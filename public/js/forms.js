@@ -4,6 +4,39 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
+export function serializeForm(formElement) {
+    if (!(formElement instanceof HTMLFormElement)) {
+        return {};
+    }
+
+    const formData = new FormData(formElement);
+    const data = {};
+
+    formData.forEach((value, key) => {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+            if (!Array.isArray(data[key])) {
+                data[key] = [data[key]];
+            }
+            data[key].push(value);
+        } else {
+            data[key] = value;
+        }
+    });
+
+    const radioNames = new Set();
+    formElement
+        .querySelectorAll('input[type="radio"][name]')
+        .forEach(radio => radioNames.add(radio.name));
+
+    radioNames.forEach(name => {
+        if (!Object.prototype.hasOwnProperty.call(data, name)) {
+            data[name] = '';
+        }
+    });
+
+    return data;
+}
+
 function setDefaultDate() {
     const fechaInput = getElement('fecha');
     if (fechaInput) {
@@ -130,10 +163,6 @@ function clearConversionOutputs() {
     });
 }
 
-function getValue(id) {
-    return getElement(id)?.value || '';
-}
-
 export function initializeForm() {
     setDefaultDate();
     configureNumberInputs();
@@ -154,53 +183,36 @@ export function resetForm() {
 }
 
 export function getFormData() {
-    return {
-        cliente: getValue('cliente'),
-        fecha: getValue('fecha'),
-        direccion: getValue('direccion'),
-        tecnico: getValue('tecnico'),
-        modelo: getValue('modelo'),
-        id_interna: getValue('id_interna'),
-        n_serie: getValue('n_serie'),
-        proximo_mant: getValue('proximo_mant'),
-        fugas_found: getValue('fugas_found'),
-        fugas_left: getValue('fugas_left'),
-        cond_red_found: getValue('cond_red_found') || 0,
-        cond_red_left: getValue('cond_red_left') || 0,
-        cond_perm_found: getValue('cond_perm_found') || 0,
-        cond_perm_left: getValue('cond_perm_left') || 0,
-        rechazo_found: getValue('rechazo_found'),
-        rechazo_left: getValue('rechazo_left'),
-        presion_found: getValue('presion_found') || 0,
-        presion_left: getValue('presion_left') || 0,
-        caudal_perm_found: getValue('caudal_perm_found') || 0,
-        caudal_perm_left: getValue('caudal_perm_left') || 0,
-        caudal_rech_found: getValue('caudal_rech_found') || 0,
-        caudal_rech_left: getValue('caudal_rech_left') || 0,
-        relacion_found: getValue('relacion_found'),
-        relacion_left: getValue('relacion_left'),
-        precarga_found: getValue('precarga_found') || 0,
-        precarga_left: getValue('precarga_left') || 0,
-        presostato_alta_found: getValue('presostato_alta_found'),
-        presostato_alta_left: getValue('presostato_alta_left'),
-        presostato_baja_found: getValue('presostato_baja_found'),
-        presostato_baja_left: getValue('presostato_baja_left'),
-        etapa1_detalles: getValue('etapa1_detalles'),
-        etapa1_accion: document.querySelector('input[name="etapa1_action"]:checked')?.value || '',
-        etapa2_detalles: getValue('etapa2_detalles'),
-        etapa2_accion: document.querySelector('input[name="etapa2_action"]:checked')?.value || '',
-        etapa3_detalles: getValue('etapa3_detalles'),
-        etapa3_accion: document.querySelector('input[name="etapa3_action"]:checked')?.value || '',
-        etapa4_detalles: getValue('etapa4_detalles'),
-        etapa4_accion: document.querySelector('input[name="etapa4_action"]:checked')?.value || '',
-        etapa5_detalles: getValue('etapa5_detalles'),
-        etapa5_accion: document.querySelector('input[name="etapa5_action"]:checked')?.value || '',
-        etapa6_detalles: getValue('etapa6_detalles'),
-        etapa6_accion: document.querySelector('input[name="etapa6_action"]:checked')?.value || '',
-        sanitizacion: getValue('sanitizacion_status'),
-        resumen: getValue('resumen'),
-        numero_reporte: `REP-${Date.now()}`,
-    };
+    const form = getElement('maintenance-form');
+    if (!(form instanceof HTMLFormElement)) {
+        return {};
+    }
+
+    const data = serializeForm(form);
+    const numericFields = [
+        'cond_red_found',
+        'cond_red_left',
+        'cond_perm_found',
+        'cond_perm_left',
+        'presion_found',
+        'presion_left',
+        'caudal_perm_found',
+        'caudal_perm_left',
+        'caudal_rech_found',
+        'caudal_rech_left',
+        'precarga_found',
+        'precarga_left',
+    ];
+
+    numericFields.forEach(field => {
+        if (Object.prototype.hasOwnProperty.call(data, field) && data[field] === '') {
+            data[field] = 0;
+        }
+    });
+
+    data.numero_reporte = `REP-${Date.now()}`;
+
+    return data;
 }
 
 export function setReportNumber(reportNumber) {
