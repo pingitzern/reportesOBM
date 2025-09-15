@@ -1,6 +1,10 @@
 import { API_URL } from './config.js';
 
 async function postJSON(payload) {
+    if (!API_URL) {
+        throw new Error('API_URL no está configurada.');
+    }
+
     const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -47,6 +51,10 @@ export async function eliminarMantenimiento(id) {
 }
 
 export async function obtenerDashboard() {
+    if (!API_URL) {
+        throw new Error('API_URL no está configurada.');
+    }
+
     const response = await fetch(`${API_URL}?action=dashboard`);
     const result = await response.json();
 
