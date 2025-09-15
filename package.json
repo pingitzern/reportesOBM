@@ -1,6 +1,7 @@
 {
   "name": "reportesobm",
   "version": "1.0.0",
+  "main": "frontend/js/main.js",
   "private": true,
   "scripts": {
     "dev": "vite",
