@@ -1,3 +1,4 @@
+import { serializeForm } from './forms.js';
 import { state } from './state.js';
 
 function getElement(id) {
@@ -97,33 +98,35 @@ export function openEditModal(mantenimiento) {
     state.mantenimientoEditando = mantenimiento;
 
     formulario.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-                <input type="text" id="edit-cliente" value="${escapeAttributeValue(mantenimiento.Cliente || '')}" class="w-full border-gray-300 rounded-md p-2">
+        <form id="edit-form">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                    <input type="text" id="edit-cliente" name="cliente" value="${escapeAttributeValue(mantenimiento.Cliente || '')}" class="w-full border-gray-300 rounded-md p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Servicio</label>
+                    <input type="date" id="edit-fecha" name="fecha_servicio" value="${escapeAttributeValue(mantenimiento.Fecha_Servicio || '')}" class="w-full border-gray-300 rounded-md p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Técnico</label>
+                    <input type="text" id="edit-tecnico" name="tecnico_asignado" value="${escapeAttributeValue(mantenimiento.Tecnico_Asignado || '')}" class="w-full border-gray-300 rounded-md p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Próximo Mantenimiento</label>
+                    <input type="date" id="edit-proximo-mant" name="proximo_mantenimiento" value="${escapeAttributeValue(mantenimiento.Proximo_Mantenimiento || '')}" class="w-full border-gray-300 rounded-md p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Conductividad Permeado</label>
+                    <input type="number" id="edit-cond-perm" name="conductividad_permeado_left" value="${escapeAttributeValue(mantenimiento.Conductividad_Permeado_Left || 0)}" class="w-full border-gray-300 rounded-md p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Resumen</label>
+                    <textarea id="edit-resumen" name="resumen_recomendaciones" rows="3" class="w-full border-gray-300 rounded-md p-2">${escapeAttributeValue(mantenimiento.Resumen_Recomendaciones || '')}</textarea>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Servicio</label>
-                <input type="date" id="edit-fecha" value="${escapeAttributeValue(mantenimiento.Fecha_Servicio || '')}" class="w-full border-gray-300 rounded-md p-2">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Técnico</label>
-                <input type="text" id="edit-tecnico" value="${escapeAttributeValue(mantenimiento.Tecnico_Asignado || '')}" class="w-full border-gray-300 rounded-md p-2">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Próximo Mantenimiento</label>
-                <input type="date" id="edit-proximo-mant" value="${escapeAttributeValue(mantenimiento.Proximo_Mantenimiento || '')}" class="w-full border-gray-300 rounded-md p-2">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Conductividad Permeado</label>
-                <input type="number" id="edit-cond-perm" value="${escapeAttributeValue(mantenimiento.Conductividad_Permeado_Left || 0)}" class="w-full border-gray-300 rounded-md p-2">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Resumen</label>
-                <textarea id="edit-resumen" rows="3" class="w-full border-gray-300 rounded-md p-2">${escapeAttributeValue(mantenimiento.Resumen_Recomendaciones || '')}</textarea>
-            </div>
-        </div>
-        <input type="hidden" id="edit-id" value="${escapeAttributeValue(mantenimiento.ID_Unico || '')}">
+            <input type="hidden" id="edit-id" name="id" value="${escapeAttributeValue(mantenimiento.ID_Unico || '')}">
+        </form>
     `;
 
     modal.classList.remove('hidden');
@@ -138,13 +141,16 @@ export function closeEditModal() {
 }
 
 export function getEditFormValues() {
-    return {
-        id: getElement('edit-id')?.value || '',
-        cliente: getElement('edit-cliente')?.value || '',
-        fecha_servicio: getElement('edit-fecha')?.value || '',
-        tecnico_asignado: getElement('edit-tecnico')?.value || '',
-        proximo_mantenimiento: getElement('edit-proximo-mant')?.value || '',
-        conductividad_permeado_left: getElement('edit-cond-perm')?.value || 0,
-        resumen_recomendaciones: getElement('edit-resumen')?.value || '',
-    };
+    const form = document.getElementById('edit-form');
+    if (!(form instanceof HTMLFormElement)) {
+        return {};
+    }
+
+    const values = serializeForm(form);
+
+    if (Object.prototype.hasOwnProperty.call(values, 'conductividad_permeado_left') && values.conductividad_permeado_left === '') {
+        values.conductividad_permeado_left = 0;
+    }
+
+    return values;
 }
