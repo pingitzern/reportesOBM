@@ -7,7 +7,7 @@
     <!-- Usando la versión correcta de Tailwind -->
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="frontend/css/styles.css">
+    <link rel="stylesheet" href="./css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100">
@@ -17,7 +17,7 @@
                 <h1 class="text-3xl font-bold text-gray-800">Sistema de Gestión de Mantenimientos RO</h1>
                 <p class="text-gray-600 mt-2">ID del Protocolo: PMA-RO-RES-12</p>
             </div>
-            <img src="OHM-agua.png" alt="Logo OHM Agua" class="max-w-[180px] h-auto">
+            <img src="../OHM-agua.png" alt="Logo OHM Agua" class="max-w-[180px] h-auto">
         </header>
 
         <div class="print-header">
@@ -25,7 +25,7 @@
                 <h1>Informe de Mantenimiento Anual</h1>
                 <p><strong>N° de Reporte:</strong> <span id="report-number-display"></span></p>
             </div>
-            <img src="OHM-agua.png" alt="Logo OHM Agua" class="print-logo">
+            <img src="../OHM-agua.png" alt="Logo OHM Agua" class="print-logo">
         </div>
 
         <!-- Navegación por pestañas - SIN onclick -->
@@ -141,60 +141,17 @@
                         <div class="sm:col-span-2">Detalles del Componente</div>
                         <div class="sm:col-span-2">Acción</div>
                     </div>
-                    <!-- Etapa 1 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2">
-                        <div class="sm:col-span-1">1ª Sedimentos (PP)</div>
-                        <div class="sm:col-span-2"><input type="text" id="etapa1_detalles" name="etapa1_detalles" placeholder="Micronaje: __ µm" class="w-full"></div>
-                        <div class="sm:col-span-2 flex space-x-4">
-                            <label><input type="radio" value="Cambiado" name="etapa1_accion">Cambiado</label>
-                            <label><input type="radio" value="Inspeccionado" name="etapa1_accion" checked>Inspeccionado</label>
+                    <div id="component-stage-container"></div>
+
+                    <template id="component-stage-template">
+                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2 component-stage">
+                            <div class="sm:col-span-1 stage-title"></div>
+                            <div class="sm:col-span-2">
+                                <input type="text" class="w-full stage-details">
+                            </div>
+                            <div class="sm:col-span-2 flex space-x-4 stage-actions"></div>
                         </div>
-                    </div>
-                    <!-- Etapa 2 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2">
-                        <div class="sm:col-span-1">2ª Carbón Bloque (CTO)</div>
-                        <div class="sm:col-span-2"><input type="text" id="etapa2_detalles" name="etapa2_detalles" placeholder="Modelo/Tipo" class="w-full"></div>
-                        <div class="sm:col-span-2 flex space-x-4">
-                            <label><input type="radio" value="Cambiado" name="etapa2_accion">Cambiado</label>
-                            <label><input type="radio" value="Inspeccionado" name="etapa2_accion" checked>Inspeccionado</label>
-                        </div>
-                    </div>
-                    <!-- Etapa 3 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2">
-                        <div class="sm:col-span-1">3ª Carbón GAC / PP</div>
-                        <div class="sm:col-span-2"><input type="text" id="etapa3_detalles" name="etapa3_detalles" placeholder="Micronaje/Tipo" class="w-full"></div>
-                        <div class="sm:col-span-2 flex space-x-4">
-                            <label><input type="radio" value="Cambiado" name="etapa3_accion">Cambiado</label>
-                            <label><input type="radio" value="Inspeccionado" name="etapa3_accion" checked>Inspeccionado</label>
-                        </div>
-                    </div>
-                    <!-- Etapa 4 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2">
-                        <div class="sm:col-span-1 font-bold">4ª Membrana RO</div>
-                        <div class="sm:col-span-2"><input type="text" id="etapa4_detalles" name="etapa4_detalles" placeholder="Caudal GPD | S/N" class="w-full"></div>
-                        <div class="sm:col-span-2 flex space-x-4">
-                            <label><input type="radio" value="Cambiado" name="etapa4_accion">Cambiado</label>
-                            <label><input type="radio" value="Inspeccionado" name="etapa4_accion" checked>Inspeccionado</label>
-                        </div>
-                    </div>
-                    <!-- Etapa 5 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2">
-                        <div class="sm:col-span-1">5ª Post-Filtro</div>
-                        <div class="sm:col-span-2"><input type="text" id="etapa5_detalles" name="etapa5_detalles" placeholder="Tipo: Carbón, Remineralizador..." class="w-full"></div>
-                        <div class="sm:col-span-2 flex space-x-4">
-                            <label><input type="radio" value="Cambiado" name="etapa5_accion">Cambiado</label>
-                            <label><input type="radio" value="Inspeccionado" name="etapa5_accion" checked>Inspeccionado</label>
-                        </div>
-                    </div>
-                    <!-- Etapa 6 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2">
-                        <div class="sm:col-span-1">6ª Adicional</div>
-                        <div class="sm:col-span-2"><input type="text" id="etapa6_detalles" name="etapa6_detalles" placeholder="Tipo: UV, Alcalino..." class="w-full"></div>
-                        <div class="sm:col-span-2 flex space-x-4">
-                            <label><input type="radio" value="Cambiado" name="etapa6_accion">Cambiado</label>
-                            <label><input type="radio" value="Inspeccionado" name="etapa6_accion" checked>Inspeccionado</label>
-                        </div>
-                    </div>
+                    </template>
                     <!-- Sanitización -->
                     <hr class="my-4">
                     <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
@@ -340,6 +297,6 @@
         </div>
     </div>
 
-    <script type="module" src="frontend/js/main.js"></script>
+    <script type="module" src="./js/main.js"></script>
 </body>
 </html>

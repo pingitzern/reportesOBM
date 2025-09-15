@@ -3,6 +3,7 @@ import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, el
 import { renderDashboard } from './dashboard.js';
 import { generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
 import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './search.js';
+import { renderComponentStages } from './templates.js';
 
 const isApiConfigured = typeof API_URL === 'string' && API_URL.length > 0;
 
@@ -198,6 +199,7 @@ function attachEventListeners() {
 }
 
 function initializeSystem() {
+    renderComponentStages();
     initializeForm();
     attachEventListeners();
     showTab('nuevo');
