@@ -1,3 +1,5 @@
+/* global Chart */
+
 let chartMensual = null;
 let chartTecnicos = null;
 

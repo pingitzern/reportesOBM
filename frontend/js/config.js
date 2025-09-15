@@ -6,8 +6,18 @@ const browserApiUrl = runtimeConfig && typeof runtimeConfig.API_URL === 'string'
 
 let resolvedApiUrl = browserApiUrl;
 
-if (!resolvedApiUrl && typeof process !== 'undefined' && process.env && typeof process.env.API_URL === 'string') {
-    resolvedApiUrl = process.env.API_URL;
+const runtimeProcess =
+    typeof globalThis !== 'undefined' && typeof globalThis.process === 'object'
+        ? globalThis.process
+        : undefined;
+
+if (
+    !resolvedApiUrl &&
+    runtimeProcess &&
+    runtimeProcess.env &&
+    typeof runtimeProcess.env.API_URL === 'string'
+) {
+    resolvedApiUrl = runtimeProcess.env.API_URL;
 }
 
 if (!resolvedApiUrl) {
