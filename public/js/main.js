@@ -1,7 +1,14 @@
+import { API_URL } from './config.js';
 import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento, obtenerDashboard } from './api.js';
 import { renderDashboard } from './dashboard.js';
 import { generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
 import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './search.js';
+
+const isApiConfigured = typeof API_URL === 'string' && API_URL.length > 0;
+
+if (!isApiConfigured) {
+    console.warn('API_URL no configurado. Configura window.__APP_CONFIG__.API_URL o la variable de entorno API_URL.');
+}
 
 function showTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
