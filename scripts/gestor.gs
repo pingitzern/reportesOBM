@@ -1,7 +1,6 @@
 const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
 
-codex/create-testing-guide-for-webpage-cafzty
 const DEFAULT_CONFIGURATION = Object.freeze({
   SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
   SHEET_NAME: 'Hoja 1'
@@ -31,18 +30,6 @@ function getAuthorizedUsersProperty() {
   return getPropertyOrDefault(
     AUTHORIZED_USERS_PROPERTY,
     DEFAULT_PROPERTY_VALUES[AUTHORIZED_USERS_PROPERTY]
-
-function initProperties() {
-  PropertiesService.getScriptProperties().setProperties(
-    {
-      SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
-      SHEET_NAME: 'Hoja 1',
-      AUTHORIZED_USERS: JSON.stringify([
-        { usuario: 'pingitzernicolas@gmail.com', token: '12345ABCD' }
-      ])
-    },
-    true
-main
   );
 }
 
