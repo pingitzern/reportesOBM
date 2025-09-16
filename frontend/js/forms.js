@@ -210,8 +210,6 @@ export function getFormData() {
         }
     });
 
-    data.numero_reporte = `REP-${Date.now()}`;
-
     return data;
 }
 

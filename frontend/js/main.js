@@ -42,11 +42,15 @@ async function handleGuardarClick() {
     guardarBtn.disabled = true;
 
     try {
+        const reportNumber = generateReportNumber();
         const datos = getFormData();
+        if (datos && typeof datos === 'object') {
+            datos.numero_reporte = reportNumber;
+        }
+
         await guardarMantenimiento(datos);
         alert('✅ Mantenimiento guardado correctamente en el sistema');
 
-        const reportNumber = generateReportNumber();
         setReportNumber(reportNumber);
 
         setTimeout(() => {
@@ -61,6 +65,10 @@ async function handleGuardarClick() {
         guardarBtn.disabled = false;
     }
 }
+
+export const __testables__ = {
+    handleGuardarClick,
+};
 
 async function handleBuscarClick() {
     const filtros = {
