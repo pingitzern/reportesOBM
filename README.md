@@ -9,7 +9,7 @@ Sistema para gestionar el mantenimiento preventivo de equipos de ósmosis bajo m
 │   ├── css/                 # Estilos base y utilidades (Tailwind + reglas personalizadas)
 │   ├── index.html           # Entrada principal del frontend
 │   ├── js/                  # Código JavaScript modular de la SPA
-│   └── public/              # Activos estáticos servidos por Vite (logo OHM Agua, etc.)
+│   └── public/              # Activos estáticos servidos por Vite (logo OHM Agua accesible como /OHM-agua.png, etc.)
 ├── scripts/
 │   └── gestor.gs            # Backend en Google Apps Script que expone la API REST
 └── README.md
