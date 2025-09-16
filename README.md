@@ -7,10 +7,10 @@ Sistema para gestionar el mantenimiento preventivo de equipos de ósmosis bajo m
 ```
 ├── frontend/
 │   ├── css/                 # Estilos base y utilidades (Tailwind + reglas personalizadas)
+│   ├── index.html           # Entrada principal del frontend
 │   └── js/                  # Código JavaScript modular de la SPA
 ├── scripts/
 │   └── gestor.gs            # Backend en Google Apps Script que expone la API REST
-├── mprobajomesadaOHM2.html  # Entrada principal del frontend
 ├── OHM-agua.png             # Logo usado en informes y vista de impresión
 └── README.md
 ```
@@ -26,7 +26,7 @@ Sistema para gestionar el mantenimiento preventivo de equipos de ósmosis bajo m
   - `dashboard.js`: construye los gráficos de Chart.js y los indicadores de métricas.
   - `state.js` y `main.js`: coordinan estado compartido, eventos de la UI y el enrutamiento por pestañas.
 
-Los módulos se cargan desde `mprobajomesadaOHM2.html` mediante `<script type="module" src="frontend/js/main.js"></script>`.
+Los módulos se cargan desde `frontend/index.html` mediante `<script type="module" src="frontend/js/main.js"></script>`.
 
 ### scripts/
 - `gestor.gs`: implementa el backend usando Google Apps Script. Define el contrato de datos con la hoja de cálculo, operaciones CRUD, los agregados que alimentan el dashboard y valida los tokens configurados antes de atender cada acción, actualizando además las columnas de auditoría (`Actualizado_por` y `Timestamp`).
@@ -111,11 +111,11 @@ Al iniciar la aplicación el usuario debe autenticarse mediante el modal integra
    # o
    python -m http.server 8080
    ```
-3. Abre `http://localhost:3000/mprobajomesadaOHM2.html` (o el puerto configurado) y verifica que las pestañas y formularios respondan correctamente.
+3. Abre `http://localhost:3000/frontend/index.html` (o el puerto configurado) y verifica que las pestañas y formularios respondan correctamente.
 4. Ajusta `window.__APP_CONFIG__` en el HTML o en un fragmento inline antes de cargar `frontend/js/main.js`.
 
 ## Despliegue
-1. Sube `mprobajomesadaOHM2.html`, la carpeta `frontend/` y los recursos estáticos al servidor o servicio de hosting elegido (Firebase Hosting, Netlify, GitHub Pages, etc.).
+1. Sube el contenido de la carpeta `frontend/` (incluido `frontend/index.html`) y los recursos estáticos al servidor o servicio de hosting elegido (Firebase Hosting, Netlify, GitHub Pages, etc.).
 2. Inserta la configuración `window.__APP_CONFIG__` en el HTML del entorno productivo apuntando al despliegue del Apps Script.
 3. Habilita HTTPS; Google Apps Script solo acepta solicitudes seguras.
 4. Mantén sincronizados los encabezados de la hoja con el script; si agregas columnas, actualiza `gestor.gs` y redepliega la API.
