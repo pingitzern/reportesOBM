@@ -1,8 +1,15 @@
 import { API_URL } from './config.js';
+import { getAuthPayload } from './auth.js';
 
-async function postJSON(payload) {
+async function postJSON(payload, { requireAuth = true } = {}) {
     if (!API_URL) {
         throw new Error('API_URL no está configurada.');
+    }
+
+    const requestPayload = { ...payload };
+
+    if (requireAuth) {
+        Object.assign(requestPayload, getAuthPayload());
     }
 
     let response;
@@ -12,7 +19,7 @@ async function postJSON(payload) {
             headers: {
                 'Content-Type': 'text/plain; charset=utf-8',
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(requestPayload),
         });
     } catch (error) {
         if (error?.name === 'AbortError') {
@@ -73,16 +80,7 @@ export async function eliminarMantenimiento(id) {
 }
 
 export async function obtenerDashboard() {
-    if (!API_URL) {
-        throw new Error('API_URL no está configurada.');
-    }
-
-    const response = await fetch(`${API_URL}?action=dashboard`);
-    const result = await response.json();
-
-    if (result.result !== 'success') {
-        throw new Error(result.error || 'Error desconocido');
-    }
-
-    return result.data;
+    return postJSON({
+        action: 'dashboard',
+    });
 }

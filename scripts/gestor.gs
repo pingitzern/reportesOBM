@@ -1,12 +1,16 @@
 const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const SHEET_ID = SCRIPT_PROPERTIES.getProperty('SHEET_ID');
 const SHEET_NAME = SCRIPT_PROPERTIES.getProperty('SHEET_NAME');
+const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
 
 function initProperties() {
   PropertiesService.getScriptProperties().setProperties(
     {
       SHEET_ID: 'TU_ID_DE_HOJA',
-      SHEET_NAME: 'Nombre de pestaña'
+      SHEET_NAME: 'Nombre de pestaña',
+      AUTHORIZED_USERS: JSON.stringify([
+        { usuario: 'tecnico@example.com', token: 'token-seguro' }
+      ])
     },
     true
   );
@@ -27,6 +31,75 @@ const CAMPOS_ACTUALIZABLES = [
   'Etapa5_Detalles', 'Etapa5_Accion', 'Etapa6_Detalles', 'Etapa6_Accion',
   'Sanitizacion_Sistema', 'Resumen_Recomendaciones'
 ];
+
+const AuthService = {
+  getAuthorizedUsers() {
+    const raw = SCRIPT_PROPERTIES.getProperty(AUTHORIZED_USERS_PROPERTY);
+    if (!raw) {
+      throw new Error('Configura la propiedad AUTHORIZED_USERS con los tokens permitidos.');
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (error) {
+      throw new Error('La propiedad AUTHORIZED_USERS debe contener un JSON válido.');
+    }
+
+    let entries = [];
+
+    if (Array.isArray(parsed)) {
+      entries = parsed.map((item) => ({
+        token: item && typeof item.token === 'string' ? item.token.trim() : '',
+        usuario: item && typeof item.usuario === 'string' ? item.usuario.trim() : '',
+      }));
+    } else if (parsed && typeof parsed === 'object') {
+      entries = Object.keys(parsed).map((tokenKey) => ({
+        token: tokenKey.trim(),
+        usuario: typeof parsed[tokenKey] === 'string'
+          ? String(parsed[tokenKey]).trim()
+          : '',
+      }));
+    } else {
+      throw new Error('El formato de AUTHORIZED_USERS debe ser un arreglo o un objeto JSON.');
+    }
+
+    const sanitized = entries.filter((entry) => entry.token);
+    if (!sanitized.length) {
+      throw new Error('No hay usuarios autorizados configurados en AUTHORIZED_USERS.');
+    }
+
+    return sanitized;
+  },
+
+  authenticate(data) {
+    const token = data && typeof data.token === 'string' ? data.token.trim() : '';
+    if (!token) {
+      throw new Error('Token de autenticación requerido.');
+    }
+
+    const usuarioEntrada = data && typeof data.usuario === 'string' ? data.usuario.trim() : '';
+    const usuarios = this.getAuthorizedUsers();
+    const match = usuarios.find((entry) => entry.token === token);
+
+    if (!match) {
+      throw new Error('Token no autorizado.');
+    }
+
+    const usuarioConfigurado = match.usuario;
+    if (usuarioConfigurado && usuarioEntrada && usuarioConfigurado !== usuarioEntrada) {
+      throw new Error('El usuario no coincide con el token proporcionado.');
+    }
+
+    const resolvedUsuario = usuarioConfigurado || usuarioEntrada;
+
+    if (!resolvedUsuario) {
+      throw new Error('Debe indicar el nombre de usuario asociado al token.');
+    }
+
+    return resolvedUsuario;
+  }
+};
 
 const SheetRepository = {
   getSheet() {
@@ -67,10 +140,11 @@ const ResponseFactory = {
 };
 
 const MantenimientoService = {
-  guardar(data) {
+  guardar(data, usuario) {
     const sheet = SheetRepository.getSheet();
     const timestamp = new Date();
     const idUnico = Utilities.getUuid();
+    const editor = typeof usuario === 'string' ? usuario : '';
 
     const rowData = [
       data.cliente,
@@ -118,12 +192,18 @@ const MantenimientoService = {
       data.sanitizacion,
       data.resumen,
       data.numero_reporte,
+      editor,
       timestamp,
       idUnico
     ];
 
     sheet.appendRow(rowData);
-    return { id: idUnico, mensaje: 'Mantenimiento guardado correctamente' };
+    return {
+      id: idUnico,
+      mensaje: 'Mantenimiento guardado correctamente',
+      actualizado_por: editor,
+      timestamp,
+    };
   },
 
   buscar(filtros) {
@@ -173,7 +253,7 @@ const MantenimientoService = {
     return resultados;
   },
 
-  actualizar(data) {
+  actualizar(data, usuario) {
     const { sheet, data: allData } = SheetRepository.getSheetData();
     const headers = allData[0];
 
@@ -206,7 +286,22 @@ const MantenimientoService = {
       }
     });
 
-    return { mensaje: 'Mantenimiento actualizado correctamente' };
+    const updateTimestamp = new Date();
+    const timestampIndex = headers.indexOf('Timestamp');
+    if (timestampIndex !== -1) {
+      sheet.getRange(rowIndex, timestampIndex + 1).setValue(updateTimestamp);
+    }
+
+    const updatedByIndex = headers.indexOf('Actualizado_por');
+    if (updatedByIndex !== -1) {
+      sheet.getRange(rowIndex, updatedByIndex + 1).setValue(typeof usuario === 'string' ? usuario : '');
+    }
+
+    return {
+      mensaje: 'Mantenimiento actualizado correctamente',
+      actualizado_por: typeof usuario === 'string' ? usuario : '',
+      timestamp: updateTimestamp,
+    };
   },
 
   eliminar(data) {
@@ -315,16 +410,23 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const { action } = data;
 
+    if (action === 'login') {
+      const usuarioLogin = AuthService.authenticate(data);
+      return ResponseFactory.success({ usuario: usuarioLogin });
+    }
+
+    const usuario = AuthService.authenticate(data);
+
     let result;
     switch (action) {
       case 'guardar':
-        result = MantenimientoService.guardar(data);
+        result = MantenimientoService.guardar(data, usuario);
         break;
       case 'buscar':
         result = MantenimientoService.buscar(data);
         break;
       case 'actualizar':
-        result = MantenimientoService.actualizar(data);
+        result = MantenimientoService.actualizar(data, usuario);
         break;
       case 'eliminar':
         result = MantenimientoService.eliminar(data);
@@ -343,14 +445,20 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  const { action } = e.parameter;
+  const params = e && e.parameter ? e.parameter : {};
+  const action = params.action;
 
   try {
-    const result = action === 'dashboard'
-      ? DashboardService.obtenerDatos()
-      : { message: 'API funcionando' };
+    if (action === 'dashboard') {
+      AuthService.authenticate({
+        token: params.token,
+        usuario: params.usuario,
+      });
+      const dashboard = DashboardService.obtenerDatos();
+      return ResponseFactory.success(dashboard);
+    }
 
-    return ResponseFactory.success(result);
+    return ResponseFactory.success({ message: 'API funcionando' });
   } catch (error) {
     return ResponseFactory.error(error);
   }

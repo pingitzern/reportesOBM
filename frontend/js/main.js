@@ -1,4 +1,5 @@
 import { API_URL } from './config.js';
+import { initializeAuth } from './auth.js';
 import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento, obtenerDashboard } from './api.js';
 import { renderDashboard } from './dashboard.js';
 import { generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
@@ -200,11 +201,17 @@ function attachEventListeners() {
     }
 }
 
-function initializeSystem() {
+async function initializeSystem() {
+    await initializeAuth();
     renderComponentStages();
     initializeForm();
     attachEventListeners();
     showTab('nuevo');
 }
 
-document.addEventListener('DOMContentLoaded', initializeSystem);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSystem().catch(error => {
+        console.error('Error inicializando la aplicación:', error);
+        alert('No se pudo inicializar la aplicación. Revisa la consola para más detalles.');
+    });
+});

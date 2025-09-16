@@ -20,6 +20,7 @@ Sistema para gestionar el mantenimiento preventivo de equipos de ósmosis bajo m
 - **js/**: código JavaScript organizado por responsabilidades.
   - `config.js`: resuelve la URL de la API y expone constantes de conversión utilizadas en formularios.
   - `api.js`: cliente ligero para llamar al Apps Script (`guardar`, `buscar`, `actualizar`, `eliminar` y `dashboard`).
+  - `auth.js`: gestiona el flujo de inicio de sesión, muestra el modal de autenticación y persiste el token de acceso del usuario.
   - `forms.js`: lógica de inicialización del formulario, cálculos automáticos y serialización de datos.
   - `search.js`: renderiza resultados, abre el modal de edición y gestiona acciones de edición/eliminación.
   - `dashboard.js`: construye los gráficos de Chart.js y los indicadores de métricas.
@@ -28,7 +29,7 @@ Sistema para gestionar el mantenimiento preventivo de equipos de ósmosis bajo m
 Los módulos se cargan desde `mprobajomesadaOHM2.html` mediante `<script type="module" src="frontend/js/main.js"></script>`.
 
 ### scripts/
-- `gestor.gs`: implementa el backend usando Google Apps Script. Define el contrato de datos con la hoja de cálculo, operaciones CRUD y los agregados que alimentan el dashboard.
+- `gestor.gs`: implementa el backend usando Google Apps Script. Define el contrato de datos con la hoja de cálculo, operaciones CRUD, los agregados que alimentan el dashboard y valida los tokens configurados antes de atender cada acción, actualizando además las columnas de auditoría (`Actualizado_por` y `Timestamp`).
 
 ## Configuración de Google Sheets y Apps Script
 
@@ -56,7 +57,7 @@ Los módulos se cargan desde `mprobajomesadaOHM2.html` mediante `<script type="m
    Etapa5_Detalles, Etapa5_Accion,
    Etapa6_Detalles, Etapa6_Accion,
    Sanitizacion_Sistema, Resumen_Recomendaciones,
-   Numero_Reporte, Timestamp, ID_Unico
+   Numero_Reporte, Actualizado_por, Timestamp, ID_Unico
    ```
 3. Anota el ID del documento (la cadena entre `/d/` y `/edit` en la URL del Sheet).
 4. Si necesitas múltiples hojas dentro del mismo documento, asegúrate de que la pestaña que actuará como base de datos coincida con el valor que cargarás en la propiedad `SHEET_NAME` del proyecto de Apps Script.
@@ -64,9 +65,10 @@ Los módulos se cargan desde `mprobajomesadaOHM2.html` mediante `<script type="m
 ### 2. Configurar el proyecto de Apps Script
 1. Abre la hoja y navega a **Extensiones > Apps Script**.
 2. Copia el contenido de [`scripts/gestor.gs`](scripts/gestor.gs) en el editor.
-3. Define las propiedades del script `SHEET_ID` y `SHEET_NAME`:
+3. Define las propiedades del script `SHEET_ID`, `SHEET_NAME` y `AUTHORIZED_USERS`:
    - Abre **Project Settings** (icono de engranaje en la barra lateral). En la sección **Script properties**, pulsa **Add script property** y crea las claves `SHEET_ID` (con el ID del documento de Google Sheets) y `SHEET_NAME` (con el nombre exacto de la pestaña que actuará como base de datos).
-   - Como alternativa, edita la función `initProperties()` incluida al inicio de `gestor.gs` con tus valores y ejecútala una vez desde **Run > Run function > initProperties**. Esto almacenará ambos campos en las propiedades del script; posteriormente puedes volver a dejar la función con valores genéricos si lo prefieres.
+   - Añade la propiedad `AUTHORIZED_USERS` con un JSON que mapee los tokens válidos, por ejemplo: `[{"usuario": "tecnico@example.com", "token": "token-seguro"}]`. Cada entrada puede asociar explícitamente un token con el nombre del usuario que lo utilizará.
+   - Como alternativa, edita la función `initProperties()` incluida al inicio de `gestor.gs` con tus valores y ejecútala una vez desde **Run > Run function > initProperties**. Esto almacenará los campos en las propiedades del script; posteriormente puedes volver a dejar la función con valores genéricos si lo prefieres.
 4. Guarda el proyecto (por ejemplo `Gestor Reportes OBM`).
 
 ### 3. Publicar la API
@@ -96,6 +98,10 @@ La aplicación necesita conocer la URL publicada en el paso anterior. Puedes con
 - **Variable de entorno:** si sirves la app con un entorno Node o un bundler que exponga `process.env.API_URL`, `frontend/js/config.js` la detectará automáticamente.
 
 Si no se define ninguna de las opciones, la consola mostrará una advertencia y las peticiones fallarán.
+
+### Autenticación en la SPA
+
+Al iniciar la aplicación el usuario debe autenticarse mediante el modal integrado en la interfaz. El token y el nombre de usuario se validan contra los valores configurados en la propiedad `AUTHORIZED_USERS` del Apps Script y, una vez aceptados, se almacenan en `localStorage` para reutilizarlos en sesiones posteriores. Todas las peticiones `guardar`, `buscar`, `actualizar`, `eliminar` y `dashboard` incluyen automáticamente esas credenciales, y también es posible cerrar sesión desde el encabezado para forzar un nuevo inicio de sesión.
 
 ### Ejecutar en desarrollo
 1. Clona el repositorio y entra en la carpeta `reportesOBM`.
