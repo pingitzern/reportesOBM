@@ -6,6 +6,17 @@ const browserApiUrl = runtimeConfig && typeof runtimeConfig.API_URL === 'string'
 
 let resolvedApiUrl = browserApiUrl;
 
+if (!resolvedApiUrl) {
+    const viteEnv =
+        typeof import.meta !== 'undefined' && import.meta && typeof import.meta.env === 'object'
+            ? import.meta.env
+            : undefined;
+
+    if (viteEnv && typeof viteEnv.VITE_API_URL === 'string') {
+        resolvedApiUrl = viteEnv.VITE_API_URL.trim();
+    }
+}
+
 const runtimeProcess =
     typeof globalThis !== 'undefined' && typeof globalThis.process === 'object'
         ? globalThis.process
@@ -21,7 +32,7 @@ if (
 }
 
 if (!resolvedApiUrl) {
-    console.warn('[config] API_URL no está configurada. Define window.__APP_CONFIG__.API_URL o la variable de entorno API_URL.');
+    console.warn('[config] API_URL no está configurada. Define window.__APP_CONFIG__.API_URL o la variable de entorno VITE_API_URL/API_URL.');
 }
 
 export const API_URL = resolvedApiUrl;

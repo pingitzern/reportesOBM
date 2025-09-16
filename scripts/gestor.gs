@@ -1,7 +1,36 @@
 const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
-const SHEET_ID = SCRIPT_PROPERTIES.getProperty('SHEET_ID');
-const SHEET_NAME = SCRIPT_PROPERTIES.getProperty('SHEET_NAME');
 const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
+
+codex/create-testing-guide-for-webpage-cafzty
+const DEFAULT_CONFIGURATION = Object.freeze({
+  SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
+  SHEET_NAME: 'Hoja 1'
+});
+
+const DEFAULT_AUTHORIZED_USERS = Object.freeze([
+  { usuario: 'pingitzernicolas@gmail.com', token: '12345ABCD' }
+]);
+
+const DEFAULT_PROPERTY_VALUES = Object.freeze({
+  SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
+  SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
+  [AUTHORIZED_USERS_PROPERTY]: JSON.stringify(DEFAULT_AUTHORIZED_USERS)
+});
+
+function getPropertyOrDefault(propertyName, fallback) {
+  const value = SCRIPT_PROPERTIES.getProperty(propertyName);
+
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim();
+  }
+
+  return fallback;
+}
+
+function getAuthorizedUsersProperty() {
+  return getPropertyOrDefault(
+    AUTHORIZED_USERS_PROPERTY,
+    DEFAULT_PROPERTY_VALUES[AUTHORIZED_USERS_PROPERTY]
 
 function initProperties() {
   PropertiesService.getScriptProperties().setProperties(
@@ -13,8 +42,18 @@ function initProperties() {
       ])
     },
     true
+main
   );
 }
+
+function initProperties(overrides) {
+  const properties = Object.assign({}, DEFAULT_PROPERTY_VALUES, overrides || {});
+
+  SCRIPT_PROPERTIES.setProperties(properties, true);
+}
+
+const SHEET_ID = getPropertyOrDefault('SHEET_ID', DEFAULT_CONFIGURATION.SHEET_ID);
+const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
 
 const CAMPOS_ACTUALIZABLES = [
   'Cliente', 'Fecha_Servicio', 'Direccion', 'Tecnico_Asignado', 'Modelo_Equipo',
@@ -34,7 +73,7 @@ const CAMPOS_ACTUALIZABLES = [
 
 const AuthService = {
   getAuthorizedUsers() {
-    const raw = SCRIPT_PROPERTIES.getProperty(AUTHORIZED_USERS_PROPERTY);
+    const raw = getAuthorizedUsersProperty();
     if (!raw) {
       throw new Error('Configura la propiedad AUTHORIZED_USERS con los tokens permitidos.');
     }
