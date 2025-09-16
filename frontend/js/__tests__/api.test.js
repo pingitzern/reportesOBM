@@ -7,6 +7,8 @@ import fetchMock from 'fetch-mock';
 
 const API_URL = 'https://api.example.com/mantenimientos';
 const loadApiModule = () => import('../api.js');
+const AUTH_STORAGE_KEY = 'reportesOBM.auth';
+const defaultAuth = { token: 'test-token', usuario: 'Tester' };
 
 let originalApiUrl;
 
@@ -19,6 +21,20 @@ describe('api.js', () => {
         fetchMock.hardReset();
         jest.resetModules();
         process.env.API_URL = API_URL;
+        const storage = {};
+        global.localStorage = {
+            getItem: key => (Object.prototype.hasOwnProperty.call(storage, key) ? storage[key] : null),
+            setItem: (key, value) => {
+                storage[key] = String(value);
+            },
+            removeItem: key => {
+                delete storage[key];
+            },
+            clear: () => {
+                Object.keys(storage).forEach(prop => delete storage[prop]);
+            },
+        };
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(defaultAuth));
         fetchMock.config.Request = typeof Request === 'function' ? Request : fetchMock.config.Request;
         fetchMock.config.Response = typeof Response === 'function' ? Response : fetchMock.config.Response;
         fetchMock.config.Headers = typeof Headers === 'function' ? Headers : fetchMock.config.Headers;
@@ -30,6 +46,7 @@ describe('api.js', () => {
 
     afterEach(() => {
         fetchMock.hardReset();
+        delete global.localStorage;
     });
 
     afterAll(() => {
@@ -56,7 +73,12 @@ describe('api.js', () => {
         expect(lastCall.url).toBe(API_URL);
         expect(lastCall.options.method).toBe('post');
         expect(lastCall.options.headers['content-type']).toBe('text/plain; charset=utf-8');
-        expect(JSON.parse(lastCall.options.body)).toEqual({ action: 'guardar', ...payload });
+        expect(JSON.parse(lastCall.options.body)).toEqual({
+            action: 'guardar',
+            ...payload,
+            token: defaultAuth.token,
+            usuario: defaultAuth.usuario,
+        });
     });
 
     test('buscarMantenimientos envía la acción buscar', async () => {
@@ -72,7 +94,12 @@ describe('api.js', () => {
         const lastCall = fetchMock.callHistory.lastCall(API_URL);
         expect(lastCall).toBeDefined();
         expect(lastCall.url).toBe(API_URL);
-        expect(JSON.parse(lastCall.options.body)).toEqual({ action: 'buscar', ...filtros });
+        expect(JSON.parse(lastCall.options.body)).toEqual({
+            action: 'buscar',
+            ...filtros,
+            token: defaultAuth.token,
+            usuario: defaultAuth.usuario,
+        });
     });
 
     test('lanza error cuando la API responde con fallo', async () => {
@@ -86,15 +113,20 @@ describe('api.js', () => {
         const { obtenerDashboard } = await loadApiModule();
         const dashboardData = { totales: 5 };
 
-        fetchMock.get(`${API_URL}?action=dashboard`, { result: 'success', data: dashboardData });
+        fetchMock.post(API_URL, { result: 'success', data: dashboardData });
 
         const data = await obtenerDashboard();
 
         expect(data).toEqual(dashboardData);
-        const lastCall = fetchMock.callHistory.lastCall(`${API_URL}?action=dashboard`);
+        const lastCall = fetchMock.callHistory.lastCall(API_URL);
         expect(lastCall).toBeDefined();
-        expect(lastCall.url).toBe(`${API_URL}?action=dashboard`);
-        expect(lastCall.options.method).toBe('get');
+        expect(lastCall.url).toBe(API_URL);
+        expect(lastCall.options.method).toBe('post');
+        expect(JSON.parse(lastCall.options.body)).toEqual({
+            action: 'dashboard',
+            token: defaultAuth.token,
+            usuario: defaultAuth.usuario,
+        });
     });
 
     test('lanza error cuando API_URL no está configurada', async () => {
