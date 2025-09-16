@@ -6,10 +6,10 @@ const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
 function initProperties() {
   PropertiesService.getScriptProperties().setProperties(
     {
-      SHEET_ID: 'TU_ID_DE_HOJA',
-      SHEET_NAME: 'Nombre de pestaña',
+      SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
+      SHEET_NAME: 'Hoja 1',
       AUTHORIZED_USERS: JSON.stringify([
-        { usuario: 'tecnico@example.com', token: 'token-seguro' }
+        { usuario: 'pingitzernicolas@gmail.com', token: '12345ABCD' }
       ])
     },
     true
