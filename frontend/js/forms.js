@@ -228,3 +228,8 @@ export function generateReportNumber() {
     const timestamp = `${now.getFullYear()}${padZero(now.getMonth() + 1)}${padZero(now.getDate())}-${padZero(now.getHours())}${padZero(now.getMinutes())}${padZero(now.getSeconds())}`;
     return `REP-${timestamp}`;
 }
+
+export const __testables__ = {
+    calculateAll,
+    updateConversions,
+};
