@@ -10,7 +10,11 @@ const DEFAULT_AUTHORIZED_USERS = Object.freeze([
   { usuario: 'pingitzernicolas@gmail.com', token: '12345ABCD' }
 ]);
 
-const DEFAULT_AUTHORIZED_USERS_JSON = JSON.stringify(DEFAULT_AUTHORIZED_USERS);
+const DEFAULT_PROPERTY_VALUES = Object.freeze({
+  SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
+  SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
+  [AUTHORIZED_USERS_PROPERTY]: JSON.stringify(DEFAULT_AUTHORIZED_USERS)
+});
 
 function getPropertyOrDefault(propertyName, fallback) {
   const value = SCRIPT_PROPERTIES.getProperty(propertyName);
@@ -23,22 +27,20 @@ function getPropertyOrDefault(propertyName, fallback) {
 }
 
 function getAuthorizedUsersProperty() {
-  return getPropertyOrDefault(AUTHORIZED_USERS_PROPERTY, DEFAULT_AUTHORIZED_USERS_JSON);
+  return getPropertyOrDefault(
+    AUTHORIZED_USERS_PROPERTY,
+    DEFAULT_PROPERTY_VALUES[AUTHORIZED_USERS_PROPERTY]
+  );
+}
+
+function initProperties(overrides) {
+  const properties = Object.assign({}, DEFAULT_PROPERTY_VALUES, overrides || {});
+
+  SCRIPT_PROPERTIES.setProperties(properties, true);
 }
 
 const SHEET_ID = getPropertyOrDefault('SHEET_ID', DEFAULT_CONFIGURATION.SHEET_ID);
 const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
-
-function initProperties() {
-  SCRIPT_PROPERTIES.setProperties(
-    {
-      SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
-      SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
-      [AUTHORIZED_USERS_PROPERTY]: DEFAULT_AUTHORIZED_USERS_JSON
-    },
-    true
-  );
-}
 
 const CAMPOS_ACTUALIZABLES = [
   'Cliente', 'Fecha_Servicio', 'Direccion', 'Tecnico_Asignado', 'Modelo_Equipo',
