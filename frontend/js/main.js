@@ -53,7 +53,8 @@ async function handleGuardarClick() {
         }, 500);
     } catch (error) {
         console.error('Error al guardar mantenimiento:', error);
-        alert(`❌ Error al guardar los datos: ${error.message}`);
+        const message = error?.message || 'Error desconocido al guardar los datos.';
+        alert(`❌ Error al guardar los datos: ${message}`);
     } finally {
         guardarBtn.textContent = originalText;
         guardarBtn.disabled = false;
@@ -75,7 +76,8 @@ async function handleBuscarClick() {
         });
     } catch (error) {
         console.error('Error buscando mantenimientos:', error);
-        alert('Error al buscar mantenimientos');
+        const message = error?.message || 'Error desconocido al buscar mantenimientos.';
+        alert(`❌ Error al buscar mantenimientos: ${message}`);
     }
 }
 
