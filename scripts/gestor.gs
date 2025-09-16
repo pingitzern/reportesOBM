@@ -1,5 +1,16 @@
-const SHEET_ID = '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis'; // REEMPLAZA ESTO con el ID de tu Google Sheet
-const SHEET_NAME = 'Hoja 1';
+const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
+const SHEET_ID = SCRIPT_PROPERTIES.getProperty('SHEET_ID');
+const SHEET_NAME = SCRIPT_PROPERTIES.getProperty('SHEET_NAME');
+
+function initProperties() {
+  PropertiesService.getScriptProperties().setProperties(
+    {
+      SHEET_ID: 'TU_ID_DE_HOJA',
+      SHEET_NAME: 'Nombre de pestaña'
+    },
+    true
+  );
+}
 
 const CAMPOS_ACTUALIZABLES = [
   'Cliente', 'Fecha_Servicio', 'Direccion', 'Tecnico_Asignado', 'Modelo_Equipo',
@@ -19,7 +30,19 @@ const CAMPOS_ACTUALIZABLES = [
 
 const SheetRepository = {
   getSheet() {
-    return SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+    if (!SHEET_ID || !SHEET_NAME) {
+      throw new Error(
+        'Configura las propiedades de script SHEET_ID y SHEET_NAME antes de ejecutar la API.'
+      );
+    }
+
+    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+
+    if (!sheet) {
+      throw new Error(`No se encontró la hoja ${SHEET_NAME} en el documento configurado.`);
+    }
+
+    return sheet;
   },
   getSheetData() {
     const sheet = this.getSheet();

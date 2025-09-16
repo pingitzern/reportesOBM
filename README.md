@@ -59,16 +59,14 @@ Los módulos se cargan desde `mprobajomesadaOHM2.html` mediante `<script type="m
    Numero_Reporte, Timestamp, ID_Unico
    ```
 3. Anota el ID del documento (la cadena entre `/d/` y `/edit` en la URL del Sheet).
-4. Si necesitas múltiples hojas dentro del mismo documento, asegúrate de que la pestaña que actuará como base de datos coincida con el valor de `SHEET_NAME` definido en el script.
+4. Si necesitas múltiples hojas dentro del mismo documento, asegúrate de que la pestaña que actuará como base de datos coincida con el valor que cargarás en la propiedad `SHEET_NAME` del proyecto de Apps Script.
 
 ### 2. Configurar el proyecto de Apps Script
 1. Abre la hoja y navega a **Extensiones > Apps Script**.
 2. Copia el contenido de [`scripts/gestor.gs`](scripts/gestor.gs) en el editor.
-3. Sustituye los valores de las constantes iniciales:
-   ```javascript
-   const SHEET_ID = 'TU_ID_DE_HOJA';
-   const SHEET_NAME = 'Nombre de pestaña';
-   ```
+3. Define las propiedades del script `SHEET_ID` y `SHEET_NAME`:
+   - Abre **Project Settings** (icono de engranaje en la barra lateral). En la sección **Script properties**, pulsa **Add script property** y crea las claves `SHEET_ID` (con el ID del documento de Google Sheets) y `SHEET_NAME` (con el nombre exacto de la pestaña que actuará como base de datos).
+   - Como alternativa, edita la función `initProperties()` incluida al inicio de `gestor.gs` con tus valores y ejecútala una vez desde **Run > Run function > initProperties**. Esto almacenará ambos campos en las propiedades del script; posteriormente puedes volver a dejar la función con valores genéricos si lo prefieres.
 4. Guarda el proyecto (por ejemplo `Gestor Reportes OBM`).
 
 ### 3. Publicar la API
