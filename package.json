@@ -4,8 +4,11 @@
   "main": "frontend/js/main.js",
   "private": true,
   "scripts": {
+    "predev": "npm run build:css",
     "dev": "vite",
+    "prebuild": "npm run build:css",
     "build": "vite build",
+    "build:css": "tailwindcss -i frontend/css/styles.css -o frontend/css/styles.build.css",
     "preview": "vite preview",
     "lint": "eslint \"frontend/js/**/*.js\"",
     "format": "prettier --write \"frontend/js/**/*.{js,json,css,html}\"",
