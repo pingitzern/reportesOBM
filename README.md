@@ -16,7 +16,7 @@ Sistema para gestionar el mantenimiento preventivo de equipos de ósmosis bajo m
 ```
 
 ### frontend/
-- **css/**: contiene `styles.css` con la configuración de Tailwind y ajustes de impresión.
+- **css/**: contiene `styles.css` (fuente con directivas de Tailwind) y `styles.build.css` (salida compilada que se enlaza desde `index.html`).
 - **js/**: código JavaScript organizado por responsabilidades.
   - `config.js`: resuelve la URL de la API y expone constantes de conversión utilizadas en formularios.
   - `api.js`: cliente ligero para llamar al Apps Script (`guardar`, `buscar`, `actualizar`, `eliminar` y `dashboard`).
@@ -105,20 +105,22 @@ Al iniciar la aplicación el usuario debe autenticarse mediante el modal integra
 
 ### Ejecutar en desarrollo
 1. Clona el repositorio y entra en la carpeta `reportesOBM`.
-2. Usa cualquier servidor estático (por ejemplo `npx serve` o `python -m http.server`) para exponer la raíz del proyecto:
-   ```bash
-   npx serve .
-   # o
-   python -m http.server 8080
-   ```
-3. Abre `http://localhost:3000/frontend/index.html` (o el puerto configurado) y verifica que las pestañas y formularios respondan correctamente.
-4. Ajusta `window.__APP_CONFIG__` en el HTML o en un fragmento inline antes de cargar `frontend/js/main.js`.
+2. Instala las dependencias con `npm install`.
+3. Lanza el entorno de desarrollo con `npm run dev`. El script ejecuta previamente `npm run build:css` para garantizar que `styles.build.css` esté actualizado y luego inicia el servidor de Vite (por defecto en `http://localhost:5173/`).
+4. Abre la URL indicada en la consola y verifica que las pestañas y formularios respondan correctamente.
+5. Ajusta `window.__APP_CONFIG__` en el HTML o inyecta la configuración antes de cargar `frontend/js/main.js`.
+
+### Regenerar el CSS de Tailwind
+- Edita los estilos base en `frontend/css/styles.css`. El archivo generado `frontend/css/styles.build.css` no debe modificarse a mano.
+- Ejecuta `npm run build:css` cada vez que agregues clases o cambies estilos para actualizar la salida consumida por `index.html`.
+- Si prefieres recompilar automáticamente mientras desarrollas, puedes ejecutar `npm run build:css -- --watch` en una terminal aparte.
 
 ## Despliegue
-1. Sube el contenido de la carpeta `frontend/` (incluido `frontend/index.html`) y los recursos estáticos al servidor o servicio de hosting elegido (Firebase Hosting, Netlify, GitHub Pages, etc.).
-2. Inserta la configuración `window.__APP_CONFIG__` en el HTML del entorno productivo apuntando al despliegue del Apps Script.
-3. Habilita HTTPS; Google Apps Script solo acepta solicitudes seguras.
-4. Mantén sincronizados los encabezados de la hoja con el script; si agregas columnas, actualiza `gestor.gs` y redepliega la API.
+1. Ejecuta `npm run build` para generar la carpeta `dist/` con los assets optimizados (el comando compila Tailwind y empaca el frontend con Vite).
+2. Sube el contenido de `dist/` al servicio de hosting elegido (Firebase Hosting, Netlify, GitHub Pages, etc.).
+3. Inserta la configuración `window.__APP_CONFIG__` en el HTML del entorno productivo apuntando al despliegue del Apps Script.
+4. Habilita HTTPS; Google Apps Script solo acepta solicitudes seguras.
+5. Mantén sincronizados los encabezados de la hoja con el script; si agregas columnas, actualiza `gestor.gs` y redepliega la API.
 
 ## Requisitos y flujo de trabajo para colaboradores
 
