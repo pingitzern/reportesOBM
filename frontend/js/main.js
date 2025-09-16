@@ -54,7 +54,13 @@ async function handleGuardarClick() {
         setReportNumber(reportNumber);
 
         setTimeout(() => {
-            window.print();
+            try {
+                window.print();
+            } catch (printError) {
+                console.error('Error al imprimir el mantenimiento guardado:', printError);
+            } finally {
+                resetForm();
+            }
         }, 500);
     } catch (error) {
         console.error('Error al guardar mantenimiento:', error);

@@ -6,6 +6,7 @@ describe('handleGuardarClick', () => {
     let handleGuardarClick;
     let guardarMantenimientoMock;
     let setReportNumberMock;
+    let resetFormMock;
     let generateReportNumberMock;
     let getFormDataMock;
     let formData;
@@ -17,6 +18,7 @@ describe('handleGuardarClick', () => {
         formData = { cliente: 'Test' };
         guardarMantenimientoMock = jest.fn().mockResolvedValue(undefined);
         setReportNumberMock = jest.fn();
+        resetFormMock = jest.fn();
         generateReportNumberMock = jest.fn().mockReturnValue(REPORT_NUMBER);
         getFormDataMock = jest.fn().mockReturnValue(formData);
 
@@ -28,7 +30,7 @@ describe('handleGuardarClick', () => {
             generateReportNumber: generateReportNumberMock,
             getFormData: getFormDataMock,
             initializeForm: jest.fn(),
-            resetForm: jest.fn(),
+            resetForm: resetFormMock,
             setReportNumber: setReportNumberMock,
         }));
 
@@ -94,7 +96,9 @@ describe('handleGuardarClick', () => {
         const formDataCallOrder = getFormDataMock.mock.invocationCallOrder[0];
         expect(generateCallOrder).toBeLessThan(formDataCallOrder);
 
+        expect(resetFormMock).not.toHaveBeenCalled();
         jest.runAllTimers();
         expect(window.print).toHaveBeenCalledTimes(1);
+        expect(resetFormMock).toHaveBeenCalledTimes(1);
     });
 });
