@@ -1,8 +1,12 @@
-import { serializeForm } from './forms.js';
+import { serializeForm, normalizeDateToISO } from './forms.js';
 import { state } from './state.js';
 
 function getElement(id) {
     return document.getElementById(id);
+}
+
+function toDateInputValue(value) {
+    return normalizeDateToISO(value) || '';
 }
 
 function createCell(text) {
@@ -97,6 +101,9 @@ export function openEditModal(mantenimiento) {
 
     state.mantenimientoEditando = mantenimiento;
 
+    const fechaServicioISO = toDateInputValue(mantenimiento.Fecha_Servicio);
+    const proximoMantenimientoISO = toDateInputValue(mantenimiento.Proximo_Mantenimiento);
+
     formulario.innerHTML = `
         <form id="edit-form">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -106,7 +113,7 @@ export function openEditModal(mantenimiento) {
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Servicio</label>
-                    <input type="date" id="edit-fecha" name="fecha_servicio" value="${escapeAttributeValue(mantenimiento.Fecha_Servicio || '')}" class="w-full border-gray-300 rounded-md p-2">
+                    <input type="date" id="edit-fecha" name="fecha_servicio" value="${escapeAttributeValue(fechaServicioISO)}" class="w-full border-gray-300 rounded-md p-2">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Técnico</label>
@@ -114,7 +121,7 @@ export function openEditModal(mantenimiento) {
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Próximo Mantenimiento</label>
-                    <input type="date" id="edit-proximo-mant" name="proximo_mantenimiento" value="${escapeAttributeValue(mantenimiento.Proximo_Mantenimiento || '')}" class="w-full border-gray-300 rounded-md p-2">
+                    <input type="date" id="edit-proximo-mant" name="proximo_mantenimiento" value="${escapeAttributeValue(proximoMantenimientoISO)}" class="w-full border-gray-300 rounded-md p-2">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Conductividad Permeado</label>
@@ -150,6 +157,14 @@ export function getEditFormValues() {
 
     if (Object.prototype.hasOwnProperty.call(values, 'conductividad_permeado_left') && values.conductividad_permeado_left === '') {
         values.conductividad_permeado_left = 0;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(values, 'fecha_servicio')) {
+        values.fecha_servicio = normalizeDateToISO(values.fecha_servicio);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(values, 'proximo_mantenimiento')) {
+        values.proximo_mantenimiento = normalizeDateToISO(values.proximo_mantenimiento);
     }
 
     return values;

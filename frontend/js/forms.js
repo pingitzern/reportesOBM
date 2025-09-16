@@ -4,6 +4,140 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
+function padWithZero(value) {
+    return String(value).padStart(2, '0');
+}
+
+function isDateInstance(value) {
+    return Object.prototype.toString.call(value) === '[object Date]';
+}
+
+function isValidDate(value) {
+    return isDateInstance(value) && !Number.isNaN(value.getTime());
+}
+
+function toDateFromParts(year, monthIndex, day) {
+    const date = new Date(year, monthIndex, day);
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    if (date.getFullYear() !== year || date.getMonth() !== monthIndex || date.getDate() !== day) {
+        return null;
+    }
+
+    return date;
+}
+
+function formatDateToISO(date) {
+    if (!isValidDate(date)) {
+        return '';
+    }
+
+    return `${date.getFullYear()}-${padWithZero(date.getMonth() + 1)}-${padWithZero(date.getDate())}`;
+}
+
+export function normalizeDateToISO(value) {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+
+    if (isValidDate(value)) {
+        return formatDateToISO(value);
+    }
+
+    if (typeof value === 'number') {
+        return formatDateToISO(new Date(value));
+    }
+
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            return '';
+        }
+
+        let match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+        if (match) {
+            const year = Number(match[1]);
+            const month = Number(match[2]);
+            const day = Number(match[3]);
+            const isoDate = toDateFromParts(year, month - 1, day);
+            return isoDate ? formatDateToISO(isoDate) : '';
+        }
+
+        match = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+        if (match) {
+            const year = Number(match[1]);
+            const month = Number(match[2]);
+            const day = Number(match[3]);
+            const yearFirstDate = toDateFromParts(year, month - 1, day);
+            return yearFirstDate ? formatDateToISO(yearFirstDate) : '';
+        }
+
+        match = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+        if (match) {
+            const day = Number(match[1]);
+            const month = Number(match[2]);
+            const year = Number(match[3]);
+            const dayFirstDate = toDateFromParts(year, month - 1, day);
+            return dayFirstDate ? formatDateToISO(dayFirstDate) : '';
+        }
+
+        const parsedDate = new Date(trimmed);
+        return formatDateToISO(parsedDate);
+    }
+
+    if (typeof value === 'object') {
+        const candidate = new Date(value);
+        return formatDateToISO(candidate);
+    }
+
+    return '';
+}
+
+function formatDateForDisplayFromISO(isoDate) {
+    if (!isoDate) {
+        return '';
+    }
+
+    const [yearStr, monthStr, dayStr] = isoDate.split('-');
+    if (!yearStr || !monthStr || !dayStr) {
+        return '';
+    }
+
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+
+    if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+        return '';
+    }
+
+    const displayDate = new Date(year, month - 1, day);
+    if (Number.isNaN(displayDate.getTime())) {
+        return '';
+    }
+
+    return displayDate.toLocaleDateString('es-AR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+}
+
+function setServiceDateValue(value) {
+    const isoDate = normalizeDateToISO(value);
+    const fechaInput = getElement('fecha');
+    if (fechaInput) {
+        fechaInput.value = isoDate;
+    }
+
+    const fechaDisplayInput = getElement('fecha_display');
+    if (fechaDisplayInput) {
+        fechaDisplayInput.value = formatDateForDisplayFromISO(isoDate);
+    }
+}
+
 export function serializeForm(formElement) {
     if (!(formElement instanceof HTMLFormElement)) {
         return {};
@@ -38,15 +172,7 @@ export function serializeForm(formElement) {
 }
 
 function setDefaultDate() {
-    const fechaInput = getElement('fecha');
-    if (fechaInput) {
-        const today = new Date();
-        fechaInput.value = today.toLocaleDateString('es-AR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-        });
-    }
+    setServiceDateValue(new Date());
 }
 
 function calculateAll() {
@@ -189,6 +315,15 @@ export function getFormData() {
     }
 
     const data = serializeForm(form);
+
+    if (Object.prototype.hasOwnProperty.call(data, 'fecha')) {
+        const isoFecha = normalizeDateToISO(data.fecha);
+        data.fecha = isoFecha || normalizeDateToISO(new Date());
+    }
+
+    if (Object.prototype.hasOwnProperty.call(data, 'proximo_mant')) {
+        data.proximo_mant = normalizeDateToISO(data.proximo_mant);
+    }
     const numericFields = [
         'cond_red_found',
         'cond_red_left',

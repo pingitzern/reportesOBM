@@ -165,6 +165,78 @@ const ResponseFactory = {
   }
 };
 
+function normalizeDateToISO(value) {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+
+  let dateObject = null;
+
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    dateObject = value;
+  } else if (typeof value === 'number') {
+    const candidate = new Date(value);
+    if (!isNaN(candidate.getTime())) {
+      dateObject = candidate;
+    }
+  } else if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    let match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+    if (match) {
+      const year = parseInt(match[1], 10);
+      const month = parseInt(match[2], 10);
+      const day = parseInt(match[3], 10);
+      const candidate = new Date(year, month - 1, day);
+      if (!isNaN(candidate.getTime())) {
+        dateObject = candidate;
+      }
+    }
+
+    if (!dateObject) {
+      match = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+      if (match) {
+        const year = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        const day = parseInt(match[3], 10);
+        const candidate = new Date(year, month - 1, day);
+        if (!isNaN(candidate.getTime())) {
+          dateObject = candidate;
+        }
+      }
+    }
+
+    if (!dateObject) {
+      match = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+      if (match) {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        const year = parseInt(match[3], 10);
+        const candidate = new Date(year, month - 1, day);
+        if (!isNaN(candidate.getTime())) {
+          dateObject = candidate;
+        }
+      }
+    }
+
+    if (!dateObject) {
+      const parsed = new Date(trimmed);
+      if (!isNaN(parsed.getTime())) {
+        dateObject = parsed;
+      }
+    }
+  }
+
+  if (!dateObject) {
+    return '';
+  }
+
+  return Utilities.formatDate(dateObject, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+}
+
 const MantenimientoService = {
   guardar(data, usuario) {
     const sheet = SheetRepository.getSheet();
@@ -240,6 +312,7 @@ const MantenimientoService = {
     const clienteFiltro = filtros.cliente ? filtros.cliente.toLowerCase() : '';
     const tecnicoFiltro = filtros.tecnico ? filtros.tecnico.toLowerCase() : '';
     const fechaFiltro = filtros.fecha || '';
+    const fechaFiltroISO = normalizeDateToISO(fechaFiltro);
 
     for (let i = 1; i < data.length; i += 1) {
       const row = data[i];
@@ -249,6 +322,11 @@ const MantenimientoService = {
       for (let j = 0; j < headers.length; j += 1) {
         const header = headers[j];
         mantenimiento[header] = row[j];
+      }
+
+      const fechaServicioISO = normalizeDateToISO(mantenimiento.Fecha_Servicio);
+      if (fechaServicioISO) {
+        mantenimiento.Fecha_Servicio = fechaServicioISO;
       }
 
       if (clienteFiltro) {
@@ -267,11 +345,17 @@ const MantenimientoService = {
         }
       }
 
-      if (coincide && fechaFiltro && mantenimiento.Fecha_Servicio !== fechaFiltro) {
-        coincide = false;
+      if (coincide && fechaFiltroISO) {
+        if (!fechaServicioISO || fechaServicioISO !== fechaFiltroISO) {
+          coincide = false;
+        }
       }
 
       if (coincide) {
+        const proximoMantenimientoISO = normalizeDateToISO(mantenimiento.Proximo_Mantenimiento);
+        if (proximoMantenimientoISO) {
+          mantenimiento.Proximo_Mantenimiento = proximoMantenimientoISO;
+        }
         resultados.push(mantenimiento);
       }
     }
