@@ -145,7 +145,7 @@ function createClientDetails(cliente) {
     };
 }
 
-function refreshClientDetailFieldState(element, options = {}) {
+function refreshClientDetailFieldState(element, { lockWhenFilled = false } = {}) {
     if (!(element instanceof HTMLInputElement)) {
         return;
     }
@@ -154,12 +154,11 @@ function refreshClientDetailFieldState(element, options = {}) {
         return;
     }
 
-    const { lockWhenFilled } = options;
     const hasValue = normalizeStringValue(element.value) !== '';
-
     let shouldDisable = false;
-    if (typeof lockWhenFilled === 'boolean') {
-        shouldDisable = lockWhenFilled && hasValue;
+
+    if (lockWhenFilled) {
+        shouldDisable = hasValue;
     } else if (element.dataset[CLIENT_DETAIL_LOCKED_DATA_KEY] === 'true') {
         shouldDisable = hasValue;
     }
