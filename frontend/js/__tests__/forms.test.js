@@ -172,6 +172,17 @@ describe('selección de clientes', () => {
         expect(document.getElementById('cliente_telefono').value).toBe('987654');
         expect(document.getElementById('cliente_email').value).toBe('dos@example.com');
         expect(document.getElementById('cliente_cuit').value).toBe('27-87654321-9');
+
+        const direccionInput = document.getElementById('direccion');
+        const telefonoInput = document.getElementById('cliente_telefono');
+        const emailInput = document.getElementById('cliente_email');
+        const cuitInput = document.getElementById('cliente_cuit');
+
+        [direccionInput, telefonoInput, emailInput, cuitInput].forEach(input => {
+            expect(input.readOnly).toBe(true);
+            expect(input.classList.contains('client-detail-locked')).toBe(true);
+            expect(input.classList.contains('client-detail-empty')).toBe(false);
+        });
     });
 
     test('maneja clientes con nombres duplicados sin identificadores visibles', () => {
@@ -199,6 +210,9 @@ describe('selección de clientes', () => {
         expect(document.getElementById('cliente_telefono').value).toBe('111111');
         expect(document.getElementById('cliente_email').value).toBe('uno@example.com');
         expect(document.getElementById('cliente_cuit').value).toBe('');
+        expect(document.getElementById('cliente_cuit').classList.contains('client-detail-empty')).toBe(true);
+        expect(document.getElementById('cliente_cuit').readOnly).toBe(false);
+        expect(document.getElementById('direccion').readOnly).toBe(true);
 
         select.selectedIndex = 2;
         expect(select.selectedIndex).toBe(2);
@@ -208,6 +222,9 @@ describe('selección de clientes', () => {
         expect(document.getElementById('cliente_telefono').value).toBe('222222');
         expect(document.getElementById('cliente_email').value).toBe('dos@example.com');
         expect(document.getElementById('cliente_cuit').value).toBe('');
+        expect(document.getElementById('cliente_cuit').classList.contains('client-detail-empty')).toBe(true);
+        expect(document.getElementById('cliente_cuit').readOnly).toBe(false);
+        expect(document.getElementById('direccion').readOnly).toBe(true);
     });
 
     test('resetForm limpia la selección y los campos de cliente', () => {
@@ -230,6 +247,8 @@ describe('selección de clientes', () => {
         expect(document.getElementById('cliente_telefono').value).toBe('');
         expect(document.getElementById('cliente_email').value).toBe('');
         expect(document.getElementById('cliente_cuit').value).toBe('');
+        expect(document.getElementById('direccion').readOnly).toBe(false);
+        expect(document.getElementById('direccion').classList.contains('client-detail-empty')).toBe(true);
     });
 });
 
