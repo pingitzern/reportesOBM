@@ -628,6 +628,24 @@ video {
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
+.status-pass {
+  background-color: rgb(220 252 231);
+  color: rgb(22 101 52);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.status-fail {
+  background-color: rgb(254 226 226);
+  color: rgb(153 27 27);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.status-na {
+  background-color: rgb(229 231 235);
+  color: rgb(55 65 81);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 .component-toggle {
   position: relative;
   display: grid;
