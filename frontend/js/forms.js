@@ -30,12 +30,17 @@ const CLIENT_FIELD_ALIASES = Object.freeze({
     cuit: ['cuit', 'CUIT'],
 });
 
+const CLIENT_DETAIL_FIELD_IDS = Object.freeze(['direccion', 'cliente_telefono', 'cliente_email', 'cliente_cuit']);
+const CLIENT_DETAIL_EMPTY_CLASS = 'client-detail-empty';
+const CLIENT_DETAIL_LOCKED_CLASS = 'client-detail-locked';
+
 const AUTO_RESIZE_ATTRIBUTE = 'data-auto-resize';
 const AUTO_RESIZE_DATASET_KEY = 'autoResizeBaseWidth';
 const AUTO_RESIZE_CHAR_WIDTH = 8;
 const AUTO_RESIZE_BUFFER_PX = 6;
 const AUTO_RESIZE_DEFAULT_MIN_WIDTH = 48;
 const autoResizeInputsWithListener = new WeakSet();
+const clientDetailInputsWithListener = new WeakSet();
 
 function isAutoResizeCandidate(element) {
     return element instanceof HTMLInputElement && element.hasAttribute(AUTO_RESIZE_ATTRIBUTE);
@@ -139,19 +144,85 @@ function createClientDetails(cliente) {
     };
 }
 
-function setClientDetailValue(fieldId, value) {
+function refreshClientDetailFieldState(element, { lockWhenFilled = false } = {}) {
+    if (!(element instanceof HTMLInputElement)) {
+        return;
+    }
+
+    if (!CLIENT_DETAIL_FIELD_IDS.includes(element.id)) {
+        return;
+    }
+
+    const hasValue = normalizeStringValue(element.value) !== '';
+
+    if (lockWhenFilled) {
+        element.readOnly = hasValue;
+    } else if (!hasValue) {
+        element.readOnly = false;
+    }
+
+    if (element.readOnly && hasValue) {
+        element.classList.add(CLIENT_DETAIL_LOCKED_CLASS);
+    } else {
+        element.classList.remove(CLIENT_DETAIL_LOCKED_CLASS);
+    }
+
+    if (hasValue) {
+        element.classList.remove(CLIENT_DETAIL_EMPTY_CLASS);
+    } else {
+        element.classList.add(CLIENT_DETAIL_EMPTY_CLASS);
+    }
+}
+
+function configureClientDetailFieldInteractions() {
+    CLIENT_DETAIL_FIELD_IDS.forEach(fieldId => {
+        const element = getElement(fieldId);
+        if (!(element instanceof HTMLInputElement)) {
+            return;
+        }
+
+        refreshClientDetailFieldState(element);
+
+        if (!clientDetailInputsWithListener.has(element)) {
+            element.addEventListener('input', () => {
+                refreshClientDetailFieldState(element);
+            });
+            clientDetailInputsWithListener.add(element);
+        }
+    });
+}
+
+function setClientDetailValue(fieldId, value, options = {}) {
     const element = getElement(fieldId);
-    if (element) {
-        element.value = normalizeStringValue(value);
+    if (!element) {
+        return;
+    }
+
+    const normalizedValue = normalizeStringValue(value);
+
+    if ('value' in element) {
+        element.value = normalizedValue;
+    }
+
+    if (element instanceof HTMLInputElement) {
         autoResizeInput(element);
+        refreshClientDetailFieldState(element, {
+            lockWhenFilled: Boolean(options.lockWhenFilled),
+        });
     }
 }
 
 function applyClientDetails(details = {}) {
-    setClientDetailValue('direccion', details.direccion);
-    setClientDetailValue('cliente_telefono', details.telefono);
-    setClientDetailValue('cliente_email', details.email);
-    setClientDetailValue('cliente_cuit', details.cuit);
+    const detailMap = {
+        direccion: details.direccion,
+        cliente_telefono: details.telefono,
+        cliente_email: details.email,
+        cliente_cuit: details.cuit,
+    };
+
+    Object.entries(detailMap).forEach(([fieldId, fieldValue]) => {
+        setClientDetailValue(fieldId, fieldValue, { lockWhenFilled: true });
+    });
 }
 
 function clearClientDetails() {
@@ -603,6 +674,7 @@ export function initializeForm() {
     configureConversionInputs();
     configureStatusSelects();
     configureAutoResizeInputs();
+    configureClientDetailFieldInteractions();
     calculateAll();
 }
 
