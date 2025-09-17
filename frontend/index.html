@@ -179,11 +179,20 @@
                     <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
                         <div class="sm:col-span-3 font-semibold text-gray-700">Sanitización del Sistema</div>
                         <div class="sm:col-span-2">
-                            <select id="sanitizacion_status" name="sanitizacion" class="w-full">
-                                <option value="N/A" selected>No Aplica</option>
-                                <option value="Realizada">Realizada</option>
-                                <option value="No Realizada">No Realizada</option>
-                            </select>
+                            <div class="sanitizacion-options" data-status="neutral">
+                                <label class="sanitizacion-option" for="sanitizacion-realizada">
+                                    <input type="radio" id="sanitizacion-realizada" name="sanitizacion" value="Realizada">
+                                    <span>Realizada</span>
+                                </label>
+                                <label class="sanitizacion-option" for="sanitizacion-no-realizada">
+                                    <input type="radio" id="sanitizacion-no-realizada" name="sanitizacion" value="No Realizada">
+                                    <span>No Realizada</span>
+                                </label>
+                                <label class="sanitizacion-option" for="sanitizacion-na">
+                                    <input type="radio" id="sanitizacion-na" name="sanitizacion" value="N/A" checked>
+                                    <span>No Aplica</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
