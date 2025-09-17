@@ -148,6 +148,42 @@ describe('selección de clientes', () => {
         expect(document.getElementById('cliente_cuit').value).toBe('27-87654321-9');
     });
 
+    test('maneja clientes con nombres duplicados sin identificadores visibles', () => {
+        const clientes = [
+            { nombre: 'Cliente Repetido', direccion: 'Calle A', telefono: '111111', email: 'uno@example.com' },
+            { nombre: 'Cliente Repetido', domicilio: 'Calle B', Tel: '222222', mail: 'dos@example.com' },
+        ];
+
+        configureClientSelect(clientes);
+
+        const select = document.getElementById('cliente');
+        expect(select.options.length).toBe(1 + clientes.length);
+
+        const firstOptionKey = select.options[1].getAttribute('data-cliente-key');
+        const secondOptionKey = select.options[2].getAttribute('data-cliente-key');
+
+        expect(firstOptionKey).toBeTruthy();
+        expect(secondOptionKey).toBeTruthy();
+        expect(firstOptionKey).not.toBe(secondOptionKey);
+
+        select.selectedIndex = 1;
+        select.dispatchEvent(new Event('change'));
+
+        expect(document.getElementById('cliente_direccion').value).toBe('Calle A');
+        expect(document.getElementById('cliente_telefono').value).toBe('111111');
+        expect(document.getElementById('cliente_email').value).toBe('uno@example.com');
+        expect(document.getElementById('cliente_cuit').value).toBe('');
+
+        select.selectedIndex = 2;
+        expect(select.selectedIndex).toBe(2);
+        select.dispatchEvent(new Event('change'));
+
+        expect(document.getElementById('cliente_direccion').value).toBe('Calle B');
+        expect(document.getElementById('cliente_telefono').value).toBe('222222');
+        expect(document.getElementById('cliente_email').value).toBe('dos@example.com');
+        expect(document.getElementById('cliente_cuit').value).toBe('');
+    });
+
     test('resetForm limpia la selección y los campos de cliente', () => {
         const clientes = [
             { id: '1', nombre: 'Cliente Uno', direccion: 'Calle 1', telefono: '123456', mail: 'uno@example.com', cuit: '20-12345678-1' },
