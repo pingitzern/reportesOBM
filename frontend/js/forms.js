@@ -263,16 +263,24 @@ function configureConversionInputs() {
 
 const STATUS_SELECT_SELECTOR = 'select[id$="_found"], select[id$="_left"]';
 
+const STATUS_CLASS_BY_VALUE = {
+    pasa: 'status-pass',
+    no: 'status-pass',
+    falla: 'status-fail',
+    'no pasa': 'status-fail',
+    sí: 'status-fail',
+    si: 'status-fail',
+    'n/a': 'status-na',
+    'no aplica': 'status-na',
+    na: 'status-na',
+    '': 'status-na',
+};
+
 function setStatusColor(selectElement) {
     selectElement.classList.remove('status-pass', 'status-fail', 'status-na');
-    const value = selectElement.value;
-    if (value === 'Pasa' || value === 'No') {
-        selectElement.classList.add('status-pass');
-    } else if (value === 'Falla' || value === 'Sí') {
-        selectElement.classList.add('status-fail');
-    } else {
-        selectElement.classList.add('status-na');
-    }
+    const normalizedValue = String(selectElement.value ?? '').trim().toLowerCase();
+    const statusClass = STATUS_CLASS_BY_VALUE[normalizedValue] || 'status-na';
+    selectElement.classList.add(statusClass);
 }
 
 function applyStatusColorsToSelects() {
