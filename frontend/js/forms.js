@@ -100,7 +100,40 @@ function updateClientDetailsFromSelect(selectElement) {
         return;
     }
 
-    const selectedDetails = clienteDataMap.get(selectElement.value);
+    let selectedDetails = null;
+    const optionFromCollection =
+        selectElement.selectedOptions && selectElement.selectedOptions.length > 0
+            ? selectElement.selectedOptions[0]
+            : null;
+    const optionFromIndex =
+        typeof selectElement.selectedIndex === 'number' && selectElement.selectedIndex >= 0
+            ? selectElement.options[selectElement.selectedIndex]
+            : null;
+
+    if (optionFromCollection) {
+        const keyFromCollection = optionFromCollection.getAttribute('data-cliente-key');
+        if (keyFromCollection) {
+            selectedDetails = clienteDataMap.get(keyFromCollection) || null;
+        }
+    }
+
+    const shouldCheckIndex =
+        !selectedDetails || (optionFromIndex && optionFromCollection && optionFromCollection !== optionFromIndex);
+
+    if (shouldCheckIndex && optionFromIndex) {
+        const keyFromIndex = optionFromIndex.getAttribute('data-cliente-key');
+        if (keyFromIndex) {
+            const detailsFromIndex = clienteDataMap.get(keyFromIndex);
+            if (detailsFromIndex) {
+                selectedDetails = detailsFromIndex;
+            }
+        }
+    }
+
+    if (!selectedDetails) {
+        selectedDetails = clienteDataMap.get(selectElement.value);
+    }
+
     if (selectedDetails) {
         applyClientDetails(selectedDetails);
     } else {
@@ -423,6 +456,10 @@ export function configureClientSelect(clientes = []) {
 
     const clientesArray = Array.isArray(clientes) ? clientes : [];
     const previousValue = select.value;
+    const previousSelectedOption = select.selectedOptions && select.selectedOptions[0];
+    const previousDataKey = previousSelectedOption
+        ? previousSelectedOption.getAttribute('data-cliente-key')
+        : null;
     const placeholderOption = select.querySelector('option[value=""]');
 
     select.querySelectorAll(`option[${CLIENT_OPTION_ATTRIBUTE}="true"]`).forEach(option => option.remove());
@@ -430,7 +467,7 @@ export function configureClientSelect(clientes = []) {
 
     const fragment = document.createDocumentFragment();
 
-    clientesArray.forEach(cliente => {
+    clientesArray.forEach((cliente, index) => {
         if (!cliente || typeof cliente !== 'object') {
             return;
         }
@@ -444,10 +481,12 @@ export function configureClientSelect(clientes = []) {
         const option = document.createElement('option');
         option.value = optionValue;
         option.textContent = optionLabel;
+        const clientKey = `cliente-${index}`;
+        option.setAttribute('data-cliente-key', clientKey);
         option.setAttribute(CLIENT_OPTION_ATTRIBUTE, 'true');
         fragment.appendChild(option);
 
-        clienteDataMap.set(optionValue, createClientDetails(cliente));
+        clienteDataMap.set(clientKey, createClientDetails(cliente));
     });
 
     select.appendChild(fragment);
@@ -462,8 +501,23 @@ export function configureClientSelect(clientes = []) {
 
     select.addEventListener('change', clienteSelectChangeHandler);
 
-    if (previousValue && clienteDataMap.has(previousValue)) {
+    let selectionRestored = false;
+
+    if (previousDataKey) {
+        const matchingOption = select.querySelector(`option[data-cliente-key="${previousDataKey}"]`);
+        if (matchingOption) {
+            matchingOption.selected = true;
+            select.value = matchingOption.value;
+            selectionRestored = true;
+        }
+    }
+
+    if (!selectionRestored && previousValue) {
         select.value = previousValue;
+        selectionRestored = select.value === previousValue && select.selectedIndex !== -1;
+    }
+
+    if (selectionRestored) {
         updateClientDetailsFromSelect(select);
     } else {
         if (placeholderOption) {
