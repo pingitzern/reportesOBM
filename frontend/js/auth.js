@@ -150,7 +150,7 @@ function updateUserPanel(auth) {
     }
 
     if (auth && auth.usuario) {
-        userLabel.textContent = `Sesión activa: ${auth.usuario}`;
+        userLabel.textContent = auth.usuario;
         panel.classList.remove('hidden');
         logoutButton.disabled = false;
     } else {

@@ -110,7 +110,7 @@ describe('auth helpers', () => {
             expect(storage.setItem).toHaveBeenCalledWith(AUTH_STORAGE_KEY, JSON.stringify(auth));
             expect(loadStoredAuth()).toEqual(auth);
             expect(elements.panel.classList.contains('hidden')).toBe(false);
-            expect(elements.userLabel.textContent).toBe('Sesión activa: Ana');
+            expect(elements.userLabel.textContent).toBe('Ana');
             expect(elements.logoutButton.disabled).toBe(false);
         });
 
@@ -150,7 +150,7 @@ describe('auth helpers', () => {
 
             elements.panel.classList.remove('hidden');
             elements.logoutButton.disabled = false;
-            elements.userLabel.textContent = 'Sesión activa: Demo';
+            elements.userLabel.textContent = 'Demo';
 
             expect(() => clearStoredAuth()).not.toThrow();
             expect(storage.removeItem).not.toHaveBeenCalled();

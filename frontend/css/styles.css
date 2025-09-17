@@ -3,6 +3,32 @@
 @tailwind utilities;
 
 @layer components {
+    .user-menu-toggle {
+        @apply flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors transition-shadow duration-200 ease-out hover:text-slate-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
+    }
+
+    .user-menu {
+        @apply absolute right-0 top-full z-30 mt-3 w-56 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-lg;
+        max-width: min(18rem, calc(100vw - 1.5rem));
+    }
+
+    .user-menu__content {
+        @apply flex flex-col gap-1 p-2;
+    }
+
+    .user-menu__item {
+        @apply flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
+    }
+
+    .user-menu__item:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
+
+    .user-menu__logout {
+        @apply text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-500;
+    }
+
     .form-card {
         @apply bg-white p-6 rounded-xl shadow-md space-y-4;
     }
