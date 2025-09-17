@@ -27,6 +27,7 @@ describe('handleGuardarClick', () => {
         }));
 
         jest.unstable_mockModule('../forms.js', () => ({
+            configureClientSelect: jest.fn(),
             generateReportNumber: generateReportNumberMock,
             getFormData: getFormDataMock,
             initializeForm: jest.fn(),
@@ -40,6 +41,7 @@ describe('handleGuardarClick', () => {
             actualizarMantenimiento: jest.fn(),
             eliminarMantenimiento: jest.fn(),
             obtenerDashboard: jest.fn(),
+            obtenerClientes: jest.fn().mockResolvedValue([]),
         }));
 
         jest.unstable_mockModule('../auth.js', () => ({

@@ -4,6 +4,132 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
+const CLIENT_OPTION_ATTRIBUTE = 'data-cliente-option';
+const CLIENT_NAME_FIELDS = Object.freeze([
+    'nombre',
+    'Nombre',
+    'cliente',
+    'Cliente',
+    'razon_social',
+    'RazonSocial',
+]);
+const CLIENT_ID_FIELDS = Object.freeze([
+    'id',
+    'ID',
+    'id_cliente',
+    'IdCliente',
+    'codigo',
+    'Codigo',
+    'cuit',
+    'CUIT',
+]);
+const CLIENT_FIELD_ALIASES = Object.freeze({
+    direccion: ['direccion', 'Direccion', 'domicilio', 'Domicilio'],
+    telefono: ['telefono', 'Telefono', 'tel', 'Tel'],
+    email: ['email', 'Email', 'mail', 'Mail', 'correo', 'Correo'],
+    cuit: ['cuit', 'CUIT'],
+});
+
+const clienteDataMap = new Map();
+let clienteSelectChangeHandler = null;
+
+function normalizeStringValue(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    const stringValue = String(value);
+    return stringValue.trim();
+}
+
+function getFirstAvailableField(source, fieldNames) {
+    if (!source || typeof source !== 'object') {
+        return '';
+    }
+
+    for (const key of fieldNames) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            const normalized = normalizeStringValue(source[key]);
+            if (normalized) {
+                return normalized;
+            }
+        }
+    }
+
+    return '';
+}
+
+function extractClientName(cliente) {
+    return getFirstAvailableField(cliente, CLIENT_NAME_FIELDS);
+}
+
+function extractClientId(cliente) {
+    return getFirstAvailableField(cliente, CLIENT_ID_FIELDS);
+}
+
+function createClientDetails(cliente) {
+    return {
+        direccion: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.direccion),
+        telefono: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.telefono),
+        email: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.email),
+        cuit: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.cuit),
+    };
+}
+
+function setClientDetailValue(fieldId, value) {
+    const element = getElement(fieldId);
+    if (element) {
+        element.value = normalizeStringValue(value);
+    }
+}
+
+function applyClientDetails(details = {}) {
+    setClientDetailValue('cliente_direccion', details.direccion);
+    setClientDetailValue('cliente_telefono', details.telefono);
+    setClientDetailValue('cliente_email', details.email);
+    setClientDetailValue('cliente_cuit', details.cuit);
+}
+
+function clearClientDetails() {
+    applyClientDetails({});
+}
+
+function updateClientDetailsFromSelect(selectElement) {
+    if (!selectElement) {
+        clearClientDetails();
+        return;
+    }
+
+    const selectedDetails = clienteDataMap.get(selectElement.value);
+    if (selectedDetails) {
+        applyClientDetails(selectedDetails);
+    } else {
+        clearClientDetails();
+    }
+}
+
+function resetClientSelection() {
+    const select = getElement('cliente');
+    if (!select) {
+        clearClientDetails();
+        return;
+    }
+
+    if (select.options.length > 0) {
+        const placeholderOption = select.querySelector('option[value=""]');
+        if (placeholderOption) {
+            placeholderOption.selected = true;
+            select.value = placeholderOption.value;
+        } else {
+            select.selectedIndex = 0;
+        }
+    } else {
+        select.value = '';
+    }
+
+    clearClientDetails();
+}
+
 function padWithZero(value) {
     return String(value).padStart(2, '0');
 }
@@ -289,6 +415,69 @@ function clearConversionOutputs() {
     });
 }
 
+export function configureClientSelect(clientes = []) {
+    const select = getElement('cliente');
+    if (!select) {
+        return;
+    }
+
+    const clientesArray = Array.isArray(clientes) ? clientes : [];
+    const previousValue = select.value;
+    const placeholderOption = select.querySelector('option[value=""]');
+
+    select.querySelectorAll(`option[${CLIENT_OPTION_ATTRIBUTE}="true"]`).forEach(option => option.remove());
+    clienteDataMap.clear();
+
+    const fragment = document.createDocumentFragment();
+
+    clientesArray.forEach(cliente => {
+        if (!cliente || typeof cliente !== 'object') {
+            return;
+        }
+
+        const optionValue = extractClientId(cliente) || extractClientName(cliente);
+        if (!optionValue) {
+            return;
+        }
+
+        const optionLabel = extractClientName(cliente) || optionValue;
+        const option = document.createElement('option');
+        option.value = optionValue;
+        option.textContent = optionLabel;
+        option.setAttribute(CLIENT_OPTION_ATTRIBUTE, 'true');
+        fragment.appendChild(option);
+
+        clienteDataMap.set(optionValue, createClientDetails(cliente));
+    });
+
+    select.appendChild(fragment);
+
+    if (clienteSelectChangeHandler) {
+        select.removeEventListener('change', clienteSelectChangeHandler);
+    }
+
+    clienteSelectChangeHandler = () => {
+        updateClientDetailsFromSelect(select);
+    };
+
+    select.addEventListener('change', clienteSelectChangeHandler);
+
+    if (previousValue && clienteDataMap.has(previousValue)) {
+        select.value = previousValue;
+        updateClientDetailsFromSelect(select);
+    } else {
+        if (placeholderOption) {
+            placeholderOption.selected = true;
+            select.value = placeholderOption.value;
+        } else if (select.options.length > 0) {
+            select.selectedIndex = 0;
+        } else {
+            select.value = '';
+        }
+        clearClientDetails();
+    }
+}
+
 export function initializeForm() {
     setDefaultDate();
     configureNumberInputs();
@@ -302,6 +491,7 @@ export function resetForm() {
     if (form) {
         form.reset();
     }
+    resetClientSelection();
     setDefaultDate();
     clearDerivedFields();
     clearConversionOutputs();

@@ -1,8 +1,8 @@
 import { API_URL } from './config.js';
 import { initializeAuth } from './auth.js';
-import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento, obtenerDashboard } from './api.js';
+import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento, obtenerDashboard, obtenerClientes } from './api.js';
 import { renderDashboard } from './dashboard.js';
-import { generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
+import { configureClientSelect, generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
 import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './search.js';
 import { renderComponentStages } from './templates.js';
 
@@ -218,6 +218,15 @@ function attachEventListeners() {
 async function initializeSystem() {
     await initializeAuth();
     renderComponentStages();
+    let clientes = [];
+    try {
+        clientes = await obtenerClientes();
+    } catch (error) {
+        console.error('Error cargando clientes:', error);
+        const detalle = error?.message ? ` Detalle: ${error.message}` : '';
+        alert(`No se pudieron cargar los datos de clientes. Podrás completar los campos manualmente.${detalle}`);
+    }
+    configureClientSelect(clientes);
     initializeForm();
     attachEventListeners();
     showTab('nuevo');
