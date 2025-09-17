@@ -52,7 +52,7 @@
                         <div class="input-group"><label for="cliente">Cliente:</label><input type="text" id="cliente" name="cliente"></div>
                         <div class="input-group">
                             <label for="fecha_display">Fecha del Servicio:</label>
-                            <input type="text" id="fecha_display" readonly>
+                            <input type="text" id="fecha_display" readonly disabled>
                             <input type="hidden" id="fecha" name="fecha">
                         </div>
                         <div class="input-group"><label for="direccion">Dirección:</label><input type="text" id="direccion" name="direccion"></div>
@@ -90,8 +90,14 @@
 
                         <!-- Rechazo Iónico -->
                         <label class="md:col-span-1 font-bold">% de Rechazo Iónico</label>
-                        <div class="md:col-span-1"><input type="text" id="rechazo_found" name="rechazo_found" class="text-center w-full calculated-field" readonly></div>
-                        <div class="md:col-span-1"><input type="text" id="rechazo_left" name="rechazo_left" class="text-center w-full calculated-field" readonly></div>
+                        <div class="md:col-span-1">
+                            <input type="text" id="rechazo_found" class="text-center w-full calculated-field" readonly disabled>
+                            <input type="hidden" id="rechazo_found_hidden" name="rechazo_found">
+                        </div>
+                        <div class="md:col-span-1">
+                            <input type="text" id="rechazo_left" class="text-center w-full calculated-field" readonly disabled>
+                            <input type="hidden" id="rechazo_left_hidden" name="rechazo_left">
+                        </div>
 
                         <!-- Presión -->
                         <label class="md:col-span-1">Presión Entrada a Membrana (bar)</label>
@@ -122,8 +128,14 @@
                         
                         <!-- Relación Rechazo -->
                         <label class="md:col-span-1 font-bold">Relación Rechazo:Permeado</label>
-                        <div class="md:col-span-1"><input type="text" id="relacion_found" name="relacion_found" class="text-center w-full calculated-field" readonly></div>
-                        <div class="md:col-span-1"><input type="text" id="relacion_left" name="relacion_left" class="text-center w-full calculated-field" readonly></div>
+                        <div class="md:col-span-1">
+                            <input type="text" id="relacion_found" class="text-center w-full calculated-field" readonly disabled>
+                            <input type="hidden" id="relacion_found_hidden" name="relacion_found">
+                        </div>
+                        <div class="md:col-span-1">
+                            <input type="text" id="relacion_left" class="text-center w-full calculated-field" readonly disabled>
+                            <input type="hidden" id="relacion_left_hidden" name="relacion_left">
+                        </div>
                         
                         <!-- Precarga Tanque -->
                         <label class="md:col-span-1">Precarga del tanque (bar)</label>

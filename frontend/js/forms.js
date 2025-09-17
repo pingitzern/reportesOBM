@@ -189,25 +189,47 @@ function calculateAll() {
     const rechazoFound = condRedFound > 0 ? ((1 - (condPermFound / condRedFound)) * 100).toFixed(2) : '';
     const rechazoLeft = condRedLeft > 0 ? ((1 - (condPermLeft / condRedLeft)) * 100).toFixed(2) : '';
 
+    const rechazoFoundValue = rechazoFound ? `${rechazoFound} %` : '';
+    const rechazoLeftValue = rechazoLeft ? `${rechazoLeft} %` : '';
+
     const rechazoFoundInput = getElement('rechazo_found');
+    const rechazoFoundHiddenInput = getElement('rechazo_found_hidden');
     const rechazoLeftInput = getElement('rechazo_left');
+    const rechazoLeftHiddenInput = getElement('rechazo_left_hidden');
     if (rechazoFoundInput) {
-        rechazoFoundInput.value = rechazoFound ? `${rechazoFound} %` : '';
+        rechazoFoundInput.value = rechazoFoundValue;
+    }
+    if (rechazoFoundHiddenInput) {
+        rechazoFoundHiddenInput.value = rechazoFoundValue;
     }
     if (rechazoLeftInput) {
-        rechazoLeftInput.value = rechazoLeft ? `${rechazoLeft} %` : '';
+        rechazoLeftInput.value = rechazoLeftValue;
+    }
+    if (rechazoLeftHiddenInput) {
+        rechazoLeftHiddenInput.value = rechazoLeftValue;
     }
 
     const relacionFound = caudalPermFound > 0 ? (caudalRechFound / caudalPermFound).toFixed(1) : '';
     const relacionLeft = caudalPermLeft > 0 ? (caudalRechLeft / caudalPermLeft).toFixed(1) : '';
 
+    const relacionFoundValue = relacionFound ? `${relacionFound}:1` : '';
+    const relacionLeftValue = relacionLeft ? `${relacionLeft}:1` : '';
+
     const relacionFoundInput = getElement('relacion_found');
+    const relacionFoundHiddenInput = getElement('relacion_found_hidden');
     const relacionLeftInput = getElement('relacion_left');
+    const relacionLeftHiddenInput = getElement('relacion_left_hidden');
     if (relacionFoundInput) {
-        relacionFoundInput.value = relacionFound ? `${relacionFound}:1` : '';
+        relacionFoundInput.value = relacionFoundValue;
+    }
+    if (relacionFoundHiddenInput) {
+        relacionFoundHiddenInput.value = relacionFoundValue;
     }
     if (relacionLeftInput) {
-        relacionLeftInput.value = relacionLeft ? `${relacionLeft}:1` : '';
+        relacionLeftInput.value = relacionLeftValue;
+    }
+    if (relacionLeftHiddenInput) {
+        relacionLeftHiddenInput.value = relacionLeftValue;
     }
 }
 
@@ -272,7 +294,16 @@ function configureNumberInputs() {
 }
 
 function clearDerivedFields() {
-    ['rechazo_found', 'rechazo_left', 'relacion_found', 'relacion_left'].forEach(id => {
+    [
+        'rechazo_found',
+        'rechazo_found_hidden',
+        'rechazo_left',
+        'rechazo_left_hidden',
+        'relacion_found',
+        'relacion_found_hidden',
+        'relacion_left',
+        'relacion_left_hidden',
+    ].forEach(id => {
         const element = getElement(id);
         if (element) {
             element.value = '';
