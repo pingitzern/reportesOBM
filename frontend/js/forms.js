@@ -261,29 +261,65 @@ function configureConversionInputs() {
     });
 }
 
+const STATUS_SELECT_SELECTOR = 'select[id$="_found"], select[id$="_left"]';
+
 function setStatusColor(selectElement) {
     selectElement.classList.remove('status-pass', 'status-fail', 'status-na');
     const value = selectElement.value;
-    if (value === 'Pasa' || value === 'Realizada' || value === 'No') {
+    if (value === 'Pasa' || value === 'No') {
         selectElement.classList.add('status-pass');
-    } else if (value === 'Falla' || value === 'No Realizada' || value === 'Sí') {
+    } else if (value === 'Falla' || value === 'Sí') {
         selectElement.classList.add('status-fail');
     } else {
         selectElement.classList.add('status-na');
     }
 }
 
-function applyStatusColors() {
-    const statusSelects = document.querySelectorAll('select[id$="_found"], select[id$="_left"], select#sanitizacion_status');
+function applyStatusColorsToSelects() {
+    const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
     statusSelects.forEach(setStatusColor);
 }
 
 function configureStatusSelects() {
-    const statusSelects = document.querySelectorAll('select[id$="_found"], select[id$="_left"], select#sanitizacion_status');
+    const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
     statusSelects.forEach(select => {
         setStatusColor(select);
         select.addEventListener('change', () => setStatusColor(select));
     });
+}
+
+const SANITIZACION_STATUS_MAP = {
+    Realizada: 'success',
+    'No Realizada': 'danger',
+    'N/A': 'neutral',
+};
+
+function configureSanitizacionRadios() {
+    const container = document.querySelector('.sanitizacion-options');
+    if (!container) {
+        return;
+    }
+
+    const radios = container.querySelectorAll('input[type="radio"][name="sanitizacion"]');
+    if (!radios.length) {
+        container.dataset.status = 'neutral';
+        return;
+    }
+
+    const updateStatus = () => {
+        const checked = container.querySelector('input[type="radio"][name="sanitizacion"]:checked');
+        const statusKey = checked?.value || 'N/A';
+        container.dataset.status = SANITIZACION_STATUS_MAP[statusKey] || 'neutral';
+    };
+
+    if (!container.dataset.sanitizacionConfigured) {
+        radios.forEach(radio => {
+            radio.addEventListener('change', updateStatus);
+        });
+        container.dataset.sanitizacionConfigured = 'true';
+    }
+
+    updateStatus();
 }
 
 function configureNumberInputs() {
@@ -325,6 +361,7 @@ export function initializeForm() {
     configureNumberInputs();
     configureConversionInputs();
     configureStatusSelects();
+    configureSanitizacionRadios();
     calculateAll();
 }
 
@@ -336,7 +373,8 @@ export function resetForm() {
     setDefaultDate();
     clearDerivedFields();
     clearConversionOutputs();
-    applyStatusColors();
+    applyStatusColorsToSelects();
+    configureSanitizacionRadios();
 }
 
 export function getFormData() {
