@@ -1,4 +1,6 @@
 let serializeForm;
+let configureClientSelect;
+let resetForm;
 let calculateAll;
 let updateConversions;
 let LMIN_TO_LPH;
@@ -13,6 +15,8 @@ beforeAll(async () => {
 
     const formsModule = await import('../forms.js');
     serializeForm = formsModule.serializeForm;
+    configureClientSelect = formsModule.configureClientSelect;
+    resetForm = formsModule.resetForm;
     ({ calculateAll, updateConversions } = formsModule.__testables__);
 
     const configModule = await import('../config.js');
@@ -98,6 +102,72 @@ describe('calculateAll', () => {
 
         expect(document.getElementById('rechazo_found').value).toBe('');
         expect(document.getElementById('relacion_found').value).toBe('');
+    });
+});
+
+describe('selección de clientes', () => {
+    beforeEach(() => {
+        document.body.innerHTML = `
+            <form id="maintenance-form">
+                <div>
+                    <select id="cliente" name="cliente">
+                        <option value="" selected>Selecciona un cliente</option>
+                    </select>
+                </div>
+                <input id="cliente_direccion" value="" />
+                <input id="cliente_telefono" value="" />
+                <input id="cliente_email" value="" />
+                <input id="cliente_cuit" value="" />
+                <input id="fecha" value="" />
+                <input id="fecha_display" value="" />
+            </form>
+        `;
+    });
+
+    afterEach(() => {
+        document.body.innerHTML = '';
+    });
+
+    test('pobla el selector y actualiza los datos del cliente al cambiar', () => {
+        const clientes = [
+            { id: '1', nombre: 'Cliente Uno', direccion: 'Calle 1', telefono: '123456', mail: 'uno@example.com', cuit: '20-12345678-1' },
+            { id: '2', nombre: 'Cliente Dos', domicilio: 'Calle 2', Tel: '987654', email: 'dos@example.com', CUIT: '27-87654321-9' },
+        ];
+
+        configureClientSelect(clientes);
+
+        const select = document.getElementById('cliente');
+        expect(select.options.length).toBe(1 + clientes.length);
+
+        select.value = '2';
+        select.dispatchEvent(new Event('change'));
+
+        expect(document.getElementById('cliente_direccion').value).toBe('Calle 2');
+        expect(document.getElementById('cliente_telefono').value).toBe('987654');
+        expect(document.getElementById('cliente_email').value).toBe('dos@example.com');
+        expect(document.getElementById('cliente_cuit').value).toBe('27-87654321-9');
+    });
+
+    test('resetForm limpia la selección y los campos de cliente', () => {
+        const clientes = [
+            { id: '1', nombre: 'Cliente Uno', direccion: 'Calle 1', telefono: '123456', mail: 'uno@example.com', cuit: '20-12345678-1' },
+        ];
+
+        configureClientSelect(clientes);
+
+        const select = document.getElementById('cliente');
+        select.value = '1';
+        select.dispatchEvent(new Event('change'));
+
+        expect(document.getElementById('cliente_direccion').value).toBe('Calle 1');
+
+        resetForm();
+
+        expect(select.value).toBe('');
+        expect(document.getElementById('cliente_direccion').value).toBe('');
+        expect(document.getElementById('cliente_telefono').value).toBe('');
+        expect(document.getElementById('cliente_email').value).toBe('');
+        expect(document.getElementById('cliente_cuit').value).toBe('');
     });
 });
 

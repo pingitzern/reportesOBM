@@ -49,7 +49,28 @@
                     <h2>A. Datos del Servicio y del Equipo</h2>
                     <p class="guide-text">Complete la información para identificar el servicio y el equipo.</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                        <div class="input-group"><label for="cliente">Cliente:</label><input type="text" id="cliente" name="cliente"></div>
+                        <div class="input-group">
+                            <label for="cliente">Cliente:</label>
+                            <select id="cliente" name="cliente">
+                                <option value="" disabled selected>Selecciona un cliente</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="cliente_direccion">Dirección del Cliente:</label>
+                            <input type="text" id="cliente_direccion" value="" readonly>
+                        </div>
+                        <div class="input-group">
+                            <label for="cliente_telefono">Teléfono del Cliente:</label>
+                            <input type="text" id="cliente_telefono" value="" readonly>
+                        </div>
+                        <div class="input-group">
+                            <label for="cliente_email">Email del Cliente:</label>
+                            <input type="text" id="cliente_email" value="" readonly>
+                        </div>
+                        <div class="input-group">
+                            <label for="cliente_cuit">CUIT del Cliente:</label>
+                            <input type="text" id="cliente_cuit" value="" readonly>
+                        </div>
                         <div class="input-group">
                             <label for="fecha_display">Fecha del Servicio:</label>
                             <input type="text" id="fecha_display" readonly>

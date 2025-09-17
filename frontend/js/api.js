@@ -1,5 +1,6 @@
 import { API_URL } from './config.js';
 import { getAuthPayload } from './auth.js';
+import { state } from './state.js';
 
 async function postJSON(payload, { requireAuth = true } = {}) {
     if (!API_URL) {
@@ -83,4 +84,23 @@ export async function obtenerDashboard() {
     return postJSON({
         action: 'dashboard',
     });
+}
+
+export async function obtenerClientes({ forceRefresh = false } = {}) {
+    if (!forceRefresh && state.clientesLoaded) {
+        return state.clientes;
+    }
+
+    const data = await postJSON({
+        action: 'clientes',
+    });
+
+    if (!Array.isArray(data)) {
+        throw new Error('La respuesta de clientes no es válida.');
+    }
+
+    state.clientes = data;
+    state.clientesLoaded = true;
+
+    return state.clientes;
 }

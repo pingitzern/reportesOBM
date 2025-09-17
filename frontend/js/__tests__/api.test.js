@@ -129,6 +129,38 @@ describe('api.js', () => {
         });
     });
 
+    test('obtenerClientes cachea la respuesta', async () => {
+        const { obtenerClientes } = await loadApiModule();
+        const clientes = [{ id: '1', nombre: 'ACME' }];
+
+        fetchMock.post(API_URL, { result: 'success', data: clientes });
+
+        const primeraRespuesta = await obtenerClientes();
+        expect(primeraRespuesta).toEqual(clientes);
+        expect(fetchMock.callHistory.calls(API_URL).length).toBe(1);
+
+        const segundaRespuesta = await obtenerClientes();
+        expect(segundaRespuesta).toBe(primeraRespuesta);
+        expect(fetchMock.callHistory.calls(API_URL).length).toBe(1);
+    });
+
+    test('obtenerClientes fuerza una nueva petición con forceRefresh', async () => {
+        const { obtenerClientes } = await loadApiModule();
+        const primera = [{ id: '1' }];
+        const refresco = [{ id: '2' }];
+
+        fetchMock.post(API_URL, { result: 'success', data: primera }, { repeat: 1 });
+
+        await obtenerClientes();
+        expect(fetchMock.callHistory.calls(API_URL).length).toBe(1);
+
+        fetchMock.post(API_URL, { result: 'success', data: refresco }, { overwriteRoutes: true });
+
+        const resultadoRefrescado = await obtenerClientes({ forceRefresh: true });
+        expect(fetchMock.callHistory.calls(API_URL).length).toBe(2);
+        expect(resultadoRefrescado).toEqual(refresco);
+    });
+
     test('lanza error cuando API_URL no está configurada', async () => {
         fetchMock.hardReset();
         jest.resetModules();
