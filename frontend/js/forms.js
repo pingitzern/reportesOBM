@@ -30,6 +30,69 @@ const CLIENT_FIELD_ALIASES = Object.freeze({
     cuit: ['cuit', 'CUIT'],
 });
 
+const AUTO_RESIZE_ATTRIBUTE = 'data-auto-resize';
+const AUTO_RESIZE_DATASET_KEY = 'autoResizeBaseWidth';
+const AUTO_RESIZE_CHAR_WIDTH = 8;
+const AUTO_RESIZE_BUFFER_PX = 6;
+const AUTO_RESIZE_DEFAULT_MIN_WIDTH = 48;
+const autoResizeInputsWithListener = new WeakSet();
+
+function isAutoResizeCandidate(element) {
+    return element instanceof HTMLInputElement && element.hasAttribute(AUTO_RESIZE_ATTRIBUTE);
+}
+
+export function autoResizeInput(element) {
+    if (!isAutoResizeCandidate(element)) {
+        return;
+    }
+
+    if (!element.dataset[AUTO_RESIZE_DATASET_KEY]) {
+        const initialWidth = Math.max(element.clientWidth || 0, element.offsetWidth || 0);
+        element.dataset[AUTO_RESIZE_DATASET_KEY] = String(
+            initialWidth > 0 ? initialWidth : AUTO_RESIZE_DEFAULT_MIN_WIDTH,
+        );
+    }
+
+    const baseWidth = Number(element.dataset[AUTO_RESIZE_DATASET_KEY]) || AUTO_RESIZE_DEFAULT_MIN_WIDTH;
+    const placeholderLength = typeof element.placeholder === 'string' ? element.placeholder.length : 0;
+    const valueLength = typeof element.value === 'string' ? element.value.length : 0;
+    const effectiveLength = Math.max(valueLength, placeholderLength, 1);
+
+    element.style.width = 'auto';
+
+    let measuredWidth = element.scrollWidth;
+
+    if (!measuredWidth || Number.isNaN(measuredWidth)) {
+        const approxCharWidth = Number(element.dataset.autoResizeCharWidth) || AUTO_RESIZE_CHAR_WIDTH;
+        measuredWidth = approxCharWidth * effectiveLength;
+    }
+
+    const finalWidth = Math.max(baseWidth, measuredWidth + AUTO_RESIZE_BUFFER_PX);
+    element.style.width = `${finalWidth}px`;
+}
+
+function getAutoResizeInputs() {
+    if (typeof document === 'undefined') {
+        return [];
+    }
+    return Array.from(document.querySelectorAll(`input[${AUTO_RESIZE_ATTRIBUTE}]`));
+}
+
+function configureAutoResizeInputs() {
+    const inputs = getAutoResizeInputs();
+    inputs.forEach(input => {
+        autoResizeInput(input);
+        if (!autoResizeInputsWithListener.has(input)) {
+            input.addEventListener('input', () => autoResizeInput(input));
+            autoResizeInputsWithListener.add(input);
+        }
+    });
+}
+
+function resizeAutoResizeInputs() {
+    getAutoResizeInputs().forEach(autoResizeInput);
+}
+
 const clienteDataMap = new Map();
 let clienteSelectChangeHandler = null;
 
@@ -80,6 +143,7 @@ function setClientDetailValue(fieldId, value) {
     const element = getElement(fieldId);
     if (element) {
         element.value = normalizeStringValue(value);
+        autoResizeInput(element);
     }
 }
 
@@ -294,6 +358,7 @@ function setServiceDateValue(value) {
     const fechaDisplayInput = getElement('fecha_display');
     if (fechaDisplayInput) {
         fechaDisplayInput.value = formatDateForDisplayFromISO(isoDate);
+        autoResizeInput(fechaDisplayInput);
     }
 }
 
@@ -537,6 +602,7 @@ export function initializeForm() {
     configureNumberInputs();
     configureConversionInputs();
     configureStatusSelects();
+    configureAutoResizeInputs();
     calculateAll();
 }
 
@@ -550,6 +616,7 @@ export function resetForm() {
     clearDerivedFields();
     clearConversionOutputs();
     applyStatusColors();
+    resizeAutoResizeInputs();
 }
 
 export function getFormData() {

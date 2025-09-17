@@ -3,6 +3,7 @@ let configureClientSelect;
 let resetForm;
 let calculateAll;
 let updateConversions;
+let autoResizeInput;
 let LMIN_TO_LPH;
 let LMIN_TO_GPD;
 let originalApiUrl;
@@ -17,6 +18,7 @@ beforeAll(async () => {
     serializeForm = formsModule.serializeForm;
     configureClientSelect = formsModule.configureClientSelect;
     resetForm = formsModule.resetForm;
+    autoResizeInput = formsModule.autoResizeInput;
     ({ calculateAll, updateConversions } = formsModule.__testables__);
 
     const configModule = await import('../config.js');
@@ -60,6 +62,30 @@ describe('serializeForm', () => {
     test('devuelve objeto vacío cuando el elemento no es un formulario', () => {
         expect(serializeForm(null)).toEqual({});
         expect(serializeForm(document.createElement('div'))).toEqual({});
+    });
+});
+
+describe('autoResizeInput', () => {
+    afterEach(() => {
+        document.body.innerHTML = '';
+    });
+
+    test('aumenta el ancho cuando el contenido crece', () => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.setAttribute('data-auto-resize', '');
+        document.body.appendChild(input);
+
+        input.value = 'abc';
+        autoResizeInput(input);
+        const initialWidth = parseFloat(input.style.width);
+
+        input.value = 'texto con muchos más caracteres';
+        autoResizeInput(input);
+        const updatedWidth = parseFloat(input.style.width);
+
+        expect(initialWidth).toBeGreaterThan(0);
+        expect(updatedWidth).toBeGreaterThan(initialWidth);
     });
 });
 
