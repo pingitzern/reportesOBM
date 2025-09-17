@@ -3,7 +3,8 @@ const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
 
 const DEFAULT_CONFIGURATION = Object.freeze({
   SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
-  SHEET_NAME: 'Hoja 1'
+  SHEET_NAME: 'Hoja 1',
+  CLIENTES_SHEET_NAME: 'clientes'
 });
 
 const DEFAULT_AUTHORIZED_USERS = Object.freeze([
@@ -13,6 +14,7 @@ const DEFAULT_AUTHORIZED_USERS = Object.freeze([
 const DEFAULT_PROPERTY_VALUES = Object.freeze({
   SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
   SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
+  CLIENTES_SHEET_NAME: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME,
   [AUTHORIZED_USERS_PROPERTY]: JSON.stringify(DEFAULT_AUTHORIZED_USERS)
 });
 
@@ -41,6 +43,10 @@ function initProperties(overrides) {
 
 const SHEET_ID = getPropertyOrDefault('SHEET_ID', DEFAULT_CONFIGURATION.SHEET_ID);
 const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
+const CLIENTES_SHEET_NAME = getPropertyOrDefault(
+  'CLIENTES_SHEET_NAME',
+  DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME
+);
 
 const CAMPOS_ACTUALIZABLES = [
   'Cliente', 'Fecha_Servicio', 'Direccion', 'Tecnico_Asignado', 'Modelo_Equipo',
@@ -128,23 +134,51 @@ const AuthService = {
 };
 
 const SheetRepository = {
-  getSheet() {
-    if (!SHEET_ID || !SHEET_NAME) {
-      throw new Error(
-        'Configura las propiedades de script SHEET_ID y SHEET_NAME antes de ejecutar la API.'
-      );
+  getSheetByName(sheetName) {
+    if (!SHEET_ID) {
+      throw new Error('Configura la propiedad de script SHEET_ID antes de ejecutar la API.');
     }
 
-    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+    const resolvedName = typeof sheetName === 'string' ? sheetName.trim() : '';
+    if (!resolvedName) {
+      throw new Error('Se requiere un nombre de hoja válido para continuar.');
+    }
+
+    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(resolvedName);
 
     if (!sheet) {
-      throw new Error(`No se encontró la hoja ${SHEET_NAME} en el documento configurado.`);
+      throw new Error(`No se encontró la hoja ${resolvedName} en el documento configurado.`);
     }
 
     return sheet;
   },
+
+  getSheet() {
+    if (!SHEET_NAME) {
+      throw new Error('Configura la propiedad de script SHEET_NAME antes de ejecutar la API.');
+    }
+
+    return this.getSheetByName(SHEET_NAME);
+  },
+
   getSheetData() {
     const sheet = this.getSheet();
+    return {
+      sheet,
+      data: sheet.getDataRange().getValues()
+    };
+  },
+
+  getClientesSheet() {
+    if (!CLIENTES_SHEET_NAME) {
+      throw new Error('Configura la propiedad de script CLIENTES_SHEET_NAME antes de ejecutar la API.');
+    }
+
+    return this.getSheetByName(CLIENTES_SHEET_NAME);
+  },
+
+  getClientesData() {
+    const sheet = this.getClientesSheet();
     return {
       sheet,
       data: sheet.getDataRange().getValues()
@@ -162,6 +196,91 @@ const ResponseFactory = {
     return ContentService
       .createTextOutput(JSON.stringify({ result: 'error', error: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+};
+
+function normalizeTextValue(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  return String(value).trim();
+}
+
+const CLIENTE_HEADERS = Object.freeze({
+  nombre: 'Nombre',
+  direccion: 'Direccion',
+  telefono: 'Telefono',
+  mail: 'Mail',
+  cuit: 'CUIT'
+});
+
+const ClienteService = {
+  listar() {
+    const { data } = SheetRepository.getClientesData();
+
+    if (!data.length) {
+      return [];
+    }
+
+    const headers = data[0];
+    const columnIndexes = {};
+
+    Object.keys(CLIENTE_HEADERS).forEach((key) => {
+      columnIndexes[key] = headers.indexOf(CLIENTE_HEADERS[key]);
+    });
+
+    const missingHeaders = Object.keys(columnIndexes).filter((key) => columnIndexes[key] === -1);
+    if (missingHeaders.length) {
+      const missingNames = missingHeaders.map((key) => CLIENTE_HEADERS[key]);
+      throw new Error(
+        `Faltan columnas requeridas en la hoja de clientes: ${missingNames.join(', ')}`
+      );
+    }
+
+    const clientes = [];
+
+    for (let i = 1; i < data.length; i += 1) {
+      const row = data[i];
+      if (!row || row.length === 0) {
+        continue;
+      }
+
+      const cliente = {
+        nombre: normalizeTextValue(row[columnIndexes.nombre]),
+        direccion: normalizeTextValue(row[columnIndexes.direccion]),
+        telefono: normalizeTextValue(row[columnIndexes.telefono]),
+        mail: normalizeTextValue(row[columnIndexes.mail]),
+        cuit: normalizeTextValue(row[columnIndexes.cuit])
+      };
+
+      const tieneDatos = Object.keys(cliente).some((key) => cliente[key]);
+      if (!tieneDatos) {
+        continue;
+      }
+
+      clientes.push(cliente);
+    }
+
+    clientes.sort((a, b) => {
+      const nombreA = a.nombre || '';
+      const nombreB = b.nombre || '';
+
+      if (!nombreA && nombreB) {
+        return 1;
+      }
+      if (nombreA && !nombreB) {
+        return -1;
+      }
+
+      return nombreA.localeCompare(nombreB, undefined, { sensitivity: 'base' });
+    });
+
+    return clientes;
   }
 };
 
@@ -544,6 +663,9 @@ function doPost(e) {
       case 'dashboard':
         result = DashboardService.obtenerDatos();
         break;
+      case 'clientes':
+        result = ClienteService.listar();
+        break;
       default:
         throw new Error('Acción no válida');
     }
@@ -566,6 +688,15 @@ function doGet(e) {
       });
       const dashboard = DashboardService.obtenerDatos();
       return ResponseFactory.success(dashboard);
+    }
+
+    if (action === 'clientes') {
+      AuthService.authenticate({
+        token: params.token,
+        usuario: params.usuario,
+      });
+      const clientes = ClienteService.listar();
+      return ResponseFactory.success(clientes);
     }
 
     return ResponseFactory.success({ message: 'API funcionando' });
