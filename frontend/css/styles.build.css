@@ -766,6 +766,10 @@ video {
   justify-content: space-between;
 }
 
+.gap-1 {
+  gap: 0.25rem;
+}
+
 .gap-4 {
   gap: 1rem;
 }
@@ -837,6 +841,10 @@ video {
 
 .whitespace-nowrap {
   white-space: nowrap;
+}
+
+.rounded {
+  border-radius: 0.25rem;
 }
 
 .rounded-lg {
@@ -913,6 +921,11 @@ video {
 
 .p-6 {
   padding: 1.5rem;
+}
+
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
 }
 
 .px-4 {

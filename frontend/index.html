@@ -48,51 +48,54 @@
                 <div class="form-section" id="section-a">
                     <h2>A. Datos del Servicio y del Equipo</h2>
                     <p class="guide-text">Complete la información para identificar el servicio y el equipo.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                        <div class="input-group">
-                            <label for="cliente">Cliente:</label>
-                            <select id="cliente" name="cliente">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="cliente" class="font-semibold text-gray-700">Cliente:</label>
+                            <select id="cliente" name="cliente" class="w-full border border-gray-300 rounded px-3 py-2">
                                 <option value="" disabled selected>Selecciona un cliente</option>
                             </select>
                         </div>
-                        <div class="input-group">
-                            <label for="cliente_telefono">Teléfono:</label>
-                            <input type="text" id="cliente_telefono" value="" readonly data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="cliente_telefono" class="font-semibold text-gray-700">Teléfono:</label>
+                            <input type="text" id="cliente_telefono" value="" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
-                        <div class="input-group">
-                            <label for="cliente_email">Email:</label>
-                            <input type="text" id="cliente_email" value="" readonly data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="cliente_email" class="font-semibold text-gray-700">Email:</label>
+                            <input type="text" id="cliente_email" value="" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
-                        <div class="input-group">
-                            <label for="cliente_cuit">CUIT:</label>
-                            <input type="text" id="cliente_cuit" value="" readonly data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="cliente_cuit" class="font-semibold text-gray-700">CUIT:</label>
+                            <input type="text" id="cliente_cuit" value="" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
-                        <div class="input-group">
-                            <label for="fecha_display">Fecha del Servicio:</label>
-                            <input type="text" id="fecha_display" readonly data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="fecha_display" class="font-semibold text-gray-700">Fecha del Servicio:</label>
+                            <input type="text" id="fecha_display" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                             <input type="hidden" id="fecha" name="fecha">
                         </div>
-                        <div class="input-group">
-                            <label for="direccion">Dirección:</label>
-                            <input type="text" id="direccion" name="direccion" data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="direccion" class="font-semibold text-gray-700">Dirección:</label>
+                            <input type="text" id="direccion" name="direccion" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
-                        <div class="input-group">
-                            <label for="tecnico">Técnico Asignado:</label>
-                            <input type="text" id="tecnico" name="tecnico" data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="tecnico" class="font-semibold text-gray-700">Técnico Asignado:</label>
+                            <input type="text" id="tecnico" name="tecnico" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
-                        <div class="input-group">
-                            <label for="modelo">Modelo del Equipo:</label>
-                            <input type="text" id="modelo" name="modelo" data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="modelo" class="font-semibold text-gray-700">Modelo del Equipo:</label>
+                            <input type="text" id="modelo" name="modelo" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
-                        <div class="input-group">
-                            <label for="id_interna">ID Interna / Activo N°:</label>
-                            <input type="text" id="id_interna" name="id_interna" data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="id_interna" class="font-semibold text-gray-700">ID Interna / Activo N°:</label>
+                            <input type="text" id="id_interna" name="id_interna" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
-                        <div class="input-group">
-                            <label for="n_serie">Número de Serie:</label>
-                            <input type="text" id="n_serie" name="n_serie" data-auto-resize>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="n_serie" class="font-semibold text-gray-700">Número de Serie:</label>
+                            <input type="text" id="n_serie" name="n_serie" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                         </div>
-                        <div class="input-group"><label for="proximo_mant">Próximo Mantenimiento:</label><input type="date" id="proximo_mant" name="proximo_mant"></div>
+                        <div class="input-group flex flex-col gap-1">
+                            <label for="proximo_mant" class="font-semibold text-gray-700">Próximo Mantenimiento:</label>
+                            <input type="date" id="proximo_mant" name="proximo_mant" class="w-full border border-gray-300 rounded px-3 py-2">
+                        </div>
                     </div>
                 </div>
 
