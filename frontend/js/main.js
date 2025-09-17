@@ -1,3 +1,4 @@
+/* global __APP_VERSION__ */
 import { API_URL } from './config.js';
 import { initializeAuth } from './auth.js';
 import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento, obtenerDashboard, obtenerClientes } from './api.js';
@@ -10,6 +11,25 @@ const isApiConfigured = typeof API_URL === 'string' && API_URL.length > 0;
 
 if (!isApiConfigured) {
     console.warn('API_URL no configurado. Configura window.__APP_CONFIG__.API_URL o la variable de entorno API_URL.');
+}
+
+function showAppVersion() {
+    const versionElement = document.getElementById('app-version');
+    if (!versionElement) {
+        return;
+    }
+
+    if (typeof __APP_VERSION__ !== 'undefined') {
+        const versionValue = `${__APP_VERSION__}`.trim();
+        if (versionValue) {
+            versionElement.textContent = `Versión ${versionValue}`;
+            versionElement.classList.remove('hidden');
+            return;
+        }
+    }
+
+    versionElement.textContent = '';
+    versionElement.classList.add('hidden');
 }
 
 function showTab(tabName) {
@@ -233,6 +253,7 @@ async function initializeSystem() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    showAppVersion();
     initializeSystem().catch(error => {
         console.error('Error inicializando la aplicación:', error);
         alert('No se pudo inicializar la aplicación. Revisa la consola para más detalles.');
