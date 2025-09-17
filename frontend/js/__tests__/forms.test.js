@@ -114,7 +114,7 @@ describe('selección de clientes', () => {
                         <option value="" selected>Selecciona un cliente</option>
                     </select>
                 </div>
-                <input id="cliente_direccion" value="" />
+                <input id="direccion" value="" />
                 <input id="cliente_telefono" value="" />
                 <input id="cliente_email" value="" />
                 <input id="cliente_cuit" value="" />
@@ -142,7 +142,7 @@ describe('selección de clientes', () => {
         select.value = '2';
         select.dispatchEvent(new Event('change'));
 
-        expect(document.getElementById('cliente_direccion').value).toBe('Calle 2');
+        expect(document.getElementById('direccion').value).toBe('Calle 2');
         expect(document.getElementById('cliente_telefono').value).toBe('987654');
         expect(document.getElementById('cliente_email').value).toBe('dos@example.com');
         expect(document.getElementById('cliente_cuit').value).toBe('27-87654321-9');
@@ -169,7 +169,7 @@ describe('selección de clientes', () => {
         select.selectedIndex = 1;
         select.dispatchEvent(new Event('change'));
 
-        expect(document.getElementById('cliente_direccion').value).toBe('Calle A');
+        expect(document.getElementById('direccion').value).toBe('Calle A');
         expect(document.getElementById('cliente_telefono').value).toBe('111111');
         expect(document.getElementById('cliente_email').value).toBe('uno@example.com');
         expect(document.getElementById('cliente_cuit').value).toBe('');
@@ -178,7 +178,7 @@ describe('selección de clientes', () => {
         expect(select.selectedIndex).toBe(2);
         select.dispatchEvent(new Event('change'));
 
-        expect(document.getElementById('cliente_direccion').value).toBe('Calle B');
+        expect(document.getElementById('direccion').value).toBe('Calle B');
         expect(document.getElementById('cliente_telefono').value).toBe('222222');
         expect(document.getElementById('cliente_email').value).toBe('dos@example.com');
         expect(document.getElementById('cliente_cuit').value).toBe('');
@@ -195,12 +195,12 @@ describe('selección de clientes', () => {
         select.value = '1';
         select.dispatchEvent(new Event('change'));
 
-        expect(document.getElementById('cliente_direccion').value).toBe('Calle 1');
+        expect(document.getElementById('direccion').value).toBe('Calle 1');
 
         resetForm();
 
         expect(select.value).toBe('');
-        expect(document.getElementById('cliente_direccion').value).toBe('');
+        expect(document.getElementById('direccion').value).toBe('');
         expect(document.getElementById('cliente_telefono').value).toBe('');
         expect(document.getElementById('cliente_email').value).toBe('');
         expect(document.getElementById('cliente_cuit').value).toBe('');

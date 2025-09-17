@@ -84,7 +84,7 @@ function setClientDetailValue(fieldId, value) {
 }
 
 function applyClientDetails(details = {}) {
-    setClientDetailValue('cliente_direccion', details.direccion);
+    setClientDetailValue('direccion', details.direccion);
     setClientDetailValue('cliente_telefono', details.telefono);
     setClientDetailValue('cliente_email', details.email);
     setClientDetailValue('cliente_cuit', details.cuit);
