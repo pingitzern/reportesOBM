@@ -1,4 +1,7 @@
 import { defineConfig } from 'vite';
+import { version } from './package.json' assert { type: 'json' };
+
+const appVersion = typeof version === 'string' ? version : '';
 
 export default defineConfig({
     root: 'frontend',
@@ -12,5 +15,8 @@ export default defineConfig({
         fs: {
             allow: ['..'],
         },
+    },
+    define: {
+        __APP_VERSION__: JSON.stringify(appVersion),
     },
 });
