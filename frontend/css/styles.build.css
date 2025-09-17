@@ -628,6 +628,88 @@ video {
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
+.component-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  width: 100%;
+  border-radius: 9999px;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(75 85 99);
+}
+
+.component-toggle__track {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: rgb(229 231 235);
+  transition: background-color 0.2s ease;
+  z-index: 1;
+}
+
+.component-toggle__thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  border-radius: inherit;
+  background-color: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  transition: transform 0.25s ease;
+  z-index: 2;
+}
+
+.component-toggle[data-state="cambiado"] .component-toggle__thumb {
+  transform: translateX(0%);
+}
+
+.component-toggle[data-state="inspeccionado"] .component-toggle__thumb {
+  transform: translateX(100%);
+}
+
+.component-toggle__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+.component-toggle__option {
+  position: relative;
+  z-index: 5;
+  cursor: pointer;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  color: rgb(107 114 128);
+  transition: color 0.2s ease, font-weight 0.2s ease;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.component-toggle__option:hover {
+  color: rgb(55 65 81);
+}
+
+.component-toggle[data-state="cambiado"] .component-toggle__option--cambiado,
+    .component-toggle[data-state="inspeccionado"] .component-toggle__option--inspeccionado {
+  color: rgb(17 24 39);
+  font-weight: 600;
+}
+
 .fixed {
   position: fixed;
 }

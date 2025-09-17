@@ -1,8 +1,3 @@
-const COMPONENT_STAGE_ACTIONS = [
-    { value: 'Cambiado', label: 'Cambiado' },
-    { value: 'Inspeccionado', label: 'Inspeccionado', default: true },
-];
-
 const COMPONENT_STAGES = [
     {
         id: 'etapa1',
@@ -37,19 +32,56 @@ const COMPONENT_STAGES = [
     },
 ];
 
-function createActionLabel(stageId, action) {
-    const label = document.createElement('label');
-    const radio = document.createElement('input');
-    radio.type = 'radio';
-    radio.name = `${stageId}_accion`;
-    radio.value = action.value;
-    if (action.default) {
-        radio.checked = true;
-        radio.defaultChecked = true;
-    }
-    label.appendChild(radio);
-    label.appendChild(document.createTextNode(action.label));
-    return label;
+function createComponentToggle(stageId) {
+    const toggle = document.createElement('div');
+    toggle.className = 'component-toggle';
+    toggle.dataset.state = 'inspeccionado';
+
+    const changedId = `${stageId}_accion_cambiado`;
+    const inspectedId = `${stageId}_accion_inspeccionado`;
+
+    const changedInput = document.createElement('input');
+    changedInput.type = 'radio';
+    changedInput.name = `${stageId}_accion`;
+    changedInput.value = 'Cambiado';
+    changedInput.id = changedId;
+    changedInput.className = 'component-toggle__input';
+
+    const inspectedInput = document.createElement('input');
+    inspectedInput.type = 'radio';
+    inspectedInput.name = `${stageId}_accion`;
+    inspectedInput.value = 'Inspeccionado';
+    inspectedInput.id = inspectedId;
+    inspectedInput.className = 'component-toggle__input';
+    inspectedInput.checked = true;
+    inspectedInput.defaultChecked = true;
+
+    const track = document.createElement('div');
+    track.className = 'component-toggle__track';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'component-toggle__thumb';
+    track.appendChild(thumb);
+
+    const changedLabel = document.createElement('label');
+    changedLabel.setAttribute('for', changedId);
+    changedLabel.className = 'component-toggle__option component-toggle__option--cambiado';
+    changedLabel.textContent = 'Cambiado';
+
+    const inspectedLabel = document.createElement('label');
+    inspectedLabel.setAttribute('for', inspectedId);
+    inspectedLabel.className = 'component-toggle__option component-toggle__option--inspeccionado';
+    inspectedLabel.textContent = 'Inspeccionado';
+
+    toggle.append(
+        changedInput,
+        inspectedInput,
+        track,
+        changedLabel,
+        inspectedLabel,
+    );
+
+    return toggle;
 }
 
 function populateStage(fragment, stage) {
@@ -70,11 +102,27 @@ function populateStage(fragment, stage) {
 
     const actionsContainer = fragment.querySelector('.stage-actions');
     if (actionsContainer) {
+        const toggle = createComponentToggle(stage.id);
         actionsContainer.innerHTML = '';
-        COMPONENT_STAGE_ACTIONS.forEach(action => {
-            const label = createActionLabel(stage.id, action);
-            actionsContainer.appendChild(label);
+        actionsContainer.appendChild(toggle);
+
+        const updateState = value => {
+            toggle.dataset.state = String(value).toLowerCase();
+        };
+
+        const radios = toggle.querySelectorAll('.component-toggle__input');
+        radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.checked) {
+                    updateState(radio.value);
+                }
+            });
         });
+
+        const checkedRadio = toggle.querySelector('.component-toggle__input:checked');
+        if (checkedRadio) {
+            updateState(checkedRadio.value);
+        }
     }
 }
 
