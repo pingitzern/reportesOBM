@@ -1,9 +1,11 @@
 const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
+const CLIENTES_SHEET_NAME_PROPERTY = 'CLIENTES_SHEET_NAME';
 
 const DEFAULT_CONFIGURATION = Object.freeze({
   SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
-  SHEET_NAME: 'Hoja 1'
+  SHEET_NAME: 'Hoja 1',
+  CLIENTES_SHEET_NAME: 'clientes'
 });
 
 const DEFAULT_AUTHORIZED_USERS = Object.freeze([
@@ -13,6 +15,7 @@ const DEFAULT_AUTHORIZED_USERS = Object.freeze([
 const DEFAULT_PROPERTY_VALUES = Object.freeze({
   SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
   SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
+  [CLIENTES_SHEET_NAME_PROPERTY]: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME,
   [AUTHORIZED_USERS_PROPERTY]: JSON.stringify(DEFAULT_AUTHORIZED_USERS)
 });
 
@@ -41,6 +44,12 @@ function initProperties(overrides) {
 
 const SHEET_ID = getPropertyOrDefault('SHEET_ID', DEFAULT_CONFIGURATION.SHEET_ID);
 const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
+const CLIENTES_SHEET_NAME = getPropertyOrDefault(
+  CLIENTES_SHEET_NAME_PROPERTY,
+  DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME
+);
+
+const CLIENTES_HEADERS = Object.freeze(['Nombre', 'Direccion', 'Telefono', 'Mail', 'CUIT']);
 
 const CAMPOS_ACTUALIZABLES = [
   'Cliente', 'Fecha_Servicio', 'Direccion', 'Tecnico_Asignado', 'Modelo_Equipo',
@@ -128,21 +137,38 @@ const AuthService = {
 };
 
 const SheetRepository = {
-  getSheet() {
-    if (!SHEET_ID || !SHEET_NAME) {
-      throw new Error(
-        'Configura las propiedades de script SHEET_ID y SHEET_NAME antes de ejecutar la API.'
-      );
+  getSpreadsheet() {
+    if (!SHEET_ID) {
+      throw new Error('Configura la propiedad de script SHEET_ID antes de ejecutar la API.');
     }
 
-    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+    return SpreadsheetApp.openById(SHEET_ID);
+  },
+
+  getSheetByName(sheetName) {
+    if (!sheetName) {
+      throw new Error('Proporciona el nombre de la hoja que deseas utilizar.');
+    }
+
+    const sheet = this.getSpreadsheet().getSheetByName(sheetName);
 
     if (!sheet) {
-      throw new Error(`No se encontró la hoja ${SHEET_NAME} en el documento configurado.`);
+      throw new Error(`No se encontró la hoja ${sheetName} en el documento configurado.`);
     }
 
     return sheet;
   },
+
+  getSheet() {
+    if (!SHEET_NAME) {
+      throw new Error(
+        'Configura la propiedad de script SHEET_NAME con la pestaña que almacena los mantenimientos.'
+      );
+    }
+
+    return this.getSheetByName(SHEET_NAME);
+  },
+
   getSheetData() {
     const sheet = this.getSheet();
     return {
@@ -162,6 +188,139 @@ const ResponseFactory = {
     return ContentService
       .createTextOutput(JSON.stringify({ result: 'error', error: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+};
+
+const CLIENTES_FIELD_MAP = Object.freeze({
+  Nombre: 'nombre',
+  Direccion: 'direccion',
+  Telefono: 'telefono',
+  Mail: 'mail',
+  CUIT: 'cuit'
+});
+
+function sanitizeCellValue(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+
+  return String(value).trim();
+}
+
+function normalizeClienteRow(row, headerIndexes) {
+  const cliente = {};
+  let hasData = false;
+
+  CLIENTES_HEADERS.forEach((header) => {
+    const index = headerIndexes[header];
+    if (index === undefined || index === null) {
+      return;
+    }
+
+    const fieldKey = CLIENTES_FIELD_MAP[header];
+    const value = sanitizeCellValue(row[index]);
+
+    cliente[fieldKey] = value;
+
+    if (!hasData && value) {
+      hasData = true;
+    }
+  });
+
+  if (!hasData) {
+    return null;
+  }
+
+  return cliente;
+}
+
+const ClientesService = {
+  getSheet() {
+    if (!CLIENTES_SHEET_NAME) {
+      throw new Error(
+        'Configura la propiedad de script CLIENTES_SHEET_NAME con la pestaña que almacena los clientes.'
+      );
+    }
+
+    return SheetRepository.getSheetByName(CLIENTES_SHEET_NAME);
+  },
+
+  getHeaderIndexes(headersRow) {
+    const indexes = {};
+
+    CLIENTES_HEADERS.forEach((header) => {
+      const index = headersRow.indexOf(header);
+      if (index === -1) {
+        throw new Error(
+          `No se encontró el encabezado ${header} en la hoja configurada para clientes.`
+        );
+      }
+
+      indexes[header] = index;
+    });
+
+    return indexes;
+  },
+
+  listar() {
+    const sheet = this.getSheet();
+    const values = sheet.getDataRange().getValues();
+
+    if (!values.length) {
+      return [];
+    }
+
+    const headersRow = values[0].map((value) => sanitizeCellValue(value));
+    const headerIndexes = this.getHeaderIndexes(headersRow);
+
+    const clientes = [];
+
+    for (let i = 1; i < values.length; i += 1) {
+      const row = values[i];
+      const cliente = normalizeClienteRow(row, headerIndexes);
+
+      if (cliente) {
+        clientes.push(cliente);
+      }
+    }
+
+    clientes.sort((a, b) => {
+      const nombreA = (a.nombre || '').toLowerCase();
+      const nombreB = (b.nombre || '').toLowerCase();
+
+      if (nombreA < nombreB) {
+        return -1;
+      }
+      if (nombreA > nombreB) {
+        return 1;
+      }
+
+      const cuitA = (a.cuit || '').toLowerCase();
+      const cuitB = (b.cuit || '').toLowerCase();
+
+      if (cuitA < cuitB) {
+        return -1;
+      }
+      if (cuitA > cuitB) {
+        return 1;
+      }
+
+      return 0;
+    });
+
+    return clientes;
   }
 };
 
@@ -544,6 +703,9 @@ function doPost(e) {
       case 'dashboard':
         result = DashboardService.obtenerDatos();
         break;
+      case 'clientes':
+        result = ClientesService.listar();
+        break;
       default:
         throw new Error('Acción no válida');
     }
@@ -566,6 +728,15 @@ function doGet(e) {
       });
       const dashboard = DashboardService.obtenerDatos();
       return ResponseFactory.success(dashboard);
+    }
+
+    if (action === 'clientes') {
+      AuthService.authenticate({
+        token: params.token,
+        usuario: params.usuario,
+      });
+      const clientes = ClientesService.listar();
+      return ResponseFactory.success(clientes);
     }
 
     return ResponseFactory.success({ message: 'API funcionando' });
