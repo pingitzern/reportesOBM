@@ -1,3 +1,81 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    .tab-button {
+        @apply px-4 py-2 text-sm font-semibold text-gray-600 rounded-lg border border-transparent bg-white/80 shadow-sm transform transition-all duration-150 ease-out;
+    }
+
+    .tab-button:hover {
+        @apply -translate-y-0.5 shadow-md text-blue-600 border-blue-200;
+    }
+
+    .tab-button:focus-visible {
+        @apply outline-none ring-2 ring-offset-2 ring-blue-400;
+    }
+
+    .tab-button.active {
+        @apply bg-blue-600 text-white border-blue-600 shadow-md;
+    }
+
+    .tab-button.active:hover {
+        @apply bg-blue-700 text-white border-blue-700;
+    }
+
+    .action-button {
+        @apply inline-flex items-center justify-center px-5 py-2.5 rounded-lg font-semibold text-sm border border-transparent bg-white/90 text-gray-700 transform transition-all duration-150 ease-out shadow-sm;
+    }
+
+    .action-button:hover {
+        @apply -translate-y-0.5 shadow-md;
+    }
+
+    .action-button:focus-visible {
+        @apply outline-none ring-2 ring-offset-2;
+    }
+
+    .action-button.reset-btn {
+        @apply bg-gray-200 text-gray-700;
+    }
+
+    .action-button.reset-btn:hover {
+        @apply bg-gray-300 text-gray-800;
+    }
+
+    .action-button.reset-btn:focus-visible {
+        @apply ring-gray-400;
+    }
+
+    .action-button.print-btn {
+        @apply bg-blue-600 text-white;
+    }
+
+    .action-button.print-btn:hover {
+        @apply bg-blue-700 text-white;
+    }
+
+    .action-button.print-btn:focus-visible {
+        @apply ring-blue-500;
+    }
+
+    .client-detail-empty {
+        @apply bg-gray-100 text-gray-600 placeholder-gray-400;
+    }
+
+    .client-detail-locked {
+        @apply bg-gray-50 text-gray-700 cursor-not-allowed;
+    }
+
+    .section-card {
+        @apply bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-6;
+    }
+
+    .section-card h2 {
+        @apply text-2xl font-semibold text-gray-800;
+    }
+
+    .section-card .guide-text {
+        @apply text-sm text-gray-600;
+    }
+}

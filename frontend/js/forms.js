@@ -30,12 +30,18 @@ const CLIENT_FIELD_ALIASES = Object.freeze({
     cuit: ['cuit', 'CUIT'],
 });
 
+const CLIENT_DETAIL_FIELD_IDS = Object.freeze(['direccion', 'cliente_telefono', 'cliente_email', 'cliente_cuit']);
+const CLIENT_DETAIL_EMPTY_CLASS = 'client-detail-empty';
+const CLIENT_DETAIL_LOCKED_CLASS = 'client-detail-locked';
+const CLIENT_DETAIL_LOCKED_DATA_KEY = 'clientDetailLocked';
+
 const AUTO_RESIZE_ATTRIBUTE = 'data-auto-resize';
 const AUTO_RESIZE_DATASET_KEY = 'autoResizeBaseWidth';
 const AUTO_RESIZE_CHAR_WIDTH = 8;
 const AUTO_RESIZE_BUFFER_PX = 6;
 const AUTO_RESIZE_DEFAULT_MIN_WIDTH = 48;
 const autoResizeInputsWithListener = new WeakSet();
+const clientDetailInputsWithListener = new WeakSet();
 
 function isAutoResizeCandidate(element) {
     return element instanceof HTMLInputElement && element.hasAttribute(AUTO_RESIZE_ATTRIBUTE);
@@ -139,19 +145,100 @@ function createClientDetails(cliente) {
     };
 }
 
-function setClientDetailValue(fieldId, value) {
+function refreshClientDetailFieldState(element, options = {}) {
+    if (!(element instanceof HTMLInputElement)) {
+        return;
+    }
+
+    if (!CLIENT_DETAIL_FIELD_IDS.includes(element.id)) {
+        return;
+    }
+
+    const { lockWhenFilled } = options;
+    const hasValue = normalizeStringValue(element.value) !== '';
+
+    let shouldDisable = false;
+    if (typeof lockWhenFilled === 'boolean') {
+        shouldDisable = lockWhenFilled && hasValue;
+    } else if (element.dataset[CLIENT_DETAIL_LOCKED_DATA_KEY] === 'true') {
+        shouldDisable = hasValue;
+    }
+
+    element.dataset[CLIENT_DETAIL_LOCKED_DATA_KEY] = shouldDisable ? 'true' : 'false';
+    element.readOnly = shouldDisable;
+    element.disabled = shouldDisable;
+
+    if (shouldDisable) {
+        element.classList.add(CLIENT_DETAIL_LOCKED_CLASS);
+    } else {
+        element.classList.remove(CLIENT_DETAIL_LOCKED_CLASS);
+    }
+
+    if (hasValue) {
+        element.classList.remove(CLIENT_DETAIL_EMPTY_CLASS);
+    } else {
+        element.classList.add(CLIENT_DETAIL_EMPTY_CLASS);
+        if (!shouldDisable) {
+            element.readOnly = false;
+            element.disabled = false;
+        }
+    }
+}
+
+function configureClientDetailFieldInteractions() {
+    CLIENT_DETAIL_FIELD_IDS.forEach(fieldId => {
+        const element = getElement(fieldId);
+        if (!(element instanceof HTMLInputElement)) {
+            return;
+        }
+
+        refreshClientDetailFieldState(element);
+
+        if (!clientDetailInputsWithListener.has(element)) {
+            element.addEventListener('input', () => {
+                refreshClientDetailFieldState(element);
+            });
+            clientDetailInputsWithListener.add(element);
+        }
+    });
+}
+
+function setClientDetailValue(fieldId, value, options = {}) {
     const element = getElement(fieldId);
-    if (element) {
-        element.value = normalizeStringValue(value);
+    if (!element) {
+        return;
+    }
+
+    const normalizedValue = normalizeStringValue(value);
+
+    if ('value' in element) {
+        element.value = normalizedValue;
+    }
+
+    if (element instanceof HTMLInputElement) {
         autoResizeInput(element);
+        if (Object.prototype.hasOwnProperty.call(options, 'lockWhenFilled')) {
+            refreshClientDetailFieldState(element, {
+                lockWhenFilled: Boolean(options.lockWhenFilled),
+            });
+        } else {
+            refreshClientDetailFieldState(element);
+        }
     }
 }
 
 function applyClientDetails(details = {}) {
-    setClientDetailValue('direccion', details.direccion);
-    setClientDetailValue('cliente_telefono', details.telefono);
-    setClientDetailValue('cliente_email', details.email);
-    setClientDetailValue('cliente_cuit', details.cuit);
+    const detailMap = {
+        direccion: details.direccion,
+        cliente_telefono: details.telefono,
+        cliente_email: details.email,
+        cliente_cuit: details.cuit,
+    };
+
+    Object.entries(detailMap).forEach(([fieldId, fieldValue]) => {
+        const shouldLock = normalizeStringValue(fieldValue) !== '';
+        setClientDetailValue(fieldId, fieldValue, { lockWhenFilled: shouldLock });
+    });
 }
 
 function clearClientDetails() {
@@ -367,7 +454,20 @@ export function serializeForm(formElement) {
         return {};
     }
 
-    const formData = new FormData(formElement);
+    const temporarilyEnabledElements = [];
+    formElement.querySelectorAll('[name][disabled]').forEach(element => {
+        temporarilyEnabledElements.push(element);
+        element.disabled = false;
+    });
+
+    let formData;
+    try {
+        formData = new FormData(formElement);
+    } finally {
+        temporarilyEnabledElements.forEach(element => {
+            element.disabled = true;
+        });
+    }
     const data = {};
 
     formData.forEach((value, key) => {
@@ -603,6 +703,7 @@ export function initializeForm() {
     configureConversionInputs();
     configureStatusSelects();
     configureAutoResizeInputs();
+    configureClientDetailFieldInteractions();
     calculateAll();
 }
 

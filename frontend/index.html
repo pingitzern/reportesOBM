@@ -47,67 +47,87 @@
             <form id="maintenance-form">
                 <!-- Sección A: Datos del Servicio y del Equipo -->
                 <div class="form-section" id="section-a">
-                    <h2>A. Datos del Servicio y del Equipo</h2>
-                    <p class="guide-text">Complete la información para identificar el servicio y el equipo.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="cliente" class="font-semibold text-gray-700">Cliente:</label>
-                            <select id="cliente" name="cliente" class="w-full border border-gray-300 rounded px-3 py-2">
-                                <option value="" disabled selected>Selecciona un cliente</option>
-                            </select>
+                    <div class="section-card">
+                        <div class="space-y-1">
+                            <h2>A. Datos del Servicio y del Equipo</h2>
+                            <p class="guide-text">Complete la información para identificar el servicio y el equipo.</p>
                         </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="cliente_telefono" class="font-semibold text-gray-700">Teléfono:</label>
-                            <input type="text" id="cliente_telefono" value="" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="cliente_email" class="font-semibold text-gray-700">Email:</label>
-                            <input type="text" id="cliente_email" value="" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="cliente_cuit" class="font-semibold text-gray-700">CUIT:</label>
-                            <input type="text" id="cliente_cuit" value="" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="fecha_display" class="font-semibold text-gray-700">Fecha del Servicio:</label>
-                            <input type="text" id="fecha_display" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                            <input type="hidden" id="fecha" name="fecha">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="direccion" class="font-semibold text-gray-700">Dirección:</label>
-                            <input type="text" id="direccion" name="direccion" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="tecnico" class="font-semibold text-gray-700">Técnico Asignado:</label>
-                            <input type="text" id="tecnico" name="tecnico" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="modelo" class="font-semibold text-gray-700">Modelo del Equipo:</label>
-                            <input type="text" id="modelo" name="modelo" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="id_interna" class="font-semibold text-gray-700">ID Interna / Activo N°:</label>
-                            <input type="text" id="id_interna" name="id_interna" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="n_serie" class="font-semibold text-gray-700">Número de Serie:</label>
-                            <input type="text" id="n_serie" name="n_serie" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
-                        </div>
-                        <div class="input-group flex flex-col gap-1">
-                            <label for="proximo_mant" class="font-semibold text-gray-700">Próximo Mantenimiento:</label>
-                            <input type="date" id="proximo_mant" name="proximo_mant" class="w-full border border-gray-300 rounded px-3 py-2">
+                        <div class="space-y-6">
+                            <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+                                <div class="flex flex-col gap-2 mb-4 md:flex-row md:items-center md:justify-between">
+                                    <h3 class="text-xl font-semibold text-gray-800">Datos del Cliente</h3>
+                                    <p class="text-sm text-gray-500">Selecciona un cliente para completar los datos automáticamente.</p>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="cliente" class="font-semibold text-gray-700">Cliente:</label>
+                                        <select id="cliente" name="cliente" class="w-full border border-gray-300 rounded px-3 py-2">
+                                            <option value="" disabled selected>Selecciona un cliente</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="direccion" class="font-semibold text-gray-700">Dirección:</label>
+                                        <input type="text" id="direccion" name="direccion" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="cliente_telefono" class="font-semibold text-gray-700">Teléfono:</label>
+                                        <input type="text" id="cliente_telefono" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="cliente_email" class="font-semibold text-gray-700">Email:</label>
+                                        <input type="text" id="cliente_email" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="cliente_cuit" class="font-semibold text-gray-700">CUIT:</label>
+                                        <input type="text" id="cliente_cuit" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-4">Datos del Servicio y del Equipo</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="fecha_display" class="font-semibold text-gray-700">Fecha del Servicio:</label>
+                                        <input type="text" id="fecha_display" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                        <input type="hidden" id="fecha" name="fecha">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="tecnico" class="font-semibold text-gray-700">Técnico Asignado:</label>
+                                        <input type="text" id="tecnico" name="tecnico" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="modelo" class="font-semibold text-gray-700">Modelo del Equipo:</label>
+                                        <input type="text" id="modelo" name="modelo" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="id_interna" class="font-semibold text-gray-700">ID Interna / Activo N°:</label>
+                                        <input type="text" id="id_interna" name="id_interna" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="n_serie" class="font-semibold text-gray-700">Número de Serie:</label>
+                                        <input type="text" id="n_serie" name="n_serie" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="proximo_mant" class="font-semibold text-gray-700">Próximo Mantenimiento:</label>
+                                        <input type="date" id="proximo_mant" name="proximo_mant" class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Sección B: Parámetros de Operación -->
                 <div class="form-section" id="section-b">
-                    <h2>B. Parámetros de Operación</h2>
-                    <p class="guide-text">Mida y registre los valores antes (As Found) y después (As Left) del mantenimiento. Cierre la válvula del tanque para medir presión y caudales de trabajo.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 items-end">
-                        <div class="md:col-span-1 font-semibold text-gray-700">Parámetro</div>
-                        <div class="md:col-span-1 font-semibold text-gray-700 text-center">Estado Inicial ('As Found')</div>
-                        <div class="md:col-span-1 font-semibold text-gray-700 text-center">Estado Final ('As Left')</div>
+                    <div class="section-card">
+                        <div class="space-y-1">
+                            <h2>B. Parámetros de Operación</h2>
+                            <p class="guide-text">Mida y registre los valores antes (As Found) y después (As Left) del mantenimiento. Cierre la válvula del tanque para medir presión y caudales de trabajo.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 items-end">
+                            <div class="md:col-span-1 font-semibold text-gray-700">Parámetro</div>
+                            <div class="md:col-span-1 font-semibold text-gray-700 text-center">Estado Inicial ('As Found')</div>
+                            <div class="md:col-span-1 font-semibold text-gray-700 text-center">Estado Final ('As Left')</div>
 
                         <!-- Fugas -->
                         <label class="md:col-span-1">Fugas visibles</label>
@@ -175,48 +195,57 @@
                         <label class="md:col-span-1">Test Presostato Baja</label>
                         <div class="md:col-span-1"><select id="presostato_baja_found" name="presostato_baja_found" class="text-center w-full"><option value="N/A" selected>No Aplica</option><option value="Pasa">Pasa</option><option value="Falla">Falla</option></select></div>
                         <div class="md:col-span-1"><select id="presostato_baja_left" name="presostato_baja_left" class="text-center w-full"><option value="N/A" selected>No Aplica</option><option value="Pasa">Pasa</option><option value="Falla">Falla</option></select></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Sección C: Registro de Componentes -->
                 <div class="form-section" id="section-c">
-                    <h2>C. Registro de Componentes y Sanitización</h2>
-                    <p class="guide-text">Marque la acción realizada para cada etapa en el sistema.</p>
-                     <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center font-semibold text-gray-700 mb-2">
-                        <div class="sm:col-span-1">Etapa</div>
-                        <div class="sm:col-span-2">Detalles del Componente</div>
-                        <div class="sm:col-span-2">Acción</div>
-                    </div>
-                    <div id="component-stage-container"></div>
-
-                    <template id="component-stage-template">
-                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2 component-stage">
-                            <div class="sm:col-span-1 stage-title"></div>
-                            <div class="sm:col-span-2">
-                                <input type="text" class="w-full stage-details">
-                            </div>
-                            <div class="sm:col-span-2 flex space-x-4 stage-actions"></div>
+                    <div class="section-card">
+                        <div class="space-y-1">
+                            <h2>C. Registro de Componentes y Sanitización</h2>
+                            <p class="guide-text">Marque la acción realizada para cada etapa en el sistema.</p>
                         </div>
-                    </template>
-                    <!-- Sanitización -->
-                    <hr class="my-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
-                        <div class="sm:col-span-3 font-semibold text-gray-700">Sanitización del Sistema</div>
-                        <div class="sm:col-span-2">
-                            <select id="sanitizacion_status" name="sanitizacion" class="w-full">
-                                <option value="N/A" selected>No Aplica</option>
-                                <option value="Realizada">Realizada</option>
-                                <option value="No Realizada">No Realizada</option>
-                            </select>
+                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center font-semibold text-gray-700 mb-2">
+                            <div class="sm:col-span-1">Etapa</div>
+                            <div class="sm:col-span-2">Detalles del Componente</div>
+                            <div class="sm:col-span-2">Acción</div>
+                        </div>
+                        <div id="component-stage-container"></div>
+
+                        <template id="component-stage-template">
+                            <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2 component-stage">
+                                <div class="sm:col-span-1 stage-title"></div>
+                                <div class="sm:col-span-2">
+                                    <input type="text" class="w-full stage-details">
+                                </div>
+                                <div class="sm:col-span-2 flex space-x-4 stage-actions"></div>
+                            </div>
+                        </template>
+                        <!-- Sanitización -->
+                        <hr class="my-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
+                            <div class="sm:col-span-3 font-semibold text-gray-700">Sanitización del Sistema</div>
+                            <div class="sm:col-span-2">
+                                <select id="sanitizacion_status" name="sanitizacion" class="w-full">
+                                    <option value="N/A" selected>No Aplica</option>
+                                    <option value="Realizada">Realizada</option>
+                                    <option value="No Realizada">No Realizada</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Sección D: Resumen -->
                 <div class="form-section" id="section-d">
-                    <h2>D. Resumen y Recomendaciones Finales</h2>
-                     <p class="guide-text">Anote un resumen claro del trabajo realizado y las recomendaciones para el cliente.</p>
-                    <textarea id="resumen" name="resumen" rows="6" class="w-full border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" placeholder="Ej: Se realizó mantenimiento anual completo, reemplazando filtros de 1ª, 2ª y 5ª etapa. La presión de operación se normalizó de 2.5 a 4.5 bar. El equipo queda 100% operativo."></textarea>
+                    <div class="section-card">
+                        <div class="space-y-1">
+                            <h2>D. Resumen y Recomendaciones Finales</h2>
+                            <p class="guide-text">Anote un resumen claro del trabajo realizado y las recomendaciones para el cliente.</p>
+                        </div>
+                        <textarea id="resumen" name="resumen" rows="6" class="w-full border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" placeholder="Ej: Se realizó mantenimiento anual completo, reemplazando filtros de 1ª, 2ª y 5ª etapa. La presión de operación se normalizó de 2.5 a 4.5 bar. El equipo queda 100% operativo."></textarea>
+                    </div>
                 </div>
 
                 <!-- Botones de Acción -->
