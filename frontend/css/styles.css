@@ -39,68 +39,85 @@
         @apply text-xs font-semibold text-gray-400;
     }
 
-    .user-menu {
-        @apply relative inline-flex items-center justify-end;
+    .session-info {
+        @apply flex items-center justify-end gap-4 text-right;
     }
 
-    .user-menu__trigger {
-        @apply inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 font-semibold text-white shadow-md transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+    .session-info__details {
+        @apply flex flex-col items-end;
     }
 
-    .user-menu__trigger:hover {
-        @apply bg-blue-700;
-    }
-
-    .user-menu__initials {
-        @apply text-lg font-semibold uppercase;
-    }
-
-    .user-menu__dropdown {
-        @apply pointer-events-none absolute right-0 top-full z-30 mt-3 w-60 origin-top-right -translate-y-2 transform rounded-2xl border border-gray-200 bg-white p-4 shadow-xl opacity-0 transition-all duration-150 ease-out;
-    }
-
-    .user-menu--open .user-menu__dropdown {
-        @apply pointer-events-auto translate-y-0 opacity-100;
-    }
-
-    .user-menu__header {
-        @apply mb-3 flex flex-col gap-0.5;
-    }
-
-    .user-menu__welcome {
-        @apply text-xs font-medium uppercase tracking-wide text-gray-400;
-    }
-
-    .user-menu__name {
+    .session-info__name {
         @apply text-base font-semibold text-gray-800;
     }
 
-    .user-menu__separator {
-        @apply my-2 h-px bg-gray-200;
+    .session-info__role {
+        @apply text-sm font-medium text-gray-500;
     }
 
-    .user-menu__item {
-        @apply block w-full cursor-pointer rounded-xl border border-transparent bg-transparent px-3 py-2 text-left text-sm font-medium text-gray-700 no-underline transition-colors duration-150 ease-out;
+    .session-info__logout-button {
+        @apply inline-flex items-center justify-center rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
     }
 
-    .user-menu__item:hover {
-        @apply bg-blue-50 text-blue-700;
+    .session-info__logout-button:hover {
+        @apply bg-red-600;
     }
 
-    .user-menu__item:focus-visible {
-        @apply outline-none ring-2 ring-blue-400 ring-offset-2;
+    .session-info__logout-button:focus-visible {
+        @apply ring-red-300;
     }
 
-    .user-menu__logout {
-        @apply text-red-600;
+    .app-container {
+        @apply min-h-screen;
     }
 
-    .user-menu__logout:hover {
-        @apply bg-red-50 text-red-700;
+    .login-container {
+        @apply flex min-h-screen w-full items-center justify-center bg-slate-900 p-6;
+        background-image: radial-gradient(circle at top, rgba(59, 130, 246, 0.35), transparent 55%);
     }
 
-    .user-menu__logout:focus-visible {
-        @apply ring-red-400;
+    .login-card {
+        @apply w-full max-w-md rounded-2xl border border-white/10 bg-white/95 p-8 shadow-2xl backdrop-blur;
+    }
+
+    .login-card__header {
+        @apply mb-8 flex flex-col items-center gap-4 text-center;
+    }
+
+    .login-card__logo {
+        @apply h-16 w-auto;
+    }
+
+    .login-card__title {
+        @apply text-2xl font-semibold text-gray-800;
+    }
+
+    .login-card__subtitle {
+        @apply text-sm text-gray-500;
+    }
+
+    .login-form {
+        @apply flex flex-col gap-4;
+    }
+
+    .login-form__field {
+        @apply flex flex-col gap-1;
+    }
+
+    .login-form__label {
+        @apply text-sm font-medium text-gray-700;
+    }
+
+    .login-form__input {
+        @apply w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-700 shadow-sm transition-shadow duration-150 ease-out focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400;
+    }
+
+    .login-error {
+        @apply text-sm font-medium text-red-600;
+    }
+
+    .login-submit-button {
+        @apply mt-2 inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 ease-out hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2;
     }
 
     .tab-button {

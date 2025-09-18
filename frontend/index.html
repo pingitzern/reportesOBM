@@ -8,38 +8,30 @@
     <link rel="stylesheet" href="./css/styles.build.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-        <header class="app-header no-print">
-            <div class="app-header__column app-header__column--logo">
-                <img src="/OHM-agua.png" alt="Logo OHM Agua" class="app-header__logo-image">
-            </div>
-            <div class="app-header__column app-header__column--titles">
-                <h1 class="app-header__title">Sistema de Gestión de Mantenimientos RO</h1>
-                <p class="app-header__subtitle">ID del Protocolo: PMA-RO-RES-12</p>
-                <span id="app-version" class="app-header__version"></span>
-            </div>
-            <div class="app-header__column app-header__column--actions">
-                <div id="auth-user-panel" class="user-menu hidden">
-                    <button id="user-menu-button" type="button" class="user-menu__trigger" aria-haspopup="true" aria-expanded="false" disabled>
-                        <span id="user-menu-initials" class="user-menu__initials" aria-hidden="true"></span>
-                        <span class="sr-only">Abrir menú de usuario</span>
-                    </button>
-                    <div id="user-menu-dropdown" class="user-menu__dropdown" role="menu" aria-labelledby="user-menu-button">
-                        <div class="user-menu__header">
-                            <span class="user-menu__welcome">Sesión activa</span>
-                            <span id="current-user" class="user-menu__name"></span>
+<body class="bg-gray-100 min-h-screen">
+    <div class="app-container hidden">
+        <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+            <header class="app-header no-print">
+                <div class="app-header__column app-header__column--logo">
+                    <img src="/OHM-agua.png" alt="Logo OHM Agua" class="app-header__logo-image">
+                </div>
+                <div class="app-header__column app-header__column--titles">
+                    <h1 class="app-header__title">Sistema de Gestión de Mantenimientos RO</h1>
+                    <p class="app-header__subtitle">ID del Protocolo: PMA-RO-RES-12</p>
+                    <span id="app-version" class="app-header__version"></span>
+                </div>
+                <div class="app-header__column app-header__column--actions">
+                    <div id="auth-user-panel" class="session-info hidden" aria-live="polite">
+                        <div class="session-info__details">
+                            <span id="current-user" class="session-info__name"></span>
+                            <span id="current-user-role" class="session-info__role"></span>
                         </div>
-                        <div class="user-menu__separator" role="none"></div>
-                        <a href="#" class="user-menu__item" role="menuitem">Ayuda</a>
-                        <a href="#" class="user-menu__item" role="menuitem">Configuración</a>
-                        <button id="logout-button" type="button" class="user-menu__item user-menu__logout" role="menuitem" disabled>
+                        <button id="logout-button" type="button" class="session-info__logout-button" disabled>
                             Cerrar sesión
                         </button>
-                    </div>
-                </div>
-            </div>
-        </header>
+        </div>
+        </div>
+            </header>
 
         <div class="print-header">
             <div class="print-header-text">
@@ -411,28 +403,30 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
 
-    <div id="login-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div class="p-6 space-y-4">
-                <h2 class="text-2xl font-semibold text-gray-800">Iniciar sesión</h2>
-                <p class="text-sm text-gray-600">Ingresa tu mail registrado y la contraseña correspondiente.</p>
-                <form id="login-form" class="space-y-4">
-                    <div>
-                        <label for="login-mail" class="block text-sm font-medium text-gray-700 mb-1">Mail</label>
-                        <input id="login-mail" name="mail" type="email" autocomplete="username" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div>
-                        <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                        <input id="login-password" name="password" type="password" autocomplete="current-password" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <p id="login-error" class="text-sm text-red-600 hidden"></p>
-                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Iniciar sesión
-                    </button>
-                </form>
+    <div id="login-container" class="login-container">
+        <div class="login-card" role="dialog" aria-labelledby="login-title" aria-modal="true">
+            <div class="login-card__header">
+                <img src="/OHM-agua.png" alt="Logo OHM Agua" class="login-card__logo">
+                <h2 id="login-title" class="login-card__title">Iniciar sesión</h2>
+                <p class="login-card__subtitle">Ingresa tu mail registrado y la contraseña correspondiente.</p>
             </div>
+            <form id="login-form" class="login-form">
+                <div class="login-form__field">
+                    <label for="login-mail" class="login-form__label">Mail</label>
+                    <input id="login-mail" name="mail" type="email" autocomplete="username" class="login-form__input" required>
+                </div>
+                <div class="login-form__field">
+                    <label for="login-password" class="login-form__label">Contraseña</label>
+                    <input id="login-password" name="password" type="password" autocomplete="current-password" class="login-form__input" required>
+                </div>
+                <p id="login-error" class="login-error hidden" role="alert"></p>
+                <button type="submit" class="login-submit-button">
+                    Iniciar sesión
+                </button>
+            </form>
         </div>
     </div>
 
