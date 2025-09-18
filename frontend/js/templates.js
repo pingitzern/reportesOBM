@@ -37,19 +37,90 @@ const COMPONENT_STAGES = [
     },
 ];
 
-function createActionLabel(stageId, action) {
-    const label = document.createElement('label');
-    const radio = document.createElement('input');
-    radio.type = 'radio';
-    radio.name = `${stageId}_accion`;
-    radio.value = action.value;
-    if (action.default) {
-        radio.checked = true;
-        radio.defaultChecked = true;
+function createActionLabel(stageId, actions) {
+    if (!Array.isArray(actions) || actions.length === 0) {
+        return null;
     }
-    label.appendChild(radio);
-    label.appendChild(document.createTextNode(action.label));
-    return label;
+
+    const validActions = actions.filter(action => action && typeof action === 'object');
+    if (validActions.length === 0) {
+        return null;
+    }
+
+    const defaultAction =
+        validActions.find(action => action.default) || validActions[0];
+    const alternateAction =
+        validActions.find(action => action !== defaultAction) || defaultAction;
+
+    const fragment = document.createDocumentFragment();
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = `${stageId}_accion`;
+    hiddenInput.value = typeof defaultAction.value === 'string'
+        ? defaultAction.value
+        : String(defaultAction.value ?? '');
+    hiddenInput.defaultValue = hiddenInput.value;
+    fragment.appendChild(hiddenInput);
+
+    const toggleLabel = document.createElement('label');
+    toggleLabel.className = 'toggle-switch';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'toggle-switch-input';
+    checkbox.setAttribute('role', 'switch');
+    checkbox.setAttribute('aria-label', 'Alternar acción de la etapa');
+
+    const slider = document.createElement('span');
+    slider.className = 'toggle-switch-slider';
+    slider.setAttribute('aria-hidden', 'true');
+
+    toggleLabel.appendChild(checkbox);
+    toggleLabel.appendChild(slider);
+    fragment.appendChild(toggleLabel);
+
+    const statusText = document.createElement('span');
+    statusText.className = 'stage-action-status';
+    statusText.id = `${stageId}_accion_estado`;
+    fragment.appendChild(statusText);
+    checkbox.setAttribute('aria-labelledby', statusText.id);
+
+    const hasAlternateAction = alternateAction !== defaultAction;
+    const defaultChecked = hasAlternateAction ? false : true;
+    checkbox.checked = defaultChecked;
+    checkbox.defaultChecked = defaultChecked;
+
+    const updateState = (isChecked) => {
+        const action = isChecked ? alternateAction : defaultAction;
+        const value = typeof action.value === 'string' ? action.value : String(action.value ?? '');
+        const label = typeof action.label === 'string' ? action.label : String(action.label ?? '');
+        hiddenInput.value = value;
+        statusText.textContent = label;
+        checkbox.setAttribute('aria-checked', String(Boolean(isChecked)));
+    };
+
+    updateState(checkbox.checked);
+
+    checkbox.addEventListener('change', () => {
+        updateState(checkbox.checked);
+    });
+
+    const formElement = document.getElementById('maintenance-form');
+    if (formElement instanceof HTMLFormElement) {
+        formElement.addEventListener('reset', () => {
+            const scheduler =
+                typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+                    ? window.requestAnimationFrame.bind(window)
+                    : (callback) => setTimeout(callback, 0);
+            scheduler(() => {
+                checkbox.checked = checkbox.defaultChecked;
+                updateState(checkbox.checked);
+            });
+        });
+    }
+
+    return fragment;
 }
 
 function populateStage(fragment, stage) {
@@ -71,10 +142,10 @@ function populateStage(fragment, stage) {
     const actionsContainer = fragment.querySelector('.stage-actions');
     if (actionsContainer) {
         actionsContainer.innerHTML = '';
-        COMPONENT_STAGE_ACTIONS.forEach(action => {
-            const label = createActionLabel(stage.id, action);
-            actionsContainer.appendChild(label);
-        });
+        const actionControl = createActionLabel(stage.id, COMPONENT_STAGE_ACTIONS);
+        if (actionControl) {
+            actionsContainer.appendChild(actionControl);
+        }
     }
 }
 
