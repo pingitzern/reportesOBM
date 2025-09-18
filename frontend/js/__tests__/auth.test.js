@@ -54,43 +54,56 @@ const createClassList = initial => {
 const setupDocumentMock = () => {
     const panel = {
         classList: createClassList(['hidden']),
-        contains: jest.fn(() => false),
     };
     const userLabel = { textContent: '' };
+    const userRole = { textContent: '' };
     const logoutButton = { disabled: true, addEventListener: jest.fn() };
-    const userMenuButton = {
-        disabled: true,
-        attributes: { 'aria-expanded': 'false' },
-        setAttribute: jest.fn((name, value) => {
-            userMenuButton.attributes[name] = value;
-        }),
-        getAttribute: jest.fn(name => userMenuButton.attributes[name]),
-        addEventListener: jest.fn(),
-    };
-    const userMenuInitials = { textContent: '' };
     const mainView = { classList: createClassList([]) };
+    const loginContainer = { classList: createClassList([]) };
+    const form = {
+        addEventListener: jest.fn(),
+        querySelectorAll: jest.fn(() => []),
+        reset: jest.fn(),
+    };
+    const error = {
+        textContent: '',
+        classList: createClassList(['hidden']),
+    };
+    const mailInput = { value: '', focus: jest.fn() };
+    const passwordInput = { value: '' };
 
     const elements = {
         panel,
         userLabel,
+        userRole,
         logoutButton,
-        userMenuButton,
-        userMenuInitials,
         mainView,
+        loginContainer,
     };
 
     const map = {
         'auth-user-panel': panel,
         'current-user': userLabel,
+        'current-user-role': userRole,
         'logout-button': logoutButton,
-        'user-menu-button': userMenuButton,
-        'user-menu-initials': userMenuInitials,
+        'login-form': form,
+        'login-error': error,
+        'login-mail': mailInput,
+        'login-password': passwordInput,
+        'login-container': loginContainer,
     };
 
     global.document = {
-        getElementById: jest.fn(id => map[id] || null),
-        querySelector: jest.fn(selector => (selector === '.container' ? mainView : null)),
-        addEventListener: jest.fn(),
+        getElementById: jest.fn(id => (Object.prototype.hasOwnProperty.call(map, id) ? map[id] : null)),
+        querySelector: jest.fn(selector => {
+            if (selector === '.app-container') {
+                return mainView;
+            }
+            if (selector === '.login-container') {
+                return loginContainer;
+            }
+            return null;
+        }),
     };
 
     return elements;
@@ -137,10 +150,7 @@ describe('auth helpers', () => {
             expect(loadStoredAuth()).toEqual({ nombre: 'Ana', cargo: 'Analista', rol: 'Administradora' });
             expect(elements.panel.classList.contains('hidden')).toBe(false);
             expect(elements.userLabel.textContent).toBe('Ana');
-            expect(elements.userMenuInitials.textContent).toBe('A');
-            expect(elements.userMenuButton.disabled).toBe(false);
-            expect(elements.userMenuButton.attributes['aria-expanded']).toBe('false');
-            expect(elements.userMenuButton.attributes['aria-label']).toBe('Abrir menú de Ana');
+            expect(elements.userRole.textContent).toBe('Administradora');
             expect(elements.logoutButton.disabled).toBe(false);
         });
 
@@ -154,7 +164,7 @@ describe('auth helpers', () => {
             expect(storage.setItem).not.toHaveBeenCalled();
             expect(loadStoredAuth()).toEqual(auth);
             expect(elements.panel.classList.contains('hidden')).toBe(false);
-            expect(elements.userMenuInitials.textContent).toBe('L');
+            expect(elements.userRole.textContent).toBe('Usuario');
         });
     });
 
@@ -173,9 +183,7 @@ describe('auth helpers', () => {
             expect(loadStoredAuth()).toBeNull();
             expect(elements.panel.classList.contains('hidden')).toBe(true);
             expect(elements.userLabel.textContent).toBe('');
-            expect(elements.userMenuInitials.textContent).toBe('');
-            expect(elements.userMenuButton.disabled).toBe(true);
-            expect(elements.userMenuButton.attributes['aria-label']).toBe('Abrir menú de usuario');
+            expect(elements.userRole.textContent).toBe('');
             expect(elements.logoutButton.disabled).toBe(true);
         });
 
@@ -187,18 +195,14 @@ describe('auth helpers', () => {
             elements.panel.classList.remove('hidden');
             elements.logoutButton.disabled = false;
             elements.userLabel.textContent = 'Demo';
-            elements.userMenuInitials.textContent = 'D';
-            elements.userMenuButton.disabled = false;
-            elements.userMenuButton.attributes['aria-label'] = 'Abrir menú de Demo';
+            elements.userRole.textContent = 'Demo Rol';
 
             expect(() => clearStoredAuth()).not.toThrow();
             expect(storage.removeItem).not.toHaveBeenCalled();
             expect(elements.panel.classList.contains('hidden')).toBe(true);
             expect(elements.logoutButton.disabled).toBe(true);
             expect(elements.userLabel.textContent).toBe('');
-            expect(elements.userMenuInitials.textContent).toBe('');
-            expect(elements.userMenuButton.disabled).toBe(true);
-            expect(elements.userMenuButton.attributes['aria-label']).toBe('Abrir menú de usuario');
+            expect(elements.userRole.textContent).toBe('');
         });
     });
 
