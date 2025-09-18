@@ -417,19 +417,19 @@
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div class="p-6 space-y-4">
                 <h2 class="text-2xl font-semibold text-gray-800">Iniciar sesión</h2>
-                <p class="text-sm text-gray-600">Ingresa tu usuario registrado y el token de acceso otorgado por el administrador.</p>
+                <p class="text-sm text-gray-600">Ingresa tu mail registrado y la contraseña correspondiente.</p>
                 <form id="login-form" class="space-y-4">
                     <div>
-                        <label for="login-usuario" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-                        <input id="login-usuario" name="usuario" type="text" autocomplete="username" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <label for="login-mail" class="block text-sm font-medium text-gray-700 mb-1">Mail</label>
+                        <input id="login-mail" name="mail" type="email" autocomplete="username" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     </div>
                     <div>
-                        <label for="login-token" class="block text-sm font-medium text-gray-700 mb-1">Token</label>
-                        <input id="login-token" name="token" type="password" autocomplete="current-password" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        <input id="login-password" name="password" type="password" autocomplete="current-password" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     </div>
                     <p id="login-error" class="text-sm text-red-600 hidden"></p>
                     <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Ingresar
+                        Iniciar sesión
                     </button>
                 </form>
             </div>

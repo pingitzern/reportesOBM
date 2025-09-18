@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 
-const AUTH_STORAGE_KEY = 'reportesOBM.auth';
+const AUTH_STORAGE_KEY = 'reportesOBM.user';
 const API_URL = 'https://auth.example.com/sesion';
 
 const loadAuthModule = async ({ apiUrl = API_URL } = {}) => {
@@ -68,6 +68,7 @@ const setupDocumentMock = () => {
         addEventListener: jest.fn(),
     };
     const userMenuInitials = { textContent: '' };
+    const mainView = { classList: createClassList([]) };
 
     const elements = {
         panel,
@@ -75,6 +76,7 @@ const setupDocumentMock = () => {
         logoutButton,
         userMenuButton,
         userMenuInitials,
+        mainView,
     };
 
     const map = {
@@ -87,6 +89,7 @@ const setupDocumentMock = () => {
 
     global.document = {
         getElementById: jest.fn(id => map[id] || null),
+        querySelector: jest.fn(selector => (selector === '.container' ? mainView : null)),
         addEventListener: jest.fn(),
     };
 
@@ -105,6 +108,7 @@ describe('auth helpers', () => {
     beforeEach(() => {
         jest.resetModules();
         storage = createStorageMock();
+        global.sessionStorage = storage;
         global.localStorage = storage;
         elements = setupDocumentMock();
         global.fetch = jest.fn();
@@ -113,6 +117,7 @@ describe('auth helpers', () => {
     afterEach(() => {
         jest.clearAllMocks();
         delete global.fetch;
+        delete global.sessionStorage;
         delete global.localStorage;
         delete global.document;
         delete process.env.API_URL;
@@ -121,12 +126,15 @@ describe('auth helpers', () => {
     describe('persistAuth', () => {
         test('guarda la sesión y actualiza el panel de usuario', async () => {
             const { loadStoredAuth, persistAuth } = await getTestables();
-            const auth = { token: 'token-123', usuario: 'Ana' };
+            const auth = { nombre: ' Ana ', cargo: ' Analista ', rol: 'Administradora' };
 
             persistAuth(auth);
 
-            expect(storage.setItem).toHaveBeenCalledWith(AUTH_STORAGE_KEY, JSON.stringify(auth));
-            expect(loadStoredAuth()).toEqual(auth);
+            expect(storage.setItem).toHaveBeenCalledWith(
+                AUTH_STORAGE_KEY,
+                JSON.stringify({ Nombre: 'Ana', Cargo: 'Analista', Rol: 'Administradora' }),
+            );
+            expect(loadStoredAuth()).toEqual({ nombre: 'Ana', cargo: 'Analista', rol: 'Administradora' });
             expect(elements.panel.classList.contains('hidden')).toBe(false);
             expect(elements.userLabel.textContent).toBe('Ana');
             expect(elements.userMenuInitials.textContent).toBe('A');
@@ -137,9 +145,10 @@ describe('auth helpers', () => {
         });
 
         test('no falla cuando localStorage no está disponible', async () => {
+            delete global.sessionStorage;
             delete global.localStorage;
             const { loadStoredAuth, persistAuth } = await getTestables();
-            const auth = { token: 'token-456', usuario: 'Luis' };
+            const auth = { nombre: 'Luis', cargo: 'Soporte', rol: 'Usuario' };
 
             expect(() => persistAuth(auth)).not.toThrow();
             expect(storage.setItem).not.toHaveBeenCalled();
@@ -152,7 +161,7 @@ describe('auth helpers', () => {
     describe('clearStoredAuth', () => {
         test('elimina la sesión almacenada y oculta el panel', async () => {
             const { clearStoredAuth, loadStoredAuth, persistAuth } = await getTestables();
-            const auth = { token: 'token-789', usuario: 'Carla' };
+            const auth = { nombre: 'Carla', cargo: 'Supervisora', rol: 'Gestora' };
 
             persistAuth(auth);
             expect(loadStoredAuth()).toEqual(auth);
@@ -171,6 +180,7 @@ describe('auth helpers', () => {
         });
 
         test('no falla cuando no existe almacenamiento disponible', async () => {
+            delete global.sessionStorage;
             delete global.localStorage;
             const { clearStoredAuth } = await getTestables();
 
@@ -194,7 +204,7 @@ describe('auth helpers', () => {
 
     describe('loadStoredAuth', () => {
         test('devuelve la sesión válida desde localStorage', async () => {
-            const storedAuth = { token: 'token-abc', usuario: 'Marina' };
+            const storedAuth = { Nombre: 'Marina', Cargo: 'Operaria', Rol: 'Coordinadora' };
             storage.__store[AUTH_STORAGE_KEY] = JSON.stringify(storedAuth);
 
             const { loadStoredAuth } = await getTestables();
@@ -202,11 +212,11 @@ describe('auth helpers', () => {
             const auth = loadStoredAuth();
 
             expect(storage.getItem).toHaveBeenCalledWith(AUTH_STORAGE_KEY);
-            expect(auth).toEqual(storedAuth);
+            expect(auth).toEqual({ nombre: 'Marina', cargo: 'Operaria', rol: 'Coordinadora' });
         });
 
         test('usa la sesión en caché sin volver a consultar el almacenamiento', async () => {
-            const storedAuth = { token: 'token-cache', usuario: 'Pedro' };
+            const storedAuth = { Nombre: 'Pedro', Cargo: 'Inspector', Rol: 'Usuario' };
             storage.__store[AUTH_STORAGE_KEY] = JSON.stringify(storedAuth);
 
             const { loadStoredAuth } = await getTestables();
@@ -233,7 +243,7 @@ describe('auth helpers', () => {
         });
 
         test('devuelve null si faltan datos obligatorios', async () => {
-            storage.__store[AUTH_STORAGE_KEY] = JSON.stringify({ token: 'token-only' });
+            storage.__store[AUTH_STORAGE_KEY] = JSON.stringify({ Nombre: 'SoloNombre' });
 
             const { loadStoredAuth } = await getTestables();
 
@@ -243,8 +253,11 @@ describe('auth helpers', () => {
 
     describe('requestAuthentication', () => {
         test('envía credenciales y devuelve el usuario autenticado', async () => {
-            const payload = { usuario: '  usuarioLocal  ', token: '  tokenLocal  ' };
-            const serverResponse = { result: 'success', data: { usuario: '  Usuario Remoto  ' } };
+            const payload = { mail: '  usuario@example.com  ', password: '  tokenLocal  ' };
+            const serverResponse = {
+                result: 'success',
+                data: { Nombre: '  Usuario Remoto  ', Cargo: 'Operaciones', Rol: 'Supervisor' },
+            };
             const jsonMock = jest.fn().mockResolvedValue(serverResponse);
             global.fetch.mockResolvedValue({ ok: true, status: 200, json: jsonMock });
 
@@ -257,19 +270,20 @@ describe('auth helpers', () => {
                 headers: { 'Content-Type': 'text/plain; charset=utf-8' },
                 body: JSON.stringify({
                     action: 'login',
-                    usuario: 'usuarioLocal',
-                    token: 'tokenLocal',
+                    mail: 'usuario@example.com',
+                    password: 'tokenLocal',
                 }),
             });
             expect(jsonMock).toHaveBeenCalledTimes(1);
-            expect(auth).toEqual({ token: 'tokenLocal', usuario: 'Usuario Remoto' });
+            expect(auth).toEqual({ nombre: 'Usuario Remoto', cargo: 'Operaciones', rol: 'Supervisor' });
         });
 
         test('lanza error cuando la API responde con estado HTTP fallido', async () => {
             global.fetch.mockResolvedValue({ ok: false, status: 401, json: jest.fn() });
             const { requestAuthentication } = await getTestables();
 
-            await expect(requestAuthentication({ usuario: 'Ana', token: '123' })).rejects.toThrow('HTTP 401');
+            await expect(requestAuthentication({ mail: 'ana@example.com', password: '123' }))
+                .rejects.toThrow('Mail o contraseña incorrectos');
         });
 
         test('lanza error cuando la respuesta indica fallo', async () => {
@@ -277,21 +291,24 @@ describe('auth helpers', () => {
             global.fetch.mockResolvedValue({ ok: true, status: 200, json: jest.fn().mockResolvedValue(serverResponse) });
             const { requestAuthentication } = await getTestables();
 
-            await expect(requestAuthentication({ usuario: 'Ana', token: '123' })).rejects.toThrow('Credenciales inválidas');
+            await expect(requestAuthentication({ mail: 'ana@example.com', password: '123' }))
+                .rejects.toThrow('Mail o contraseña incorrectos');
         });
 
         test('lanza error cuando la respuesta no es JSON válido', async () => {
             global.fetch.mockResolvedValue({ ok: true, status: 200, json: jest.fn().mockRejectedValue(new Error('parse error')) });
             const { requestAuthentication } = await getTestables();
 
-            await expect(requestAuthentication({ usuario: 'Ana', token: '123' })).rejects.toThrow('No se pudo interpretar la respuesta de autenticación.');
+            await expect(requestAuthentication({ mail: 'ana@example.com', password: '123' }))
+                .rejects.toThrow('No se pudo interpretar la respuesta de autenticación.');
         });
 
         test('lanza error cuando el servidor no responde', async () => {
             global.fetch.mockRejectedValue(new TypeError('failed to fetch'));
             const { requestAuthentication } = await getTestables();
 
-            await expect(requestAuthentication({ usuario: 'Ana', token: '123' })).rejects.toThrow('No se pudo conectar con el servidor de autenticación.');
+            await expect(requestAuthentication({ mail: 'ana@example.com', password: '123' }))
+                .rejects.toThrow('No se pudo conectar con el servidor de autenticación.');
         });
 
         test('lanza error si no se recibe el usuario autenticado', async () => {
@@ -299,14 +316,16 @@ describe('auth helpers', () => {
             global.fetch.mockResolvedValue({ ok: true, status: 200, json: jest.fn().mockResolvedValue(serverResponse) });
             const { requestAuthentication } = await getTestables();
 
-            await expect(requestAuthentication({ usuario: '   ', token: 'abc' })).rejects.toThrow('La respuesta del servidor no incluye el usuario autenticado.');
+            await expect(requestAuthentication({ mail: '   ', password: 'abc' }))
+                .rejects.toThrow('Mail o contraseña incorrectos');
         });
 
         test('lanza error cuando API_URL no está configurada', async () => {
             const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
             const { requestAuthentication } = await getTestables({ apiUrl: '' });
 
-            await expect(requestAuthentication({ usuario: 'Ana', token: '123' })).rejects.toThrow('API_URL no está configurada.');
+            await expect(requestAuthentication({ mail: 'ana@example.com', password: '123' }))
+                .rejects.toThrow('API_URL no está configurada.');
             expect(global.fetch).not.toHaveBeenCalled();
 
             warnSpy.mockRestore();

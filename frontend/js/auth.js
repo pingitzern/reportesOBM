@@ -1,8 +1,8 @@
 import { API_URL } from './config.js';
 
-const STORAGE_KEY = 'reportesOBM.auth';
+const STORAGE_KEY = 'reportesOBM.user';
 
-let cachedAuth = null;
+let cachedUser = null;
 let listenersBound = false;
 let pendingAuth = null;
 
@@ -94,18 +94,58 @@ function handleDocumentKeydown(event) {
 }
 
 function getStorage() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-        return window.localStorage;
+    if (typeof window !== 'undefined') {
+        if (window.sessionStorage) {
+            return window.sessionStorage;
+        }
+        if (window.localStorage) {
+            return window.localStorage;
+        }
     }
-    if (typeof globalThis !== 'undefined' && globalThis.localStorage) {
-        return globalThis.localStorage;
+    if (typeof globalThis !== 'undefined') {
+        if (globalThis.sessionStorage) {
+            return globalThis.sessionStorage;
+        }
+        if (globalThis.localStorage) {
+            return globalThis.localStorage;
+        }
     }
     return null;
 }
 
+function normalizeUser(user) {
+    if (!user || typeof user !== 'object') {
+        return null;
+    }
+
+    const nombre = typeof user.nombre === 'string'
+        ? user.nombre.trim()
+        : typeof user.Nombre === 'string'
+            ? user.Nombre.trim()
+            : '';
+
+    const cargo = typeof user.cargo === 'string'
+        ? user.cargo.trim()
+        : typeof user.Cargo === 'string'
+            ? user.Cargo.trim()
+            : '';
+
+    const rol = typeof user.rol === 'string'
+        ? user.rol.trim()
+        : typeof user.Rol === 'string'
+            ? user.Rol.trim()
+            : '';
+
+    if (!nombre || !rol) {
+        return null;
+    }
+
+    return { nombre, cargo, rol };
+}
+
 function loadStoredAuth() {
-    if (cachedAuth) {
-        return cachedAuth;
+    if (cachedUser) {
+        return cachedUser;
     }
 
     const storage = getStorage();
@@ -120,13 +160,10 @@ function loadStoredAuth() {
 
     try {
         const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object') {
-            const token = typeof parsed.token === 'string' ? parsed.token : '';
-            const usuario = typeof parsed.usuario === 'string' ? parsed.usuario : '';
-            if (token && usuario) {
-                cachedAuth = { token, usuario };
-                return cachedAuth;
-            }
+        const normalized = normalizeUser(parsed);
+        if (normalized) {
+            cachedUser = normalized;
+            return cachedUser;
         }
     } catch (error) {
         console.warn('[auth] No se pudo leer la sesión almacenada:', error);
@@ -136,16 +173,26 @@ function loadStoredAuth() {
 }
 
 function persistAuth(auth) {
-    cachedAuth = auth;
+    const normalized = normalizeUser(auth);
+    if (!normalized) {
+        throw new Error('Los datos de usuario son inválidos.');
+    }
+
+    cachedUser = normalized;
     const storage = getStorage();
     if (storage) {
-        storage.setItem(STORAGE_KEY, JSON.stringify(auth));
+        const payload = {
+            Nombre: normalized.nombre,
+            Cargo: normalized.cargo,
+            Rol: normalized.rol,
+        };
+        storage.setItem(STORAGE_KEY, JSON.stringify(payload));
     }
-    updateUserPanel(auth);
+    updateUserPanel(normalized);
 }
 
 function clearStoredAuth() {
-    cachedAuth = null;
+    cachedUser = null;
     const storage = getStorage();
     if (storage) {
         storage.removeItem(STORAGE_KEY);
@@ -162,18 +209,19 @@ function getElements() {
         modal: document.getElementById('login-modal'),
         form: document.getElementById('login-form'),
         error: document.getElementById('login-error'),
-        usuarioInput: document.getElementById('login-usuario'),
-        tokenInput: document.getElementById('login-token'),
+        mailInput: document.getElementById('login-mail'),
+        passwordInput: document.getElementById('login-password'),
         logoutButton: document.getElementById('logout-button'),
         panel: document.getElementById('auth-user-panel'),
         userLabel: document.getElementById('current-user'),
         userMenuButton: document.getElementById('user-menu-button'),
         userMenuInitials: document.getElementById('user-menu-initials'),
+        mainView: document.querySelector('.container'),
     };
 }
 
 function showLoginModal() {
-    const { modal, error, usuarioInput } = getElements();
+    const { modal, error, mailInput } = getElements();
     if (modal) {
         modal.classList.remove('hidden');
     }
@@ -181,8 +229,8 @@ function showLoginModal() {
         error.textContent = '';
         error.classList.add('hidden');
     }
-    if (usuarioInput) {
-        usuarioInput.focus();
+    if (mailInput) {
+        mailInput.focus();
     }
 }
 
@@ -197,6 +245,19 @@ function hideLoginModal() {
     if (error) {
         error.textContent = '';
         error.classList.add('hidden');
+    }
+}
+
+function setMainViewVisible(isVisible) {
+    const { mainView } = getElements();
+    if (!mainView) {
+        return;
+    }
+
+    if (isVisible) {
+        mainView.classList.remove('hidden');
+    } else {
+        mainView.classList.add('hidden');
     }
 }
 
@@ -216,7 +277,7 @@ function setFormLoading(form, isLoading) {
             submitButton.textContent = 'Ingresando...';
             submitButton.disabled = true;
         } else {
-            submitButton.textContent = submitButton.dataset.originalText || 'Ingresar';
+            submitButton.textContent = submitButton.dataset.originalText || 'Iniciar sesión';
             submitButton.disabled = false;
             delete submitButton.dataset.originalText;
         }
@@ -240,15 +301,15 @@ function updateUserPanel(auth) {
 
     setUserMenuOpen(false);
 
-    const usuario = typeof auth?.usuario === 'string' ? auth.usuario.trim() : '';
+    const nombre = typeof auth?.nombre === 'string' ? auth.nombre.trim() : '';
 
-    if (usuario) {
-        const initials = getUserInitials(usuario) || usuario.charAt(0).toUpperCase();
+    if (nombre) {
+        const initials = getUserInitials(nombre) || nombre.charAt(0).toUpperCase();
 
-        userLabel.textContent = usuario;
+        userLabel.textContent = nombre;
         userMenuInitials.textContent = initials;
         userMenuButton.disabled = false;
-        userMenuButton.setAttribute('aria-label', `Abrir menú de ${usuario}`);
+        userMenuButton.setAttribute('aria-label', `Abrir menú de ${nombre}`);
         panel.classList.remove('hidden');
         logoutButton.disabled = false;
     } else {
@@ -282,22 +343,22 @@ function createPendingAuthPromise() {
     return promise;
 }
 
-function resolvePendingAuth(usuario) {
+function resolvePendingAuth(user) {
     if (pendingAuth && typeof pendingAuth.resolve === 'function') {
-        pendingAuth.resolve(usuario);
+        pendingAuth.resolve(user);
     }
     pendingAuth = null;
 }
 
-async function requestAuthentication({ usuario, token }) {
+async function requestAuthentication({ mail, password }) {
     if (!API_URL) {
         throw new Error('API_URL no está configurada.');
     }
 
     const payload = {
         action: 'login',
-        usuario: typeof usuario === 'string' ? usuario.trim() : '',
-        token: typeof token === 'string' ? token.trim() : '',
+        mail: typeof mail === 'string' ? mail.trim() : '',
+        password: typeof password === 'string' ? password.trim() : '',
     };
 
     let response;
@@ -320,6 +381,9 @@ async function requestAuthentication({ usuario, token }) {
     }
 
     if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Mail o contraseña incorrectos');
+        }
         throw new Error(`HTTP ${response.status}`);
     }
 
@@ -331,46 +395,40 @@ async function requestAuthentication({ usuario, token }) {
     }
 
     if (result.result !== 'success') {
-        throw new Error(result.error || 'Credenciales inválidas.');
+        throw new Error('Mail o contraseña incorrectos');
     }
 
-    const data = result.data || {};
-    const resolvedUser = typeof data.usuario === 'string' && data.usuario.trim()
-        ? data.usuario.trim()
-        : payload.usuario;
-
-    if (!resolvedUser) {
-        throw new Error('La respuesta del servidor no incluye el usuario autenticado.');
+    const normalized = normalizeUser(result.data);
+    if (!normalized) {
+        throw new Error('Mail o contraseña incorrectos');
     }
 
-    return {
-        token: payload.token,
-        usuario: resolvedUser,
-    };
+    return normalized;
 }
 
 async function handleLoginSubmit(event) {
     event.preventDefault();
 
-    const { form, tokenInput, usuarioInput } = getElements();
+    const { form, mailInput, passwordInput } = getElements();
     if (!form || !(form instanceof HTMLFormElement)) {
         return;
     }
 
-    const token = tokenInput?.value || '';
-    const usuario = usuarioInput?.value || '';
+    const mail = mailInput?.value || '';
+    const password = passwordInput?.value || '';
 
-    if (!token.trim() || !usuario.trim()) {
-        displayError('Completa el usuario y el token de acceso.');
+    if (!mail.trim() || !password.trim()) {
+        displayError('Completa el mail y la contraseña.');
         return;
     }
 
     setFormLoading(form, true);
     try {
-        const auth = await requestAuthentication({ token, usuario });
-        persistAuth(auth);
+        const user = await requestAuthentication({ mail, password });
+        persistAuth(user);
+        setMainViewVisible(true);
         hideLoginModal();
-        resolvePendingAuth(auth.usuario);
+        resolvePendingAuth(user);
     } catch (error) {
         displayError(error?.message || 'No se pudo iniciar sesión.');
     } finally {
@@ -384,6 +442,7 @@ function handleLogout(event) {
     }
     setUserMenuOpen(false);
     clearStoredAuth();
+    setMainViewVisible(false);
     showLoginModal();
     createPendingAuthPromise();
 }
@@ -411,30 +470,32 @@ function bindEventListeners() {
     listenersBound = true;
 }
 
-export function getAuthPayload() {
-    const auth = loadStoredAuth();
-    if (!auth || !auth.token || !auth.usuario) {
-        throw new Error('Sesión no autenticada. Vuelve a iniciar sesión.');
-    }
-    return { token: auth.token, usuario: auth.usuario };
+export function getCurrentUser() {
+    return loadStoredAuth();
+}
+
+export function getCurrentUserName() {
+    const user = loadStoredAuth();
+    return user?.nombre || '';
+}
+
+export function getCurrentUserRole() {
+    const user = loadStoredAuth();
+    return user?.rol || '';
 }
 
 export async function initializeAuth() {
     bindEventListeners();
 
-    const existingAuth = loadStoredAuth();
-    if (existingAuth && existingAuth.token && existingAuth.usuario) {
-        try {
-            const auth = await requestAuthentication(existingAuth);
-            persistAuth(auth);
-            hideLoginModal();
-            return auth.usuario;
-        } catch (error) {
-            console.warn('[auth] Sesión almacenada inválida:', error);
-            clearStoredAuth();
-        }
+    const storedUser = loadStoredAuth();
+    if (storedUser) {
+        updateUserPanel(storedUser);
+        setMainViewVisible(true);
+        hideLoginModal();
+        return storedUser;
     }
 
+    setMainViewVisible(false);
     showLoginModal();
     return createPendingAuthPromise();
 }
@@ -444,13 +505,14 @@ export function logout() {
 }
 
 export async function requireAuthentication() {
-    try {
-        const auth = getAuthPayload();
-        return auth.usuario;
-    } catch (error) {
-        showLoginModal();
-        return createPendingAuthPromise();
+    const user = loadStoredAuth();
+    if (user) {
+        return user;
     }
+
+    setMainViewVisible(false);
+    showLoginModal();
+    return createPendingAuthPromise();
 }
 
 export const __testables__ = {

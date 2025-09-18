@@ -1,16 +1,9 @@
 import { API_URL } from './config.js';
-import { getAuthPayload } from './auth.js';
 import { state } from './state.js';
 
-async function postJSON(payload, { requireAuth = true } = {}) {
+async function postJSON(payload) {
     if (!API_URL) {
         throw new Error('API_URL no está configurada.');
-    }
-
-    const requestPayload = { ...payload };
-
-    if (requireAuth) {
-        Object.assign(requestPayload, getAuthPayload());
     }
 
     let response;
@@ -20,7 +13,7 @@ async function postJSON(payload, { requireAuth = true } = {}) {
             headers: {
                 'Content-Type': 'text/plain; charset=utf-8',
             },
-            body: JSON.stringify(requestPayload),
+            body: JSON.stringify(payload),
         });
     } catch (error) {
         if (error?.name === 'AbortError') {
