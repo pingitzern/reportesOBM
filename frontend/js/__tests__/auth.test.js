@@ -52,24 +52,42 @@ const createClassList = initial => {
 };
 
 const setupDocumentMock = () => {
-    const panel = { classList: createClassList(['hidden']) };
+    const panel = {
+        classList: createClassList(['hidden']),
+        contains: jest.fn(() => false),
+    };
     const userLabel = { textContent: '' };
-    const logoutButton = { disabled: true };
+    const logoutButton = { disabled: true, addEventListener: jest.fn() };
+    const userMenuButton = {
+        disabled: true,
+        attributes: { 'aria-expanded': 'false' },
+        setAttribute: jest.fn((name, value) => {
+            userMenuButton.attributes[name] = value;
+        }),
+        getAttribute: jest.fn(name => userMenuButton.attributes[name]),
+        addEventListener: jest.fn(),
+    };
+    const userMenuInitials = { textContent: '' };
 
     const elements = {
         panel,
         userLabel,
         logoutButton,
+        userMenuButton,
+        userMenuInitials,
     };
 
     const map = {
         'auth-user-panel': panel,
         'current-user': userLabel,
         'logout-button': logoutButton,
+        'user-menu-button': userMenuButton,
+        'user-menu-initials': userMenuInitials,
     };
 
     global.document = {
         getElementById: jest.fn(id => map[id] || null),
+        addEventListener: jest.fn(),
     };
 
     return elements;
@@ -110,7 +128,11 @@ describe('auth helpers', () => {
             expect(storage.setItem).toHaveBeenCalledWith(AUTH_STORAGE_KEY, JSON.stringify(auth));
             expect(loadStoredAuth()).toEqual(auth);
             expect(elements.panel.classList.contains('hidden')).toBe(false);
-            expect(elements.userLabel.textContent).toBe('Sesión activa: Ana');
+            expect(elements.userLabel.textContent).toBe('Ana');
+            expect(elements.userMenuInitials.textContent).toBe('A');
+            expect(elements.userMenuButton.disabled).toBe(false);
+            expect(elements.userMenuButton.attributes['aria-expanded']).toBe('false');
+            expect(elements.userMenuButton.attributes['aria-label']).toBe('Abrir menú de Ana');
             expect(elements.logoutButton.disabled).toBe(false);
         });
 
@@ -123,6 +145,7 @@ describe('auth helpers', () => {
             expect(storage.setItem).not.toHaveBeenCalled();
             expect(loadStoredAuth()).toEqual(auth);
             expect(elements.panel.classList.contains('hidden')).toBe(false);
+            expect(elements.userMenuInitials.textContent).toBe('L');
         });
     });
 
@@ -141,6 +164,9 @@ describe('auth helpers', () => {
             expect(loadStoredAuth()).toBeNull();
             expect(elements.panel.classList.contains('hidden')).toBe(true);
             expect(elements.userLabel.textContent).toBe('');
+            expect(elements.userMenuInitials.textContent).toBe('');
+            expect(elements.userMenuButton.disabled).toBe(true);
+            expect(elements.userMenuButton.attributes['aria-label']).toBe('Abrir menú de usuario');
             expect(elements.logoutButton.disabled).toBe(true);
         });
 
@@ -150,13 +176,19 @@ describe('auth helpers', () => {
 
             elements.panel.classList.remove('hidden');
             elements.logoutButton.disabled = false;
-            elements.userLabel.textContent = 'Sesión activa: Demo';
+            elements.userLabel.textContent = 'Demo';
+            elements.userMenuInitials.textContent = 'D';
+            elements.userMenuButton.disabled = false;
+            elements.userMenuButton.attributes['aria-label'] = 'Abrir menú de Demo';
 
             expect(() => clearStoredAuth()).not.toThrow();
             expect(storage.removeItem).not.toHaveBeenCalled();
             expect(elements.panel.classList.contains('hidden')).toBe(true);
             expect(elements.logoutButton.disabled).toBe(true);
             expect(elements.userLabel.textContent).toBe('');
+            expect(elements.userMenuInitials.textContent).toBe('');
+            expect(elements.userMenuButton.disabled).toBe(true);
+            expect(elements.userMenuButton.attributes['aria-label']).toBe('Abrir menú de usuario');
         });
     });
 

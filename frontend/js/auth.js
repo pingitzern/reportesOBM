@@ -6,6 +6,93 @@ let cachedAuth = null;
 let listenersBound = false;
 let pendingAuth = null;
 
+function getUserInitials(name) {
+    if (typeof name !== 'string') {
+        return '';
+    }
+
+    const parts = name
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (parts.length === 0) {
+        return '';
+    }
+
+    const initials = parts
+        .slice(0, 2)
+        .map(part => part.charAt(0).toUpperCase())
+        .join('');
+
+    return initials;
+}
+
+function setUserMenuOpen(isOpen) {
+    const { panel, userMenuButton } = getElements();
+    if (!panel || !userMenuButton) {
+        return;
+    }
+
+    if (isOpen) {
+        panel.classList.add('user-menu--open');
+        userMenuButton.setAttribute('aria-expanded', 'true');
+    } else {
+        panel.classList.remove('user-menu--open');
+        userMenuButton.setAttribute('aria-expanded', 'false');
+    }
+}
+
+function toggleUserMenu() {
+    const { panel } = getElements();
+    if (!panel || panel.classList.contains('hidden')) {
+        return;
+    }
+
+    const isOpen = panel.classList.contains('user-menu--open');
+    setUserMenuOpen(!isOpen);
+}
+
+function handleUserMenuButtonClick(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const { userMenuButton } = getElements();
+    if (!userMenuButton || userMenuButton.disabled) {
+        return;
+    }
+
+    toggleUserMenu();
+}
+
+function handleDocumentClick(event) {
+    const { panel } = getElements();
+    if (!panel || panel.classList.contains('hidden') || !panel.classList.contains('user-menu--open')) {
+        return;
+    }
+
+    if (typeof panel.contains === 'function' && panel.contains(event.target)) {
+        return;
+    }
+
+    setUserMenuOpen(false);
+}
+
+function handleDocumentKeydown(event) {
+    if (event?.key !== 'Escape') {
+        return;
+    }
+
+    const { panel } = getElements();
+    if (!panel || panel.classList.contains('hidden') || !panel.classList.contains('user-menu--open')) {
+        return;
+    }
+
+    setUserMenuOpen(false);
+}
+
 function getStorage() {
     if (typeof window !== 'undefined' && window.localStorage) {
         return window.localStorage;
@@ -80,6 +167,8 @@ function getElements() {
         logoutButton: document.getElementById('logout-button'),
         panel: document.getElementById('auth-user-panel'),
         userLabel: document.getElementById('current-user'),
+        userMenuButton: document.getElementById('user-menu-button'),
+        userMenuInitials: document.getElementById('user-menu-initials'),
     };
 }
 
@@ -144,17 +233,29 @@ function displayError(message) {
 }
 
 function updateUserPanel(auth) {
-    const { panel, userLabel, logoutButton } = getElements();
-    if (!panel || !userLabel || !logoutButton) {
+    const { panel, userLabel, logoutButton, userMenuButton, userMenuInitials } = getElements();
+    if (!panel || !userLabel || !logoutButton || !userMenuButton || !userMenuInitials) {
         return;
     }
 
-    if (auth && auth.usuario) {
-        userLabel.textContent = `Sesión activa: ${auth.usuario}`;
+    setUserMenuOpen(false);
+
+    const usuario = typeof auth?.usuario === 'string' ? auth.usuario.trim() : '';
+
+    if (usuario) {
+        const initials = getUserInitials(usuario) || usuario.charAt(0).toUpperCase();
+
+        userLabel.textContent = usuario;
+        userMenuInitials.textContent = initials;
+        userMenuButton.disabled = false;
+        userMenuButton.setAttribute('aria-label', `Abrir menú de ${usuario}`);
         panel.classList.remove('hidden');
         logoutButton.disabled = false;
     } else {
         userLabel.textContent = '';
+        userMenuInitials.textContent = '';
+        userMenuButton.disabled = true;
+        userMenuButton.setAttribute('aria-label', 'Abrir menú de usuario');
         panel.classList.add('hidden');
         logoutButton.disabled = true;
     }
@@ -281,6 +382,7 @@ function handleLogout(event) {
     if (event) {
         event.preventDefault();
     }
+    setUserMenuOpen(false);
     clearStoredAuth();
     showLoginModal();
     createPendingAuthPromise();
@@ -291,12 +393,19 @@ function bindEventListeners() {
         return;
     }
 
-    const { form, logoutButton } = getElements();
+    const { form, logoutButton, userMenuButton } = getElements();
     if (form) {
         form.addEventListener('submit', handleLoginSubmit);
     }
     if (logoutButton) {
         logoutButton.addEventListener('click', handleLogout);
+    }
+    if (userMenuButton) {
+        userMenuButton.addEventListener('click', handleUserMenuButtonClick);
+    }
+    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+        document.addEventListener('click', handleDocumentClick);
+        document.addEventListener('keydown', handleDocumentKeydown);
     }
 
     listenersBound = true;
