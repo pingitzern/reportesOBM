@@ -13,6 +13,7 @@
     "lint": "eslint \"frontend/js/**/*.js\"",
     "format": "prettier --write \"frontend/js/**/*.{js,json,css,html}\"",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
+    "deploy": "npm run build && gh-pages -d dist"
   },
   "devDependencies": {
     "@jest/environment-jsdom": "npm:jest-environment-jsdom@^30.1.2",
