@@ -157,11 +157,15 @@ function refreshClientDetailFieldState(element, { lockWhenFilled = false } = {})
 
     if (lockWhenFilled) {
         element.readOnly = hasValue;
+        element.disabled = hasValue;
     } else if (!hasValue) {
         element.readOnly = false;
+        element.disabled = false;
     }
 
-    if (element.readOnly && hasValue) {
+    const isLocked = hasValue && (element.disabled || element.readOnly);
+
+    if (isLocked) {
         element.classList.add(CLIENT_DETAIL_LOCKED_CLASS);
     } else {
         element.classList.remove(CLIENT_DETAIL_LOCKED_CLASS);

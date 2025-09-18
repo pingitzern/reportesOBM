@@ -180,6 +180,7 @@ describe('selección de clientes', () => {
 
         [direccionInput, telefonoInput, emailInput, cuitInput].forEach(input => {
             expect(input.readOnly).toBe(true);
+            expect(input.disabled).toBe(true);
             expect(input.classList.contains('client-detail-locked')).toBe(true);
             expect(input.classList.contains('client-detail-empty')).toBe(false);
         });
@@ -212,7 +213,9 @@ describe('selección de clientes', () => {
         expect(document.getElementById('cliente_cuit').value).toBe('');
         expect(document.getElementById('cliente_cuit').classList.contains('client-detail-empty')).toBe(true);
         expect(document.getElementById('cliente_cuit').readOnly).toBe(false);
+        expect(document.getElementById('cliente_cuit').disabled).toBe(false);
         expect(document.getElementById('direccion').readOnly).toBe(true);
+        expect(document.getElementById('direccion').disabled).toBe(true);
 
         select.selectedIndex = 2;
         expect(select.selectedIndex).toBe(2);
@@ -224,7 +227,9 @@ describe('selección de clientes', () => {
         expect(document.getElementById('cliente_cuit').value).toBe('');
         expect(document.getElementById('cliente_cuit').classList.contains('client-detail-empty')).toBe(true);
         expect(document.getElementById('cliente_cuit').readOnly).toBe(false);
+        expect(document.getElementById('cliente_cuit').disabled).toBe(false);
         expect(document.getElementById('direccion').readOnly).toBe(true);
+        expect(document.getElementById('direccion').disabled).toBe(true);
     });
 
     test('resetForm limpia la selección y los campos de cliente', () => {
@@ -248,6 +253,7 @@ describe('selección de clientes', () => {
         expect(document.getElementById('cliente_email').value).toBe('');
         expect(document.getElementById('cliente_cuit').value).toBe('');
         expect(document.getElementById('direccion').readOnly).toBe(false);
+        expect(document.getElementById('direccion').disabled).toBe(false);
         expect(document.getElementById('direccion').classList.contains('client-detail-empty')).toBe(true);
     });
 });
