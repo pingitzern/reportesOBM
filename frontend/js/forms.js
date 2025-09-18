@@ -538,12 +538,29 @@ function configureConversionInputs() {
     });
 }
 
+const STATUS_CLASS_NAMES = ['status-pass', 'status-fail', 'status-na'];
+const STATUS_PASS_VALUES = new Set(['Pasa', 'Realizada', 'No']);
+const STATUS_FAIL_VALUES = new Set(['No Pasa', 'Falla', 'No Realizada', 'Sí']);
+
+function normalizeStatusValue(value) {
+    if (typeof value !== 'string') {
+        return '';
+    }
+    return value.trim();
+}
+
 function setStatusColor(selectElement) {
-    selectElement.classList.remove('status-pass', 'status-fail', 'status-na');
-    const value = selectElement.value;
-    if (value === 'Pasa' || value === 'Realizada' || value === 'No') {
+    if (!(selectElement instanceof HTMLSelectElement)) {
+        return;
+    }
+
+    STATUS_CLASS_NAMES.forEach(className => selectElement.classList.remove(className));
+
+    const value = normalizeStatusValue(selectElement.value);
+
+    if (STATUS_PASS_VALUES.has(value)) {
         selectElement.classList.add('status-pass');
-    } else if (value === 'Falla' || value === 'No Realizada' || value === 'Sí') {
+    } else if (STATUS_FAIL_VALUES.has(value)) {
         selectElement.classList.add('status-fail');
     } else {
         selectElement.classList.add('status-na');

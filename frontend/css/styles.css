@@ -155,4 +155,16 @@
     .sanitizacion-toggle-option[data-option='No Realizada'] input:checked + span {
         @apply border-transparent bg-rose-500 text-white shadow-sm;
     }
+
+    .status-pass {
+        @apply bg-emerald-100 text-emerald-700 border border-emerald-300;
+    }
+
+    .status-fail {
+        @apply bg-rose-100 text-rose-700 border border-rose-300;
+    }
+
+    .status-na {
+        @apply bg-slate-100 text-slate-700 border border-slate-300;
+    }
 }
