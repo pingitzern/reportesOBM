@@ -551,12 +551,12 @@ function setStatusColor(selectElement) {
 }
 
 function applyStatusColors() {
-    const statusSelects = document.querySelectorAll('select[id$="_found"], select[id$="_left"], select#sanitizacion_status');
+    const statusSelects = document.querySelectorAll('select[id$="_found"], select[id$="_left"]');
     statusSelects.forEach(setStatusColor);
 }
 
 function configureStatusSelects() {
-    const statusSelects = document.querySelectorAll('select[id$="_found"], select[id$="_left"], select#sanitizacion_status');
+    const statusSelects = document.querySelectorAll('select[id$="_found"], select[id$="_left"]');
     statusSelects.forEach(select => {
         setStatusColor(select);
         select.addEventListener('change', () => setStatusColor(select));
@@ -702,6 +702,9 @@ export function getFormData() {
     }
 
     const data = serializeForm(form);
+
+    const sanitizacionOption = form.querySelector('input[name="sanitizacion"]:checked');
+    data.sanitizacion = sanitizacionOption ? sanitizacionOption.value : '';
 
     if (Object.prototype.hasOwnProperty.call(data, 'fecha')) {
         const isoFecha = normalizeDateToISO(data.fecha);

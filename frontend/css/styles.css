@@ -115,4 +115,44 @@
     .stage-action-status {
         @apply text-sm font-medium text-gray-600;
     }
+
+    .sanitizacion-toggle {
+        @apply inline-flex w-full gap-2 rounded-xl border border-gray-200 bg-white p-1 shadow-inner;
+    }
+
+    .sanitizacion-toggle-option {
+        @apply relative flex-1;
+    }
+
+    .sanitizacion-toggle-option input {
+        @apply sr-only;
+    }
+
+    .sanitizacion-toggle-option span {
+        @apply block w-full rounded-lg border border-transparent px-3 py-2 text-center text-sm font-semibold text-gray-600 transition-colors duration-150 ease-out;
+    }
+
+    .sanitizacion-toggle-option input:not(:checked) + span {
+        @apply bg-transparent text-gray-600;
+    }
+
+    .sanitizacion-toggle-option input:not(:checked) + span:hover {
+        @apply bg-gray-100 border-gray-200;
+    }
+
+    .sanitizacion-toggle-option input:focus-visible + span {
+        @apply ring-2 ring-offset-1 ring-blue-400;
+    }
+
+    .sanitizacion-toggle-option[data-option='N/A'] input:checked + span {
+        @apply border-transparent bg-slate-500 text-white shadow-sm;
+    }
+
+    .sanitizacion-toggle-option[data-option='Realizada'] input:checked + span {
+        @apply border-transparent bg-emerald-500 text-white shadow-sm;
+    }
+
+    .sanitizacion-toggle-option[data-option='No Realizada'] input:checked + span {
+        @apply border-transparent bg-rose-500 text-white shadow-sm;
+    }
 }
