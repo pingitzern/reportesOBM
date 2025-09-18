@@ -66,4 +66,12 @@
     .client-detail-locked {
         @apply bg-gray-50 text-gray-700 cursor-not-allowed;
     }
+
+    .form-card {
+        @apply rounded-xl border border-gray-200 bg-white shadow-md p-6;
+    }
+
+    .form-card + .form-card {
+        @apply mt-6;
+    }
 }
