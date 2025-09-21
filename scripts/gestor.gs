@@ -1,3 +1,9 @@
+const MOD_CODE_VERSION = 'SMRO-CODE-2025-09-21';
+
+const _json = (payload) =>
+  ContentService.createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
+
 const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
 const CLIENTES_SHEET_NAME_PROPERTY = 'CLIENTES_SHEET_NAME';
@@ -706,6 +712,12 @@ function doPost(e) {
       case 'clientes':
         result = ClientesService.listar();
         break;
+      case 'version': {
+        return _json({
+          ok: true,
+          version: MOD_CODE_VERSION
+        });
+      }
       default:
         throw new Error('Acción no válida');
     }
