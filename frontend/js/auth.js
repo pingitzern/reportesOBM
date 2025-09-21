@@ -466,6 +466,12 @@ export function getCurrentUserRole() {
     return session?.user?.rol || '';
 }
 
+export function getCurrentToken() {
+    const session = loadStoredAuth();
+    const token = typeof session?.token === 'string' ? session.token.trim() : '';
+    return token || null;
+}
+
 export async function initializeAuth() {
     bindEventListeners();
 
@@ -484,6 +490,11 @@ export async function initializeAuth() {
 
 export function logout() {
     handleLogout();
+}
+
+export function handleSessionExpiration() {
+    handleLogout();
+    displayError('Tu sesión ha expirado. Por favor, ingresá de nuevo.');
 }
 
 export async function requireAuthentication() {

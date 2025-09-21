@@ -6,7 +6,24 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest, tes
 import fetchMock from 'fetch-mock';
 
 const API_URL = 'https://api.example.com/mantenimientos';
-const loadApiModule = () => import('../api.js');
+const loadApiModule = async ({ token = 'token-123' } = {}) => {
+    const getCurrentTokenMock = jest.fn(() => token);
+    const handleSessionExpirationMock = jest.fn();
+
+    jest.unstable_mockModule('../auth.js', () => ({
+        getCurrentToken: getCurrentTokenMock,
+        handleSessionExpiration: handleSessionExpirationMock,
+    }));
+
+    const module = await import('../api.js');
+    return {
+        ...module,
+        __authMocks: {
+            getCurrentTokenMock,
+            handleSessionExpirationMock,
+        },
+    };
+};
 let originalApiUrl;
 
 describe('api.js', () => {
@@ -41,7 +58,7 @@ describe('api.js', () => {
     });
 
     test('guardarMantenimiento envía los datos con acción guardar', async () => {
-        const { guardarMantenimiento } = await loadApiModule();
+        const { guardarMantenimiento, __authMocks } = await loadApiModule();
         const payload = { equipo: 'RO', tecnico: 'Ana' };
         const responseData = { id: 'abc123' };
 
@@ -58,7 +75,20 @@ describe('api.js', () => {
         expect(JSON.parse(lastCall.options.body)).toEqual({
             action: 'guardar',
             ...payload,
+            token: 'token-123',
         });
+        expect(__authMocks.getCurrentTokenMock).toHaveBeenCalledTimes(1);
+        expect(__authMocks.handleSessionExpirationMock).not.toHaveBeenCalled();
+    });
+
+    test('no realiza petición cuando no hay token disponible', async () => {
+        const { guardarMantenimiento, __authMocks } = await loadApiModule({ token: null });
+
+        await expect(guardarMantenimiento({ equipo: 'RO' }))
+            .rejects.toThrow('No hay una sesión activa. Por favor, ingresá de nuevo.');
+        expect(fetchMock.callHistory.calls(API_URL).length).toBe(0);
+        expect(__authMocks.getCurrentTokenMock).toHaveBeenCalledTimes(1);
+        expect(__authMocks.handleSessionExpirationMock).not.toHaveBeenCalled();
     });
 
     test('buscarMantenimientos envía la acción buscar', async () => {
@@ -77,7 +107,21 @@ describe('api.js', () => {
         expect(JSON.parse(lastCall.options.body)).toEqual({
             action: 'buscar',
             ...filtros,
+            token: 'token-123',
         });
+    });
+
+    test.each([
+        ['Sesión expirada', { result: 'error', error: 'Sesión expirada' }],
+        ['Token inválido', { result: 'error', message: 'Token inválido' }],
+    ])('invoca el manejador de expiración cuando la API devuelve %s', async (_descripcion, respuesta) => {
+        const { obtenerDashboard, __authMocks } = await loadApiModule();
+
+        fetchMock.post(API_URL, respuesta);
+
+        await expect(obtenerDashboard()).rejects.toThrow('Tu sesión ha expirado. Por favor, ingresá de nuevo.');
+        expect(__authMocks.handleSessionExpirationMock).toHaveBeenCalledTimes(1);
+        expect(__authMocks.getCurrentTokenMock).toHaveBeenCalledTimes(1);
     });
 
     test('lanza error cuando la API responde con fallo', async () => {
@@ -102,6 +146,7 @@ describe('api.js', () => {
         expect(lastCall.options.method).toBe('post');
         expect(JSON.parse(lastCall.options.body)).toEqual({
             action: 'dashboard',
+            token: 'token-123',
         });
     });
 
@@ -114,6 +159,12 @@ describe('api.js', () => {
         const primeraRespuesta = await obtenerClientes();
         expect(primeraRespuesta).toEqual(clientes);
         expect(fetchMock.callHistory.calls(API_URL).length).toBe(1);
+        const primeraLlamada = fetchMock.callHistory.lastCall(API_URL);
+        expect(primeraLlamada).toBeDefined();
+        expect(JSON.parse(primeraLlamada.options.body)).toEqual({
+            action: 'clientes',
+            token: 'token-123',
+        });
 
         const segundaRespuesta = await obtenerClientes();
         expect(segundaRespuesta).toBe(primeraRespuesta);
@@ -135,6 +186,11 @@ describe('api.js', () => {
         const resultadoRefrescado = await obtenerClientes({ forceRefresh: true });
         expect(fetchMock.callHistory.calls(API_URL).length).toBe(2);
         expect(resultadoRefrescado).toEqual(refresco);
+        const ultimaLlamada = fetchMock.callHistory.lastCall(API_URL);
+        expect(JSON.parse(ultimaLlamada.options.body)).toEqual({
+            action: 'clientes',
+            token: 'token-123',
+        });
     });
 
     test('lanza error cuando API_URL no está configurada', async () => {
@@ -143,9 +199,10 @@ describe('api.js', () => {
         delete process.env.API_URL;
         const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-        const { guardarMantenimiento } = await loadApiModule();
+        const { guardarMantenimiento, __authMocks } = await loadApiModule();
 
         await expect(guardarMantenimiento({})).rejects.toThrow('API_URL no está configurada.');
+        expect(__authMocks.getCurrentTokenMock).not.toHaveBeenCalled();
 
         warnSpy.mockRestore();
     });

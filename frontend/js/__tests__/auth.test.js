@@ -80,6 +80,7 @@ const setupDocumentMock = () => {
         logoutButton,
         mainView,
         loginContainer,
+        error,
     };
 
     const map = {
@@ -196,6 +197,28 @@ describe('auth helpers', () => {
         });
     });
 
+    describe('getCurrentToken', () => {
+        test('devuelve el token actual normalizado cuando existe sesión', async () => {
+            const module = await loadAuthModule();
+            const { persistAuth } = module.__testables__;
+            const expiresAt = new Date(NOW.getTime() + 15 * 60 * 1000).toISOString();
+
+            persistAuth({
+                user: { nombre: 'Ana', cargo: 'Analista', rol: 'Admin' },
+                token: ' token-xyz ',
+                expiresAt,
+            });
+
+            expect(module.getCurrentToken()).toBe('token-xyz');
+        });
+
+        test('devuelve null cuando no hay sesión activa', async () => {
+            const module = await loadAuthModule();
+
+            expect(module.getCurrentToken()).toBeNull();
+        });
+    });
+
     describe('clearStoredAuth', () => {
         test('elimina la sesión almacenada y oculta el panel', async () => {
             const { clearStoredAuth, loadStoredAuth, persistAuth } = await getTestables();
@@ -236,6 +259,39 @@ describe('auth helpers', () => {
             expect(elements.logoutButton.disabled).toBe(true);
             expect(elements.userLabel.textContent).toBe('');
             expect(elements.userRole.textContent).toBe('');
+        });
+    });
+
+    describe('handleSessionExpiration', () => {
+        test('limpia la sesión y muestra el mensaje de expiración', async () => {
+            const module = await loadAuthModule();
+            const { persistAuth, loadStoredAuth } = module.__testables__;
+            const expiresAt = new Date(NOW.getTime() + 30 * 60 * 1000).toISOString();
+
+            persistAuth({
+                user: { nombre: 'Carlos', cargo: 'Supervisor', rol: 'Administrador' },
+                token: 'token-activo',
+                expiresAt,
+            });
+
+            expect(loadStoredAuth()).not.toBeNull();
+            elements.panel.classList.remove('hidden');
+            elements.logoutButton.disabled = false;
+            elements.loginContainer.classList.add('hidden');
+            elements.mainView.classList.remove('hidden');
+            elements.error.classList.add('hidden');
+            elements.error.textContent = '';
+
+            module.handleSessionExpiration();
+
+            expect(module.getCurrentToken()).toBeNull();
+            expect(storage.removeItem).toHaveBeenCalledWith(AUTH_STORAGE_KEY);
+            expect(elements.panel.classList.contains('hidden')).toBe(true);
+            expect(elements.logoutButton.disabled).toBe(true);
+            expect(elements.loginContainer.classList.contains('hidden')).toBe(false);
+            expect(elements.mainView.classList.contains('hidden')).toBe(true);
+            expect(elements.error.textContent).toBe('Tu sesión ha expirado. Por favor, ingresá de nuevo.');
+            expect(elements.error.classList.contains('hidden')).toBe(false);
         });
     });
 

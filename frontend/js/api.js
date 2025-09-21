@@ -1,9 +1,23 @@
 import { API_URL } from './config.js';
+import { getCurrentToken, handleSessionExpiration } from './auth.js';
 import { state } from './state.js';
 
 async function postJSON(payload) {
     if (!API_URL) {
         throw new Error('API_URL no está configurada.');
+    }
+
+    const requestPayload = { ...(payload || {}) };
+    const action = typeof requestPayload.action === 'string'
+        ? requestPayload.action
+        : undefined;
+
+    if (action !== 'login') {
+        const token = getCurrentToken();
+        if (!token) {
+            throw new Error('No hay una sesión activa. Por favor, ingresá de nuevo.');
+        }
+        requestPayload.token = token;
     }
 
     let response;
@@ -13,7 +27,7 @@ async function postJSON(payload) {
             headers: {
                 'Content-Type': 'text/plain; charset=utf-8',
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(requestPayload),
         });
     } catch (error) {
         if (error?.name === 'AbortError') {
@@ -39,7 +53,18 @@ async function postJSON(payload) {
     }
 
     if (result.result !== 'success') {
-        throw new Error(result.error || 'Error desconocido');
+        const rawError = typeof result.error === 'string'
+            ? result.error.trim()
+            : typeof result.message === 'string'
+                ? result.message.trim()
+                : '';
+
+        if (rawError === 'Sesión expirada' || rawError === 'Token inválido') {
+            handleSessionExpiration();
+            throw new Error('Tu sesión ha expirado. Por favor, ingresá de nuevo.');
+        }
+
+        throw new Error(rawError || 'Error desconocido');
     }
 
     return result.data;
