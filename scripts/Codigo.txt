@@ -477,6 +477,14 @@ function doPost(e) {
     const { action } = data;
 
     switch (action) {
+      case 'version': {
+        return ResponseFactory.success({
+          code: 'SistemaMantenimientosRO',
+          auth: true,
+          session: true
+        });
+      }
+
       /* --------- AUTENTICACIÓN / SESIONES --------- */
       case 'login': {
         const usuario = AuthService.authenticate(data.mail, data.password);
