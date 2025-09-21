@@ -262,6 +262,68 @@ describe('auth helpers', () => {
         });
     });
 
+    describe('logout', () => {
+        test('envía la petición de logout con el token y limpia el estado', async () => {
+            const module = await loadAuthModule();
+            const { persistAuth } = module.__testables__;
+            const expiresAt = new Date(NOW.getTime() + 30 * 60 * 1000).toISOString();
+
+            persistAuth({
+                user: { nombre: 'Laura', cargo: 'Operaria', rol: 'Supervisora' },
+                token: 'token-activo',
+                expiresAt,
+            });
+
+            elements.mainView.classList.remove('hidden');
+            elements.loginContainer.classList.add('hidden');
+            global.fetch.mockResolvedValue({ ok: true, status: 200 });
+
+            await module.logout();
+
+            expect(global.fetch).toHaveBeenCalledWith(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                body: JSON.stringify({ action: 'logout', token: 'token-activo' }),
+            });
+            expect(storage.removeItem).toHaveBeenCalledWith(AUTH_STORAGE_KEY);
+            expect(module.getCurrentToken()).toBeNull();
+            expect(elements.panel.classList.contains('hidden')).toBe(true);
+            expect(elements.logoutButton.disabled).toBe(true);
+            expect(elements.mainView.classList.contains('hidden')).toBe(true);
+            expect(elements.loginContainer.classList.contains('hidden')).toBe(false);
+        });
+
+        test('limpia el estado aunque la petición de logout falle', async () => {
+            const module = await loadAuthModule();
+            const { persistAuth } = module.__testables__;
+            const expiresAt = new Date(NOW.getTime() + 45 * 60 * 1000).toISOString();
+
+            persistAuth({
+                user: { nombre: 'Sofía', cargo: 'Analista', rol: 'Usuaria' },
+                token: 'token-error',
+                expiresAt,
+            });
+
+            elements.mainView.classList.remove('hidden');
+            elements.loginContainer.classList.add('hidden');
+            global.fetch.mockRejectedValue(new TypeError('Fallo de red'));
+
+            await module.logout();
+
+            expect(global.fetch).toHaveBeenCalledWith(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                body: JSON.stringify({ action: 'logout', token: 'token-error' }),
+            });
+            expect(storage.removeItem).toHaveBeenCalledWith(AUTH_STORAGE_KEY);
+            expect(module.getCurrentToken()).toBeNull();
+            expect(elements.panel.classList.contains('hidden')).toBe(true);
+            expect(elements.logoutButton.disabled).toBe(true);
+            expect(elements.mainView.classList.contains('hidden')).toBe(true);
+            expect(elements.loginContainer.classList.contains('hidden')).toBe(false);
+        });
+    });
+
     describe('handleSessionExpiration', () => {
         test('limpia la sesión y muestra el mensaje de expiración', async () => {
             const module = await loadAuthModule();
@@ -282,7 +344,7 @@ describe('auth helpers', () => {
             elements.error.classList.add('hidden');
             elements.error.textContent = '';
 
-            module.handleSessionExpiration();
+            await module.handleSessionExpiration();
 
             expect(module.getCurrentToken()).toBeNull();
             expect(storage.removeItem).toHaveBeenCalledWith(AUTH_STORAGE_KEY);
