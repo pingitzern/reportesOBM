@@ -425,14 +425,35 @@ async function handleLoginSubmit(event) {
     }
 }
 
-function handleLogout(event) {
+async function handleLogout(event) {
     if (event) {
         event.preventDefault();
     }
-    clearStoredAuth();
-    setMainViewVisible(false);
-    showLoginModal();
-    createPendingAuthPromise();
+
+    const session = loadStoredAuth();
+    const token = typeof session?.token === 'string' ? session.token.trim() : '';
+
+    try {
+        if (API_URL && token) {
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain; charset=utf-8',
+                },
+                body: JSON.stringify({
+                    action: 'logout',
+                    token,
+                }),
+            });
+        }
+    } catch (error) {
+        // Ignorar errores de red para no bloquear el cierre de sesión local.
+    } finally {
+        clearStoredAuth();
+        setMainViewVisible(false);
+        showLoginModal();
+        createPendingAuthPromise();
+    }
 }
 
 function bindEventListeners() {
@@ -489,11 +510,11 @@ export async function initializeAuth() {
 }
 
 export function logout() {
-    handleLogout();
+    return handleLogout();
 }
 
-export function handleSessionExpiration() {
-    handleLogout();
+export async function handleSessionExpiration() {
+    await handleLogout();
     displayError('Tu sesión ha expirado. Por favor, ingresá de nuevo.');
 }
 
