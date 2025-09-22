@@ -31,7 +31,6 @@ const COMPONENT_STAGES = [
         placeholder: 'Tipo: UV, Alcalino...',
     },
 ];
-
 function createComponentToggle(stageId) {
     const toggle = document.createElement('div');
     toggle.className = 'component-toggle';

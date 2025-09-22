@@ -41,6 +41,7 @@
             </div>
         </header>
 
+
         <div class="print-header">
             <div class="print-header-text">
                 <h1>Informe de Mantenimiento Anual</h1>
@@ -60,48 +61,103 @@
         <div id="tab-nuevo" class="tab-content">
             <form id="maintenance-form">
                 <!-- Sección A: Datos del Servicio y del Equipo -->
-                <div class="form-section form-card" id="section-a">
-                    <h2>A. Datos del Servicio y del Equipo</h2>
-                    <p class="guide-text">Complete la información para identificar el servicio y el equipo.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                        <div class="input-group"><label for="cliente">Cliente:</label><input type="text" id="cliente" name="cliente"></div>
-                        <div class="input-group">
-                            <label for="fecha_display">Fecha del Servicio:</label>
-                            <input type="text" id="fecha_display" readonly disabled>
-                            <input type="hidden" id="fecha" name="fecha">
+
+                <div class="form-card">
+                    <div class="form-section" id="section-a">
+                        <h2>A. Datos del Servicio y del Equipo</h2>
+                        <p class="guide-text">Complete la información para identificar el servicio y el equipo.</p>
+                        <div class="space-y-6">
+                            <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+                                <div class="flex flex-col gap-2 mb-4 md:flex-row md:items-center md:justify-between">
+                                    <h3 class="text-xl font-semibold text-gray-800">Datos del Cliente</h3>
+                                    <p class="text-sm text-gray-500">Selecciona un cliente para completar los datos automáticamente.</p>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="cliente" class="font-semibold text-gray-700">Cliente:</label>
+                                        <select id="cliente" name="cliente" class="w-full border border-gray-300 rounded px-3 py-2">
+                                            <option value="" disabled selected>Selecciona un cliente</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="direccion" class="font-semibold text-gray-700">Dirección:</label>
+                                        <input type="text" id="direccion" name="direccion" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="cliente_telefono" class="font-semibold text-gray-700">Teléfono:</label>
+                                        <input type="text" id="cliente_telefono" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="cliente_email" class="font-semibold text-gray-700">Email:</label>
+                                        <input type="text" id="cliente_email" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="cliente_cuit" class="font-semibold text-gray-700">CUIT:</label>
+                                        <input type="text" id="cliente_cuit" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-4">Datos del Servicio y del Equipo</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="fecha_display" class="font-semibold text-gray-700">Fecha del Servicio:</label>
+                                        <input type="text" id="fecha_display" readonly data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                        <input type="hidden" id="fecha" name="fecha">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="tecnico" class="font-semibold text-gray-700">Técnico Asignado:</label>
+                                        <input type="text" id="tecnico" name="tecnico" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="modelo" class="font-semibold text-gray-700">Modelo del Equipo:</label>
+                                        <input type="text" id="modelo" name="modelo" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="id_interna" class="font-semibold text-gray-700">ID Interna / Activo N°:</label>
+                                        <input type="text" id="id_interna" name="id_interna" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="n_serie" class="font-semibold text-gray-700">Número de Serie:</label>
+                                        <input type="text" id="n_serie" name="n_serie" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                    <div class="input-group flex flex-col gap-1">
+                                        <label for="proximo_mant" class="font-semibold text-gray-700">Próximo Mantenimiento:</label>
+                                        <input type="date" id="proximo_mant" name="proximo_mant" class="w-full border border-gray-300 rounded px-3 py-2">
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
-                        <div class="input-group"><label for="direccion">Dirección:</label><input type="text" id="direccion" name="direccion"></div>
-                        <div class="input-group"><label for="tecnico">Técnico Asignado:</label><input type="text" id="tecnico" name="tecnico"></div>
-                        <div class="input-group"><label for="modelo">Modelo del Equipo:</label><input type="text" id="modelo" name="modelo"></div>
-                        <div class="input-group"><label for="id_interna">ID Interna / Activo N°:</label><input type="text" id="id_interna" name="id_interna"></div>
-                        <div class="input-group"><label for="n_serie">Número de Serie:</label><input type="text" id="n_serie" name="n_serie"></div>
-                        <div class="input-group"><label for="proximo_mant">Próximo Mantenimiento:</label><input type="date" id="proximo_mant" name="proximo_mant"></div>
                     </div>
                 </div>
 
                 <!-- Sección B: Parámetros de Operación -->
-                <div class="form-section form-card" id="section-b">
-                    <h2>B. Parámetros de Operación</h2>
-                    <p class="guide-text">Mida y registre los valores antes (As Found) y después (As Left) del mantenimiento. Cierre la válvula del tanque para medir presión y caudales de trabajo.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 items-end">
-                        <div class="md:col-span-1 font-semibold text-gray-700">Parámetro</div>
-                        <div class="md:col-span-1 font-semibold text-gray-700 text-center">Estado Inicial ('As Found')</div>
-                        <div class="md:col-span-1 font-semibold text-gray-700 text-center">Estado Final ('As Left')</div>
 
-                        <!-- Fugas -->
-                        <label class="md:col-span-1">Fugas visibles</label>
-                        <div class="md:col-span-1"><select id="fugas_found" name="fugas_found" class="text-center w-full"><option value="No">No</option><option value="Sí">Sí</option></select></div>
-                        <div class="md:col-span-1"><select id="fugas_left" name="fugas_left" class="text-center w-full"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+                <div class="form-card">
+                    <div class="form-section" id="section-b">
+                        <h2>B. Parámetros de Operación</h2>
+                        <p class="guide-text">Mida y registre los valores antes (As Found) y después (As Left) del mantenimiento. Cierre la válvula del tanque para medir presión y caudales de trabajo.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 items-end">
+                            <div class="md:col-span-1 font-semibold text-gray-700">Parámetro</div>
+                            <div class="md:col-span-1 font-semibold text-gray-700 text-center">Estado Inicial ('As Found')</div>
+                            <div class="md:col-span-1 font-semibold text-gray-700 text-center">Estado Final ('As Left')</div>
 
-                        <!-- Conductividad Red -->
-                        <label class="md:col-span-1">Conductividad Agua de Red (µS/cm)</label>
-                        <div class="md:col-span-1"><input type="number" id="cond_red_found" name="cond_red_found" class="text-center w-full" placeholder="0"></div>
-                        <div class="md:col-span-1"><input type="number" id="cond_red_left" name="cond_red_left" class="text-center w-full" placeholder="0"></div>
+                            <!-- Fugas -->
+                            <label class="md:col-span-1">Fugas visibles</label>
+                            <div class="md:col-span-1"><select id="fugas_found" name="fugas_found" class="text-center w-full"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+                            <div class="md:col-span-1"><select id="fugas_left" name="fugas_left" class="text-center w-full"><option value="No">No</option><option value="Sí">Sí</option></select></div>
 
-                        <!-- Conductividad Permeado -->
-                        <label class="md:col-span-1">Conductividad Permeado (µS/cm)</label>
-                        <div class="md:col-span-1"><input type="number" id="cond_perm_found" name="cond_perm_found" class="text-center w-full" placeholder="0"></div>
-                        <div class="md:col-span-1"><input type="number" id="cond_perm_left" name="cond_perm_left" class="text-center w-full" placeholder="0"></div>
+                            <!-- Conductividad Red -->
+                            <label class="md:col-span-1">Conductividad Agua de Red (µS/cm)</label>
+                            <div class="md:col-span-1"><input type="number" id="cond_red_found" name="cond_red_found" class="text-center w-full" placeholder="0"></div>
+                            <div class="md:col-span-1"><input type="number" id="cond_red_left" name="cond_red_left" class="text-center w-full" placeholder="0"></div>
+
+                            <!-- Conductividad Permeado -->
+                            <label class="md:col-span-1">Conductividad Permeado (µS/cm)</label>
+                            <div class="md:col-span-1"><input type="number" id="cond_perm_found" name="cond_perm_found" class="text-center w-full" placeholder="0"></div>
+                            <div class="md:col-span-1"><input type="number" id="cond_perm_left" name="cond_perm_left" class="text-center w-full" placeholder="0"></div>
+
 
                         <!-- Rechazo Iónico -->
                         <label class="md:col-span-1 font-bold">% de Rechazo Iónico</label>
@@ -114,33 +170,34 @@
                             <input type="hidden" id="rechazo_left_hidden" name="rechazo_left">
                         </div>
 
-                        <!-- Presión -->
-                        <label class="md:col-span-1">Presión Entrada a Membrana (bar)</label>
-                        <div class="md:col-span-1"><input type="number" step="0.1" id="presion_found" name="presion_found" class="text-center w-full" placeholder="0.0"></div>
-                        <div class="md:col-span-1"><input type="number" step="0.1" id="presion_left" name="presion_left" class="text-center w-full" placeholder="0.0"></div>
+                            <!-- Presión -->
+                            <label class="md:col-span-1">Presión Entrada a Membrana (bar)</label>
+                            <div class="md:col-span-1"><input type="number" step="0.1" id="presion_found" name="presion_found" class="text-center w-full" placeholder="0.0"></div>
+                            <div class="md:col-span-1"><input type="number" step="0.1" id="presion_left" name="presion_left" class="text-center w-full" placeholder="0.0"></div>
                         
-                        <!-- Caudal Permeado -->
-                        <label class="md:col-span-1">Caudal de Permeado (l/min)</label>
-                        <div class="md:col-span-1">
-                            <input type="number" step="0.01" id="caudal_perm_found" name="caudal_perm_found" class="text-center w-full" placeholder="0.00">
-                            <p id="caudal_perm_found_conv" class="conversion-text text-center"></p>
-                        </div>
-                        <div class="md:col-span-1">
-                            <input type="number" step="0.01" id="caudal_perm_left" name="caudal_perm_left" class="text-center w-full" placeholder="0.00">
-                            <p id="caudal_perm_left_conv" class="conversion-text text-center"></p>
-                        </div>
+                            <!-- Caudal Permeado -->
+                            <label class="md:col-span-1">Caudal de Permeado (l/min)</label>
+                            <div class="md:col-span-1">
+                                <input type="number" step="0.01" id="caudal_perm_found" name="caudal_perm_found" class="text-center w-full" placeholder="0.00">
+                                <p id="caudal_perm_found_conv" class="conversion-text text-center"></p>
+                            </div>
+                            <div class="md:col-span-1">
+                                <input type="number" step="0.01" id="caudal_perm_left" name="caudal_perm_left" class="text-center w-full" placeholder="0.00">
+                                <p id="caudal_perm_left_conv" class="conversion-text text-center"></p>
+                            </div>
 
-                        <!-- Caudal Rechazo -->
-                        <label class="md:col-span-1">Caudal de Rechazo (l/min)</label>
-                         <div class="md:col-span-1">
-                            <input type="number" step="0.01" id="caudal_rech_found" name="caudal_rech_found" class="text-center w-full" placeholder="0.00">
-                            <p id="caudal_rech_found_conv" class="conversion-text text-center"></p>
-                        </div>
-                        <div class="md:col-span-1">
-                            <input type="number" step="0.01" id="caudal_rech_left" name="caudal_rech_left" class="text-center w-full" placeholder="0.00">
-                            <p id="caudal_rech_left_conv" class="conversion-text text-center"></p>
-                        </div>
+                            <!-- Caudal Rechazo -->
+                            <label class="md:col-span-1">Caudal de Rechazo (l/min)</label>
+                            <div class="md:col-span-1">
+                                <input type="number" step="0.01" id="caudal_rech_found" name="caudal_rech_found" class="text-center w-full" placeholder="0.00">
+                                <p id="caudal_rech_found_conv" class="conversion-text text-center"></p>
+                            </div>
+                            <div class="md:col-span-1">
+                                <input type="number" step="0.01" id="caudal_rech_left" name="caudal_rech_left" class="text-center w-full" placeholder="0.00">
+                                <p id="caudal_rech_left_conv" class="conversion-text text-center"></p>
+                            </div>
                         
+
                         <!-- Relación Rechazo -->
                         <label class="md:col-span-1 font-bold">Relación Rechazo:Permeado</label>
                         <div class="md:col-span-1">
@@ -151,44 +208,98 @@
                             <input type="text" id="relacion_left" class="text-center w-full calculated-field" readonly disabled>
                             <input type="hidden" id="relacion_left_hidden" name="relacion_left">
                         </div>
-                        
-                        <!-- Precarga Tanque -->
-                        <label class="md:col-span-1">Precarga del tanque (bar)</label>
-                        <div class="md:col-span-1"><input type="number" step="0.1" id="precarga_found" name="precarga_found" class="text-center w-full" placeholder="0.0"></div>
-                        <div class="md:col-span-1"><input type="number" step="0.1" id="precarga_left" name="precarga_left" class="text-center w-full" placeholder="0.0"></div>
-                        
-                        <!-- Test Presostato Alta -->
-                        <label class="md:col-span-1">Test Presostato Alta</label>
-                        <div class="md:col-span-1"><select id="presostato_alta_found" name="presostato_alta_found" class="text-center w-full"><option value="N/A" selected>No Aplica</option><option value="Pasa">Pasa</option><option value="Falla">Falla</option></select></div>
-                        <div class="md:col-span-1"><select id="presostato_alta_left" name="presostato_alta_left" class="text-center w-full"><option value="N/A" selected>No Aplica</option><option value="Pasa">Pasa</option><option value="Falla">Falla</option></select></div>
 
-                        <!-- Test Presostato Baja -->
-                        <label class="md:col-span-1">Test Presostato Baja</label>
-                        <div class="md:col-span-1"><select id="presostato_baja_found" name="presostato_baja_found" class="text-center w-full"><option value="N/A" selected>No Aplica</option><option value="Pasa">Pasa</option><option value="Falla">Falla</option></select></div>
-                        <div class="md:col-span-1"><select id="presostato_baja_left" name="presostato_baja_left" class="text-center w-full"><option value="N/A" selected>No Aplica</option><option value="Pasa">Pasa</option><option value="Falla">Falla</option></select></div>
+                        
+                            <!-- Precarga Tanque -->
+                            <label class="md:col-span-1">Precarga del tanque (bar)</label>
+                            <div class="md:col-span-1"><input type="number" step="0.1" id="precarga_found" name="precarga_found" class="text-center w-full" placeholder="0.0"></div>
+                            <div class="md:col-span-1"><input type="number" step="0.1" id="precarga_left" name="precarga_left" class="text-center w-full" placeholder="0.0"></div>
+                        
+                            <!-- Test Presostato Alta -->
+                            <label class="md:col-span-1">Test Presostato Alta</label>
+                            <div class="md:col-span-1">
+                                <select id="presostato_alta_found" name="presostato_alta_found" class="text-center w-full">
+                                    <option value="Pasa">Pasa</option>
+                                    <option value="No Pasa">No Pasa</option>
+                                    <option value="No Aplica" selected>No Aplica</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-1">
+                                <select id="presostato_alta_left" name="presostato_alta_left" class="text-center w-full">
+                                    <option value="Pasa">Pasa</option>
+                                    <option value="No Pasa">No Pasa</option>
+                                    <option value="No Aplica" selected>No Aplica</option>
+                                </select>
+                            </div>
+
+                            <!-- Test Presostato Baja -->
+                            <label class="md:col-span-1">Test Presostato Baja</label>
+                            <div class="md:col-span-1">
+                                <select id="presostato_baja_found" name="presostato_baja_found" class="text-center w-full">
+                                    <option value="Pasa">Pasa</option>
+                                    <option value="No Pasa">No Pasa</option>
+                                    <option value="No Aplica" selected>No Aplica</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-1">
+                                <select id="presostato_baja_left" name="presostato_baja_left" class="text-center w-full">
+                                    <option value="Pasa">Pasa</option>
+                                    <option value="No Pasa">No Pasa</option>
+                                    <option value="No Aplica" selected>No Aplica</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Sección C: Registro de Componentes -->
-                <div class="form-section form-card" id="section-c">
-                    <h2>C. Registro de Componentes y Sanitización</h2>
-                    <p class="guide-text">Marque la acción realizada para cada etapa en el sistema.</p>
-                     <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center font-semibold text-gray-700 mb-2">
-                        <div class="sm:col-span-1">Etapa</div>
-                        <div class="sm:col-span-2">Detalles del Componente</div>
-                        <div class="sm:col-span-2">Acción</div>
-                    </div>
-                    <div id="component-stage-container"></div>
 
-                    <template id="component-stage-template">
-                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2 component-stage">
-                            <div class="sm:col-span-1 stage-title"></div>
-                            <div class="sm:col-span-2">
-                                <input type="text" class="w-full stage-details">
+                <div class="form-card">
+                    <div class="form-section" id="section-c">
+                        <h2>C. Registro de Componentes y Sanitización</h2>
+                        <p class="guide-text">Marque la acción realizada para cada etapa en el sistema.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center font-semibold text-gray-700 mb-2">
+                            <div class="sm:col-span-1">Etapa</div>
+                            <div class="sm:col-span-2">Detalles del Componente</div>
+                            <div class="sm:col-span-2">Acción</div>
+                        </div>
+                        <div id="component-stage-container"></div>
+
+
+                        <template id="component-stage-template">
+                            <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2 component-stage">
+                                <div class="sm:col-span-1 stage-title"></div>
+                                <div class="sm:col-span-2">
+                                    <input type="text" class="w-full stage-details">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <div class="stage-actions flex items-center gap-3"></div>
+                                </div>
                             </div>
+                        </template>
+                        <!-- Sanitización -->
+                        <hr class="my-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
+                            <div class="sm:col-span-3 font-semibold text-gray-700">Sanitización del Sistema</div>
+                            <div class="sm:col-span-2">
+                                <div class="sanitizacion-toggle" role="radiogroup" aria-label="Sanitización del Sistema">
+                                    <label class="sanitizacion-toggle-option" data-option="N/A">
+                                        <input type="radio" name="sanitizacion" value="N/A" checked>
+                                        <span>No Aplica</span>
+                                    </label>
+                                    <label class="sanitizacion-toggle-option" data-option="Realizada">
+                                        <input type="radio" name="sanitizacion" value="Realizada">
+                                        <span>Realizada</span>
+                                    </label>
+                                    <label class="sanitizacion-toggle-option" data-option="No Realizada">
+                                        <input type="radio" name="sanitizacion" value="No Realizada">
+                                        <span>No Realizada</span>
+                                    </label>
+                                </div>
+                            </div>
+
                             <div class="sm:col-span-2 stage-actions stage-actions--toggle"></div>
                         </div>
-                    </template>
                     <!-- Sanitización -->
                     <hr class="my-4">
                     <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
@@ -208,15 +319,20 @@
                                     <span>No Aplica</span>
                                 </label>
                             </div>
+
                         </div>
                     </div>
                 </div>
 
                 <!-- Sección D: Resumen -->
-                <div class="form-section form-card" id="section-d">
-                    <h2>D. Resumen y Recomendaciones Finales</h2>
-                     <p class="guide-text">Anote un resumen claro del trabajo realizado y las recomendaciones para el cliente.</p>
-                    <textarea id="resumen" name="resumen" rows="6" class="w-full border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" placeholder="Ej: Se realizó mantenimiento anual completo, reemplazando filtros de 1ª, 2ª y 5ª etapa. La presión de operación se normalizó de 2.5 a 4.5 bar. El equipo queda 100% operativo."></textarea>
+
+                <div class="form-card">
+                    <div class="form-section" id="section-d">
+                        <h2>D. Resumen y Recomendaciones Finales</h2>
+                        <p class="guide-text">Anote un resumen claro del trabajo realizado y las recomendaciones para el cliente.</p>
+                        <textarea id="resumen" name="resumen" rows="6" class="w-full border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" placeholder="Ej: Se realizó mantenimiento anual completo, reemplazando filtros de 1ª, 2ª y 5ª etapa. La presión de operación se normalizó de 2.5 a 4.5 bar. El equipo queda 100% operativo."></textarea>
+                    </div>
+
                 </div>
 
                 <!-- Botones de Acción -->
@@ -341,34 +457,36 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
 
-    <div id="login-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div class="p-6 space-y-4">
-                <h2 class="text-2xl font-semibold text-gray-800">Iniciar sesión</h2>
-                <p class="text-sm text-gray-600">Ingresa tu usuario registrado y el token de acceso otorgado por el administrador.</p>
-                <form id="login-form" class="space-y-4">
-                    <div>
-                        <label for="login-usuario" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
-                        <input id="login-usuario" name="usuario" type="text" autocomplete="username" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div>
-                        <label for="login-token" class="block text-sm font-medium text-gray-700 mb-1">Token</label>
-                        <input id="login-token" name="token" type="password" autocomplete="current-password" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <p id="login-error" class="text-sm text-red-600 hidden"></p>
-                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Ingresar
-                    </button>
-                </form>
+    <div id="login-container" class="login-container">
+        <div class="login-card" role="dialog" aria-labelledby="login-title" aria-modal="true">
+            <div class="login-card__header">
+                <img src="/OHM-agua.png" alt="Logo OHM Agua" class="login-card__logo">
+                <h2 id="login-title" class="login-card__title">Iniciar sesión</h2>
+                <p class="login-card__subtitle">Ingresa tu mail registrado y la contraseña correspondiente.</p>
             </div>
+            <form id="login-form" class="login-form">
+                <div class="login-form__field">
+                    <label for="login-mail" class="login-form__label">Mail</label>
+                    <input id="login-mail" name="mail" type="email" autocomplete="username" class="login-form__input" required>
+                </div>
+                <div class="login-form__field">
+                    <label for="login-password" class="login-form__label">Contraseña</label>
+                    <input id="login-password" name="password" type="password" autocomplete="current-password" class="login-form__input" required>
+                </div>
+                <p id="login-error" class="login-error hidden" role="alert"></p>
+                <button type="submit" class="login-submit-button">
+                    Iniciar sesión
+                </button>
+            </form>
         </div>
     </div>
 
     <script>
         window.__APP_CONFIG__ = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbzyGoFHGuSYenO3zevGz2W5qlAurFyBPKVR41wPTop2B1_VHhiZmt4ttW2fcAygYll9EQ/exec'
+            API_URL: 'https://script.google.com/macros/s/AKfycbxKwEuv3OlUB0tvYeZpy3_msHiSyDl9rjeTf9xCWOSMtBB05WO9jcAqTdjWtAHz8b3Y7g/exec'
         };
     </script>
     <script type="module" src="./js/main.js"></script>

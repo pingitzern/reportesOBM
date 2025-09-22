@@ -4,6 +4,304 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
+const CLIENT_OPTION_ATTRIBUTE = 'data-cliente-option';
+const CLIENT_NAME_FIELDS = Object.freeze([
+    'nombre',
+    'Nombre',
+    'cliente',
+    'Cliente',
+    'razon_social',
+    'RazonSocial',
+]);
+const CLIENT_ID_FIELDS = Object.freeze([
+    'id',
+    'ID',
+    'id_cliente',
+    'IdCliente',
+    'codigo',
+    'Codigo',
+    'cuit',
+    'CUIT',
+]);
+const CLIENT_FIELD_ALIASES = Object.freeze({
+    direccion: ['direccion', 'Direccion', 'domicilio', 'Domicilio'],
+    telefono: ['telefono', 'Telefono', 'tel', 'Tel'],
+    email: ['email', 'Email', 'mail', 'Mail', 'correo', 'Correo'],
+    cuit: ['cuit', 'CUIT'],
+});
+
+const CLIENT_DETAIL_FIELD_IDS = Object.freeze(['direccion', 'cliente_telefono', 'cliente_email', 'cliente_cuit']);
+const CLIENT_DETAIL_EMPTY_CLASS = 'client-detail-empty';
+const CLIENT_DETAIL_LOCKED_CLASS = 'client-detail-locked';
+
+const AUTO_RESIZE_ATTRIBUTE = 'data-auto-resize';
+const AUTO_RESIZE_DATASET_KEY = 'autoResizeBaseWidth';
+const AUTO_RESIZE_CHAR_WIDTH = 8;
+const AUTO_RESIZE_BUFFER_PX = 6;
+const AUTO_RESIZE_DEFAULT_MIN_WIDTH = 48;
+const autoResizeInputsWithListener = new WeakSet();
+const clientDetailInputsWithListener = new WeakSet();
+
+function isAutoResizeCandidate(element) {
+    return element instanceof HTMLInputElement && element.hasAttribute(AUTO_RESIZE_ATTRIBUTE);
+}
+
+export function autoResizeInput(element) {
+    if (!isAutoResizeCandidate(element)) {
+        return;
+    }
+
+    if (!element.dataset[AUTO_RESIZE_DATASET_KEY]) {
+        const initialWidth = Math.max(element.clientWidth || 0, element.offsetWidth || 0);
+        element.dataset[AUTO_RESIZE_DATASET_KEY] = String(
+            initialWidth > 0 ? initialWidth : AUTO_RESIZE_DEFAULT_MIN_WIDTH,
+        );
+    }
+
+    const baseWidth = Number(element.dataset[AUTO_RESIZE_DATASET_KEY]) || AUTO_RESIZE_DEFAULT_MIN_WIDTH;
+    const placeholderLength = typeof element.placeholder === 'string' ? element.placeholder.length : 0;
+    const valueLength = typeof element.value === 'string' ? element.value.length : 0;
+    const effectiveLength = Math.max(valueLength, placeholderLength, 1);
+
+    element.style.width = 'auto';
+
+    let measuredWidth = element.scrollWidth;
+
+    if (!measuredWidth || Number.isNaN(measuredWidth)) {
+        const approxCharWidth = Number(element.dataset.autoResizeCharWidth) || AUTO_RESIZE_CHAR_WIDTH;
+        measuredWidth = approxCharWidth * effectiveLength;
+    }
+
+    const finalWidth = Math.max(baseWidth, measuredWidth + AUTO_RESIZE_BUFFER_PX);
+    element.style.width = `${finalWidth}px`;
+}
+
+function getAutoResizeInputs() {
+    if (typeof document === 'undefined') {
+        return [];
+    }
+    return Array.from(document.querySelectorAll(`input[${AUTO_RESIZE_ATTRIBUTE}]`));
+}
+
+function configureAutoResizeInputs() {
+    const inputs = getAutoResizeInputs();
+    inputs.forEach(input => {
+        autoResizeInput(input);
+        if (!autoResizeInputsWithListener.has(input)) {
+            input.addEventListener('input', () => autoResizeInput(input));
+            autoResizeInputsWithListener.add(input);
+        }
+    });
+}
+
+function resizeAutoResizeInputs() {
+    getAutoResizeInputs().forEach(autoResizeInput);
+}
+
+const clienteDataMap = new Map();
+let clienteSelectChangeHandler = null;
+
+function normalizeStringValue(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    const stringValue = String(value);
+    return stringValue.trim();
+}
+
+function getFirstAvailableField(source, fieldNames) {
+    if (!source || typeof source !== 'object') {
+        return '';
+    }
+
+    for (const key of fieldNames) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            const normalized = normalizeStringValue(source[key]);
+            if (normalized) {
+                return normalized;
+            }
+        }
+    }
+
+    return '';
+}
+
+function extractClientName(cliente) {
+    return getFirstAvailableField(cliente, CLIENT_NAME_FIELDS);
+}
+
+function extractClientId(cliente) {
+    return getFirstAvailableField(cliente, CLIENT_ID_FIELDS);
+}
+
+function createClientDetails(cliente) {
+    return {
+        direccion: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.direccion),
+        telefono: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.telefono),
+        email: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.email),
+        cuit: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.cuit),
+    };
+}
+
+function refreshClientDetailFieldState(element, { lockWhenFilled = false } = {}) {
+    if (!(element instanceof HTMLInputElement)) {
+        return;
+    }
+
+    if (!CLIENT_DETAIL_FIELD_IDS.includes(element.id)) {
+        return;
+    }
+
+    const hasValue = normalizeStringValue(element.value) !== '';
+
+    if (lockWhenFilled) {
+        element.readOnly = hasValue;
+        element.disabled = hasValue;
+    } else if (!hasValue) {
+        element.readOnly = false;
+        element.disabled = false;
+    }
+
+    const isLocked = hasValue && (element.disabled || element.readOnly);
+
+    if (isLocked) {
+        element.classList.add(CLIENT_DETAIL_LOCKED_CLASS);
+    } else {
+        element.classList.remove(CLIENT_DETAIL_LOCKED_CLASS);
+    }
+
+    if (hasValue) {
+        element.classList.remove(CLIENT_DETAIL_EMPTY_CLASS);
+    } else {
+        element.classList.add(CLIENT_DETAIL_EMPTY_CLASS);
+    }
+}
+
+function configureClientDetailFieldInteractions() {
+    CLIENT_DETAIL_FIELD_IDS.forEach(fieldId => {
+        const element = getElement(fieldId);
+        if (!(element instanceof HTMLInputElement)) {
+            return;
+        }
+
+        refreshClientDetailFieldState(element);
+
+        if (!clientDetailInputsWithListener.has(element)) {
+            element.addEventListener('input', () => {
+                refreshClientDetailFieldState(element);
+            });
+            clientDetailInputsWithListener.add(element);
+        }
+    });
+}
+
+function setClientDetailValue(fieldId, value, options = {}) {
+    const element = getElement(fieldId);
+    if (!element) {
+        return;
+    }
+
+    const normalizedValue = normalizeStringValue(value);
+
+    if ('value' in element) {
+        element.value = normalizedValue;
+    }
+
+    if (element instanceof HTMLInputElement) {
+        autoResizeInput(element);
+        refreshClientDetailFieldState(element, {
+            lockWhenFilled: Boolean(options.lockWhenFilled),
+        });
+    }
+}
+
+function applyClientDetails(details = {}) {
+    const detailMap = {
+        direccion: details.direccion,
+        cliente_telefono: details.telefono,
+        cliente_email: details.email,
+        cliente_cuit: details.cuit,
+    };
+
+    Object.entries(detailMap).forEach(([fieldId, fieldValue]) => {
+        setClientDetailValue(fieldId, fieldValue, { lockWhenFilled: true });
+    });
+}
+
+function clearClientDetails() {
+    applyClientDetails({});
+}
+
+function updateClientDetailsFromSelect(selectElement) {
+    if (!selectElement) {
+        clearClientDetails();
+        return;
+    }
+
+    let selectedDetails = null;
+    const optionFromCollection =
+        selectElement.selectedOptions && selectElement.selectedOptions.length > 0
+            ? selectElement.selectedOptions[0]
+            : null;
+    const optionFromIndex =
+        typeof selectElement.selectedIndex === 'number' && selectElement.selectedIndex >= 0
+            ? selectElement.options[selectElement.selectedIndex]
+            : null;
+
+    if (optionFromCollection) {
+        const keyFromCollection = optionFromCollection.getAttribute('data-cliente-key');
+        if (keyFromCollection) {
+            selectedDetails = clienteDataMap.get(keyFromCollection) || null;
+        }
+    }
+
+    const shouldCheckIndex =
+        !selectedDetails || (optionFromIndex && optionFromCollection && optionFromCollection !== optionFromIndex);
+
+    if (shouldCheckIndex && optionFromIndex) {
+        const keyFromIndex = optionFromIndex.getAttribute('data-cliente-key');
+        if (keyFromIndex) {
+            const detailsFromIndex = clienteDataMap.get(keyFromIndex);
+            if (detailsFromIndex) {
+                selectedDetails = detailsFromIndex;
+            }
+        }
+    }
+
+    if (!selectedDetails) {
+        selectedDetails = clienteDataMap.get(selectElement.value);
+    }
+
+    if (selectedDetails) {
+        applyClientDetails(selectedDetails);
+    } else {
+        clearClientDetails();
+    }
+}
+
+function resetClientSelection() {
+    const select = getElement('cliente');
+    if (!select) {
+        clearClientDetails();
+        return;
+    }
+
+    if (select.options.length > 0) {
+        const placeholderOption = select.querySelector('option[value=""]');
+        if (placeholderOption) {
+            placeholderOption.selected = true;
+            select.value = placeholderOption.value;
+        } else {
+            select.selectedIndex = 0;
+        }
+    } else {
+        select.value = '';
+    }
+
+    clearClientDetails();
+}
+
 function padWithZero(value) {
     return String(value).padStart(2, '0');
 }
@@ -135,6 +433,7 @@ function setServiceDateValue(value) {
     const fechaDisplayInput = getElement('fecha_display');
     if (fechaDisplayInput) {
         fechaDisplayInput.value = formatDateForDisplayFromISO(isoDate);
+        autoResizeInput(fechaDisplayInput);
     }
 }
 
@@ -260,7 +559,6 @@ function configureConversionInputs() {
         }
     });
 }
-
 const STATUS_SELECT_SELECTOR = 'select[id$="_found"], select[id$="_left"]';
 
 const STATUS_CLASS_BY_VALUE = {
@@ -289,7 +587,9 @@ function applyStatusColorsToSelects() {
 }
 
 function configureStatusSelects() {
+
     const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
+
     statusSelects.forEach(select => {
         setStatusColor(select);
         select.addEventListener('change', () => setStatusColor(select));
@@ -364,12 +664,101 @@ function clearConversionOutputs() {
     });
 }
 
+export function configureClientSelect(clientes = []) {
+    const select = getElement('cliente');
+    if (!select) {
+        return;
+    }
+
+    const clientesArray = Array.isArray(clientes) ? clientes : [];
+    const previousValue = select.value;
+    const previousSelectedOption = select.selectedOptions && select.selectedOptions[0];
+    const previousDataKey = previousSelectedOption
+        ? previousSelectedOption.getAttribute('data-cliente-key')
+        : null;
+    const placeholderOption = select.querySelector('option[value=""]');
+
+    select.querySelectorAll(`option[${CLIENT_OPTION_ATTRIBUTE}="true"]`).forEach(option => option.remove());
+    clienteDataMap.clear();
+
+    const fragment = document.createDocumentFragment();
+
+    clientesArray.forEach((cliente, index) => {
+        if (!cliente || typeof cliente !== 'object') {
+            return;
+        }
+
+        const optionValue = extractClientId(cliente) || extractClientName(cliente);
+        if (!optionValue) {
+            return;
+        }
+
+        const optionLabel = extractClientName(cliente) || optionValue;
+        const option = document.createElement('option');
+        option.value = optionValue;
+        option.textContent = optionLabel;
+        const clientKey = `cliente-${index}`;
+        option.setAttribute('data-cliente-key', clientKey);
+        option.setAttribute(CLIENT_OPTION_ATTRIBUTE, 'true');
+        fragment.appendChild(option);
+
+        clienteDataMap.set(clientKey, createClientDetails(cliente));
+    });
+
+    select.appendChild(fragment);
+
+    if (clienteSelectChangeHandler) {
+        select.removeEventListener('change', clienteSelectChangeHandler);
+    }
+
+    clienteSelectChangeHandler = () => {
+        updateClientDetailsFromSelect(select);
+    };
+
+    select.addEventListener('change', clienteSelectChangeHandler);
+
+    let selectionRestored = false;
+
+    if (previousDataKey) {
+        const matchingOption = select.querySelector(`option[data-cliente-key="${previousDataKey}"]`);
+        if (matchingOption) {
+            matchingOption.selected = true;
+            select.value = matchingOption.value;
+            selectionRestored = true;
+        }
+    }
+
+    if (!selectionRestored && previousValue) {
+        select.value = previousValue;
+        selectionRestored = select.value === previousValue && select.selectedIndex !== -1;
+    }
+
+    if (selectionRestored) {
+        updateClientDetailsFromSelect(select);
+    } else {
+        if (placeholderOption) {
+            placeholderOption.selected = true;
+            select.value = placeholderOption.value;
+        } else if (select.options.length > 0) {
+            select.selectedIndex = 0;
+        } else {
+            select.value = '';
+        }
+        clearClientDetails();
+    }
+}
+
 export function initializeForm() {
     setDefaultDate();
     configureNumberInputs();
     configureConversionInputs();
     configureStatusSelects();
+
+    configureAutoResizeInputs();
+    configureClientDetailFieldInteractions();
+
     configureSanitizacionRadios();
+
     calculateAll();
 }
 
@@ -378,11 +767,16 @@ export function resetForm() {
     if (form) {
         form.reset();
     }
+    resetClientSelection();
     setDefaultDate();
     clearDerivedFields();
     clearConversionOutputs();
+
     applyStatusColorsToSelects();
+    resizeAutoResizeInputs();
+
     configureSanitizacionRadios();
+
 }
 
 export function getFormData() {
@@ -392,6 +786,9 @@ export function getFormData() {
     }
 
     const data = serializeForm(form);
+
+    const sanitizacionOption = form.querySelector('input[name="sanitizacion"]:checked');
+    data.sanitizacion = sanitizacionOption ? sanitizacionOption.value : '';
 
     if (Object.prototype.hasOwnProperty.call(data, 'fecha')) {
         const isoFecha = normalizeDateToISO(data.fecha);

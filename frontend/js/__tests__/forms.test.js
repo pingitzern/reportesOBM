@@ -1,6 +1,9 @@
 let serializeForm;
+let configureClientSelect;
+let resetForm;
 let calculateAll;
 let updateConversions;
+let autoResizeInput;
 let LMIN_TO_LPH;
 let LMIN_TO_GPD;
 let originalApiUrl;
@@ -13,6 +16,9 @@ beforeAll(async () => {
 
     const formsModule = await import('../forms.js');
     serializeForm = formsModule.serializeForm;
+    configureClientSelect = formsModule.configureClientSelect;
+    resetForm = formsModule.resetForm;
+    autoResizeInput = formsModule.autoResizeInput;
     ({ calculateAll, updateConversions } = formsModule.__testables__);
 
     const configModule = await import('../config.js');
@@ -59,6 +65,30 @@ describe('serializeForm', () => {
     });
 });
 
+describe('autoResizeInput', () => {
+    afterEach(() => {
+        document.body.innerHTML = '';
+    });
+
+    test('aumenta el ancho cuando el contenido crece', () => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.setAttribute('data-auto-resize', '');
+        document.body.appendChild(input);
+
+        input.value = 'abc';
+        autoResizeInput(input);
+        const initialWidth = parseFloat(input.style.width);
+
+        input.value = 'texto con muchos más caracteres';
+        autoResizeInput(input);
+        const updatedWidth = parseFloat(input.style.width);
+
+        expect(initialWidth).toBeGreaterThan(0);
+        expect(updatedWidth).toBeGreaterThan(initialWidth);
+    });
+});
+
 describe('calculateAll', () => {
     beforeEach(() => {
         document.body.innerHTML = `
@@ -98,6 +128,133 @@ describe('calculateAll', () => {
 
         expect(document.getElementById('rechazo_found').value).toBe('');
         expect(document.getElementById('relacion_found').value).toBe('');
+    });
+});
+
+describe('selección de clientes', () => {
+    beforeEach(() => {
+        document.body.innerHTML = `
+            <form id="maintenance-form">
+                <div>
+                    <select id="cliente" name="cliente">
+                        <option value="" selected>Selecciona un cliente</option>
+                    </select>
+                </div>
+                <input id="direccion" value="" />
+                <input id="cliente_telefono" value="" />
+                <input id="cliente_email" value="" />
+                <input id="cliente_cuit" value="" />
+                <input id="fecha" value="" />
+                <input id="fecha_display" value="" />
+            </form>
+        `;
+    });
+
+    afterEach(() => {
+        document.body.innerHTML = '';
+    });
+
+    test('pobla el selector y actualiza los datos del cliente al cambiar', () => {
+        const clientes = [
+            { id: '1', nombre: 'Cliente Uno', direccion: 'Calle 1', telefono: '123456', mail: 'uno@example.com', cuit: '20-12345678-1' },
+            { id: '2', nombre: 'Cliente Dos', domicilio: 'Calle 2', Tel: '987654', email: 'dos@example.com', CUIT: '27-87654321-9' },
+        ];
+
+        configureClientSelect(clientes);
+
+        const select = document.getElementById('cliente');
+        expect(select.options.length).toBe(1 + clientes.length);
+
+        select.value = '2';
+        select.dispatchEvent(new Event('change'));
+
+        expect(document.getElementById('direccion').value).toBe('Calle 2');
+        expect(document.getElementById('cliente_telefono').value).toBe('987654');
+        expect(document.getElementById('cliente_email').value).toBe('dos@example.com');
+        expect(document.getElementById('cliente_cuit').value).toBe('27-87654321-9');
+
+        const direccionInput = document.getElementById('direccion');
+        const telefonoInput = document.getElementById('cliente_telefono');
+        const emailInput = document.getElementById('cliente_email');
+        const cuitInput = document.getElementById('cliente_cuit');
+
+        [direccionInput, telefonoInput, emailInput, cuitInput].forEach(input => {
+            expect(input.readOnly).toBe(true);
+            expect(input.disabled).toBe(true);
+            expect(input.classList.contains('client-detail-locked')).toBe(true);
+            expect(input.classList.contains('client-detail-empty')).toBe(false);
+        });
+    });
+
+    test('maneja clientes con nombres duplicados sin identificadores visibles', () => {
+        const clientes = [
+            { nombre: 'Cliente Repetido', direccion: 'Calle A', telefono: '111111', email: 'uno@example.com' },
+            { nombre: 'Cliente Repetido', domicilio: 'Calle B', Tel: '222222', mail: 'dos@example.com' },
+        ];
+
+        configureClientSelect(clientes);
+
+        const select = document.getElementById('cliente');
+        expect(select.options.length).toBe(1 + clientes.length);
+
+        const firstOptionKey = select.options[1].getAttribute('data-cliente-key');
+        const secondOptionKey = select.options[2].getAttribute('data-cliente-key');
+
+        expect(firstOptionKey).toBeTruthy();
+        expect(secondOptionKey).toBeTruthy();
+        expect(firstOptionKey).not.toBe(secondOptionKey);
+
+        select.selectedIndex = 1;
+        select.dispatchEvent(new Event('change'));
+
+        expect(document.getElementById('direccion').value).toBe('Calle A');
+        expect(document.getElementById('cliente_telefono').value).toBe('111111');
+        expect(document.getElementById('cliente_email').value).toBe('uno@example.com');
+        expect(document.getElementById('cliente_cuit').value).toBe('');
+        expect(document.getElementById('cliente_cuit').classList.contains('client-detail-empty')).toBe(true);
+        expect(document.getElementById('cliente_cuit').readOnly).toBe(false);
+        expect(document.getElementById('cliente_cuit').disabled).toBe(false);
+        expect(document.getElementById('direccion').readOnly).toBe(true);
+        expect(document.getElementById('direccion').disabled).toBe(true);
+
+        select.selectedIndex = 2;
+        expect(select.selectedIndex).toBe(2);
+        select.dispatchEvent(new Event('change'));
+
+        expect(document.getElementById('direccion').value).toBe('Calle B');
+        expect(document.getElementById('cliente_telefono').value).toBe('222222');
+        expect(document.getElementById('cliente_email').value).toBe('dos@example.com');
+        expect(document.getElementById('cliente_cuit').value).toBe('');
+        expect(document.getElementById('cliente_cuit').classList.contains('client-detail-empty')).toBe(true);
+        expect(document.getElementById('cliente_cuit').readOnly).toBe(false);
+        expect(document.getElementById('cliente_cuit').disabled).toBe(false);
+        expect(document.getElementById('direccion').readOnly).toBe(true);
+        expect(document.getElementById('direccion').disabled).toBe(true);
+    });
+
+    test('resetForm limpia la selección y los campos de cliente', () => {
+        const clientes = [
+            { id: '1', nombre: 'Cliente Uno', direccion: 'Calle 1', telefono: '123456', mail: 'uno@example.com', cuit: '20-12345678-1' },
+        ];
+
+        configureClientSelect(clientes);
+
+        const select = document.getElementById('cliente');
+        select.value = '1';
+        select.dispatchEvent(new Event('change'));
+
+        expect(document.getElementById('direccion').value).toBe('Calle 1');
+
+        resetForm();
+
+        expect(select.value).toBe('');
+        expect(document.getElementById('direccion').value).toBe('');
+        expect(document.getElementById('cliente_telefono').value).toBe('');
+        expect(document.getElementById('cliente_email').value).toBe('');
+        expect(document.getElementById('cliente_cuit').value).toBe('');
+        expect(document.getElementById('direccion').readOnly).toBe(false);
+        expect(document.getElementById('direccion').disabled).toBe(false);
+        expect(document.getElementById('direccion').classList.contains('client-detail-empty')).toBe(true);
     });
 });
 
