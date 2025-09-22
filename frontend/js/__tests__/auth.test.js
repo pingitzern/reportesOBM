@@ -383,7 +383,7 @@ describe('auth helpers', () => {
                 expiresAt,
             });
             expect(elements.panel.classList.contains('hidden')).toBe(false);
-            expect(elements.userRole.textContent).toBe('Usuario');
+            expect(elements.userNameDisplay.textContent).toBe('Luis');
         });
     });
 
@@ -453,8 +453,8 @@ describe('auth helpers', () => {
             expect(elements.panel.classList.contains('hidden')).toBe(true);
             expect(elements.logoutButton.disabled).toBe(true);
 
-            expect(elements.userLabel.textContent).toBe('');
-            expect(elements.userRole.textContent).toBe('');
+            expect(elements.userNameDisplay.textContent).toBe('');
+            expect(elements.userNameDisplay.classList.contains('hidden')).toBe(true);
         });
     });
 
