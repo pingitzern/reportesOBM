@@ -217,6 +217,7 @@ function getElements() {
     }
 
     return {
+        mainView: document.getElementById('main-view'),
         loginContainer: document.getElementById('login-container'),
         form: document.getElementById('login-form'),
         error: document.getElementById('login-error'),
@@ -492,7 +493,12 @@ function updateUserPanel(auth) {
         userNameDisplay,
     } = getElements();
 
-    const isAuthenticated = Boolean(auth && auth.usuario);
+    const displayName = typeof auth?.usuario === 'string'
+        ? auth.usuario.trim()
+        : typeof auth?.nombre === 'string'
+            ? auth.nombre.trim()
+            : '';
+    const isAuthenticated = Boolean(displayName);
 
     if (!panel && !menuButton && !menu && !logoutButton && !userNameDisplay) {
         return;
@@ -517,7 +523,7 @@ function updateUserPanel(auth) {
             logoutButton.disabled = false;
         }
         if (userNameDisplay) {
-            userNameDisplay.textContent = auth.usuario;
+            userNameDisplay.textContent = displayName;
             userNameDisplay.classList?.remove?.('hidden');
         }
     } else {
