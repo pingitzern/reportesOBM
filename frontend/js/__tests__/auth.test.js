@@ -237,6 +237,15 @@ const setupDocumentMock = () => {
     panel.appendChild(menuButton);
     panel.appendChild(menu);
 
+    const mainView = createElementStub({ initialClasses: ['hidden'] });
+    mainView.id = 'main-view';
+
+    const loginContainer = createElementStub({ initialClasses: ['hidden'] });
+    loginContainer.id = 'login-container';
+
+    const error = createElementStub({ initialClasses: ['hidden'] });
+    error.id = 'login-error';
+
     const docListeners = {};
 
     const elements = {
@@ -258,11 +267,12 @@ const setupDocumentMock = () => {
         'user-menu-toggle': menuButton,
         'user-menu': menu,
         'logout-button': logoutButton,
-        'login-modal': null,
+        'main-view': mainView,
+        'login-container': loginContainer,
         'login-form': null,
-        'login-error': null,
-        'login-usuario': null,
-        'login-token': null,
+        'login-error': error,
+        'login-mail': null,
+        'login-password': null,
     };
 
     global.document = {
