@@ -1,8 +1,3 @@
-const COMPONENT_STAGE_ACTIONS = [
-    { value: 'Cambiado', label: 'Cambiado' },
-    { value: 'Inspeccionado', label: 'Inspeccionado', default: true },
-];
-
 const COMPONENT_STAGES = [
     {
         id: 'etapa1',
@@ -36,91 +31,56 @@ const COMPONENT_STAGES = [
         placeholder: 'Tipo: UV, Alcalino...',
     },
 ];
+function createComponentToggle(stageId) {
+    const toggle = document.createElement('div');
+    toggle.className = 'component-toggle';
+    toggle.dataset.state = 'inspeccionado';
 
-function createActionLabel(stageId, actions) {
-    if (!Array.isArray(actions) || actions.length === 0) {
-        return null;
-    }
+    const changedId = `${stageId}_accion_cambiado`;
+    const inspectedId = `${stageId}_accion_inspeccionado`;
 
-    const validActions = actions.filter(action => action && typeof action === 'object');
-    if (validActions.length === 0) {
-        return null;
-    }
+    const changedInput = document.createElement('input');
+    changedInput.type = 'radio';
+    changedInput.name = `${stageId}_accion`;
+    changedInput.value = 'Cambiado';
+    changedInput.id = changedId;
+    changedInput.className = 'component-toggle__input';
 
-    const defaultAction =
-        validActions.find(action => action.default) || validActions[0];
-    const alternateAction =
-        validActions.find(action => action !== defaultAction) || defaultAction;
+    const inspectedInput = document.createElement('input');
+    inspectedInput.type = 'radio';
+    inspectedInput.name = `${stageId}_accion`;
+    inspectedInput.value = 'Inspeccionado';
+    inspectedInput.id = inspectedId;
+    inspectedInput.className = 'component-toggle__input';
+    inspectedInput.checked = true;
+    inspectedInput.defaultChecked = true;
 
-    const fragment = document.createDocumentFragment();
+    const track = document.createElement('div');
+    track.className = 'component-toggle__track';
 
-    const hiddenInput = document.createElement('input');
-    hiddenInput.type = 'hidden';
-    hiddenInput.name = `${stageId}_accion`;
-    hiddenInput.value = typeof defaultAction.value === 'string'
-        ? defaultAction.value
-        : String(defaultAction.value ?? '');
-    hiddenInput.defaultValue = hiddenInput.value;
-    fragment.appendChild(hiddenInput);
+    const thumb = document.createElement('div');
+    thumb.className = 'component-toggle__thumb';
+    track.appendChild(thumb);
 
-    const toggleLabel = document.createElement('label');
-    toggleLabel.className = 'toggle-switch';
+    const changedLabel = document.createElement('label');
+    changedLabel.setAttribute('for', changedId);
+    changedLabel.className = 'component-toggle__option component-toggle__option--cambiado';
+    changedLabel.textContent = 'Cambiado';
 
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'toggle-switch-input';
-    checkbox.setAttribute('role', 'switch');
-    checkbox.setAttribute('aria-label', 'Alternar acción de la etapa');
+    const inspectedLabel = document.createElement('label');
+    inspectedLabel.setAttribute('for', inspectedId);
+    inspectedLabel.className = 'component-toggle__option component-toggle__option--inspeccionado';
+    inspectedLabel.textContent = 'Inspeccionado';
 
-    const slider = document.createElement('span');
-    slider.className = 'toggle-switch-slider';
-    slider.setAttribute('aria-hidden', 'true');
+    toggle.append(
+        changedInput,
+        inspectedInput,
+        track,
+        changedLabel,
+        inspectedLabel,
+    );
 
-    toggleLabel.appendChild(checkbox);
-    toggleLabel.appendChild(slider);
-    fragment.appendChild(toggleLabel);
-
-    const statusText = document.createElement('span');
-    statusText.className = 'stage-action-status';
-    statusText.id = `${stageId}_accion_estado`;
-    fragment.appendChild(statusText);
-    checkbox.setAttribute('aria-labelledby', statusText.id);
-
-    const hasAlternateAction = alternateAction !== defaultAction;
-    const defaultChecked = hasAlternateAction ? false : true;
-    checkbox.checked = defaultChecked;
-    checkbox.defaultChecked = defaultChecked;
-
-    const updateState = (isChecked) => {
-        const action = isChecked ? alternateAction : defaultAction;
-        const value = typeof action.value === 'string' ? action.value : String(action.value ?? '');
-        const label = typeof action.label === 'string' ? action.label : String(action.label ?? '');
-        hiddenInput.value = value;
-        statusText.textContent = label;
-        checkbox.setAttribute('aria-checked', String(Boolean(isChecked)));
-    };
-
-    updateState(checkbox.checked);
-
-    checkbox.addEventListener('change', () => {
-        updateState(checkbox.checked);
-    });
-
-    const formElement = document.getElementById('maintenance-form');
-    if (formElement instanceof HTMLFormElement) {
-        formElement.addEventListener('reset', () => {
-            const scheduler =
-                typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
-                    ? window.requestAnimationFrame.bind(window)
-                    : (callback) => setTimeout(callback, 0);
-            scheduler(() => {
-                checkbox.checked = checkbox.defaultChecked;
-                updateState(checkbox.checked);
-            });
-        });
-    }
-
-    return fragment;
+    return toggle;
 }
 
 function populateStage(fragment, stage) {
@@ -141,10 +101,26 @@ function populateStage(fragment, stage) {
 
     const actionsContainer = fragment.querySelector('.stage-actions');
     if (actionsContainer) {
+        const toggle = createComponentToggle(stage.id);
         actionsContainer.innerHTML = '';
-        const actionControl = createActionLabel(stage.id, COMPONENT_STAGE_ACTIONS);
-        if (actionControl) {
-            actionsContainer.appendChild(actionControl);
+        actionsContainer.appendChild(toggle);
+
+        const updateState = value => {
+            toggle.dataset.state = String(value).toLowerCase();
+        };
+
+        const radios = toggle.querySelectorAll('.component-toggle__input');
+        radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (radio.checked) {
+                    updateState(radio.value);
+                }
+            });
+        });
+
+        const checkedRadio = toggle.querySelector('.component-toggle__input:checked');
+        if (checkedRadio) {
+            updateState(checkedRadio.value);
         }
     }
 }

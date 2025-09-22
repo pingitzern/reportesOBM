@@ -5,6 +5,8 @@ const STORAGE_KEY = 'reportesOBM.user';
 let cachedSession = null;
 let listenersBound = false;
 let pendingAuth = null;
+let menuIsOpen = false;
+let documentMenuHandlersActive = false;
 
 function getStorage() {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -185,6 +187,35 @@ function getElements() {
         return {};
     }
 
+    const panel = document.getElementById('auth-user-panel');
+    const menu = document.getElementById('user-menu');
+    let userNameDisplay = null;
+    let helpLink = null;
+    let settingsLink = null;
+
+    if (menu && typeof menu.querySelector === 'function') {
+        userNameDisplay = menu.querySelector('[data-user-name]')
+            || menu.querySelector('.user-menu__user-name')
+            || null;
+        helpLink = menu.querySelector('[data-auth-action="help"]');
+        settingsLink = menu.querySelector('[data-auth-action="settings"]');
+    }
+
+    if (menu && typeof menu.querySelectorAll === 'function') {
+        const normalizeText = value => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+        const items = Array.from(menu.querySelectorAll('[role="menuitem"]') || []);
+
+        if (!helpLink) {
+            helpLink = items.find(item => normalizeText(item?.textContent) === 'ayuda') || null;
+        }
+        if (!settingsLink) {
+            settingsLink = items.find(item => normalizeText(item?.textContent) === 'configuración') || null;
+        }
+        if (!userNameDisplay) {
+            userNameDisplay = items.find(item => item?.dataset?.userName) || null;
+        }
+    }
+
     return {
         loginContainer: document.getElementById('login-container'),
         form: document.getElementById('login-form'),
@@ -192,10 +223,12 @@ function getElements() {
         mailInput: document.getElementById('login-mail'),
         passwordInput: document.getElementById('login-password'),
         logoutButton: document.getElementById('logout-button'),
-        panel: document.getElementById('auth-user-panel'),
-        userLabel: document.getElementById('current-user'),
-        userRole: document.getElementById('current-user-role'),
-        mainView: document.querySelector('.app-container'),
+        panel,
+        menuButton: document.getElementById('user-menu-toggle'),
+        menu,
+        helpLink,
+        settingsLink,
+        userNameDisplay,
     };
 }
 
@@ -278,31 +311,230 @@ function displayError(message) {
     error.classList.remove('hidden');
 }
 
-function updateUserPanel(auth) {
-    const { panel, userLabel, userRole, logoutButton } = getElements();
-    if (!panel || !userLabel || !logoutButton) {
+function isTargetWithinMenu(target, ...elements) {
+    if (!target) {
+        return false;
+    }
+
+    return elements.some(element => {
+        if (!element) {
+            return false;
+        }
+        if (target === element) {
+            return true;
+        }
+        if (typeof element.contains === 'function') {
+            try {
+                return element.contains(target);
+            } catch (error) {
+                return false;
+            }
+        }
+        return false;
+    });
+}
+
+function activateDocumentHandlers() {
+    if (documentMenuHandlersActive || typeof document === 'undefined' || typeof document.addEventListener !== 'function') {
+        return;
+    }
+    document.addEventListener('click', handleDocumentClick);
+    document.addEventListener('keydown', handleDocumentKeydown);
+    documentMenuHandlersActive = true;
+}
+
+function deactivateDocumentHandlers() {
+    if (!documentMenuHandlersActive || typeof document === 'undefined' || typeof document.removeEventListener !== 'function') {
+        return;
+    }
+    document.removeEventListener('click', handleDocumentClick);
+    document.removeEventListener('keydown', handleDocumentKeydown);
+    documentMenuHandlersActive = false;
+}
+
+function openUserMenu() {
+    const { menuButton, menu } = getElements();
+    if (!menuButton || menuButton.disabled || !menu) {
         return;
     }
 
-    const nombre = typeof auth?.nombre === 'string' ? auth.nombre.trim() : '';
-    const rol = typeof auth?.rol === 'string' ? auth.rol.trim() : '';
-    const cargo = typeof auth?.cargo === 'string' ? auth.cargo.trim() : '';
-    const roleLabel = rol || cargo;
+    if (menu.classList?.remove) {
+        menu.classList.remove('hidden');
+    }
+    if (typeof menu.setAttribute === 'function') {
+        menu.setAttribute('aria-hidden', 'false');
+    }
+    if (typeof menuButton.setAttribute === 'function') {
+        menuButton.setAttribute('aria-expanded', 'true');
+    }
 
-    if (nombre) {
-        userLabel.textContent = nombre;
-        if (userRole) {
-            userRole.textContent = roleLabel || '';
-        }
-        panel.classList.remove('hidden');
-        logoutButton.disabled = false;
+    menuIsOpen = true;
+    activateDocumentHandlers();
+}
+
+function closeUserMenu(options = {}) {
+    const { focusButton = false } = options;
+    const { menuButton, menu } = getElements();
+
+    menuIsOpen = false;
+
+    if (menu?.classList?.add) {
+        menu.classList.add('hidden');
+    }
+    if (typeof menu?.setAttribute === 'function') {
+        menu.setAttribute('aria-hidden', 'true');
+    }
+    if (typeof menuButton?.setAttribute === 'function') {
+        menuButton.setAttribute('aria-expanded', 'false');
+    }
+
+    deactivateDocumentHandlers();
+
+    if (focusButton && typeof menuButton?.focus === 'function') {
+        menuButton.focus();
+    }
+}
+
+function handleDocumentClick(event) {
+    if (!menuIsOpen) {
+        return;
+    }
+
+    const { panel, menuButton, menu } = getElements();
+    if (isTargetWithinMenu(event?.target, panel, menuButton, menu)) {
+        return;
+    }
+
+    closeUserMenu();
+}
+
+function handleDocumentKeydown(event) {
+    if (!menuIsOpen) {
+        return;
+    }
+
+    const key = event?.key || event?.code;
+    if (key === 'Escape' || key === 'Esc') {
+        closeUserMenu({ focusButton: true });
+    }
+}
+
+function handleMenuButtonClick(event) {
+    if (event) {
+        event.preventDefault?.();
+        event.stopPropagation?.();
+    }
+
+    const { menuButton } = getElements();
+    if (!menuButton || menuButton.disabled) {
+        return;
+    }
+
+    if (menuIsOpen) {
+        closeUserMenu();
     } else {
-        userLabel.textContent = '';
-        if (userRole) {
-            userRole.textContent = '';
+        openUserMenu();
+    }
+}
+
+function emitAuthNavigation(action) {
+    if (typeof document === 'undefined' || typeof document.dispatchEvent !== 'function') {
+        return;
+    }
+
+    const detail = { action };
+    let eventConstructor = null;
+
+    if (typeof window !== 'undefined' && typeof window.CustomEvent === 'function') {
+        eventConstructor = window.CustomEvent;
+    } else if (typeof CustomEvent === 'function') {
+        eventConstructor = CustomEvent;
+    }
+
+    if (eventConstructor) {
+        document.dispatchEvent(new eventConstructor('auth:navigate', { detail }));
+        return;
+    }
+
+    if (typeof Event === 'function') {
+        const fallbackEvent = new Event('auth:navigate');
+        fallbackEvent.detail = detail;
+        document.dispatchEvent(fallbackEvent);
+        return;
+    }
+
+    document.dispatchEvent({ type: 'auth:navigate', detail });
+}
+
+function handleMenuNavigation(event, action) {
+    if (event) {
+        event.preventDefault?.();
+        event.stopPropagation?.();
+    }
+    closeUserMenu();
+    emitAuthNavigation(action);
+}
+
+function handleHelpClick(event) {
+    handleMenuNavigation(event, 'help');
+}
+
+function handleSettingsClick(event) {
+    handleMenuNavigation(event, 'settings');
+}
+
+function updateUserPanel(auth) {
+    const {
+        panel,
+        menuButton,
+        menu,
+        logoutButton,
+        userNameDisplay,
+    } = getElements();
+
+    const isAuthenticated = Boolean(auth && auth.usuario);
+
+    if (!panel && !menuButton && !menu && !logoutButton && !userNameDisplay) {
+        return;
+    }
+
+    if (isAuthenticated) {
+        panel?.classList?.remove?.('hidden');
+        if (menuButton) {
+            menuButton.disabled = false;
+            menuButton.setAttribute?.('aria-expanded', menuIsOpen ? 'true' : 'false');
         }
-        panel.classList.add('hidden');
-        logoutButton.disabled = true;
+        if (menu) {
+            if (menuIsOpen) {
+                menu.classList?.remove?.('hidden');
+                menu.setAttribute?.('aria-hidden', 'false');
+            } else {
+                menu.classList?.add?.('hidden');
+                menu.setAttribute?.('aria-hidden', 'true');
+            }
+        }
+        if (logoutButton) {
+            logoutButton.disabled = false;
+        }
+        if (userNameDisplay) {
+            userNameDisplay.textContent = auth.usuario;
+            userNameDisplay.classList?.remove?.('hidden');
+        }
+    } else {
+        if (userNameDisplay) {
+            userNameDisplay.textContent = '';
+            userNameDisplay.classList?.add?.('hidden');
+        }
+        closeUserMenu();
+        panel?.classList?.add?.('hidden');
+        if (menuButton) {
+            menuButton.disabled = true;
+            menuButton.setAttribute?.('aria-expanded', 'false');
+        }
+        menu?.setAttribute?.('aria-hidden', 'true');
+        if (logoutButton) {
+            logoutButton.disabled = true;
+        }
     }
 }
 
@@ -430,6 +662,7 @@ async function handleLogout(event) {
         event.preventDefault();
     }
 
+
     const session = loadStoredAuth();
     const token = typeof session?.token === 'string' ? session.token.trim() : '';
 
@@ -454,6 +687,12 @@ async function handleLogout(event) {
         showLoginModal();
         createPendingAuthPromise();
     }
+
+    closeUserMenu();
+    clearStoredAuth();
+    showLoginModal();
+    createPendingAuthPromise();
+
 }
 
 function bindEventListeners() {
@@ -461,12 +700,21 @@ function bindEventListeners() {
         return;
     }
 
-    const { form, logoutButton } = getElements();
+    const { form, logoutButton, menuButton, helpLink, settingsLink } = getElements();
     if (form) {
         form.addEventListener('submit', handleLoginSubmit);
     }
     if (logoutButton) {
         logoutButton.addEventListener('click', handleLogout);
+    }
+    if (menuButton) {
+        menuButton.addEventListener('click', handleMenuButtonClick);
+    }
+    if (helpLink) {
+        helpLink.addEventListener('click', handleHelpClick);
+    }
+    if (settingsLink) {
+        settingsLink.addEventListener('click', handleSettingsClick);
     }
 
     listenersBound = true;
@@ -503,8 +751,10 @@ export async function initializeAuth() {
         hideLoginModal();
         return storedSession;
     }
-
     setMainViewVisible(false);
+
+    updateUserPanel(null);
+
     showLoginModal();
     return createPendingAuthPromise();
 }
@@ -534,4 +784,6 @@ export const __testables__ = {
     persistAuth,
     clearStoredAuth,
     requestAuthentication,
+    updateUserPanel,
+    bindEventListeners,
 };

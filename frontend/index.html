@@ -8,30 +8,39 @@
     <link rel="stylesheet" href="./css/styles.build.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="app-container hidden">
-        <div class="container mx-auto p-4 md:p-8 max-w-7xl">
-            <header class="app-header no-print">
-                <div class="app-header__column app-header__column--logo">
-                    <img src="/OHM-agua.png" alt="Logo OHM Agua" class="app-header__logo-image">
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="relative flex flex-wrap items-center justify-between gap-4 mb-8 no-print">
+            <div class="order-1 flex-shrink-0">
+                <img src="/OHM-agua.png" alt="Logo OHM Agua" class="h-14 w-auto md:h-16">
+            </div>
+            <div class="order-3 w-full text-center md:order-2 md:flex-1">
+                <h1 class="text-3xl font-bold text-gray-800">Sistema de Gestión de Mantenimientos RO</h1>
+                <p class="text-gray-600 mt-2">ID del Protocolo: PMA-RO-RES-12</p>
+            </div>
+            <div class="order-2 md:order-3 relative ml-auto flex items-center gap-3">
+                <div id="auth-user-panel" class="hidden whitespace-nowrap text-sm font-medium text-gray-700">
+                    <span id="current-user"></span>
                 </div>
-                <div class="app-header__column app-header__column--titles">
-                    <h1 class="app-header__title">Sistema de Gestión de Mantenimientos RO</h1>
-                    <p class="app-header__subtitle">ID del Protocolo: PMA-RO-RES-12</p>
-                    <span id="app-version" class="app-header__version"></span>
-                </div>
-                <div class="app-header__column app-header__column--actions">
-                    <div id="auth-user-panel" class="session-info hidden" aria-live="polite">
-                        <div class="session-info__details">
-                            <span id="current-user" class="session-info__name"></span>
-                            <span id="current-user-role" class="session-info__role"></span>
-                        </div>
-                        <button id="logout-button" type="button" class="session-info__logout-button" disabled>
-                            Cerrar sesión
+                <button id="user-menu-toggle" type="button" class="user-menu-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="user-menu">
+                    <span class="sr-only">Abrir menú de usuario</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a8.25 8.25 0 0 1 15 0" />
+                    </svg>
+                </button>
+                <div id="user-menu" class="user-menu hidden" role="menu" aria-labelledby="user-menu-toggle" aria-hidden="true">
+                    <nav class="user-menu__content" aria-label="Opciones de usuario">
+                        <a href="#" class="user-menu__item" role="menuitem">Ayuda</a>
+                        <a href="#" class="user-menu__item" role="menuitem">Configuración</a>
+                        <button id="logout-button" type="button" class="user-menu__item user-menu__logout" role="menuitem" disabled>
+                            Cerrar Sesión
                         </button>
-        </div>
-        </div>
-            </header>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
 
         <div class="print-header">
             <div class="print-header-text">
@@ -52,6 +61,7 @@
         <div id="tab-nuevo" class="tab-content">
             <form id="maintenance-form">
                 <!-- Sección A: Datos del Servicio y del Equipo -->
+
                 <div class="form-card">
                     <div class="form-section" id="section-a">
                         <h2>A. Datos del Servicio y del Equipo</h2>
@@ -117,11 +127,13 @@
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
 
                 <!-- Sección B: Parámetros de Operación -->
+
                 <div class="form-card">
                     <div class="form-section" id="section-b">
                         <h2>B. Parámetros de Operación</h2>
@@ -146,10 +158,17 @@
                             <div class="md:col-span-1"><input type="number" id="cond_perm_found" name="cond_perm_found" class="text-center w-full" placeholder="0"></div>
                             <div class="md:col-span-1"><input type="number" id="cond_perm_left" name="cond_perm_left" class="text-center w-full" placeholder="0"></div>
 
-                            <!-- Rechazo Iónico -->
-                            <label class="md:col-span-1 font-bold">% de Rechazo Iónico</label>
-                            <div class="md:col-span-1"><input type="text" id="rechazo_found" name="rechazo_found" class="text-center w-full calculated-field" readonly></div>
-                            <div class="md:col-span-1"><input type="text" id="rechazo_left" name="rechazo_left" class="text-center w-full calculated-field" readonly></div>
+
+                        <!-- Rechazo Iónico -->
+                        <label class="md:col-span-1 font-bold">% de Rechazo Iónico</label>
+                        <div class="md:col-span-1">
+                            <input type="text" id="rechazo_found" class="text-center w-full calculated-field" readonly disabled>
+                            <input type="hidden" id="rechazo_found_hidden" name="rechazo_found">
+                        </div>
+                        <div class="md:col-span-1">
+                            <input type="text" id="rechazo_left" class="text-center w-full calculated-field" readonly disabled>
+                            <input type="hidden" id="rechazo_left_hidden" name="rechazo_left">
+                        </div>
 
                             <!-- Presión -->
                             <label class="md:col-span-1">Presión Entrada a Membrana (bar)</label>
@@ -178,10 +197,18 @@
                                 <p id="caudal_rech_left_conv" class="conversion-text text-center"></p>
                             </div>
                         
-                            <!-- Relación Rechazo -->
-                            <label class="md:col-span-1 font-bold">Relación Rechazo:Permeado</label>
-                            <div class="md:col-span-1"><input type="text" id="relacion_found" name="relacion_found" class="text-center w-full calculated-field" readonly></div>
-                            <div class="md:col-span-1"><input type="text" id="relacion_left" name="relacion_left" class="text-center w-full calculated-field" readonly></div>
+
+                        <!-- Relación Rechazo -->
+                        <label class="md:col-span-1 font-bold">Relación Rechazo:Permeado</label>
+                        <div class="md:col-span-1">
+                            <input type="text" id="relacion_found" class="text-center w-full calculated-field" readonly disabled>
+                            <input type="hidden" id="relacion_found_hidden" name="relacion_found">
+                        </div>
+                        <div class="md:col-span-1">
+                            <input type="text" id="relacion_left" class="text-center w-full calculated-field" readonly disabled>
+                            <input type="hidden" id="relacion_left_hidden" name="relacion_left">
+                        </div>
+
                         
                             <!-- Precarga Tanque -->
                             <label class="md:col-span-1">Precarga del tanque (bar)</label>
@@ -226,6 +253,7 @@
                 </div>
 
                 <!-- Sección C: Registro de Componentes -->
+
                 <div class="form-card">
                     <div class="form-section" id="section-c">
                         <h2>C. Registro de Componentes y Sanitización</h2>
@@ -236,6 +264,7 @@
                             <div class="sm:col-span-2">Acción</div>
                         </div>
                         <div id="component-stage-container"></div>
+
 
                         <template id="component-stage-template">
                             <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center border-t py-2 component-stage">
@@ -268,17 +297,43 @@
                                     </label>
                                 </div>
                             </div>
+
+                            <div class="sm:col-span-2 stage-actions stage-actions--toggle"></div>
+                        </div>
+                    </template>
+                    <!-- Sanitización -->
+                    <hr class="my-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
+                        <div class="sm:col-span-3 font-semibold text-gray-700">Sanitización del Sistema</div>
+                        <div class="sm:col-span-2">
+                            <div class="sanitizacion-options" data-status="neutral">
+                                <label class="sanitizacion-option" for="sanitizacion-realizada">
+                                    <input type="radio" id="sanitizacion-realizada" name="sanitizacion" value="Realizada">
+                                    <span>Realizada</span>
+                                </label>
+                                <label class="sanitizacion-option" for="sanitizacion-no-realizada">
+                                    <input type="radio" id="sanitizacion-no-realizada" name="sanitizacion" value="No Realizada">
+                                    <span>No Realizada</span>
+                                </label>
+                                <label class="sanitizacion-option" for="sanitizacion-na">
+                                    <input type="radio" id="sanitizacion-na" name="sanitizacion" value="N/A" checked>
+                                    <span>No Aplica</span>
+                                </label>
+                            </div>
+
                         </div>
                     </div>
                 </div>
 
                 <!-- Sección D: Resumen -->
+
                 <div class="form-card">
                     <div class="form-section" id="section-d">
                         <h2>D. Resumen y Recomendaciones Finales</h2>
                         <p class="guide-text">Anote un resumen claro del trabajo realizado y las recomendaciones para el cliente.</p>
                         <textarea id="resumen" name="resumen" rows="6" class="w-full border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring focus:ring-blue-200" placeholder="Ej: Se realizó mantenimiento anual completo, reemplazando filtros de 1ª, 2ª y 5ª etapa. La presión de operación se normalizó de 2.5 a 4.5 bar. El equipo queda 100% operativo."></textarea>
                     </div>
+
                 </div>
 
                 <!-- Botones de Acción -->

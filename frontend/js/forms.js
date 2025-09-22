@@ -488,25 +488,47 @@ function calculateAll() {
     const rechazoFound = condRedFound > 0 ? ((1 - (condPermFound / condRedFound)) * 100).toFixed(2) : '';
     const rechazoLeft = condRedLeft > 0 ? ((1 - (condPermLeft / condRedLeft)) * 100).toFixed(2) : '';
 
+    const rechazoFoundValue = rechazoFound ? `${rechazoFound} %` : '';
+    const rechazoLeftValue = rechazoLeft ? `${rechazoLeft} %` : '';
+
     const rechazoFoundInput = getElement('rechazo_found');
+    const rechazoFoundHiddenInput = getElement('rechazo_found_hidden');
     const rechazoLeftInput = getElement('rechazo_left');
+    const rechazoLeftHiddenInput = getElement('rechazo_left_hidden');
     if (rechazoFoundInput) {
-        rechazoFoundInput.value = rechazoFound ? `${rechazoFound} %` : '';
+        rechazoFoundInput.value = rechazoFoundValue;
+    }
+    if (rechazoFoundHiddenInput) {
+        rechazoFoundHiddenInput.value = rechazoFoundValue;
     }
     if (rechazoLeftInput) {
-        rechazoLeftInput.value = rechazoLeft ? `${rechazoLeft} %` : '';
+        rechazoLeftInput.value = rechazoLeftValue;
+    }
+    if (rechazoLeftHiddenInput) {
+        rechazoLeftHiddenInput.value = rechazoLeftValue;
     }
 
     const relacionFound = caudalPermFound > 0 ? (caudalRechFound / caudalPermFound).toFixed(1) : '';
     const relacionLeft = caudalPermLeft > 0 ? (caudalRechLeft / caudalPermLeft).toFixed(1) : '';
 
+    const relacionFoundValue = relacionFound ? `${relacionFound}:1` : '';
+    const relacionLeftValue = relacionLeft ? `${relacionLeft}:1` : '';
+
     const relacionFoundInput = getElement('relacion_found');
+    const relacionFoundHiddenInput = getElement('relacion_found_hidden');
     const relacionLeftInput = getElement('relacion_left');
+    const relacionLeftHiddenInput = getElement('relacion_left_hidden');
     if (relacionFoundInput) {
-        relacionFoundInput.value = relacionFound ? `${relacionFound}:1` : '';
+        relacionFoundInput.value = relacionFoundValue;
+    }
+    if (relacionFoundHiddenInput) {
+        relacionFoundHiddenInput.value = relacionFoundValue;
     }
     if (relacionLeftInput) {
-        relacionLeftInput.value = relacionLeft ? `${relacionLeft}:1` : '';
+        relacionLeftInput.value = relacionLeftValue;
+    }
+    if (relacionLeftHiddenInput) {
+        relacionLeftHiddenInput.value = relacionLeftValue;
     }
 }
 
@@ -537,47 +559,75 @@ function configureConversionInputs() {
         }
     });
 }
+const STATUS_SELECT_SELECTOR = 'select[id$="_found"], select[id$="_left"]';
 
-const STATUS_CLASS_NAMES = ['status-pass', 'status-fail', 'status-na'];
-const STATUS_PASS_VALUES = new Set(['Pasa', 'Realizada', 'No']);
-const STATUS_FAIL_VALUES = new Set(['No Pasa', 'Falla', 'No Realizada', 'Sí']);
-
-function normalizeStatusValue(value) {
-    if (typeof value !== 'string') {
-        return '';
-    }
-    return value.trim();
-}
+const STATUS_CLASS_BY_VALUE = {
+    pasa: 'status-pass',
+    no: 'status-pass',
+    falla: 'status-fail',
+    'no pasa': 'status-fail',
+    sí: 'status-fail',
+    si: 'status-fail',
+    'n/a': 'status-na',
+    'no aplica': 'status-na',
+    na: 'status-na',
+    '': 'status-na',
+};
 
 function setStatusColor(selectElement) {
-    if (!(selectElement instanceof HTMLSelectElement)) {
-        return;
-    }
-
-    STATUS_CLASS_NAMES.forEach(className => selectElement.classList.remove(className));
-
-    const value = normalizeStatusValue(selectElement.value);
-
-    if (STATUS_PASS_VALUES.has(value)) {
-        selectElement.classList.add('status-pass');
-    } else if (STATUS_FAIL_VALUES.has(value)) {
-        selectElement.classList.add('status-fail');
-    } else {
-        selectElement.classList.add('status-na');
-    }
+    selectElement.classList.remove('status-pass', 'status-fail', 'status-na');
+    const normalizedValue = String(selectElement.value ?? '').trim().toLowerCase();
+    const statusClass = STATUS_CLASS_BY_VALUE[normalizedValue] || 'status-na';
+    selectElement.classList.add(statusClass);
 }
 
-function applyStatusColors() {
-    const statusSelects = document.querySelectorAll('select[id$="_found"], select[id$="_left"]');
+function applyStatusColorsToSelects() {
+    const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
     statusSelects.forEach(setStatusColor);
 }
 
 function configureStatusSelects() {
-    const statusSelects = document.querySelectorAll('select[id$="_found"], select[id$="_left"]');
+
+    const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
+
     statusSelects.forEach(select => {
         setStatusColor(select);
         select.addEventListener('change', () => setStatusColor(select));
     });
+}
+
+const SANITIZACION_STATUS_MAP = {
+    Realizada: 'success',
+    'No Realizada': 'danger',
+    'N/A': 'neutral',
+};
+
+function configureSanitizacionRadios() {
+    const container = document.querySelector('.sanitizacion-options');
+    if (!container) {
+        return;
+    }
+
+    const radios = container.querySelectorAll('input[type="radio"][name="sanitizacion"]');
+    if (!radios.length) {
+        container.dataset.status = 'neutral';
+        return;
+    }
+
+    const updateStatus = () => {
+        const checked = container.querySelector('input[type="radio"][name="sanitizacion"]:checked');
+        const statusKey = checked?.value || 'N/A';
+        container.dataset.status = SANITIZACION_STATUS_MAP[statusKey] || 'neutral';
+    };
+
+    if (!container.dataset.sanitizacionConfigured) {
+        radios.forEach(radio => {
+            radio.addEventListener('change', updateStatus);
+        });
+        container.dataset.sanitizacionConfigured = 'true';
+    }
+
+    updateStatus();
 }
 
 function configureNumberInputs() {
@@ -588,7 +638,16 @@ function configureNumberInputs() {
 }
 
 function clearDerivedFields() {
-    ['rechazo_found', 'rechazo_left', 'relacion_found', 'relacion_left'].forEach(id => {
+    [
+        'rechazo_found',
+        'rechazo_found_hidden',
+        'rechazo_left',
+        'rechazo_left_hidden',
+        'relacion_found',
+        'relacion_found_hidden',
+        'relacion_left',
+        'relacion_left_hidden',
+    ].forEach(id => {
         const element = getElement(id);
         if (element) {
             element.value = '';
@@ -694,8 +753,12 @@ export function initializeForm() {
     configureNumberInputs();
     configureConversionInputs();
     configureStatusSelects();
+
     configureAutoResizeInputs();
     configureClientDetailFieldInteractions();
+
+    configureSanitizacionRadios();
+
     calculateAll();
 }
 
@@ -708,8 +771,13 @@ export function resetForm() {
     setDefaultDate();
     clearDerivedFields();
     clearConversionOutputs();
+
     applyStatusColors();
     resizeAutoResizeInputs();
+
+    applyStatusColorsToSelects();
+    configureSanitizacionRadios();
+
 }
 
 export function getFormData() {
