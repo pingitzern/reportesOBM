@@ -560,10 +560,20 @@ describe('auth helpers', () => {
     });
 
     describe('user menu interactions', () => {
+        const createMenuSession = () => ({
+            token: 'token-menu',
+            expiresAt: new Date(NOW.getTime() + 45 * 60 * 1000).toISOString(),
+            usuario: {
+                Nombre: 'Laura',
+                Rol: 'Supervisora',
+                mail: 'laura@example.com',
+            },
+        });
+
         test('abre y cierra el menú con el botón de usuario', async () => {
             const { bindEventListeners, persistAuth } = await getTestables();
             bindEventListeners();
-            persistAuth({ token: 'token-menu', usuario: 'Laura' });
+            persistAuth(createMenuSession());
 
             const [buttonHandler] = Array.from(elements.menuButton.listeners.click);
             expect(typeof buttonHandler).toBe('function');
@@ -588,7 +598,7 @@ describe('auth helpers', () => {
         test('cierra el menú al hacer clic fuera y al presionar Escape', async () => {
             const { bindEventListeners, persistAuth } = await getTestables();
             bindEventListeners();
-            persistAuth({ token: 'token-menu', usuario: 'Laura' });
+            persistAuth(createMenuSession());
 
             const [buttonHandler] = Array.from(elements.menuButton.listeners.click);
             const clickEvent = { preventDefault: jest.fn(), stopPropagation: jest.fn(), target: elements.menuButton };
@@ -617,7 +627,7 @@ describe('auth helpers', () => {
         test('emite eventos de navegación para Ayuda y Configuración', async () => {
             const { bindEventListeners, persistAuth } = await getTestables();
             bindEventListeners();
-            persistAuth({ token: 'token-menu', usuario: 'Laura' });
+            persistAuth(createMenuSession());
 
             const [buttonHandler] = Array.from(elements.menuButton.listeners.click);
             const clickEvent = { preventDefault: jest.fn(), stopPropagation: jest.fn(), target: elements.menuButton };
