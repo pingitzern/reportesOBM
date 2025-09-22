@@ -772,10 +772,9 @@ export function resetForm() {
     clearDerivedFields();
     clearConversionOutputs();
 
-    applyStatusColors();
+    applyStatusColorsToSelects();
     resizeAutoResizeInputs();
 
-    applyStatusColorsToSelects();
     configureSanitizacionRadios();
 
 }
