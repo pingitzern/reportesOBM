@@ -67,7 +67,10 @@ describe('handleGuardarClick', () => {
         const mainModule = await import('../main.js');
         ({ handleGuardarClick } = mainModule.__testables__);
 
-        document.body.innerHTML = '<button id="guardarButton">Guardar</button>';
+        document.body.innerHTML = `
+            <button id="guardarButton">Guardar</button>
+            <button id="generarRemitoButton" disabled>Generar Remito</button>
+        `;
         window.alert = jest.fn();
         window.print = jest.fn();
 
@@ -81,6 +84,10 @@ describe('handleGuardarClick', () => {
     });
 
     test('usa el mismo número de reporte para guardar y mostrar', async () => {
+        const generarRemitoButton = document.getElementById('generarRemitoButton');
+        expect(generarRemitoButton).not.toBeNull();
+        expect(generarRemitoButton.disabled).toBe(true);
+
         await handleGuardarClick();
 
         expect(generateReportNumberMock).toHaveBeenCalledTimes(1);
@@ -89,6 +96,8 @@ describe('handleGuardarClick', () => {
         expect(formData.numero_reporte).toBe(REPORT_NUMBER);
         expect(guardarMantenimientoMock).toHaveBeenCalledWith(formData);
         expect(setReportNumberMock).toHaveBeenCalledWith(REPORT_NUMBER);
+
+        expect(generarRemitoButton.disabled).toBe(false);
 
         const savedNumber = guardarMantenimientoMock.mock.calls[0][0].numero_reporte;
         const displayedNumber = setReportNumberMock.mock.calls[0][0];
