@@ -5,12 +5,237 @@ import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, el
 import { renderDashboard } from './dashboard.js';
 import { configureClientSelect, generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
 import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './search.js';
-import { renderComponentStages } from './templates.js';
+import { renderComponentStages, COMPONENT_STAGES } from './templates.js';
 
 const isApiConfigured = typeof API_URL === 'string' && API_URL.length > 0;
 
 if (!isApiConfigured) {
     console.warn('API_URL no configurado. Configura window.__APP_CONFIG__.API_URL o la variable de entorno API_URL.');
+}
+
+let lastSavedReportData = null;
+
+function normalizeTextValue(value, { fallback = '' } = {}) {
+    if (value === null || value === undefined) {
+        return fallback;
+    }
+
+    const stringValue = String(value).trim();
+    return stringValue || fallback;
+}
+
+function formatDateFromISO(isoDate) {
+    if (!isoDate || typeof isoDate !== 'string') {
+        return '';
+    }
+
+    const datePart = isoDate.split('T')[0] || isoDate;
+    const [yearStr, monthStr, dayStr] = datePart.split('-');
+    if (!yearStr || !monthStr || !dayStr) {
+        return '';
+    }
+
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+
+    if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+        return '';
+    }
+
+    const date = new Date(year, month - 1, day);
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return date.toLocaleDateString('es-AR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    });
+}
+
+function formatReportDate(reportData) {
+    if (!reportData || typeof reportData !== 'object') {
+        return '';
+    }
+
+    const displayDate = normalizeTextValue(reportData.fecha_display);
+    if (displayDate) {
+        return displayDate;
+    }
+
+    return formatDateFromISO(reportData.fecha);
+}
+
+function getSelectedOptionText(selectElement) {
+    if (!selectElement) {
+        return '';
+    }
+
+    const option = selectElement.selectedOptions && selectElement.selectedOptions[0];
+    return option ? normalizeTextValue(option.textContent) : '';
+}
+
+function getRadioValue(name) {
+    if (!name) {
+        return '';
+    }
+
+    const checked = document.querySelector(`input[type="radio"][name="${name}"]:checked`);
+    return checked ? normalizeTextValue(checked.value) : '';
+}
+
+function collectComponentData() {
+    if (!Array.isArray(COMPONENT_STAGES)) {
+        return [];
+    }
+
+    return COMPONENT_STAGES.map(stage => {
+        const detailsInput = document.getElementById(`${stage.id}_detalles`);
+        const detalles = detailsInput ? normalizeTextValue(detailsInput.value) : '';
+        const accion = getRadioValue(`${stage.id}_accion`);
+
+        return {
+            id: stage.id,
+            title: stage.title,
+            detalles,
+            accion,
+        };
+    });
+}
+
+function createReportSnapshot(datos = {}) {
+    const clienteSelect = document.getElementById('cliente');
+    const fechaDisplayInput = document.getElementById('fecha_display');
+
+    let serializedData = {};
+    try {
+        serializedData = JSON.parse(JSON.stringify(datos || {}));
+    } catch (serializationError) {
+        serializedData = { ...(datos || {}) };
+    }
+
+    const snapshot = {
+        ...serializedData,
+        cliente_nombre: getSelectedOptionText(clienteSelect),
+        fecha_display: fechaDisplayInput ? normalizeTextValue(fechaDisplayInput.value) : '',
+        componentes: collectComponentData(),
+    };
+
+    if (!snapshot.cliente_nombre) {
+        snapshot.cliente_nombre = normalizeTextValue(snapshot.cliente);
+    }
+
+    return snapshot;
+}
+
+function fillTextContent(elementId, value, { fallback = '---' } = {}) {
+    const element = document.getElementById(elementId);
+    if (!element) {
+        return;
+    }
+
+    const resolved = normalizeTextValue(value, { fallback });
+    element.textContent = resolved;
+}
+
+function renderRemitoRepuestos(componentes = []) {
+    const tableBody = document.getElementById('remito-repuestos');
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.innerHTML = '';
+
+    const changedComponents = componentes.filter(componento => normalizeTextValue(componento.accion) === 'Cambiado');
+
+    if (changedComponents.length === 0) {
+        const emptyRow = document.createElement('tr');
+        const emptyCell = document.createElement('td');
+        emptyCell.colSpan = 3;
+        emptyCell.className = 'px-4 py-3 text-sm text-gray-500 text-center';
+        emptyCell.textContent = 'No se registraron repuestos cambiados en este servicio.';
+        emptyRow.appendChild(emptyCell);
+        tableBody.appendChild(emptyRow);
+        return;
+    }
+
+    changedComponents.forEach(componento => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+
+        const codigoCell = document.createElement('td');
+        codigoCell.className = 'px-4 py-2 text-sm text-gray-700';
+        codigoCell.textContent = normalizeTextValue(componento.id);
+
+        const descripcionCell = document.createElement('td');
+        descripcionCell.className = 'px-4 py-2 text-sm text-gray-700';
+        const descripcionPartes = [normalizeTextValue(componento.title), normalizeTextValue(componento.detalles)];
+        descripcionCell.textContent = descripcionPartes.filter(Boolean).join(' - ') || 'Repuesto sin descripción';
+
+        const cantidadCell = document.createElement('td');
+        cantidadCell.className = 'px-4 py-2 text-sm text-right text-gray-700';
+        const cantidad = Number(componento.cantidad);
+        cantidadCell.textContent = !Number.isNaN(cantidad) && cantidad > 0 ? String(cantidad) : '1';
+
+        row.append(codigoCell, descripcionCell, cantidadCell);
+        tableBody.appendChild(row);
+    });
+}
+
+function renderRemitoView(reportData) {
+    if (!reportData || typeof reportData !== 'object') {
+        return;
+    }
+
+    fillTextContent('remito-numero', reportData.numero_reporte);
+    fillTextContent('remito-fecha', formatReportDate(reportData), { fallback: '--/--/----' });
+    fillTextContent('remito-cliente', reportData.cliente_nombre);
+    fillTextContent('remito-cliente-direccion', reportData.direccion);
+    fillTextContent('remito-cliente-telefono', reportData.cliente_telefono);
+    fillTextContent('remito-cliente-email', reportData.cliente_email);
+    fillTextContent('remito-cliente-cuit', reportData.cliente_cuit);
+
+    const equipoValue = normalizeTextValue(reportData.equipo || reportData.modelo || reportData.id_interna);
+    fillTextContent('remito-equipo', equipoValue);
+    fillTextContent('remito-equipo-modelo', reportData.modelo);
+    fillTextContent('remito-equipo-serie', reportData.n_serie);
+    fillTextContent('remito-equipo-interno', reportData.id_interna);
+    fillTextContent('remito-equipo-ubicacion', reportData.ubicacion || reportData.direccion);
+    fillTextContent('remito-equipo-tecnico', reportData.tecnico);
+
+    const observaciones = document.getElementById('remito-observaciones');
+    if (observaciones) {
+        observaciones.value = normalizeTextValue(reportData.resumen);
+        observaciones.readOnly = true;
+        observaciones.setAttribute('readonly', 'readonly');
+    }
+
+    renderRemitoRepuestos(Array.isArray(reportData.componentes) ? reportData.componentes : []);
+}
+
+function showRemitoView() {
+    const formView = document.getElementById('tab-nuevo');
+    const remitoView = document.getElementById('remito-servicio');
+
+    if (formView) {
+        formView.classList.add('hidden');
+    }
+
+    if (remitoView) {
+        remitoView.classList.remove('hidden');
+    }
+}
+
+function handleGenerarRemitoClick() {
+    if (!lastSavedReportData) {
+        alert('Primero debes guardar un mantenimiento para generar el remito.');
+        return;
+    }
+
+    renderRemitoView(lastSavedReportData);
+    showRemitoView();
 }
 
 function showAppVersion() {
@@ -70,6 +295,7 @@ async function handleGuardarClick() {
         }
 
         await guardarMantenimiento(datos);
+        lastSavedReportData = createReportSnapshot(datos);
         alert('✅ Mantenimiento guardado correctamente en el sistema');
 
         if (generarRemitoBtn) {
@@ -99,6 +325,13 @@ async function handleGuardarClick() {
 
 export const __testables__ = {
     handleGuardarClick,
+    handleGenerarRemitoClick,
+    setLastSavedReportDataForTests(data) {
+        lastSavedReportData = data;
+    },
+    getLastSavedReportDataForTests() {
+        return lastSavedReportData;
+    },
 };
 
 async function handleBuscarClick() {
@@ -237,6 +470,11 @@ function attachEventListeners() {
     const tabDashboardBtn = document.getElementById('tab-dashboard-btn');
     if (tabDashboardBtn) {
         tabDashboardBtn.addEventListener('click', () => showTab('dashboard'));
+    }
+
+    const generarRemitoBtn = document.getElementById('generarRemitoButton');
+    if (generarRemitoBtn) {
+        generarRemitoBtn.addEventListener('click', handleGenerarRemitoClick);
     }
 }
 
