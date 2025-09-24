@@ -59,6 +59,7 @@
 
         <!-- Pestaña: Nuevo Mantenimiento -->
         <div id="tab-nuevo" class="tab-content">
+            <div id="maintenance-view">
             <form id="maintenance-form">
                 <!-- Sección A: Datos del Servicio y del Equipo -->
 
@@ -336,11 +337,36 @@
                 </div>
 
                 <!-- Botones de Acción -->
-                <div class="flex justify-end space-x-4 mt-8 no-print">
+                <div class="flex flex-wrap justify-end gap-3 mt-8 no-print">
                     <button type="button" id="resetButton" class="action-button reset-btn">Limpiar Formulario</button>
+                    <button type="button" id="generarRemitoButton" class="action-button print-btn">Generar Remito</button>
                     <button type="button" id="guardarButton" class="action-button print-btn">Guardar y Generar Reporte</button>
                 </div>
             </form>
+            </div>
+
+            <div id="remito-view" class="hidden space-y-6">
+                <div class="form-card">
+                    <div class="form-section">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">Remito de Entrega</h2>
+                                <p class="text-gray-600 mt-1">Documento generado a partir del mantenimiento registrado.</p>
+                                <p class="text-gray-600 mt-2">
+                                    Reporte <span id="remito-report-number" class="font-semibold"></span>
+                                    &bull; Fecha del servicio: <span id="remito-report-date" class="font-semibold"></span>
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap gap-3 no-print">
+                                <button type="button" id="volverFormularioButton" class="action-button reset-btn">Volver al Formulario</button>
+                                <button type="button" id="imprimirRemitoButton" class="action-button print-btn">Imprimir Remito</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="remito-sections" class="space-y-6"></div>
+            </div>
         </div>
 
         <!-- Pestaña: Buscar/Editar -->
