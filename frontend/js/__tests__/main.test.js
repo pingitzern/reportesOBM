@@ -78,7 +78,9 @@ describe('event handlers en main.js', () => {
         }));
 
         const mainModule = await import('../main.js');
+ codex/implementar-logica-para-boton-generar-remito
         ({ handleGuardarClick, handleGenerarRemitoClick } = mainModule.__testables__);
+
 
         document.body.innerHTML = '';
         window.alert = jest.fn();
