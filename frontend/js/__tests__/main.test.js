@@ -1,6 +1,10 @@
 import { jest } from '@jest/globals';
 
 const REPORT_NUMBER = 'REP-TEST-123456';
+const DOM_TEMPLATE = `
+<button id="guardarButton">Guardar</button>
+<button id="generarRemitoButton" disabled>Generar Remito</button>
+`.trim();
 
 describe('event handlers en main.js', () => {
     let handleGuardarClick;
@@ -10,6 +14,8 @@ describe('event handlers en main.js', () => {
     let resetFormMock;
     let generateReportNumberMock;
     let getFormDataMock;
+    let originalAlert;
+    let originalPrint;
     let formData;
     let storeLastSavedReportMock;
     let renderRemitoFromStoredMock;
@@ -82,7 +88,11 @@ describe('event handlers en main.js', () => {
         ({ handleGuardarClick, handleGenerarRemitoClick } = mainModule.__testables__);
 
 
-        document.body.innerHTML = '';
+        document.body.innerHTML = DOM_TEMPLATE;
+
+        originalAlert = window.alert;
+        originalPrint = window.print;
+develop
         window.alert = jest.fn();
         window.print = jest.fn();
 
@@ -92,6 +102,9 @@ describe('event handlers en main.js', () => {
     afterEach(() => {
         jest.runOnlyPendingTimers();
         jest.useRealTimers();
+        jest.clearAllMocks();
+        window.alert = originalAlert;
+        window.print = originalPrint;
         document.body.innerHTML = '';
     });
 
