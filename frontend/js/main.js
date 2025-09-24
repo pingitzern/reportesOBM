@@ -1,7 +1,7 @@
 /* global __APP_VERSION__ */
 import { API_URL } from './config.js';
 import { initializeAuth } from './auth.js';
-import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento, obtenerDashboard, obtenerClientes } from './api.js';
+import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento, obtenerDashboard, obtenerClientes, crearRemito } from './api.js';
 import { renderDashboard } from './dashboard.js';
 import { configureClientSelect, generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
 import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './search.js';
@@ -130,6 +130,30 @@ function createReportSnapshot(datos = {}) {
     return snapshot;
 }
 
+function resolveRemitoNumberFromData(data = {}) {
+    if (!data || typeof data !== 'object') {
+        return '';
+    }
+
+    const candidates = [
+        data.numero_remito,
+        data.remito_numero,
+        data.numeroRemito,
+        data.remitoNumero,
+        data.numero_remito_generado,
+        data.numero_reporte,
+    ];
+
+    for (const candidate of candidates) {
+        const normalized = normalizeTextValue(candidate);
+        if (normalized) {
+            return normalized;
+        }
+    }
+
+    return '';
+}
+
 function fillTextContent(elementId, value, { fallback = '---' } = {}) {
     const element = document.getElementById(elementId);
     if (!element) {
@@ -189,7 +213,8 @@ function renderRemitoView(reportData) {
         return;
     }
 
-    fillTextContent('remito-numero', reportData.numero_reporte);
+    const numeroRemito = resolveRemitoNumberFromData(reportData);
+    fillTextContent('remito-numero', numeroRemito);
     fillTextContent('remito-fecha', formatReportDate(reportData), { fallback: '--/--/----' });
     fillTextContent('remito-cliente', reportData.cliente_nombre);
     fillTextContent('remito-cliente-direccion', reportData.direccion);
@@ -207,9 +232,11 @@ function renderRemitoView(reportData) {
 
     const observaciones = document.getElementById('remito-observaciones');
     if (observaciones) {
-        observaciones.value = normalizeTextValue(reportData.resumen);
-        observaciones.readOnly = true;
-        observaciones.setAttribute('readonly', 'readonly');
+        const observacionesTexto = normalizeTextValue(reportData.observaciones || reportData.resumen);
+        observaciones.value = observacionesTexto;
+        observaciones.readOnly = false;
+        observaciones.removeAttribute('readonly');
+        observaciones.disabled = false;
     }
 
     renderRemitoRepuestos(Array.isArray(reportData.componentes) ? reportData.componentes : []);
@@ -236,6 +263,79 @@ function handleGenerarRemitoClick() {
 
     renderRemitoView(lastSavedReportData);
     showRemitoView();
+}
+
+function extractRemitoNumberFromResponse(data) {
+    if (!data) {
+        return '';
+    }
+
+    if (typeof data === 'string') {
+        return normalizeTextValue(data);
+    }
+
+    if (typeof data !== 'object') {
+        return '';
+    }
+
+    const directNumber = resolveRemitoNumberFromData(data);
+    if (directNumber) {
+        return directNumber;
+    }
+
+    if (typeof data.remito === 'string') {
+        return normalizeTextValue(data.remito);
+    }
+
+    if (data.remito && typeof data.remito === 'object') {
+        return resolveRemitoNumberFromData(data.remito);
+    }
+
+    return '';
+}
+
+async function handleFinalizarRemitoClick() {
+    if (!lastSavedReportData) {
+        alert('No hay datos disponibles para generar el remito. Guarda un mantenimiento primero.');
+        return;
+    }
+
+    const finalizarBtn = document.getElementById('finalizarRemitoButton');
+    const observacionesInput = document.getElementById('remito-observaciones');
+    const observaciones = observacionesInput ? observacionesInput.value : '';
+
+    let originalText = '';
+    if (finalizarBtn) {
+        originalText = finalizarBtn.textContent || '';
+        finalizarBtn.textContent = 'Generando remito...';
+        finalizarBtn.disabled = true;
+    }
+
+    try {
+        const responseData = await crearRemito({
+            reporte: lastSavedReportData,
+            observaciones,
+        });
+
+        lastSavedReportData.observaciones = observaciones;
+
+        const remitoNumber = extractRemitoNumberFromResponse(responseData);
+        if (remitoNumber) {
+            lastSavedReportData.numero_remito = remitoNumber;
+            fillTextContent('remito-numero', remitoNumber);
+        }
+
+        alert('✅ Remito generado correctamente.');
+    } catch (error) {
+        console.error('Error al generar remito:', error);
+        const message = error?.message || 'Error desconocido al generar el remito.';
+        alert(`❌ Error al generar el remito: ${message}`);
+    } finally {
+        if (finalizarBtn) {
+            finalizarBtn.textContent = originalText || 'Finalizar y Generar Remito';
+            finalizarBtn.disabled = false;
+        }
+    }
 }
 
 function showAppVersion() {
@@ -326,6 +426,7 @@ async function handleGuardarClick() {
 export const __testables__ = {
     handleGuardarClick,
     handleGenerarRemitoClick,
+    handleFinalizarRemitoClick,
     setLastSavedReportDataForTests(data) {
         lastSavedReportData = data;
     },
@@ -475,6 +576,11 @@ function attachEventListeners() {
     const generarRemitoBtn = document.getElementById('generarRemitoButton');
     if (generarRemitoBtn) {
         generarRemitoBtn.addEventListener('click', handleGenerarRemitoClick);
+    }
+
+    const finalizarRemitoBtn = document.getElementById('finalizarRemitoButton');
+    if (finalizarRemitoBtn) {
+        finalizarRemitoBtn.addEventListener('click', handleFinalizarRemitoClick);
     }
 }
 

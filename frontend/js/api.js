@@ -122,3 +122,11 @@ export async function obtenerClientes({ forceRefresh = false } = {}) {
 
     return state.clientes;
 }
+
+export async function crearRemito({ reporte, observaciones } = {}) {
+    return postJSON({
+        action: 'crear_remito',
+        reporte,
+        observaciones,
+    });
+}
