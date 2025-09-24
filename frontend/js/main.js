@@ -6,6 +6,7 @@ import { renderDashboard } from './dashboard.js';
 import { configureClientSelect, generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
 import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './search.js';
 import { renderComponentStages } from './templates.js';
+import { storeLastSavedReport, renderRemitoFromStored } from './remito.js';
 
 const isApiConfigured = typeof API_URL === 'string' && API_URL.length > 0;
 
@@ -70,6 +71,20 @@ async function handleGuardarClick() {
         }
 
         await guardarMantenimiento(datos);
+        const clienteSelect = document.getElementById('cliente');
+        const clienteOption = clienteSelect?.selectedOptions?.[0] || null;
+        const direccionInput = document.getElementById('direccion');
+        const telefonoInput = document.getElementById('cliente_telefono');
+        const emailInput = document.getElementById('cliente_email');
+        const cuitInput = document.getElementById('cliente_cuit');
+
+        storeLastSavedReport(datos, {
+            clienteNombre: clienteOption ? clienteOption.textContent : datos.cliente,
+            clienteDireccion: direccionInput?.value ?? datos.direccion,
+            clienteTelefono: telefonoInput?.value ?? '',
+            clienteEmail: emailInput?.value ?? '',
+            clienteCuit: cuitInput?.value ?? '',
+        });
         alert('✅ Mantenimiento guardado correctamente en el sistema');
 
         if (generarRemitoBtn) {
@@ -97,8 +112,27 @@ async function handleGuardarClick() {
     }
 }
 
+function handleGenerarRemitoClick() {
+    const wasRendered = renderRemitoFromStored();
+    if (!wasRendered) {
+        alert('Primero guarda el mantenimiento para generar el remito.');
+        return;
+    }
+
+    const formView = document.getElementById('tab-nuevo');
+    if (formView) {
+        formView.classList.add('hidden');
+    }
+
+    const remitoView = document.getElementById('remito-servicio');
+    if (remitoView) {
+        remitoView.classList.remove('hidden');
+    }
+}
+
 export const __testables__ = {
     handleGuardarClick,
+    handleGenerarRemitoClick,
 };
 
 async function handleBuscarClick() {
@@ -190,6 +224,11 @@ function attachEventListeners() {
     const resetBtn = document.getElementById('resetButton');
     if (resetBtn) {
         resetBtn.addEventListener('click', resetForm);
+    }
+
+    const generarRemitoBtn = document.getElementById('generarRemitoButton');
+    if (generarRemitoBtn) {
+        generarRemitoBtn.addEventListener('click', handleGenerarRemitoClick);
     }
 
     const buscarBtn = document.getElementById('buscar-btn');
