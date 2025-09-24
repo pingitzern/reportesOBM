@@ -53,6 +53,7 @@ function showTab(tabName) {
 
 async function handleGuardarClick() {
     const guardarBtn = document.getElementById('guardarButton');
+    const generarRemitoBtn = document.getElementById('generarRemitoButton');
     if (!guardarBtn) {
         return;
     }
@@ -70,6 +71,10 @@ async function handleGuardarClick() {
 
         await guardarMantenimiento(datos);
         alert('✅ Mantenimiento guardado correctamente en el sistema');
+
+        if (generarRemitoBtn) {
+            generarRemitoBtn.disabled = false;
+        }
 
         setReportNumber(reportNumber);
 
