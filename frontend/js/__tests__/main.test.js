@@ -1,6 +1,10 @@
 import { jest } from '@jest/globals';
 
 const REPORT_NUMBER = 'REP-TEST-123456';
+const DOM_TEMPLATE = `
+<button id="guardarButton">Guardar</button>
+<button id="generarRemitoButton" disabled>Generar Remito</button>
+`.trim();
 
 describe('handleGuardarClick', () => {
     let handleGuardarClick;
@@ -9,6 +13,8 @@ describe('handleGuardarClick', () => {
     let resetFormMock;
     let generateReportNumberMock;
     let getFormDataMock;
+    let originalAlert;
+    let originalPrint;
     let formData;
 
     beforeEach(async () => {
@@ -67,10 +73,10 @@ describe('handleGuardarClick', () => {
         const mainModule = await import('../main.js');
         handleGuardarClick = mainModule.__testables__.handleGuardarClick;
 
-        document.body.innerHTML = `
-            <button id="guardarButton">Guardar</button>
-            <button id="generarRemitoButton" disabled>Generar Remito</button>
-        `;
+        document.body.innerHTML = DOM_TEMPLATE;
+
+        originalAlert = window.alert;
+        originalPrint = window.print;
         window.alert = jest.fn();
         window.print = jest.fn();
 
@@ -80,6 +86,9 @@ describe('handleGuardarClick', () => {
     afterEach(() => {
         jest.runOnlyPendingTimers();
         jest.useRealTimers();
+        jest.clearAllMocks();
+        window.alert = originalAlert;
+        window.print = originalPrint;
         document.body.innerHTML = '';
     });
 
