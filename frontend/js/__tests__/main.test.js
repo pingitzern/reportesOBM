@@ -50,6 +50,7 @@ describe('handleGuardarClick', () => {
 
         jest.unstable_mockModule('../templates.js', () => ({
             renderComponentStages: jest.fn(),
+            COMPONENT_STAGES: [],
         }));
 
         jest.unstable_mockModule('../search.js', () => ({
