@@ -65,7 +65,7 @@ describe('handleGuardarClick', () => {
         }));
 
         const mainModule = await import('../main.js');
-        ({ handleGuardarClick } = mainModule.__testables__);
+        handleGuardarClick = mainModule.__testables__.handleGuardarClick;
 
         document.body.innerHTML = `
             <button id="guardarButton">Guardar</button>
