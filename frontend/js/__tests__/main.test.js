@@ -157,6 +157,7 @@ describe('manejo de la vista de remito', () => {
     let handleGenerarRemitoClick;
     let handleFinalizarRemitoClick;
     let setLastSavedReportData;
+    let showView;
     let originalAlert;
     let crearRemitoMock;
 
@@ -213,6 +214,7 @@ describe('manejo de la vista de remito', () => {
         handleGenerarRemitoClick = mainModule.__testables__.handleGenerarRemitoClick;
         handleFinalizarRemitoClick = mainModule.__testables__.handleFinalizarRemitoClick;
         setLastSavedReportData = mainModule.__testables__.setLastSavedReportDataForTests;
+        showView = mainModule.__testables__.showView;
 
         originalAlert = window.alert;
         window.alert = jest.fn();
@@ -227,7 +229,9 @@ describe('manejo de la vista de remito', () => {
     test('muestra un mensaje cuando no hay datos para generar el remito', () => {
         document.body.innerHTML = REMITO_DOM_TEMPLATE;
 
-        handleGenerarRemitoClick();
+        const shouldShowRemito = handleGenerarRemitoClick();
+
+        expect(shouldShowRemito).toBe(false);
 
         expect(window.alert).toHaveBeenCalledTimes(1);
         const generarRemitoButton = document.getElementById('generarRemitoButton');
@@ -264,12 +268,19 @@ describe('manejo de la vista de remito', () => {
 
         setLastSavedReportData(savedReport);
 
-        handleGenerarRemitoClick();
+        const shouldShowRemito = handleGenerarRemitoClick();
 
         expect(window.alert).not.toHaveBeenCalled();
 
+        expect(shouldShowRemito).toBe(true);
+
         const formView = document.getElementById('tab-nuevo');
         const remitoView = document.getElementById('remito-servicio');
+        expect(formView.classList.contains('hidden')).toBe(false);
+        expect(remitoView.classList.contains('hidden')).toBe(true);
+
+        showView('remito-servicio');
+
         expect(formView.classList.contains('hidden')).toBe(true);
         expect(remitoView.classList.contains('hidden')).toBe(false);
 

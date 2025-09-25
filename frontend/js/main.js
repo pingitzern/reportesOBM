@@ -13,6 +13,13 @@ if (!isApiConfigured) {
     console.warn('API_URL no configurado. Configura window.__APP_CONFIG__.API_URL o la variable de entorno API_URL.');
 }
 
+const MAIN_VIEW_IDS = [
+    'tab-nuevo',
+    'tab-buscar',
+    'tab-dashboard',
+    'remito-servicio',
+];
+
 let lastSavedReportData = null;
 
 function normalizeTextValue(value, { fallback = '' } = {}) {
@@ -247,42 +254,27 @@ function showView(viewId) {
         return;
     }
 
-    const selectors = ['[data-view]', '[data-app-view]', '.app-view', '.view-container'];
-    const knownIds = ['mantenimiento-form-container', 'remito-view', 'tab-nuevo', 'remito-servicio'];
-    const views = new Set();
+    let viewFound = false;
 
-    selectors.forEach(selector => {
-        document.querySelectorAll(selector).forEach(element => {
-            views.add(element);
-        });
-    });
-
-    knownIds.forEach(id => {
+    MAIN_VIEW_IDS.forEach(id => {
         const element = document.getElementById(id);
-        if (element) {
-            views.add(element);
-        }
-    });
-
-    let targetFound = false;
-
-    views.forEach(view => {
-        if (!view) {
+        if (!element) {
             return;
         }
 
-        if (view.id === viewId) {
-            view.classList.remove('hidden');
-            targetFound = true;
-        } else {
-            view.classList.add('hidden');
+        if (id === viewId) {
+            element.classList.remove('hidden');
+            viewFound = true;
+            return;
         }
+
+        element.classList.add('hidden');
     });
 
-    if (!targetFound) {
-        const target = document.getElementById(viewId);
-        if (target) {
-            target.classList.remove('hidden');
+    if (!viewFound) {
+        const targetElement = document.getElementById(viewId);
+        if (targetElement) {
+            targetElement.classList.remove('hidden');
         }
     }
 }
@@ -309,11 +301,11 @@ function handleGenerarRemitoClick() {
     if (!lastSavedReportData) {
         setGenerarRemitoButtonEnabled(false);
         alert('Primero debes guardar un mantenimiento para generar el remito.');
-        return;
+        return false;
     }
 
     renderRemitoView(lastSavedReportData);
-    showView('remito-servicio');
+    return true;
 }
 
 function extractRemitoNumberFromResponse(data) {
@@ -409,14 +401,18 @@ function showAppVersion() {
 }
 
 function showTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+    const viewId = `tab-${tabName}`;
+    showView(viewId);
+
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        if (tab.id === viewId) {
+            tab.classList.remove('hidden');
+            return;
+        }
+        tab.classList.add('hidden');
+    });
+
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-
-    const tabElement = document.getElementById(`tab-${tabName}`);
-    if (tabElement) {
-        tabElement.classList.remove('hidden');
-    }
-
     const tabButton = document.getElementById(`tab-${tabName}-btn`);
     if (tabButton) {
         tabButton.classList.add('active');
@@ -465,6 +461,7 @@ export const __testables__ = {
     handleGuardarClick,
     handleGenerarRemitoClick,
     handleFinalizarRemitoClick,
+    showView,
     setLastSavedReportDataForTests(data) {
         lastSavedReportData = data;
     },
@@ -613,7 +610,11 @@ function attachEventListeners() {
 
     const generarRemitoBtn = document.getElementById('generarRemitoButton');
     if (generarRemitoBtn) {
-        generarRemitoBtn.addEventListener('click', handleGenerarRemitoClick);
+        generarRemitoBtn.addEventListener('click', () => {
+            if (handleGenerarRemitoClick()) {
+                showView('remito-servicio');
+            }
+        });
     }
 
     const finalizarRemitoBtn = document.getElementById('finalizarRemitoButton');
