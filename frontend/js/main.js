@@ -451,16 +451,6 @@ async function handleGuardarClick() {
         setGenerarRemitoButtonEnabled(true);
 
         setReportNumber(reportNumber);
-
-        setTimeout(() => {
-            try {
-                window.print();
-            } catch (printError) {
-                console.error('Error al imprimir el mantenimiento guardado:', printError);
-            } finally {
-                resetForm();
-            }
-        }, 500);
     } catch (error) {
         console.error('Error al guardar mantenimiento:', error);
         const message = error?.message || 'Error desconocido al guardar los datos.';
