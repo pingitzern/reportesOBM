@@ -10,7 +10,7 @@ import {
     crearRemito,
 } from './api.js';
 import { initializeAuth } from './modules/login/auth.js';
-import { renderDashboard } from './modules/dashboard/dashboard.js';
+import { createDashboardModule } from './modules/dashboard/dashboard.js';
 import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js';
 import { createSearchModule } from './modules/busqueda/busqueda.js';
 import { createRemitoModule } from './modules/remito/remito.js';
@@ -35,16 +35,27 @@ const maintenanceModule = createMaintenanceModule(
     },
 );
 
-const searchModule = createSearchModule({
-    buscarMantenimientos,
-    actualizarMantenimiento,
-    eliminarMantenimiento,
-});
+const searchModule = createSearchModule(
+    {
+        buscarMantenimientos,
+        actualizarMantenimiento,
+        eliminarMantenimiento,
+    },
+    {
+        showView,
+    },
+);
+
+const dashboardModule = createDashboardModule(
+    { obtenerDashboard },
+    { showView },
+);
 
 const appModules = {
     maintenance: maintenanceModule,
     remito: remitoModule,
     search: searchModule,
+    dashboard: dashboardModule,
 };
 
 function showAppVersion() {
@@ -66,52 +77,49 @@ function showAppVersion() {
     versionElement.classList.add('hidden');
 }
 
-async function loadDashboard() {
-    try {
-        const data = await obtenerDashboard();
-        renderDashboard(data);
-    } catch (error) {
-        console.error('Error cargando dashboard:', error);
-    }
-}
-
-function activateTab(tabName) {
-    const viewId = `tab-${tabName}`;
-    showView(viewId);
-
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        if (tab.id === viewId) {
-            tab.classList.remove('hidden');
-            return;
-        }
-        tab.classList.add('hidden');
-    });
-
+function setActiveNavigation(tabName) {
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
     const tabButton = document.getElementById(`tab-${tabName}-btn`);
     if (tabButton) {
         tabButton.classList.add('active');
     }
+}
 
-    if (tabName === 'dashboard') {
-        loadDashboard();
-    }
+function showMaintenanceTab() {
+    showView('tab-nuevo');
+    setActiveNavigation('nuevo');
+}
+
+function showSearchTab() {
+    appModules.search.show();
+    setActiveNavigation('buscar');
+}
+
+async function showDashboardTab() {
+    setActiveNavigation('dashboard');
+    await appModules.dashboard.show();
 }
 
 function initializeNavigation() {
     const tabNuevoBtn = document.getElementById('tab-nuevo-btn');
     if (tabNuevoBtn) {
-        tabNuevoBtn.addEventListener('click', () => activateTab('nuevo'));
+        tabNuevoBtn.addEventListener('click', () => {
+            showMaintenanceTab();
+        });
     }
 
     const tabBuscarBtn = document.getElementById('tab-buscar-btn');
     if (tabBuscarBtn) {
-        tabBuscarBtn.addEventListener('click', () => activateTab('buscar'));
+        tabBuscarBtn.addEventListener('click', () => {
+            showSearchTab();
+        });
     }
 
     const tabDashboardBtn = document.getElementById('tab-dashboard-btn');
     if (tabDashboardBtn) {
-        tabDashboardBtn.addEventListener('click', () => activateTab('dashboard'));
+        tabDashboardBtn.addEventListener('click', () => {
+            void showDashboardTab();
+        });
     }
 }
 
@@ -124,7 +132,7 @@ async function initializeApp() {
     try {
         await initializeAuth();
         await appModules.maintenance.initialize();
-        activateTab('dashboard');
+        await showDashboardTab();
     } catch (error) {
         console.error('Error inicializando la aplicación:', error);
         alert('No se pudo inicializar la aplicación. Revisa la consola para más detalles.');

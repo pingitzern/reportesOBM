@@ -10,8 +10,9 @@ function getElement(id) {
     return document.getElementById(id);
 }
 
-export function createSearchModule(api) {
+export function createSearchModule(api, dependencies = {}) {
     const { buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento } = api;
+    const { showView: showViewFn } = dependencies;
 
     let eventsInitialized = false;
 
@@ -126,8 +127,15 @@ export function createSearchModule(api) {
         eventsInitialized = true;
     }
 
+    function show() {
+        if (typeof showViewFn === 'function') {
+            showViewFn('tab-buscar');
+        }
+    }
+
     return {
         initialize,
+        show,
         handleBuscarClick,
         handleLimpiarBusqueda,
         handleEditarMantenimiento,

@@ -116,6 +116,11 @@ describe('handleGuardarClick', () => {
 
         jest.unstable_mockModule('../modules/dashboard/dashboard.js', () => ({
             renderDashboard: jest.fn(),
+            createDashboardModule: jest.fn(() => ({
+                initialize: jest.fn(),
+                show: jest.fn(),
+                refresh: jest.fn(),
+            })),
         }));
 
         const mainModule = await import('../main.js');
@@ -261,6 +266,11 @@ describe('manejo de la vista de remito', () => {
 
         jest.unstable_mockModule('../modules/dashboard/dashboard.js', () => ({
             renderDashboard: jest.fn(),
+            createDashboardModule: jest.fn(() => ({
+                initialize: jest.fn(),
+                show: jest.fn(),
+                refresh: jest.fn(),
+            })),
         }));
 
         const mainModule = await import('../main.js');

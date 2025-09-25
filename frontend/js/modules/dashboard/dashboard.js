@@ -137,3 +137,34 @@ export function renderDashboard(data) {
     createTechnicianChart(Array.isArray(data.tecnicosData) ? data.tecnicosData : []);
     renderUpcomingMaintenances(Array.isArray(data.proximosMantenimientos) ? data.proximosMantenimientos : []);
 }
+
+export function createDashboardModule(api, dependencies = {}) {
+    const { obtenerDashboard } = api;
+    const { showView: showViewFn } = dependencies;
+
+    async function fetchAndRender() {
+        try {
+            const data = await obtenerDashboard();
+            renderDashboard(data);
+        } catch (error) {
+            console.error('Error cargando dashboard:', error);
+        }
+    }
+
+    async function show() {
+        if (typeof showViewFn === 'function') {
+            showViewFn('tab-dashboard');
+        }
+        await fetchAndRender();
+    }
+
+    async function initialize() {
+        await fetchAndRender();
+    }
+
+    return {
+        initialize,
+        show,
+        refresh: fetchAndRender,
+    };
+}
