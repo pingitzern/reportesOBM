@@ -1,5 +1,5 @@
-import { serializeForm, normalizeDateToISO } from './forms.js';
-import { state } from './state.js';
+import { serializeForm, normalizeDateToISO } from '../mantenimiento/forms.js';
+import { state } from '../mantenimiento/state.js';
 
 function getElement(id) {
     return document.getElementById(id);

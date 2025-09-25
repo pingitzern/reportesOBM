@@ -78,7 +78,7 @@ describe('handleGuardarClick', () => {
             API_URL: 'http://localhost/api',
         }));
 
-        jest.unstable_mockModule('../forms.js', () => ({
+        jest.unstable_mockModule('../modules/mantenimiento/forms.js', () => ({
             configureClientSelect: jest.fn(),
             generateReportNumber: generateReportNumberMock,
             getFormData: getFormDataMock,
@@ -97,16 +97,16 @@ describe('handleGuardarClick', () => {
             crearRemito: jest.fn(),
         }));
 
-        jest.unstable_mockModule('../auth.js', () => ({
+        jest.unstable_mockModule('../modules/login/auth.js', () => ({
             initializeAuth: jest.fn(),
         }));
 
-        jest.unstable_mockModule('../templates.js', () => ({
+        jest.unstable_mockModule('../modules/mantenimiento/templates.js', () => ({
             renderComponentStages: jest.fn(),
             COMPONENT_STAGES: MOCK_COMPONENT_STAGES,
         }));
 
-        jest.unstable_mockModule('../search.js', () => ({
+        jest.unstable_mockModule('../modules/busqueda/search.js', () => ({
             clearSearchResults: jest.fn(),
             getEditFormValues: jest.fn(),
             openEditModal: jest.fn(),
@@ -114,7 +114,7 @@ describe('handleGuardarClick', () => {
             renderSearchResults: jest.fn(),
         }));
 
-        jest.unstable_mockModule('../dashboard.js', () => ({
+        jest.unstable_mockModule('../modules/dashboard/dashboard.js', () => ({
             renderDashboard: jest.fn(),
         }));
 
@@ -222,7 +222,7 @@ describe('manejo de la vista de remito', () => {
             API_URL: 'http://localhost/api',
         }));
 
-        jest.unstable_mockModule('../forms.js', () => ({
+        jest.unstable_mockModule('../modules/mantenimiento/forms.js', () => ({
             configureClientSelect: jest.fn(),
             generateReportNumber: jest.fn(),
             getFormData: jest.fn(),
@@ -243,16 +243,16 @@ describe('manejo de la vista de remito', () => {
             crearRemito: crearRemitoMock,
         }));
 
-        jest.unstable_mockModule('../auth.js', () => ({
+        jest.unstable_mockModule('../modules/login/auth.js', () => ({
             initializeAuth: jest.fn(),
         }));
 
-        jest.unstable_mockModule('../templates.js', () => ({
+        jest.unstable_mockModule('../modules/mantenimiento/templates.js', () => ({
             renderComponentStages: jest.fn(),
             COMPONENT_STAGES: MOCK_COMPONENT_STAGES,
         }));
 
-        jest.unstable_mockModule('../search.js', () => ({
+        jest.unstable_mockModule('../modules/busqueda/search.js', () => ({
             clearSearchResults: jest.fn(),
             getEditFormValues: jest.fn(),
             openEditModal: jest.fn(),
@@ -260,7 +260,7 @@ describe('manejo de la vista de remito', () => {
             renderSearchResults: jest.fn(),
         }));
 
-        jest.unstable_mockModule('../dashboard.js', () => ({
+        jest.unstable_mockModule('../modules/dashboard/dashboard.js', () => ({
             renderDashboard: jest.fn(),
         }));
 

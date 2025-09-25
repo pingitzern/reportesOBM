@@ -1,4 +1,4 @@
-import { LMIN_TO_GPD, LMIN_TO_LPH } from './config.js';
+import { LMIN_TO_GPD, LMIN_TO_LPH } from '../../config.js';
 
 function getElement(id) {
     return document.getElementById(id);

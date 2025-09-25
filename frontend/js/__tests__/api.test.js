@@ -10,7 +10,7 @@ const loadApiModule = async ({ token = 'token-123' } = {}) => {
     const getCurrentTokenMock = jest.fn(() => token);
     const handleSessionExpirationMock = jest.fn();
 
-    jest.unstable_mockModule('../auth.js', () => ({
+    jest.unstable_mockModule('../modules/login/auth.js', () => ({
         getCurrentToken: getCurrentTokenMock,
         handleSessionExpiration: handleSessionExpirationMock,
     }));

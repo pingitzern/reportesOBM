@@ -14,7 +14,7 @@ beforeAll(async () => {
         process.env.API_URL = 'http://localhost/api';
     }
 
-    const formsModule = await import('../forms.js');
+    const formsModule = await import('../modules/mantenimiento/forms.js');
     serializeForm = formsModule.serializeForm;
     configureClientSelect = formsModule.configureClientSelect;
     resetForm = formsModule.resetForm;

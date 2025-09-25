@@ -1,6 +1,6 @@
 import { API_URL } from './config.js';
-import { getCurrentToken, handleSessionExpiration } from './auth.js';
-import { state } from './state.js';
+import { getCurrentToken, handleSessionExpiration } from './modules/login/auth.js';
+import { state } from './modules/mantenimiento/state.js';
 
 async function postJSON(payload) {
     if (!API_URL) {
