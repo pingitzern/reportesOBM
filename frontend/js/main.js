@@ -242,16 +242,48 @@ function renderRemitoView(reportData) {
     renderRemitoRepuestos(Array.isArray(reportData.componentes) ? reportData.componentes : []);
 }
 
-function showRemitoView() {
-    const formView = document.getElementById('tab-nuevo');
-    const remitoView = document.getElementById('remito-servicio');
-
-    if (formView) {
-        formView.classList.add('hidden');
+function showView(viewId) {
+    if (typeof viewId !== 'string' || !viewId) {
+        return;
     }
 
-    if (remitoView) {
-        remitoView.classList.remove('hidden');
+    const selectors = ['[data-view]', '[data-app-view]', '.app-view', '.view-container'];
+    const knownIds = ['mantenimiento-form-container', 'remito-view', 'tab-nuevo', 'remito-servicio'];
+    const views = new Set();
+
+    selectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(element => {
+            views.add(element);
+        });
+    });
+
+    knownIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            views.add(element);
+        }
+    });
+
+    let targetFound = false;
+
+    views.forEach(view => {
+        if (!view) {
+            return;
+        }
+
+        if (view.id === viewId) {
+            view.classList.remove('hidden');
+            targetFound = true;
+        } else {
+            view.classList.add('hidden');
+        }
+    });
+
+    if (!targetFound) {
+        const target = document.getElementById(viewId);
+        if (target) {
+            target.classList.remove('hidden');
+        }
     }
 }
 
@@ -281,7 +313,7 @@ function handleGenerarRemitoClick() {
     }
 
     renderRemitoView(lastSavedReportData);
-    showRemitoView();
+    showView('remito-servicio');
 }
 
 function extractRemitoNumberFromResponse(data) {
