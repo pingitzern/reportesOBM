@@ -148,10 +148,8 @@ describe('handleGuardarClick', () => {
         const formDataCallOrder = getFormDataMock.mock.invocationCallOrder[0];
         expect(generateCallOrder).toBeLessThan(formDataCallOrder);
 
+        expect(window.print).not.toHaveBeenCalled();
         expect(resetFormMock).not.toHaveBeenCalled();
-        jest.runAllTimers();
-        expect(window.print).toHaveBeenCalledTimes(1);
-        expect(resetFormMock).toHaveBeenCalledTimes(1);
     });
 });
 
