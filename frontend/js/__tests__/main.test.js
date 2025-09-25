@@ -2,6 +2,22 @@ import { jest } from '@jest/globals';
 
 const REPORT_NUMBER = 'REP-TEST-123456';
 const DOM_TEMPLATE = `
+<form id="maintenance-form">
+    <select id="cliente" name="cliente">
+        <option value="">Selecciona un cliente</option>
+        <option value="CLI-001" selected>Cliente Demo</option>
+    </select>
+    <input type="text" id="direccion" name="direccion" value="Av. Siempre Viva 742">
+    <input type="text" id="cliente_telefono" name="cliente_telefono" value="+54 11 5555-5555">
+    <input type="text" id="cliente_email" name="cliente_email" value="cliente@demo.com">
+    <input type="text" id="cliente_cuit" name="cliente_cuit" value="20-12345678-9">
+    <input type="text" id="tecnico" name="tecnico" value="Juan Pérez">
+    <input type="text" id="modelo" name="modelo" value="Equipo RO-5000">
+    <input type="text" id="id_interna" name="id_interna" value="ACT-45">
+    <input type="text" id="n_serie" name="n_serie" value="SN-123">
+    <input type="text" id="fecha_display" value="01/06/2024">
+    <input type="hidden" id="fecha" name="fecha" value="2024-06-01">
+</form>
 <button id="guardarButton">Guardar</button>
 <button id="generarRemitoButton" disabled>Generar Remito</button>
 `.trim();
@@ -41,6 +57,8 @@ describe('handleGuardarClick', () => {
     let resetFormMock;
     let generateReportNumberMock;
     let getFormDataMock;
+    let getLastSavedReportData;
+    let setLastSavedReportData;
     let originalAlert;
     let originalPrint;
     let formData;
@@ -102,6 +120,9 @@ describe('handleGuardarClick', () => {
 
         const mainModule = await import('../main.js');
         handleGuardarClick = mainModule.__testables__.handleGuardarClick;
+        getLastSavedReportData = mainModule.__testables__.getLastSavedReportDataForTests;
+        setLastSavedReportData = mainModule.__testables__.setLastSavedReportDataForTests;
+        setLastSavedReportData(null);
 
         document.body.innerHTML = DOM_TEMPLATE;
 
@@ -151,12 +172,46 @@ describe('handleGuardarClick', () => {
         expect(window.print).not.toHaveBeenCalled();
         expect(resetFormMock).not.toHaveBeenCalled();
     });
+
+    test('almacena los datos visibles del cliente para el remito', async () => {
+        const customFormData = {
+            cliente: 'CLI-001',
+            direccion: 'Av. Siempre Viva 742',
+            tecnico: 'Juan Pérez',
+            modelo: 'Equipo RO-5000',
+            id_interna: 'ACT-45',
+            n_serie: 'SN-123',
+            fecha: '2024-06-01',
+        };
+        getFormDataMock.mockReturnValue(customFormData);
+
+        await handleGuardarClick();
+
+        const snapshot = getLastSavedReportData();
+
+        expect(snapshot).toMatchObject({
+            cliente: 'CLI-001',
+            cliente_nombre: 'Cliente Demo',
+            direccion: 'Av. Siempre Viva 742',
+            cliente_telefono: '+54 11 5555-5555',
+            cliente_email: 'cliente@demo.com',
+            cliente_cuit: '20-12345678-9',
+            tecnico: 'Juan Pérez',
+            modelo: 'Equipo RO-5000',
+            id_interna: 'ACT-45',
+            n_serie: 'SN-123',
+        });
+        expect(snapshot.fecha_display).toBe('01/06/2024');
+        expect(Array.isArray(snapshot.componentes)).toBe(true);
+        expect(snapshot.componentes).toHaveLength(MOCK_COMPONENT_STAGES.length);
+    });
 });
 
 describe('manejo de la vista de remito', () => {
     let handleGenerarRemitoClick;
     let handleFinalizarRemitoClick;
     let setLastSavedReportData;
+    let showView;
     let originalAlert;
     let crearRemitoMock;
 
@@ -213,6 +268,7 @@ describe('manejo de la vista de remito', () => {
         handleGenerarRemitoClick = mainModule.__testables__.handleGenerarRemitoClick;
         handleFinalizarRemitoClick = mainModule.__testables__.handleFinalizarRemitoClick;
         setLastSavedReportData = mainModule.__testables__.setLastSavedReportDataForTests;
+        showView = mainModule.__testables__.showView;
 
         originalAlert = window.alert;
         window.alert = jest.fn();
@@ -227,7 +283,9 @@ describe('manejo de la vista de remito', () => {
     test('muestra un mensaje cuando no hay datos para generar el remito', () => {
         document.body.innerHTML = REMITO_DOM_TEMPLATE;
 
-        handleGenerarRemitoClick();
+        const shouldShowRemito = handleGenerarRemitoClick();
+
+        expect(shouldShowRemito).toBe(false);
 
         expect(window.alert).toHaveBeenCalledTimes(1);
         const generarRemitoButton = document.getElementById('generarRemitoButton');
@@ -264,12 +322,19 @@ describe('manejo de la vista de remito', () => {
 
         setLastSavedReportData(savedReport);
 
-        handleGenerarRemitoClick();
+        const shouldShowRemito = handleGenerarRemitoClick();
 
         expect(window.alert).not.toHaveBeenCalled();
 
+        expect(shouldShowRemito).toBe(true);
+
         const formView = document.getElementById('tab-nuevo');
         const remitoView = document.getElementById('remito-servicio');
+        expect(formView.classList.contains('hidden')).toBe(false);
+        expect(remitoView.classList.contains('hidden')).toBe(true);
+
+        showView('remito-servicio');
+
         expect(formView.classList.contains('hidden')).toBe(true);
         expect(remitoView.classList.contains('hidden')).toBe(false);
 

@@ -13,6 +13,13 @@ if (!isApiConfigured) {
     console.warn('API_URL no configurado. Configura window.__APP_CONFIG__.API_URL o la variable de entorno API_URL.');
 }
 
+const MAIN_VIEW_IDS = [
+    'tab-nuevo',
+    'tab-buscar',
+    'tab-dashboard',
+    'remito-servicio',
+];
+
 let lastSavedReportData = null;
 
 function normalizeTextValue(value, { fallback = '' } = {}) {
@@ -105,6 +112,23 @@ function collectComponentData() {
     });
 }
 
+function getInputValueById(elementId) {
+    if (!elementId) {
+        return '';
+    }
+
+    const element = document.getElementById(elementId);
+    if (!element) {
+        return '';
+    }
+
+    if ('value' in element) {
+        return normalizeTextValue(element.value);
+    }
+
+    return '';
+}
+
 function createReportSnapshot(datos = {}) {
     const clienteSelect = document.getElementById('cliente');
     const fechaDisplayInput = document.getElementById('fecha_display');
@@ -127,6 +151,22 @@ function createReportSnapshot(datos = {}) {
         snapshot.cliente_nombre = normalizeTextValue(snapshot.cliente);
     }
 
+    const snapshotFallbackMap = {
+        direccion: 'direccion',
+        cliente_telefono: 'cliente_telefono',
+        cliente_email: 'cliente_email',
+        cliente_cuit: 'cliente_cuit',
+    };
+
+    Object.entries(snapshotFallbackMap).forEach(([fieldName, elementId]) => {
+        if (!normalizeTextValue(snapshot[fieldName])) {
+            const fieldValue = getInputValueById(elementId);
+            if (fieldValue) {
+                snapshot[fieldName] = fieldValue;
+            }
+        }
+    });
+
     return snapshot;
 }
 
@@ -148,6 +188,22 @@ function resolveRemitoNumberFromData(data = {}) {
         const normalized = normalizeTextValue(candidate);
         if (normalized) {
             return normalized;
+        }
+    }
+
+    return '';
+}
+
+function resolveReportField(reportData, candidateKeys = []) {
+    if (!reportData || typeof reportData !== 'object') {
+        return '';
+    }
+
+    const keys = Array.isArray(candidateKeys) ? candidateKeys : [candidateKeys];
+    for (const key of keys) {
+        const value = normalizeTextValue(reportData[key]);
+        if (value) {
+            return value;
         }
     }
 
@@ -216,19 +272,63 @@ function renderRemitoView(reportData) {
     const numeroRemito = resolveRemitoNumberFromData(reportData);
     fillTextContent('remito-numero', numeroRemito);
     fillTextContent('remito-fecha', formatReportDate(reportData), { fallback: '--/--/----' });
-    fillTextContent('remito-cliente', reportData.cliente_nombre);
-    fillTextContent('remito-cliente-direccion', reportData.direccion);
-    fillTextContent('remito-cliente-telefono', reportData.cliente_telefono);
-    fillTextContent('remito-cliente-email', reportData.cliente_email);
-    fillTextContent('remito-cliente-cuit', reportData.cliente_cuit);
+    fillTextContent('remito-cliente', resolveReportField(reportData, [
+        'cliente_nombre',
+        'cliente',
+        'razon_social',
+        'razonSocial',
+        'clienteNombre',
+    ]));
+    fillTextContent('remito-cliente-direccion', resolveReportField(reportData, [
+        'direccion',
+        'cliente_direccion',
+        'domicilio',
+        'clienteDireccion',
+    ]));
+    fillTextContent('remito-cliente-telefono', resolveReportField(reportData, [
+        'cliente_telefono',
+        'telefono',
+        'telefono_cliente',
+        'clienteTelefono',
+    ]));
+    fillTextContent('remito-cliente-email', resolveReportField(reportData, [
+        'cliente_email',
+        'email',
+        'clienteEmail',
+    ]));
+    fillTextContent('remito-cliente-cuit', resolveReportField(reportData, [
+        'cliente_cuit',
+        'cuit',
+        'clienteCuit',
+    ]));
 
     const equipoValue = normalizeTextValue(reportData.equipo || reportData.modelo || reportData.id_interna);
     fillTextContent('remito-equipo', equipoValue);
-    fillTextContent('remito-equipo-modelo', reportData.modelo);
-    fillTextContent('remito-equipo-serie', reportData.n_serie);
-    fillTextContent('remito-equipo-interno', reportData.id_interna);
-    fillTextContent('remito-equipo-ubicacion', reportData.ubicacion || reportData.direccion);
-    fillTextContent('remito-equipo-tecnico', reportData.tecnico);
+    fillTextContent('remito-equipo-modelo', resolveReportField(reportData, [
+        'modelo',
+        'equipo_modelo',
+        'modelo_equipo',
+    ]));
+    fillTextContent('remito-equipo-serie', resolveReportField(reportData, [
+        'n_serie',
+        'numero_serie',
+        'serie',
+    ]));
+    fillTextContent('remito-equipo-interno', resolveReportField(reportData, [
+        'id_interna',
+        'activo',
+        'codigo_interno',
+    ]));
+    fillTextContent('remito-equipo-ubicacion', resolveReportField(reportData, [
+        'ubicacion',
+        'direccion',
+        'cliente_direccion',
+    ]));
+    fillTextContent('remito-equipo-tecnico', resolveReportField(reportData, [
+        'tecnico',
+        'tecnico_asignado',
+        'tecnicoAsignado',
+    ]));
 
     const observaciones = document.getElementById('remito-observaciones');
     if (observaciones) {
@@ -247,42 +347,27 @@ function showView(viewId) {
         return;
     }
 
-    const selectors = ['[data-view]', '[data-app-view]', '.app-view', '.view-container'];
-    const knownIds = ['mantenimiento-form-container', 'remito-view', 'tab-nuevo', 'remito-servicio'];
-    const views = new Set();
+    let viewFound = false;
 
-    selectors.forEach(selector => {
-        document.querySelectorAll(selector).forEach(element => {
-            views.add(element);
-        });
-    });
-
-    knownIds.forEach(id => {
+    MAIN_VIEW_IDS.forEach(id => {
         const element = document.getElementById(id);
-        if (element) {
-            views.add(element);
-        }
-    });
-
-    let targetFound = false;
-
-    views.forEach(view => {
-        if (!view) {
+        if (!element) {
             return;
         }
 
-        if (view.id === viewId) {
-            view.classList.remove('hidden');
-            targetFound = true;
-        } else {
-            view.classList.add('hidden');
+        if (id === viewId) {
+            element.classList.remove('hidden');
+            viewFound = true;
+            return;
         }
+
+        element.classList.add('hidden');
     });
 
-    if (!targetFound) {
-        const target = document.getElementById(viewId);
-        if (target) {
-            target.classList.remove('hidden');
+    if (!viewFound) {
+        const targetElement = document.getElementById(viewId);
+        if (targetElement) {
+            targetElement.classList.remove('hidden');
         }
     }
 }
@@ -309,11 +394,11 @@ function handleGenerarRemitoClick() {
     if (!lastSavedReportData) {
         setGenerarRemitoButtonEnabled(false);
         alert('Primero debes guardar un mantenimiento para generar el remito.');
-        return;
+        return false;
     }
 
     renderRemitoView(lastSavedReportData);
-    showView('remito-servicio');
+    return true;
 }
 
 function extractRemitoNumberFromResponse(data) {
@@ -409,14 +494,18 @@ function showAppVersion() {
 }
 
 function showTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+    const viewId = `tab-${tabName}`;
+    showView(viewId);
+
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        if (tab.id === viewId) {
+            tab.classList.remove('hidden');
+            return;
+        }
+        tab.classList.add('hidden');
+    });
+
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-
-    const tabElement = document.getElementById(`tab-${tabName}`);
-    if (tabElement) {
-        tabElement.classList.remove('hidden');
-    }
-
     const tabButton = document.getElementById(`tab-${tabName}-btn`);
     if (tabButton) {
         tabButton.classList.add('active');
@@ -465,6 +554,7 @@ export const __testables__ = {
     handleGuardarClick,
     handleGenerarRemitoClick,
     handleFinalizarRemitoClick,
+    showView,
     setLastSavedReportDataForTests(data) {
         lastSavedReportData = data;
     },
@@ -613,7 +703,11 @@ function attachEventListeners() {
 
     const generarRemitoBtn = document.getElementById('generarRemitoButton');
     if (generarRemitoBtn) {
-        generarRemitoBtn.addEventListener('click', handleGenerarRemitoClick);
+        generarRemitoBtn.addEventListener('click', () => {
+            if (handleGenerarRemitoClick()) {
+                showView('remito-servicio');
+            }
+        });
     }
 
     const finalizarRemitoBtn = document.getElementById('finalizarRemitoButton');
