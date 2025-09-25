@@ -126,6 +126,7 @@ describe('handleGuardarClick', () => {
         const generarRemitoButton = document.getElementById('generarRemitoButton');
         expect(generarRemitoButton).not.toBeNull();
         expect(generarRemitoButton.disabled).toBe(true);
+        expect(generarRemitoButton.hasAttribute('disabled')).toBe(true);
 
         await handleGuardarClick();
 
@@ -137,6 +138,7 @@ describe('handleGuardarClick', () => {
         expect(setReportNumberMock).toHaveBeenCalledWith(REPORT_NUMBER);
 
         expect(generarRemitoButton.disabled).toBe(false);
+        expect(generarRemitoButton.hasAttribute('disabled')).toBe(false);
 
         const savedNumber = guardarMantenimientoMock.mock.calls[0][0].numero_reporte;
         const displayedNumber = setReportNumberMock.mock.calls[0][0];
@@ -230,6 +232,9 @@ describe('manejo de la vista de remito', () => {
         handleGenerarRemitoClick();
 
         expect(window.alert).toHaveBeenCalledTimes(1);
+        const generarRemitoButton = document.getElementById('generarRemitoButton');
+        expect(generarRemitoButton.disabled).toBe(true);
+        expect(generarRemitoButton.hasAttribute('disabled')).toBe(true);
         const formView = document.getElementById('tab-nuevo');
         const remitoView = document.getElementById('remito-servicio');
         expect(formView.classList.contains('hidden')).toBe(false);

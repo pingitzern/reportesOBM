@@ -255,8 +255,27 @@ function showRemitoView() {
     }
 }
 
+function setGenerarRemitoButtonEnabled(enabled) {
+    const generarRemitoBtn = document.getElementById('generarRemitoButton');
+    if (!generarRemitoBtn) {
+        return;
+    }
+
+    if (enabled) {
+        generarRemitoBtn.disabled = false;
+        generarRemitoBtn.removeAttribute('disabled');
+        return;
+    }
+
+    generarRemitoBtn.disabled = true;
+    if (!generarRemitoBtn.hasAttribute('disabled')) {
+        generarRemitoBtn.setAttribute('disabled', 'disabled');
+    }
+}
+
 function handleGenerarRemitoClick() {
     if (!lastSavedReportData) {
+        setGenerarRemitoButtonEnabled(false);
         alert('Primero debes guardar un mantenimiento para generar el remito.');
         return;
     }
@@ -378,7 +397,6 @@ function showTab(tabName) {
 
 async function handleGuardarClick() {
     const guardarBtn = document.getElementById('guardarButton');
-    const generarRemitoBtn = document.getElementById('generarRemitoButton');
     if (!guardarBtn) {
         return;
     }
@@ -398,9 +416,7 @@ async function handleGuardarClick() {
         lastSavedReportData = createReportSnapshot(datos);
         alert('✅ Mantenimiento guardado correctamente en el sistema');
 
-        if (generarRemitoBtn) {
-            generarRemitoBtn.disabled = false;
-        }
+        setGenerarRemitoButtonEnabled(true);
 
         setReportNumber(reportNumber);
 
@@ -598,6 +614,7 @@ async function initializeSystem() {
     configureClientSelect(clientes);
     initializeForm();
     attachEventListeners();
+    setGenerarRemitoButtonEnabled(false);
     showTab('nuevo');
 }
 
