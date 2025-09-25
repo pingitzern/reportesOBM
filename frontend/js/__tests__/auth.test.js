@@ -15,7 +15,7 @@ const loadAuthModule = async ({ apiUrl = API_URL } = {}) => {
         process.env.API_URL = apiUrl;
     }
 
-    return import('../auth.js');
+    return import('../modules/login/auth.js');
 };
 
 const createStorageMock = (initial = {}) => {

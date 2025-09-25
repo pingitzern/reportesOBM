@@ -1,11 +1,11 @@
 /* global __APP_VERSION__ */
 import { API_URL } from './config.js';
-import { initializeAuth } from './auth.js';
+import { initializeAuth } from './modules/login/auth.js';
 import { guardarMantenimiento, buscarMantenimientos, actualizarMantenimiento, eliminarMantenimiento, obtenerDashboard, obtenerClientes, crearRemito } from './api.js';
-import { renderDashboard } from './dashboard.js';
-import { configureClientSelect, generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
-import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './search.js';
-import { renderComponentStages, COMPONENT_STAGES } from './templates.js';
+import { renderDashboard } from './modules/dashboard/dashboard.js';
+import { configureClientSelect, generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './modules/mantenimiento/forms.js';
+import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './modules/busqueda/search.js';
+import { renderComponentStages, COMPONENT_STAGES } from './modules/mantenimiento/templates.js';
 
 const isApiConfigured = typeof API_URL === 'string' && API_URL.length > 0;
 
