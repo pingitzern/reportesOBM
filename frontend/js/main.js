@@ -6,19 +6,13 @@ import { renderDashboard } from './modules/dashboard/dashboard.js';
 import { configureClientSelect, generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './modules/mantenimiento/forms.js';
 import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './modules/busqueda/search.js';
 import { renderComponentStages, COMPONENT_STAGES } from './modules/mantenimiento/templates.js';
+import { showView } from './viewManager.js';
 
 const isApiConfigured = typeof API_URL === 'string' && API_URL.length > 0;
 
 if (!isApiConfigured) {
     console.warn('API_URL no configurado. Configura window.__APP_CONFIG__.API_URL o la variable de entorno API_URL.');
 }
-
-const MAIN_VIEW_IDS = [
-    'tab-nuevo',
-    'tab-buscar',
-    'tab-dashboard',
-    'remito-servicio',
-];
 
 let lastSavedReportData = null;
 
@@ -340,36 +334,6 @@ function renderRemitoView(reportData) {
     }
 
     renderRemitoRepuestos(Array.isArray(reportData.componentes) ? reportData.componentes : []);
-}
-
-function showView(viewId) {
-    if (typeof viewId !== 'string' || !viewId) {
-        return;
-    }
-
-    let viewFound = false;
-
-    MAIN_VIEW_IDS.forEach(id => {
-        const element = document.getElementById(id);
-        if (!element) {
-            return;
-        }
-
-        if (id === viewId) {
-            element.classList.remove('hidden');
-            viewFound = true;
-            return;
-        }
-
-        element.classList.add('hidden');
-    });
-
-    if (!viewFound) {
-        const targetElement = document.getElementById(viewId);
-        if (targetElement) {
-            targetElement.classList.remove('hidden');
-        }
-    }
 }
 
 function setGenerarRemitoButtonEnabled(enabled) {
