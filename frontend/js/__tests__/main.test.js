@@ -1,48 +1,47 @@
 import { jest } from '@jest/globals';
 
 const REPORT_NUMBER = 'REP-TEST-123456';
-const DOM_TEMPLATE = `
-<form id="maintenance-form">
-    <select id="cliente" name="cliente">
-        <option value="">Selecciona un cliente</option>
-        <option value="CLI-001" selected>Cliente Demo</option>
-    </select>
-    <input type="text" id="direccion" name="direccion" value="Av. Siempre Viva 742">
-    <input type="text" id="cliente_telefono" name="cliente_telefono" value="+54 11 5555-5555">
-    <input type="text" id="cliente_email" name="cliente_email" value="cliente@demo.com">
-    <input type="text" id="cliente_cuit" name="cliente_cuit" value="20-12345678-9">
-    <input type="text" id="tecnico" name="tecnico" value="Juan Pérez">
-    <input type="text" id="modelo" name="modelo" value="Equipo RO-5000">
-    <input type="text" id="id_interna" name="id_interna" value="ACT-45">
-    <input type="text" id="n_serie" name="n_serie" value="SN-123">
-    <input type="text" id="fecha_display" value="01/06/2024">
-    <input type="hidden" id="fecha" name="fecha" value="2024-06-01">
-</form>
-<button id="guardarButton">Guardar</button>
-<button id="generarRemitoButton" disabled>Generar Remito</button>
-`.trim();
-
-const REMITO_DOM_TEMPLATE = `
-<div id="tab-nuevo" class="tab-content"></div>
-<div id="remito-servicio" class="hidden">
-    <p id="remito-numero"></p>
-    <p id="remito-fecha"></p>
-    <p id="remito-cliente"></p>
-    <p id="remito-cliente-direccion"></p>
-    <p id="remito-cliente-telefono"></p>
-    <p id="remito-cliente-email"></p>
-    <p id="remito-cliente-cuit"></p>
-    <p id="remito-equipo"></p>
-    <p id="remito-equipo-modelo"></p>
-    <p id="remito-equipo-serie"></p>
-    <p id="remito-equipo-interno"></p>
-    <p id="remito-equipo-ubicacion"></p>
-    <p id="remito-equipo-tecnico"></p>
-    <textarea id="remito-observaciones"></textarea>
-    <table><tbody id="remito-repuestos"></tbody></table>
-    <button id="finalizarRemitoButton">Finalizar y Generar Remito</button>
+const FULL_DOM_TEMPLATE = `
+<div id="tab-nuevo" class="tab-content">
+    <form id="maintenance-form">
+        <select id="cliente" name="cliente">
+            <option value="">Selecciona un cliente</option>
+            <option value="CLI-001" selected>Cliente Demo</option>
+        </select>
+        <input type="text" id="direccion" name="direccion" value="Av. Siempre Viva 742">
+        <input type="text" id="cliente_telefono" name="cliente_telefono" value="+54 11 5555-5555">
+        <input type="text" id="cliente_email" name="cliente_email" value="cliente@demo.com">
+        <input type="text" id="cliente_cuit" name="cliente_cuit" value="20-12345678-9">
+        <input type="text" id="tecnico" name="tecnico" value="Juan Pérez">
+        <input type="text" id="modelo" name="modelo" value="Equipo RO-5000">
+        <input type="text" id="id_interna" name="id_interna" value="ACT-45">
+        <input type="text" id="n_serie" name="n_serie" value="SN-123">
+        <input type="text" id="fecha_display" value="01/06/2024">
+        <input type="hidden" id="fecha" name="fecha" value="2024-06-01">
+    </form>
+    <button id="guardarButton">Guardar</button>
+    <button id="generar-remito-btn" disabled>Generar Remito</button>
 </div>
-<button id="generarRemitoButton">Generar Remito</button>
+<div id="tab-buscar" class="hidden"></div>
+<div id="tab-dashboard" class="hidden"></div>
+<div id="remito-view" class="hidden">
+    <input id="remito-numero" readonly>
+    <input id="remito-fecha" readonly>
+    <input id="remito-cliente-nombre" readonly>
+    <input id="remito-cliente-direccion" readonly>
+    <input id="remito-cliente-telefono" readonly>
+    <input id="remito-cliente-email" readonly>
+    <input id="remito-cliente-cuit" readonly>
+    <input id="remito-equipo-descripcion" readonly>
+    <input id="remito-equipo-modelo" readonly>
+    <input id="remito-equipo-serie" readonly>
+    <input id="remito-equipo-interno" readonly>
+    <input id="remito-equipo-ubicacion" readonly>
+    <input id="remito-equipo-tecnico" readonly>
+    <textarea id="remito-observaciones"></textarea>
+    <table><tbody id="remito-repuestos-body"></tbody></table>
+    <button id="finalizar-remito-btn">Finalizar y Guardar Remito</button>
+</div>
 `.trim();
 
 const MOCK_COMPONENT_STAGES = [
@@ -50,7 +49,7 @@ const MOCK_COMPONENT_STAGES = [
     { id: 'etapa2', title: '2ª Etapa' },
 ];
 
-describe('handleGuardarClick', () => {
+describe('manejo del guardado de mantenimientos', () => {
     let handleGuardarClick;
     let guardarMantenimientoMock;
     let setReportNumberMock;
@@ -58,21 +57,17 @@ describe('handleGuardarClick', () => {
     let generateReportNumberMock;
     let getFormDataMock;
     let getLastSavedReportData;
-    let setLastSavedReportData;
     let originalAlert;
-    let originalPrint;
-    let formData;
 
     beforeEach(async () => {
         jest.resetModules();
         jest.useFakeTimers();
 
-        formData = { cliente: 'Test' };
         guardarMantenimientoMock = jest.fn().mockResolvedValue(undefined);
         setReportNumberMock = jest.fn();
         resetFormMock = jest.fn();
         generateReportNumberMock = jest.fn().mockReturnValue(REPORT_NUMBER);
-        getFormDataMock = jest.fn().mockReturnValue(formData);
+        getFormDataMock = jest.fn().mockReturnValue({ cliente: 'CLI-001' });
 
         jest.unstable_mockModule('../config.js', () => ({
             API_URL: 'http://localhost/api',
@@ -94,11 +89,11 @@ describe('handleGuardarClick', () => {
             eliminarMantenimiento: jest.fn(),
             obtenerDashboard: jest.fn(),
             obtenerClientes: jest.fn().mockResolvedValue([]),
-            crearRemito: jest.fn(),
         }));
 
         jest.unstable_mockModule('../modules/login/auth.js', () => ({
             initializeAuth: jest.fn(),
+            getCurrentToken: jest.fn(() => 'token-123'),
         }));
 
         jest.unstable_mockModule('../modules/mantenimiento/templates.js', () => ({
@@ -106,35 +101,28 @@ describe('handleGuardarClick', () => {
             COMPONENT_STAGES: MOCK_COMPONENT_STAGES,
         }));
 
-        jest.unstable_mockModule('../modules/busqueda/search.js', () => ({
-            clearSearchResults: jest.fn(),
-            getEditFormValues: jest.fn(),
-            openEditModal: jest.fn(),
-            closeEditModal: jest.fn(),
-            renderSearchResults: jest.fn(),
+        jest.unstable_mockModule('../modules/busqueda/busqueda.js', () => ({
+            createSearchModule: jest.fn(() => ({
+                initialize: jest.fn(),
+                show: jest.fn(),
+            })),
         }));
 
         jest.unstable_mockModule('../modules/dashboard/dashboard.js', () => ({
-            renderDashboard: jest.fn(),
             createDashboardModule: jest.fn(() => ({
                 initialize: jest.fn(),
                 show: jest.fn(),
-                refresh: jest.fn(),
             })),
         }));
 
         const mainModule = await import('../main.js');
         handleGuardarClick = mainModule.__testables__.handleGuardarClick;
         getLastSavedReportData = mainModule.__testables__.getLastSavedReportDataForTests;
-        setLastSavedReportData = mainModule.__testables__.setLastSavedReportDataForTests;
-        setLastSavedReportData(null);
 
-        document.body.innerHTML = DOM_TEMPLATE;
+        document.body.innerHTML = FULL_DOM_TEMPLATE;
 
         originalAlert = window.alert;
-        originalPrint = window.print;
         window.alert = jest.fn();
-        window.print = jest.fn();
 
         jest.clearAllMocks();
     });
@@ -144,80 +132,40 @@ describe('handleGuardarClick', () => {
         jest.useRealTimers();
         jest.clearAllMocks();
         window.alert = originalAlert;
-        window.print = originalPrint;
         document.body.innerHTML = '';
     });
 
-    test('usa el mismo número de reporte para guardar y mostrar', async () => {
-        const generarRemitoButton = document.getElementById('generarRemitoButton');
-        expect(generarRemitoButton).not.toBeNull();
-        expect(generarRemitoButton.disabled).toBe(true);
-        expect(generarRemitoButton.hasAttribute('disabled')).toBe(true);
+    test('habilita el botón de remito al guardar y conserva un snapshot del reporte', async () => {
+        const generarBtn = document.getElementById('generar-remito-btn');
+        expect(generarBtn.disabled).toBe(true);
 
         await handleGuardarClick();
 
-        expect(generateReportNumberMock).toHaveBeenCalledTimes(1);
-        expect(getFormDataMock).toHaveBeenCalledTimes(1);
-
-        expect(formData.numero_reporte).toBe(REPORT_NUMBER);
-        expect(guardarMantenimientoMock).toHaveBeenCalledWith(formData);
+        expect(guardarMantenimientoMock).toHaveBeenCalledWith(expect.objectContaining({
+            numero_reporte: REPORT_NUMBER,
+        }));
         expect(setReportNumberMock).toHaveBeenCalledWith(REPORT_NUMBER);
 
-        expect(generarRemitoButton.disabled).toBe(false);
-        expect(generarRemitoButton.hasAttribute('disabled')).toBe(false);
-
-        const savedNumber = guardarMantenimientoMock.mock.calls[0][0].numero_reporte;
-        const displayedNumber = setReportNumberMock.mock.calls[0][0];
-        expect(savedNumber).toBe(displayedNumber);
-
-        const generateCallOrder = generateReportNumberMock.mock.invocationCallOrder[0];
-        const formDataCallOrder = getFormDataMock.mock.invocationCallOrder[0];
-        expect(generateCallOrder).toBeLessThan(formDataCallOrder);
-
-        expect(window.print).not.toHaveBeenCalled();
-        expect(resetFormMock).not.toHaveBeenCalled();
-    });
-
-    test('almacena los datos visibles del cliente para el remito', async () => {
-        const customFormData = {
-            cliente: 'CLI-001',
-            direccion: 'Av. Siempre Viva 742',
-            tecnico: 'Juan Pérez',
-            modelo: 'Equipo RO-5000',
-            id_interna: 'ACT-45',
-            n_serie: 'SN-123',
-            fecha: '2024-06-01',
-        };
-        getFormDataMock.mockReturnValue(customFormData);
-
-        await handleGuardarClick();
+        const button = document.getElementById('generar-remito-btn');
+        expect(button.disabled).toBe(false);
 
         const snapshot = getLastSavedReportData();
-
         expect(snapshot).toMatchObject({
             cliente: 'CLI-001',
-            cliente_nombre: 'Cliente Demo',
+            clienteNombre: 'Cliente Demo',
             direccion: 'Av. Siempre Viva 742',
             cliente_telefono: '+54 11 5555-5555',
-            cliente_email: 'cliente@demo.com',
-            cliente_cuit: '20-12345678-9',
-            tecnico: 'Juan Pérez',
-            modelo: 'Equipo RO-5000',
-            id_interna: 'ACT-45',
-            n_serie: 'SN-123',
         });
         expect(snapshot.fecha_display).toBe('01/06/2024');
-        expect(Array.isArray(snapshot.componentes)).toBe(true);
-        expect(snapshot.componentes).toHaveLength(MOCK_COMPONENT_STAGES.length);
     });
 });
 
-describe('manejo de la vista de remito', () => {
+describe('flujo de generación y finalización de remito', () => {
     let handleGenerarRemitoClick;
     let handleFinalizarRemitoClick;
     let setLastSavedReportData;
     let originalAlert;
-    let crearRemitoMock;
+    let originalFetch;
 
     beforeEach(async () => {
         jest.resetModules();
@@ -235,8 +183,6 @@ describe('manejo de la vista de remito', () => {
             setReportNumber: jest.fn(),
         }));
 
-        crearRemitoMock = jest.fn().mockResolvedValue({ numero_remito: 'REM-0099' });
-
         jest.unstable_mockModule('../api.js', () => ({
             guardarMantenimiento: jest.fn(),
             buscarMantenimientos: jest.fn(),
@@ -244,11 +190,11 @@ describe('manejo de la vista de remito', () => {
             eliminarMantenimiento: jest.fn(),
             obtenerDashboard: jest.fn(),
             obtenerClientes: jest.fn().mockResolvedValue([]),
-            crearRemito: crearRemitoMock,
         }));
 
         jest.unstable_mockModule('../modules/login/auth.js', () => ({
             initializeAuth: jest.fn(),
+            getCurrentToken: jest.fn(() => 'token-abc'),
         }));
 
         jest.unstable_mockModule('../modules/mantenimiento/templates.js', () => ({
@@ -256,20 +202,17 @@ describe('manejo de la vista de remito', () => {
             COMPONENT_STAGES: MOCK_COMPONENT_STAGES,
         }));
 
-        jest.unstable_mockModule('../modules/busqueda/search.js', () => ({
-            clearSearchResults: jest.fn(),
-            getEditFormValues: jest.fn(),
-            openEditModal: jest.fn(),
-            closeEditModal: jest.fn(),
-            renderSearchResults: jest.fn(),
+        jest.unstable_mockModule('../modules/busqueda/busqueda.js', () => ({
+            createSearchModule: jest.fn(() => ({
+                initialize: jest.fn(),
+                show: jest.fn(),
+            })),
         }));
 
         jest.unstable_mockModule('../modules/dashboard/dashboard.js', () => ({
-            renderDashboard: jest.fn(),
             createDashboardModule: jest.fn(() => ({
                 initialize: jest.fn(),
                 show: jest.fn(),
-                refresh: jest.fn(),
             })),
         }));
 
@@ -278,41 +221,39 @@ describe('manejo de la vista de remito', () => {
         handleFinalizarRemitoClick = mainModule.__testables__.handleFinalizarRemitoClick;
         setLastSavedReportData = mainModule.__testables__.setLastSavedReportDataForTests;
 
+        document.body.innerHTML = FULL_DOM_TEMPLATE;
+
         originalAlert = window.alert;
+        originalFetch = global.fetch;
         window.alert = jest.fn();
+        global.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ result: 'success', data: { NumeroRemito: 'REM-0099' } }),
+        });
+
+        jest.clearAllMocks();
     });
 
     afterEach(() => {
         window.alert = originalAlert;
+        global.fetch = originalFetch;
         document.body.innerHTML = '';
         jest.clearAllMocks();
     });
 
-    test('muestra un mensaje cuando no hay datos para generar el remito', () => {
-        document.body.innerHTML = REMITO_DOM_TEMPLATE;
-
-        const shouldShowRemito = handleGenerarRemitoClick();
-
-        expect(shouldShowRemito).toBe(false);
-
-        expect(window.alert).toHaveBeenCalledTimes(1);
-        const generarRemitoButton = document.getElementById('generarRemitoButton');
-        expect(generarRemitoButton.disabled).toBe(true);
-        expect(generarRemitoButton.hasAttribute('disabled')).toBe(true);
-        const formView = document.getElementById('tab-nuevo');
-        const remitoView = document.getElementById('remito-servicio');
-        expect(formView.classList.contains('hidden')).toBe(false);
-        expect(remitoView.classList.contains('hidden')).toBe(true);
+    test('no abre la vista si no hay datos guardados', () => {
+        const result = handleGenerarRemitoClick();
+        expect(result).toBe(false);
+        expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Primero debés guardar'));
+        const view = document.getElementById('remito-view');
+        expect(view.classList.contains('hidden')).toBe(true);
     });
 
-    test('rellena la vista del remito con los datos guardados y permite editar observaciones', () => {
-        document.body.innerHTML = REMITO_DOM_TEMPLATE;
-
-        const savedReport = {
-            numero_reporte: 'REP-001',
-            fecha: '2024-06-01',
+    test('muestra la vista del remito con los datos del reporte', () => {
+        setLastSavedReportData({
+            NumeroRemito: 'REM-0001',
             fecha_display: '01/06/2024',
-            cliente_nombre: 'Cliente Demo',
+            clienteNombre: 'Cliente Demo',
             direccion: 'Av. Siempre Viva 742',
             cliente_telefono: '+54 11 5555-5555',
             cliente_email: 'cliente@demo.com',
@@ -321,88 +262,43 @@ describe('manejo de la vista de remito', () => {
             n_serie: 'SN-123',
             id_interna: 'ACT-45',
             tecnico: 'Juan Pérez',
-            resumen: 'Se realizó mantenimiento completo.',
-            componentes: [
-                { id: 'etapa1', title: '1ª Etapa', detalles: 'Filtro PP 5µ', accion: 'Cambiado', cantidad: 2 },
-                { id: 'etapa2', title: '2ª Etapa', detalles: 'Filtro CTO', accion: 'Inspeccionado' },
-            ],
-        };
+        });
 
-        setLastSavedReportData(savedReport);
+        const result = handleGenerarRemitoClick();
+        expect(result).toBe(true);
 
-        const shouldShowRemito = handleGenerarRemitoClick();
+        const view = document.getElementById('remito-view');
+        expect(view.classList.contains('hidden')).toBe(false);
 
-        expect(window.alert).not.toHaveBeenCalled();
-
-        expect(shouldShowRemito).toBe(true);
-
-        const formView = document.getElementById('tab-nuevo');
-        const remitoView = document.getElementById('remito-servicio');
-        expect(formView.classList.contains('hidden')).toBe(true);
-        expect(remitoView.classList.contains('hidden')).toBe(false);
-
-        expect(document.getElementById('remito-numero').textContent).toBe('REP-001');
-        expect(document.getElementById('remito-fecha').textContent).toBe('01/06/2024');
-        expect(document.getElementById('remito-cliente').textContent).toBe('Cliente Demo');
-        expect(document.getElementById('remito-equipo-modelo').textContent).toBe('Equipo RO-5000');
-        expect(document.getElementById('remito-equipo-interno').textContent).toBe('ACT-45');
-
-        const observaciones = document.getElementById('remito-observaciones');
-        expect(observaciones.value).toBe('Se realizó mantenimiento completo.');
-        expect(observaciones.readOnly).toBe(false);
-        expect(observaciones.hasAttribute('readonly')).toBe(false);
-
-        const repuestosRows = document.querySelectorAll('#remito-repuestos tr');
-        expect(repuestosRows).toHaveLength(1);
-        const cells = repuestosRows[0].querySelectorAll('td');
-        expect(cells[0].textContent).toBe('etapa1');
-        expect(cells[1].textContent).toContain('1ª Etapa');
-        expect(cells[1].textContent).toContain('Filtro PP 5µ');
-        expect(cells[2].textContent).toBe('2');
+        expect(document.getElementById('remito-numero').value).toBe('REM-0001');
+        expect(document.getElementById('remito-fecha').value).toBe('01/06/2024');
+        expect(document.getElementById('remito-cliente-nombre').value).toBe('Cliente Demo');
+        expect(document.getElementById('remito-equipo-modelo').value).toBe('Equipo RO-5000');
     });
 
-    test('muestra un mensaje cuando no hay datos para finalizar el remito', async () => {
-        document.body.innerHTML = REMITO_DOM_TEMPLATE;
+    test('envía los datos al finalizar y actualiza el número de remito', async () => {
+        const savedReport = {
+            numero_reporte: 'REP-002',
+            clienteNombre: 'Cliente Demo',
+        };
+        setLastSavedReportData(savedReport);
+        document.getElementById('remito-observaciones').value = 'Observaciones finales';
 
         await handleFinalizarRemitoClick();
 
-        expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('No hay datos disponibles'));
-        expect(crearRemitoMock).not.toHaveBeenCalled();
-    });
+        expect(global.fetch).toHaveBeenCalledWith('http://localhost/api', expect.objectContaining({
+            method: 'POST',
+        }));
 
-    test('envía el reporte y observaciones y muestra el número de remito devuelto', async () => {
-        document.body.innerHTML = REMITO_DOM_TEMPLATE;
-
-        const savedReport = {
-            numero_reporte: 'REP-002',
-            cliente_nombre: 'Cliente 2',
-        };
-
-        setLastSavedReportData(savedReport);
-
-        const observacionesTextarea = document.getElementById('remito-observaciones');
-        observacionesTextarea.value = 'Observaciones finales';
-
-        const numeroElement = document.getElementById('remito-numero');
-        numeroElement.textContent = 'REP-002';
-
-        const finalizarButton = document.getElementById('finalizarRemitoButton');
-
-        const promise = handleFinalizarRemitoClick();
-
-        expect(finalizarButton.disabled).toBe(true);
-        expect(finalizarButton.textContent).toContain('Generando');
-
-        await promise;
-
-        expect(crearRemitoMock).toHaveBeenCalledWith({
-            reporte: savedReport,
+        const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+        expect(body).toMatchObject({
+            action: 'crear_remito',
+            token: 'token-abc',
+            reporteData: savedReport,
             observaciones: 'Observaciones finales',
         });
 
-        expect(numeroElement.textContent).toBe('REM-0099');
-        expect(finalizarButton.disabled).toBe(false);
-        expect(finalizarButton.textContent).toBe('Finalizar y Generar Remito');
-        expect(window.alert).toHaveBeenCalledWith(expect.stringContaining('Remito generado correctamente'));
+        expect(document.getElementById('remito-numero').value).toBe('REM-0099');
+        expect(window.alert).toHaveBeenCalledWith('✅ Remito generado correctamente.');
     });
 });

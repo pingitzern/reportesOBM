@@ -339,7 +339,7 @@
                 <div class="flex justify-end space-x-4 mt-8 no-print">
                     <button type="button" id="resetButton" class="action-button reset-btn">Limpiar Formulario</button>
                     <button type="button" id="guardarButton" class="action-button print-btn">Guardar y Generar Reporte</button>
-                    <button type="button" id="generarRemitoButton" class="action-button print-btn" disabled>Generar Remito</button>
+                    <button type="button" id="generar-remito-btn" class="action-button print-btn" disabled>Generar Remito</button>
                 </div>
             </form>
         </div>
@@ -459,113 +459,116 @@
             </div>
         </div>
 
-        <!-- Vista: Remito de Servicio -->
-        <div id="remito-servicio" class="hidden">
-            <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8 space-y-8">
-                <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between pb-6 border-b border-gray-200">
-                    <div class="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-                        <img src="/OHM-agua.png" alt="Logo OHM Agua" class="h-16 w-auto md:h-20">
-                        <div class="space-y-1 text-gray-700">
-                            <h2 class="text-2xl font-semibold text-gray-800">Remito de Servicio</h2>
-                            <p class="text-sm"><span class="font-semibold">Razón Social:</span> <span id="remito-empresa-nombre">OHM Agua y Medio Ambiente S.R.L.</span></p>
-                            <p class="text-sm"><span class="font-semibold">Dirección:</span> <span id="remito-empresa-direccion">---</span></p>
-                            <p class="text-sm"><span class="font-semibold">Teléfono:</span> <span id="remito-empresa-telefono">---</span></p>
-                            <p class="text-sm"><span class="font-semibold">Email:</span> <span id="remito-empresa-email">---</span></p>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 gap-4 w-full sm:grid-cols-2 md:w-auto md:text-right">
-                        <div class="border border-gray-300 rounded-lg px-4 py-3">
-                            <span class="block text-xs font-semibold tracking-widest text-gray-500 uppercase">Remito N°</span>
-                            <p class="mt-1 text-xl font-semibold text-gray-800" id="remito-numero">---</p>
-                        </div>
-                        <div class="border border-gray-300 rounded-lg px-4 py-3">
-                            <span class="block text-xs font-semibold tracking-widest text-gray-500 uppercase">Fecha</span>
-                            <p class="mt-1 text-base font-medium text-gray-700" id="remito-fecha">--/--/----</p>
-                        </div>
-                    </div>
+        <div id="remito-view" class="hidden">
+            <div class="max-w-5xl mx-auto">
+                <div class="bg-white shadow-lg rounded-3xl p-8 mb-8 border border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800">Generación de Remito</h2>
+                    <p class="mt-2 text-sm text-gray-500">Verificá la información antes de finalizar y guardar el remito.</p>
                 </div>
 
-                <section class="border border-gray-200 rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800">Datos del Cliente</h3>
-                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">Cliente</span>
-                            <p class="mt-1 text-base font-medium text-gray-800" id="remito-cliente">---</p>
+                <form id="remito-form" class="space-y-6">
+                    <section class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                            <label for="remito-numero" class="block text-sm font-semibold text-gray-600">Número de Remito</label>
+                            <input id="remito-numero" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
                         </div>
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">Dirección</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-cliente-direccion">---</p>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                            <label for="remito-fecha" class="block text-sm font-semibold text-gray-600">Fecha</label>
+                            <input id="remito-fecha" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
                         </div>
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">Teléfono</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-cliente-telefono">---</p>
-                        </div>
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">Email</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-cliente-email">---</p>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">CUIT</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-cliente-cuit">---</p>
-                        </div>
-                    </div>
-                </section>
+                    </section>
 
-                <section class="border border-gray-200 rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800">Datos del Equipo</h3>
-                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">Equipo</span>
-                            <p class="mt-1 text-base font-medium text-gray-800" id="remito-equipo">---</p>
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Datos del Cliente</h3>
+                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="remito-cliente-nombre" class="block text-sm font-semibold text-gray-600">Razón Social</label>
+                                <input id="remito-cliente-nombre" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-cliente-direccion" class="block text-sm font-semibold text-gray-600">Dirección</label>
+                                <input id="remito-cliente-direccion" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-cliente-telefono" class="block text-sm font-semibold text-gray-600">Teléfono</label>
+                                <input id="remito-cliente-telefono" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-cliente-email" class="block text-sm font-semibold text-gray-600">Email</label>
+                                <input id="remito-cliente-email" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-cliente-cuit" class="block text-sm font-semibold text-gray-600">CUIT</label>
+                                <input id="remito-cliente-cuit" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
                         </div>
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">Modelo</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-equipo-modelo">---</p>
-                        </div>
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">N° de Serie</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-equipo-serie">---</p>
-                        </div>
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">ID Interna / Activo</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-equipo-interno">---</p>
-                        </div>
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">Ubicación</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-equipo-ubicacion">---</p>
-                        </div>
-                        <div>
-                            <span class="block text-xs font-semibold tracking-wide text-gray-500 uppercase">Técnico Responsable</span>
-                            <p class="mt-1 text-base text-gray-700" id="remito-equipo-tecnico">---</p>
-                        </div>
-                    </div>
-                </section>
+                    </section>
 
-                <section class="border border-gray-200 rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Listado de Repuestos</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Código</th>
-                                    <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Descripción</th>
-                                    <th class="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Cantidad</th>
-                                </tr>
-                            </thead>
-                            <tbody id="remito-repuestos" class="bg-white divide-y divide-gray-200">
-                                <!-- Los repuestos se cargarán dinámicamente -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Datos del Equipo</h3>
+                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="remito-equipo-descripcion" class="block text-sm font-semibold text-gray-600">Equipo / Descripción</label>
+                                <input id="remito-equipo-descripcion" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-modelo" class="block text-sm font-semibold text-gray-600">Modelo</label>
+                                <input id="remito-equipo-modelo" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-serie" class="block text-sm font-semibold text-gray-600">Número de Serie</label>
+                                <input id="remito-equipo-serie" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-interno" class="block text-sm font-semibold text-gray-600">ID Interna / Activo</label>
+                                <input id="remito-equipo-interno" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-ubicacion" class="block text-sm font-semibold text-gray-600">Ubicación</label>
+                                <input id="remito-equipo-ubicacion" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-tecnico" class="block text-sm font-semibold text-gray-600">Técnico Responsable</label>
+                                <input id="remito-equipo-tecnico" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                        </div>
+                    </section>
 
-                <section class="border border-gray-200 rounded-lg p-6">
-                    <label for="remito-observaciones" class="block text-lg font-semibold text-gray-800">Observaciones</label>
-                    <textarea id="remito-observaciones" class="mt-4 w-full border border-gray-300 rounded-lg p-4 text-gray-700 min-h-[180px]" placeholder="Detalle las tareas realizadas y cualquier observación relevante..."></textarea>
-                    <div class="mt-6 flex justify-end">
-                        <button type="button" id="finalizarRemitoButton" class="action-button print-btn">Finalizar y Generar Remito</button>
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Listado de Repuestos</h3>
+                                <p class="text-sm text-gray-500">Detalle de los repuestos utilizados durante el servicio.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Código</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Descripción</th>
+                                        <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Cantidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="remito-repuestos-body" class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-3 text-sm text-gray-500 text-center">Sin repuestos registrados.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <label for="remito-observaciones" class="block text-lg font-semibold text-gray-800">Observaciones</label>
+                        <textarea id="remito-observaciones" class="mt-4 w-full border border-gray-300 rounded-lg p-4 text-gray-700 min-h-[160px]" placeholder="Agregá observaciones o comentarios relevantes"></textarea>
+                    </section>
+
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <p class="text-sm text-gray-500">Al finalizar, el número de remito quedará registrado en esta pantalla.</p>
+                        <button type="button" id="finalizar-remito-btn" class="action-button">Finalizar y Guardar Remito</button>
                     </div>
-                </section>
+                </form>
             </div>
         </div>
         </div>
