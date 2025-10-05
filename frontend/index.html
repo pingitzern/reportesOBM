@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 </head>
 <body class="bg-gray-100">
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+    <div id="main-view" class="container mx-auto p-4 md:p-8 max-w-7xl">
         <header class="relative flex flex-wrap items-center justify-between gap-4 mb-8 no-print">
             <div class="order-1 flex-shrink-0">
                 <img src="/OHM-agua.png" alt="Logo OHM Agua" class="h-14 w-auto md:h-16">
@@ -57,8 +57,9 @@
             <button class="tab-button" id="tab-dashboard-btn">Dashboard</button>
         </div>
 
+        <div class="space-y-8" id="main-content">
         <!-- Pestaña: Nuevo Mantenimiento -->
-        <div id="tab-nuevo" class="tab-content">
+        <section id="tab-nuevo" class="tab-content">
             <form id="maintenance-form">
                 <!-- Sección A: Datos del Servicio y del Equipo -->
 
@@ -342,10 +343,10 @@
                     <button type="button" id="generar-remito-btn" class="action-button print-btn" disabled>Generar Remito</button>
                 </div>
             </form>
-        </div>
+        </section><!-- /tab-nuevo -->
 
         <!-- Pestaña: Buscar/Editar -->
-        <div id="tab-buscar" class="tab-content hidden">
+        <section id="tab-buscar" class="tab-content hidden">
             <div class="form-section">
                 <h2>Buscar Mantenimientos</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -405,10 +406,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Pestaña: Dashboard -->
-        <div id="tab-dashboard" class="tab-content hidden">
+        <section id="tab-dashboard" class="tab-content hidden">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div class="dashboard-card">
                     <h3 class="text-lg font-semibold mb-2">Total Mantenimientos</h3>
@@ -457,9 +458,9 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="remito-view" class="hidden">
+        <section id="remito-view" class="tab-content hidden">
             <div class="max-w-5xl mx-auto">
                 <div class="bg-white shadow-lg rounded-3xl p-8 mb-8 border border-gray-200">
                     <h2 class="text-2xl font-bold text-gray-800">Generación de Remito</h2>
@@ -570,7 +571,7 @@
                     </div>
                 </form>
             </div>
-        </div>
+        </section>
         </div>
     </div>
 
