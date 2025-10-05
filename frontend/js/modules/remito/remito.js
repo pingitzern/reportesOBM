@@ -1,391 +1,270 @@
-import { COMPONENT_STAGES } from '../mantenimiento/templates.js';
-
 function getElement(id) {
-    return document.getElementById(id);
+    return typeof document !== 'undefined' ? document.getElementById(id) : null;
 }
 
-function getSelectedOptionText(selectElement) {
-    if (!selectElement || !selectElement.selectedOptions?.length) {
+function getSelectedOptionText(selectId) {
+    const select = getElement(selectId);
+    if (!(select instanceof HTMLSelectElement)) {
         return '';
     }
 
-    return textUtils.normalize(selectElement.selectedOptions[0].textContent);
+    const option = select.selectedOptions?.[0];
+    return option ? option.textContent.trim() : '';
 }
 
-function getRadioValue(name) {
-    if (!name) {
+function getInputValue(id) {
+    const element = getElement(id);
+    if (!(element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)) {
         return '';
     }
-
-    const checked = document.querySelector(`input[type="radio"][name="${name}"]:checked`);
-    return checked ? textUtils.normalize(checked.value) : '';
+    return element.value.trim();
 }
 
-function collectComponentData() {
-    if (!Array.isArray(COMPONENT_STAGES)) {
-        return [];
-    }
-
-    return COMPONENT_STAGES.map(stage => {
-        const detailsInput = getElement(`${stage.id}_detalles`);
-        const detalles = detailsInput ? textUtils.normalize(detailsInput.value) : '';
-        const accion = getRadioValue(`${stage.id}_accion`);
-
-        return {
-            id: stage.id,
-            title: stage.title,
-            detalles,
-            accion,
-            cantidad: detailsInput?.dataset?.cantidad || '',
-        };
-    });
-}
-
-function getInputValueById(elementId) {
-    if (!elementId) {
-        return '';
-    }
-
-    const element = getElement(elementId);
-    if (!element || !('value' in element)) {
-        return '';
-    }
-
-    return textUtils.normalize(element.value);
-}
-
-const textUtils = {
-    normalize(value, { fallback = '' } = {}) {
-        if (value === null || value === undefined) {
-            return fallback;
-        }
-
-        const text = String(value).trim();
-        return text || fallback;
-    },
-
-    formatDateFromISO(isoDate) {
-        if (!isoDate || typeof isoDate !== 'string') {
-            return '';
-        }
-
-        const [datePart] = isoDate.split('T');
-        const [yearStr, monthStr, dayStr] = (datePart || isoDate).split('-');
-
-        const year = Number(yearStr);
-        const month = Number(monthStr);
-        const day = Number(dayStr);
-
-        if ([year, month, day].some(Number.isNaN)) {
-            return '';
-        }
-
-        const date = new Date(year, month - 1, day);
-        if (Number.isNaN(date.getTime())) {
-            return '';
-        }
-
-        return date.toLocaleDateString('es-AR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-        });
-    },
-};
-
-function formatReportDate(reportData) {
-    if (!reportData || typeof reportData !== 'object') {
-        return '';
-    }
-
-    const displayDate = textUtils.normalize(reportData.fecha_display);
-    return displayDate || textUtils.formatDateFromISO(reportData.fecha);
-}
-
-function createReportSnapshot(datos = {}) {
-    const clienteSelect = getElement('cliente');
-    const fechaDisplayInput = getElement('fecha_display');
-
-    let serializedData = {};
-    try {
-        serializedData = JSON.parse(JSON.stringify(datos || {}));
-    } catch (error) {
-        serializedData = { ...(datos || {}) };
-    }
-
-    const snapshot = {
-        ...serializedData,
-        cliente_nombre: getSelectedOptionText(clienteSelect),
-        fecha_display: fechaDisplayInput ? textUtils.normalize(fechaDisplayInput.value) : '',
-        componentes: collectComponentData(),
-    };
-
-    if (!snapshot.cliente_nombre) {
-        snapshot.cliente_nombre = textUtils.normalize(snapshot.cliente);
-    }
-
-    const snapshotFallbackMap = {
-        direccion: 'direccion',
-        cliente_telefono: 'cliente_telefono',
-        cliente_email: 'cliente_email',
-        cliente_cuit: 'cliente_cuit',
-    };
-
-    Object.entries(snapshotFallbackMap).forEach(([fieldName, elementId]) => {
-        if (!textUtils.normalize(snapshot[fieldName])) {
-            const fieldValue = getInputValueById(elementId);
-            if (fieldValue) {
-                snapshot[fieldName] = fieldValue;
-            }
-        }
-    });
-
-    return snapshot;
-}
-
-function resolveRemitoNumberFromData(data = {}) {
+function cloneReportData(data) {
     if (!data || typeof data !== 'object') {
-        return '';
+        return {};
     }
 
-    const candidates = [
-        data.numero_remito,
-        data.remito_numero,
-        data.numeroRemito,
-        data.remitoNumero,
-        data.numero_remito_generado,
-        data.numero_reporte,
-    ];
-
-    for (const candidate of candidates) {
-        const normalized = textUtils.normalize(candidate);
-        if (normalized) {
-            return normalized;
-        }
+    try {
+        return JSON.parse(JSON.stringify(data));
+    } catch (error) {
+        return { ...data };
     }
-
-    return '';
 }
 
-function resolveReportField(reportData, candidateKeys = []) {
-    if (!reportData || typeof reportData !== 'object') {
+function normalizeString(value) {
+    if (value === null || value === undefined) {
         return '';
     }
 
-    const keys = Array.isArray(candidateKeys) ? candidateKeys : [candidateKeys];
-    for (const key of keys) {
-        const value = textUtils.normalize(reportData[key]);
+    const text = String(value).trim();
+    return text;
+}
+
+function formatDateValue(rawDate) {
+    const value = normalizeString(rawDate);
+    if (!value) {
+        return '';
+    }
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+        return value;
+    }
+
+    const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+        const [, year, month, day] = isoMatch;
+        return `${day}/${month}/${year}`;
+    }
+
+    const timestamp = Date.parse(value);
+    if (!Number.isNaN(timestamp)) {
+        const date = new Date(timestamp);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = String(date.getFullYear());
+        return `${day}/${month}/${year}`;
+    }
+
+    return value;
+}
+
+function resolveReportValue(report, keys, fallback = '') {
+    if (!report || typeof report !== 'object') {
+        return fallback;
+    }
+
+    const candidates = Array.isArray(keys) ? keys : [keys];
+    for (const key of candidates) {
+        const value = normalizeString(report[key]);
         if (value) {
             return value;
         }
     }
 
-    return '';
+    return fallback;
 }
 
-function fillTextContent(elementId, value, { fallback = '---' } = {}) {
-    const element = getElement(elementId);
-    if (!element) {
+function setReadonlyInputValue(id, value) {
+    const element = getElement(id);
+    if (!(element instanceof HTMLInputElement)) {
         return;
     }
 
-    const resolved = textUtils.normalize(value, { fallback });
-    element.textContent = resolved;
+    element.value = normalizeString(value);
+    element.readOnly = true;
+    element.setAttribute('readonly', 'readonly');
 }
 
-function renderRemitoRepuestos(componentes = []) {
-    const tableBody = getElement('remito-repuestos');
-    if (!tableBody) {
+function clearReadonlyInputs(ids = []) {
+    ids.forEach(id => {
+        const element = getElement(id);
+        if (element instanceof HTMLInputElement) {
+            element.value = '';
+            element.readOnly = true;
+            element.setAttribute('readonly', 'readonly');
+        }
+    });
+}
+
+function renderRepuestosList(repuestos = []) {
+    const tbody = getElement('remito-repuestos-body');
+    if (!(tbody instanceof HTMLElement)) {
         return;
     }
 
-    tableBody.innerHTML = '';
+    tbody.innerHTML = '';
 
-    const changedComponents = componentes.filter(componento => textUtils.normalize(componento.accion) === 'Cambiado');
-
-    if (!changedComponents.length) {
+    if (!Array.isArray(repuestos) || repuestos.length === 0) {
         const emptyRow = document.createElement('tr');
-        const emptyCell = document.createElement('td');
-        emptyCell.colSpan = 3;
-        emptyCell.className = 'px-4 py-3 text-sm text-gray-500 text-center';
-        emptyCell.textContent = 'No se registraron repuestos cambiados en este servicio.';
-        emptyRow.appendChild(emptyCell);
-        tableBody.appendChild(emptyRow);
+        const cell = document.createElement('td');
+        cell.colSpan = 3;
+        cell.className = 'px-4 py-3 text-sm text-gray-500 text-center';
+        cell.textContent = 'Sin repuestos registrados.';
+        emptyRow.appendChild(cell);
+        tbody.appendChild(emptyRow);
         return;
     }
 
-    changedComponents.forEach(componento => {
+    repuestos.forEach(item => {
         const row = document.createElement('tr');
         row.className = 'hover:bg-gray-50';
 
         const codigoCell = document.createElement('td');
         codigoCell.className = 'px-4 py-2 text-sm text-gray-700';
-        codigoCell.textContent = textUtils.normalize(componento.id);
+        codigoCell.textContent = normalizeString(item.codigo || item.id || '');
 
         const descripcionCell = document.createElement('td');
         descripcionCell.className = 'px-4 py-2 text-sm text-gray-700';
-        const descripcionPartes = [
-            textUtils.normalize(componento.title),
-            textUtils.normalize(componento.detalles),
-        ];
-        descripcionCell.textContent = descripcionPartes.filter(Boolean).join(' - ') || 'Repuesto sin descripción';
+        const descripcion = [item.descripcion, item.detalle, item.detalles, item.title]
+            .map(normalizeString)
+            .filter(Boolean)
+            .join(' - ');
+        descripcionCell.textContent = descripcion || 'Repuesto sin descripción';
 
         const cantidadCell = document.createElement('td');
         cantidadCell.className = 'px-4 py-2 text-sm text-right text-gray-700';
-        const cantidad = Number(componento.cantidad);
-        cantidadCell.textContent = !Number.isNaN(cantidad) && cantidad > 0 ? String(cantidad) : '1';
+        const cantidad = Number(item.cantidad);
+        cantidadCell.textContent = Number.isFinite(cantidad) && cantidad > 0 ? String(cantidad) : '1';
 
         row.append(codigoCell, descripcionCell, cantidadCell);
-        tableBody.appendChild(row);
+        tbody.appendChild(row);
     });
 }
 
-function renderRemitoView(reportData) {
-    if (!reportData || typeof reportData !== 'object') {
+function createReportSnapshot(rawData) {
+    const snapshot = cloneReportData(rawData);
+
+    if (!snapshot.clienteNombre) {
+        snapshot.clienteNombre = getSelectedOptionText('cliente') || snapshot.cliente || snapshot.cliente_nombre;
+    }
+
+    snapshot.direccion = snapshot.direccion || getInputValue('direccion');
+    snapshot.cliente_telefono = snapshot.cliente_telefono || getInputValue('cliente_telefono');
+    snapshot.cliente_email = snapshot.cliente_email || getInputValue('cliente_email');
+    snapshot.cliente_cuit = snapshot.cliente_cuit || getInputValue('cliente_cuit');
+    snapshot.fecha_display = snapshot.fecha_display || getInputValue('fecha_display');
+
+    return snapshot;
+}
+
+function populateRemitoForm(report) {
+    if (!report || typeof report !== 'object') {
         return;
     }
 
-    const numeroRemito = resolveRemitoNumberFromData(reportData);
-    fillTextContent('remito-numero', numeroRemito);
-    fillTextContent('remito-fecha', formatReportDate(reportData), { fallback: '--/--/----' });
-    fillTextContent('remito-cliente', resolveReportField(reportData, [
-        'cliente_nombre',
-        'cliente',
-        'razon_social',
-        'razonSocial',
-        'clienteNombre',
-    ]));
-    fillTextContent('remito-cliente-direccion', resolveReportField(reportData, [
-        'direccion',
-        'cliente_direccion',
-        'domicilio',
-        'clienteDireccion',
-    ]));
-    fillTextContent('remito-cliente-telefono', resolveReportField(reportData, [
-        'cliente_telefono',
-        'telefono',
-        'telefono_cliente',
-        'clienteTelefono',
-    ]));
-    fillTextContent('remito-cliente-email', resolveReportField(reportData, [
-        'cliente_email',
-        'email',
-        'clienteEmail',
-    ]));
-    fillTextContent('remito-cliente-cuit', resolveReportField(reportData, [
-        'cliente_cuit',
-        'cuit',
-        'clienteCuit',
-    ]));
+    const numeroRemito = resolveReportValue(report, ['NumeroRemito', 'numero_remito', 'remitoNumero', 'numero_reporte']);
+    const fechaRemito = formatDateValue(resolveReportValue(report, ['fecha_display', 'fecha']));
 
-    const equipoValue = textUtils.normalize(reportData.equipo || reportData.modelo || reportData.id_interna);
-    fillTextContent('remito-equipo', equipoValue);
-    fillTextContent('remito-equipo-modelo', resolveReportField(reportData, [
-        'modelo',
-        'equipo_modelo',
-        'modelo_equipo',
-    ]));
-    fillTextContent('remito-equipo-serie', resolveReportField(reportData, [
-        'n_serie',
-        'numero_serie',
-        'serie',
-    ]));
-    fillTextContent('remito-equipo-interno', resolveReportField(reportData, [
-        'id_interna',
-        'activo',
-        'codigo_interno',
-    ]));
-    fillTextContent('remito-equipo-ubicacion', resolveReportField(reportData, [
-        'ubicacion',
-        'direccion',
-        'cliente_direccion',
-    ]));
-    fillTextContent('remito-equipo-tecnico', resolveReportField(reportData, [
-        'tecnico',
-        'tecnico_asignado',
-        'tecnicoAsignado',
-    ]));
+    setReadonlyInputValue('remito-numero', numeroRemito);
+    setReadonlyInputValue('remito-fecha', fechaRemito);
+    setReadonlyInputValue('remito-cliente-nombre', resolveReportValue(report, ['clienteNombre', 'cliente_nombre', 'cliente']));
+    setReadonlyInputValue('remito-cliente-direccion', resolveReportValue(report, ['direccion', 'cliente_direccion', 'ubicacion']));
+    setReadonlyInputValue('remito-cliente-telefono', resolveReportValue(report, ['cliente_telefono', 'telefono_cliente', 'telefono']));
+    setReadonlyInputValue('remito-cliente-email', resolveReportValue(report, ['cliente_email', 'email']));
+    setReadonlyInputValue('remito-cliente-cuit', resolveReportValue(report, ['cliente_cuit', 'cuit']));
+
+    const descripcionEquipo = resolveReportValue(report, ['equipo', 'modelo', 'descripcion_equipo']);
+    setReadonlyInputValue('remito-equipo-descripcion', descripcionEquipo);
+    setReadonlyInputValue('remito-equipo-modelo', resolveReportValue(report, ['modelo', 'modelo_equipo']));
+    setReadonlyInputValue('remito-equipo-serie', resolveReportValue(report, ['n_serie', 'numero_serie']));
+    setReadonlyInputValue('remito-equipo-interno', resolveReportValue(report, ['id_interna', 'codigo_interno']));
+    setReadonlyInputValue('remito-equipo-ubicacion', resolveReportValue(report, ['ubicacion', 'direccion', 'cliente_direccion']));
+    setReadonlyInputValue('remito-equipo-tecnico', resolveReportValue(report, ['tecnico', 'tecnico_asignado']));
 
     const observaciones = getElement('remito-observaciones');
-    if (observaciones) {
-        observaciones.value = textUtils.normalize(reportData.observaciones || reportData.resumen);
-        observaciones.readOnly = false;
+    if (observaciones instanceof HTMLTextAreaElement) {
+        const texto = normalizeString(report.observaciones || report.resumen || '');
+        observaciones.value = texto;
         observaciones.removeAttribute('readonly');
-        observaciones.disabled = false;
     }
 
-    renderRemitoRepuestos(Array.isArray(reportData.componentes) ? reportData.componentes : []);
+    const repuestos = Array.isArray(report.repuestos)
+        ? report.repuestos
+        : Array.isArray(report.componentes)
+            ? report.componentes.filter(item => normalizeString(item.accion) === 'Cambiado' || normalizeString(item.cantidad))
+            : [];
+
+    renderRepuestosList(repuestos);
 }
 
-function setGenerarRemitoButtonEnabled(enabled) {
-    const generarRemitoBtn = getElement('generarRemitoButton');
-    if (!generarRemitoBtn) {
-        return;
-    }
-
-    if (enabled) {
-        generarRemitoBtn.disabled = false;
-        generarRemitoBtn.removeAttribute('disabled');
-        return;
-    }
-
-    generarRemitoBtn.disabled = true;
-    if (!generarRemitoBtn.hasAttribute('disabled')) {
-        generarRemitoBtn.setAttribute('disabled', 'disabled');
+function disableButton(buttonId) {
+    const button = getElement(buttonId);
+    if (button instanceof HTMLButtonElement) {
+        button.disabled = true;
+        button.setAttribute('disabled', 'disabled');
     }
 }
 
-function extractRemitoNumberFromResponse(data) {
-    if (!data) {
-        return '';
+function enableButton(buttonId) {
+    const button = getElement(buttonId);
+    if (button instanceof HTMLButtonElement) {
+        button.disabled = false;
+        button.removeAttribute('disabled');
     }
-
-    if (typeof data === 'string') {
-        return textUtils.normalize(data);
-    }
-
-    if (typeof data !== 'object') {
-        return '';
-    }
-
-    const directNumber = resolveRemitoNumberFromData(data);
-    if (directNumber) {
-        return directNumber;
-    }
-
-    if (typeof data.remito === 'string') {
-        return textUtils.normalize(data.remito);
-    }
-
-    if (data.remito && typeof data.remito === 'object') {
-        return resolveRemitoNumberFromData(data.remito);
-    }
-
-    return '';
 }
 
-export function createRemitoModule({ crearRemito, showView }) {
+export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
     let lastSavedReport = null;
     let eventsInitialized = false;
 
     function ensureReportAvailable() {
         if (!lastSavedReport) {
-            setGenerarRemitoButtonEnabled(false);
-            alert('Primero debes guardar un mantenimiento para generar el remito.');
+            disableButton('generar-remito-btn');
+            window.alert?.('Primero debés guardar el mantenimiento para generar el remito.');
             return false;
         }
-
         return true;
     }
 
-    function handleMaintenanceSaved(datos) {
-        lastSavedReport = createReportSnapshot(datos);
-        setGenerarRemitoButtonEnabled(true);
+    function handleMaintenanceSaved(reportData) {
+        lastSavedReport = createReportSnapshot(reportData);
+        enableButton('generar-remito-btn');
     }
 
     function reset() {
         lastSavedReport = null;
-        setGenerarRemitoButtonEnabled(false);
+        disableButton('generar-remito-btn');
+        clearReadonlyInputs([
+            'remito-numero',
+            'remito-fecha',
+            'remito-cliente-nombre',
+            'remito-cliente-direccion',
+            'remito-cliente-telefono',
+            'remito-cliente-email',
+            'remito-cliente-cuit',
+            'remito-equipo-descripcion',
+            'remito-equipo-modelo',
+            'remito-equipo-serie',
+            'remito-equipo-interno',
+            'remito-equipo-ubicacion',
+            'remito-equipo-tecnico',
+        ]);
+        renderRepuestosList([]);
+        const observaciones = getElement('remito-observaciones');
+        if (observaciones instanceof HTMLTextAreaElement) {
+            observaciones.value = '';
+        }
     }
 
     function handleGenerarRemitoClick() {
@@ -393,50 +272,87 @@ export function createRemitoModule({ crearRemito, showView }) {
             return false;
         }
 
-        renderRemitoView(lastSavedReport);
-        showView('remito-servicio');
+        populateRemitoForm(lastSavedReport);
+        if (typeof showView === 'function') {
+            showView('remito-view');
+        }
         return true;
     }
 
     async function handleFinalizarRemitoClick() {
         if (!lastSavedReport) {
-            alert('No hay datos disponibles para generar el remito. Guarda un mantenimiento primero.');
+            window.alert?.('No hay datos disponibles para generar el remito. Guardá el mantenimiento primero.');
             return;
         }
 
-        const finalizarBtn = getElement('finalizarRemitoButton');
-        const observacionesInput = getElement('remito-observaciones');
-        const observaciones = observacionesInput ? observacionesInput.value : '';
+        const observacionesElement = getElement('remito-observaciones');
+        const observaciones = observacionesElement instanceof HTMLTextAreaElement ? observacionesElement.value.trim() : '';
 
+        const finalizarBtn = getElement('finalizar-remito-btn');
         let originalText = '';
-        if (finalizarBtn) {
+        if (finalizarBtn instanceof HTMLButtonElement) {
             originalText = finalizarBtn.textContent || '';
             finalizarBtn.textContent = 'Generando remito...';
             finalizarBtn.disabled = true;
         }
 
         try {
-            const responseData = await crearRemito({
-                reporte: lastSavedReport,
-                observaciones,
-            });
-
-            lastSavedReport.observaciones = observaciones;
-
-            const remitoNumber = extractRemitoNumberFromResponse(responseData);
-            if (remitoNumber) {
-                lastSavedReport.numero_remito = remitoNumber;
-                fillTextContent('remito-numero', remitoNumber);
+            if (!apiUrl) {
+                throw new Error('La URL del servicio no está configurada.');
             }
 
-            alert('✅ Remito generado correctamente.');
+            const token = typeof getToken === 'function' ? normalizeString(getToken()) : '';
+            if (!token) {
+                throw new Error('No hay una sesión activa. Ingresá nuevamente.');
+            }
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain; charset=utf-8',
+                },
+                body: JSON.stringify({
+                    action: 'crear_remito',
+                    token,
+                    reporteData: lastSavedReport,
+                    observaciones,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            let payload;
+            try {
+                payload = await response.json();
+            } catch (error) {
+                throw new Error('No se pudo interpretar la respuesta del servidor.');
+            }
+
+            if (payload?.result !== 'success') {
+                const message = normalizeString(payload?.error || payload?.message) || 'No fue posible generar el remito.';
+                throw new Error(message);
+            }
+
+            const numeroRemito = normalizeString(payload?.data?.NumeroRemito);
+            if (numeroRemito) {
+                lastSavedReport.NumeroRemito = numeroRemito;
+                setReadonlyInputValue('remito-numero', numeroRemito);
+            }
+
+            if (observaciones) {
+                lastSavedReport.observaciones = observaciones;
+            }
+
+            window.alert?.('✅ Remito generado correctamente.');
         } catch (error) {
-            console.error('Error al generar remito:', error);
-            const message = error?.message || 'Error desconocido al generar el remito.';
-            alert(`❌ Error al generar el remito: ${message}`);
+            console.error('Error al generar el remito:', error);
+            const message = error instanceof Error ? error.message : 'Error desconocido al generar el remito.';
+            window.alert?.(`❌ ${message}`);
         } finally {
-            if (finalizarBtn) {
-                finalizarBtn.textContent = originalText || 'Finalizar y Generar Remito';
+            if (finalizarBtn instanceof HTMLButtonElement) {
+                finalizarBtn.textContent = originalText || 'Finalizar y Guardar Remito';
                 finalizarBtn.disabled = false;
             }
         }
@@ -447,21 +363,21 @@ export function createRemitoModule({ crearRemito, showView }) {
             return;
         }
 
-        setGenerarRemitoButtonEnabled(Boolean(lastSavedReport));
+        disableButton('generar-remito-btn');
 
-        const generarRemitoBtn = getElement('generarRemitoButton');
-        if (generarRemitoBtn) {
-            generarRemitoBtn.addEventListener('click', event => {
+        const generarBtn = getElement('generar-remito-btn');
+        if (generarBtn instanceof HTMLButtonElement) {
+            generarBtn.addEventListener('click', event => {
                 event.preventDefault();
                 handleGenerarRemitoClick();
             });
         }
 
-        const finalizarRemitoBtn = getElement('finalizarRemitoButton');
-        if (finalizarRemitoBtn) {
-            finalizarRemitoBtn.addEventListener('click', event => {
+        const finalizarBtn = getElement('finalizar-remito-btn');
+        if (finalizarBtn instanceof HTMLButtonElement) {
+            finalizarBtn.addEventListener('click', event => {
                 event.preventDefault();
-                handleFinalizarRemitoClick();
+                void handleFinalizarRemitoClick();
             });
         }
 
@@ -469,7 +385,7 @@ export function createRemitoModule({ crearRemito, showView }) {
     }
 
     function setLastSavedReportForTests(data) {
-        lastSavedReport = data || null;
+        lastSavedReport = data ? cloneReportData(data) : null;
     }
 
     function getLastSavedReportForTests() {
@@ -486,4 +402,3 @@ export function createRemitoModule({ crearRemito, showView }) {
         getLastSavedReportForTests,
     };
 }
-

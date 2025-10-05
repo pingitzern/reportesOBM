@@ -7,17 +7,18 @@ import {
     eliminarMantenimiento,
     obtenerDashboard,
     obtenerClientes,
-    crearRemito,
 } from './api.js';
-import { initializeAuth } from './modules/login/auth.js';
+import { API_URL } from './config.js';
+import { initializeAuth, getCurrentToken } from './modules/login/auth.js';
 import { createDashboardModule } from './modules/dashboard/dashboard.js';
 import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js';
 import { createSearchModule } from './modules/busqueda/busqueda.js';
 import { createRemitoModule } from './modules/remito/remito.js';
 
 const remitoModule = createRemitoModule({
-    crearRemito,
     showView,
+    apiUrl: API_URL,
+    getToken: getCurrentToken,
 });
 
 const maintenanceModule = createMaintenanceModule(
