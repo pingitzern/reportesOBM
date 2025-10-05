@@ -7,11 +7,22 @@ const _json = (payload) =>
 const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
 const CLIENTES_SHEET_NAME_PROPERTY = 'CLIENTES_SHEET_NAME';
+const REMITOS_SHEET_ID_PROPERTY = 'REMITOS_SHEET_ID';
+const REMITOS_SHEET_NAME_PROPERTY = 'REMITOS_SHEET_NAME';
+const REMITOS_SPREADSHEET_NAME_PROPERTY = 'REMITOS_SPREADSHEET_NAME';
+
+const SCRIPT_TIMEZONE = Session.getScriptTimeZone ? Session.getScriptTimeZone() : 'GMT';
 
 const DEFAULT_CONFIGURATION = Object.freeze({
   SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
   SHEET_NAME: 'Hoja 1',
   CLIENTES_SHEET_NAME: 'clientes'
+});
+
+const DEFAULT_REMITOS_CONFIGURATION = Object.freeze({
+  SHEET_ID: '',
+  SHEET_NAME: 'remitos',
+  SPREADSHEET_NAME: 'BaseDatosMantenimientosRO'
 });
 
 const DEFAULT_AUTHORIZED_USERS = Object.freeze([
@@ -22,7 +33,10 @@ const DEFAULT_PROPERTY_VALUES = Object.freeze({
   SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
   SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
   [CLIENTES_SHEET_NAME_PROPERTY]: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME,
-  [AUTHORIZED_USERS_PROPERTY]: JSON.stringify(DEFAULT_AUTHORIZED_USERS)
+  [AUTHORIZED_USERS_PROPERTY]: JSON.stringify(DEFAULT_AUTHORIZED_USERS),
+  [REMITOS_SHEET_ID_PROPERTY]: DEFAULT_REMITOS_CONFIGURATION.SHEET_ID,
+  [REMITOS_SHEET_NAME_PROPERTY]: DEFAULT_REMITOS_CONFIGURATION.SHEET_NAME,
+  [REMITOS_SPREADSHEET_NAME_PROPERTY]: DEFAULT_REMITOS_CONFIGURATION.SPREADSHEET_NAME
 });
 
 function getPropertyOrDefault(propertyName, fallback) {
@@ -54,8 +68,43 @@ const CLIENTES_SHEET_NAME = getPropertyOrDefault(
   CLIENTES_SHEET_NAME_PROPERTY,
   DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME
 );
+const REMITOS_SHEET_ID = getPropertyOrDefault(REMITOS_SHEET_ID_PROPERTY, DEFAULT_REMITOS_CONFIGURATION.SHEET_ID);
+const REMITOS_SHEET_NAME = getPropertyOrDefault(
+  REMITOS_SHEET_NAME_PROPERTY,
+  DEFAULT_REMITOS_CONFIGURATION.SHEET_NAME
+);
+const REMITOS_SPREADSHEET_NAME = getPropertyOrDefault(
+  REMITOS_SPREADSHEET_NAME_PROPERTY,
+  DEFAULT_REMITOS_CONFIGURATION.SPREADSHEET_NAME
+);
 
 const CLIENTES_HEADERS = Object.freeze(['Nombre', 'Direccion', 'Telefono', 'Mail', 'CUIT']);
+const REMITOS_HEADERS = Object.freeze([
+  'Timestamp',
+  'NumeroRemito',
+  'NumeroReporte',
+  'ReporteID',
+  'FechaRemito',
+  'FechaRemitoISO',
+  'FechaServicio',
+  'FechaServicioISO',
+  'Cliente',
+  'Direccion',
+  'Telefono',
+  'Email',
+  'CUIT',
+  'EquipoDescripcion',
+  'EquipoModelo',
+  'EquipoSerie',
+  'EquipoInterno',
+  'EquipoUbicacion',
+  'Tecnico',
+  'Observaciones',
+  'Repuestos',
+  'RepuestosJSON',
+  'ReporteJSON',
+  'GeneradoPor'
+]);
 
 const CAMPOS_ACTUALIZABLES = [
   'Cliente', 'Fecha_Servicio', 'Direccion', 'Tecnico_Asignado', 'Modelo_Equipo',
@@ -181,6 +230,57 @@ const SheetRepository = {
       sheet,
       data: sheet.getDataRange().getValues()
     };
+  }
+};
+
+const RemitosRepository = {
+  getSpreadsheet() {
+    if (REMITOS_SHEET_ID) {
+      return SpreadsheetApp.openById(REMITOS_SHEET_ID);
+    }
+
+    if (!REMITOS_SPREADSHEET_NAME) {
+      throw new Error('Configura la propiedad REMITOS_SPREADSHEET_NAME con la planilla que almacena los remitos.');
+    }
+
+    const files = DriveApp.getFilesByName(REMITOS_SPREADSHEET_NAME);
+    if (!files.hasNext()) {
+      throw new Error(`No se encontró la hoja de cálculo ${REMITOS_SPREADSHEET_NAME} para registrar los remitos.`);
+    }
+
+    const file = files.next();
+    return SpreadsheetApp.openById(file.getId());
+  },
+
+  getSheet() {
+    const spreadsheet = this.getSpreadsheet();
+    const sheetName = REMITOS_SHEET_NAME || DEFAULT_REMITOS_CONFIGURATION.SHEET_NAME;
+    let sheet = spreadsheet.getSheetByName(sheetName);
+
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet(sheetName);
+    }
+
+    this.ensureHeaders(sheet);
+    return sheet;
+  },
+
+  ensureHeaders(sheet) {
+    const headerLength = REMITOS_HEADERS.length;
+    if (sheet.getLastRow() === 0) {
+      sheet.getRange(1, 1, 1, headerLength).setValues([REMITOS_HEADERS]);
+      return;
+    }
+
+    const headerRange = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), headerLength));
+    const headerValues = headerRange.getValues()[0].map((value) => normalizeTextValue(value));
+
+    for (let i = 0; i < headerLength; i += 1) {
+      if (headerValues[i] !== REMITOS_HEADERS[i]) {
+        sheet.getRange(1, 1, 1, headerLength).setValues([REMITOS_HEADERS]);
+        break;
+      }
+    }
   }
 };
 
@@ -402,6 +502,75 @@ function normalizeDateToISO(value) {
   return Utilities.formatDate(dateObject, Session.getScriptTimeZone(), 'yyyy-MM-dd');
 }
 
+function normalizeTextValue(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : '';
+  }
+
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, SCRIPT_TIMEZONE, 'yyyy-MM-dd');
+  }
+
+  return String(value).trim();
+}
+
+function pickFirstValue(source, keys, fallback = '') {
+  if (!source || typeof source !== 'object') {
+    return fallback;
+  }
+
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    if (!Object.prototype.hasOwnProperty.call(source, key)) {
+      continue;
+    }
+
+    const value = normalizeTextValue(source[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
+function formatIsoDateForDisplay(isoString) {
+  const iso = normalizeDateToISO(isoString);
+  if (!iso) {
+    return '';
+  }
+
+  const date = new Date(`${iso}T00:00:00`);
+  if (isNaN(date.getTime())) {
+    return iso;
+  }
+
+  return Utilities.formatDate(date, SCRIPT_TIMEZONE, 'dd/MM/yyyy');
+}
+
+function parseRemitoNumericSuffix(value) {
+  const text = normalizeTextValue(value);
+  if (!text) {
+    return NaN;
+  }
+
+  const match = text.match(/(\d+)\s*$/);
+  if (!match) {
+    return NaN;
+  }
+
+  const parsed = parseInt(match[1], 10);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
 const MantenimientoService = {
   guardar(data, usuario) {
     const sheet = SheetRepository.getSheet();
@@ -599,6 +768,211 @@ const MantenimientoService = {
   }
 };
 
+const RemitosService = {
+  extractRepuestos(report) {
+    if (!report || typeof report !== 'object') {
+      return [];
+    }
+
+    if (Array.isArray(report.repuestos)) {
+      return report.repuestos;
+    }
+
+    if (!Array.isArray(report.componentes)) {
+      return [];
+    }
+
+    return report.componentes.filter((item) => {
+      if (!item || typeof item !== 'object') {
+        return false;
+      }
+
+      const accion = normalizeTextValue(item.accion || item.estado || item.action).toLowerCase();
+      if (accion.includes('cambi') || accion.includes('instal')) {
+        return true;
+      }
+
+      const cantidadNumero = Number(item.cantidad);
+      if (Number.isFinite(cantidadNumero) && cantidadNumero > 0) {
+        return true;
+      }
+
+      const cantidadTexto = normalizeTextValue(item.cantidad);
+      return Boolean(cantidadTexto);
+    });
+  },
+
+  formatRepuestoItem(item) {
+    if (!item || typeof item !== 'object') {
+      return '';
+    }
+
+    const codigo = pickFirstValue(item, ['codigo', 'Codigo', 'id', 'ID', 'codigo_interno', 'codigoRepuesto']);
+    const descripcion = pickFirstValue(item, ['descripcion', 'Descripcion', 'detalle', 'detalles', 'title', 'nombre', 'descripcion_repuesto']);
+    const cantidadBruta = pickFirstValue(item, ['cantidad', 'Cantidad', 'qty', 'CantidadUtilizada']);
+
+    let cantidad = '';
+    if (cantidadBruta) {
+      let fuenteCantidad = cantidadBruta;
+      if (typeof fuenteCantidad === 'string') {
+        fuenteCantidad = fuenteCantidad.replace(',', '.');
+      }
+
+      const numero = Number(fuenteCantidad);
+      if (Number.isFinite(numero) && numero > 0) {
+        cantidad = String(numero);
+      } else {
+        cantidad = cantidadBruta;
+      }
+    }
+
+    const partes = [];
+    if (codigo) {
+      partes.push(codigo);
+    }
+    if (descripcion) {
+      partes.push(descripcion);
+    }
+
+    let texto = partes.join(' - ');
+    if (cantidad) {
+      texto = texto ? `${texto} x${cantidad}` : `x${cantidad}`;
+    }
+
+    return texto.trim();
+  },
+
+  resolveNumeroRemito(sheet, report) {
+    const existente = pickFirstValue(report, ['NumeroRemito', 'numero_remito', 'remitoNumero']);
+    if (existente) {
+      return existente;
+    }
+
+    const totalColumnas = Math.max(sheet.getLastColumn(), REMITOS_HEADERS.length, 1);
+    const headers = sheet.getRange(1, 1, 1, totalColumnas).getValues()[0];
+    const indice = headers.indexOf('NumeroRemito');
+
+    let siguiente = 1;
+    if (indice !== -1) {
+      const totalFilas = sheet.getLastRow();
+      if (totalFilas > 1) {
+        const valores = sheet.getRange(2, indice + 1, totalFilas - 1, 1).getValues();
+        for (let i = 0; i < valores.length; i += 1) {
+          const numero = parseRemitoNumericSuffix(valores[i][0]);
+          if (Number.isFinite(numero) && numero >= siguiente) {
+            siguiente = numero + 1;
+          }
+        }
+      }
+    }
+
+    return `REM-${String(siguiente).padStart(4, '0')}`;
+  },
+
+  buildRemitoRecord(report, observaciones, numeroRemito, usuario) {
+    const ahora = new Date();
+    let fechaRemitoCruda = ahora;
+    if (report && typeof report === 'object') {
+      const candidata = report.fecha_display || report.fecha || report.Fecha_Servicio;
+      if (candidata) {
+        fechaRemitoCruda = candidata;
+      }
+    }
+
+    const fechaRemitoISO = normalizeDateToISO(fechaRemitoCruda) || normalizeDateToISO(ahora);
+
+    let fechaRemitoDisplay = '';
+    if (typeof fechaRemitoCruda === 'string' && fechaRemitoCruda.trim()) {
+      fechaRemitoDisplay = fechaRemitoCruda.trim();
+    } else {
+      fechaRemitoDisplay = formatIsoDateForDisplay(fechaRemitoISO) || Utilities.formatDate(ahora, SCRIPT_TIMEZONE, 'dd/MM/yyyy');
+    }
+
+    let fechaServicioCruda = undefined;
+    if (report && typeof report === 'object') {
+      fechaServicioCruda = report.Fecha_Servicio || report.fecha_servicio || report.fecha;
+    }
+    const fechaServicioISO = normalizeDateToISO(fechaServicioCruda);
+    const fechaServicioDisplay =
+      typeof fechaServicioCruda === 'string' && fechaServicioCruda.trim()
+        ? fechaServicioCruda.trim()
+        : formatIsoDateForDisplay(fechaServicioISO);
+
+    const repuestos = this.extractRepuestos(report);
+    const repuestosTexto = repuestos
+      .map((item) => this.formatRepuestoItem(item))
+      .filter(Boolean)
+      .join('\n');
+
+    let repuestosJSON = '';
+    if (repuestos.length) {
+      try {
+        repuestosJSON = JSON.stringify(repuestos);
+      } catch (error) {
+        repuestosJSON = '';
+      }
+    }
+
+    let reporteJSON = '';
+    try {
+      reporteJSON = JSON.stringify(report);
+    } catch (error) {
+      reporteJSON = '';
+    }
+
+    const observacionesLimpias = normalizeTextValue(observaciones) || pickFirstValue(report, ['observaciones', 'Resumen_Recomendaciones', 'resumen']);
+
+    return {
+      Timestamp: ahora,
+      NumeroRemito: numeroRemito,
+      NumeroReporte: pickFirstValue(report, ['NumeroReporte', 'numero_reporte', 'numeroReporte']),
+      ReporteID: pickFirstValue(report, ['ID_Unico', 'id_unico', 'id', 'Id', 'ID', 'reporteId']),
+      FechaRemito: fechaRemitoDisplay || formatIsoDateForDisplay(fechaRemitoISO),
+      FechaRemitoISO: fechaRemitoISO,
+      FechaServicio: fechaServicioDisplay,
+      FechaServicioISO: fechaServicioISO,
+      Cliente: pickFirstValue(report, ['clienteNombre', 'Cliente', 'cliente', 'cliente_nombre']),
+      Direccion: pickFirstValue(report, ['direccion', 'Direccion', 'cliente_direccion', 'ubicacion']),
+      Telefono: pickFirstValue(report, ['cliente_telefono', 'telefono_cliente', 'telefono']),
+      Email: pickFirstValue(report, ['cliente_email', 'email']),
+      CUIT: pickFirstValue(report, ['cliente_cuit', 'cuit']),
+      EquipoDescripcion: pickFirstValue(report, ['equipo', 'equipo_descripcion', 'descripcion_equipo']),
+      EquipoModelo: pickFirstValue(report, ['modelo', 'modelo_equipo', 'Modelo_Equipo']),
+      EquipoSerie: pickFirstValue(report, ['n_serie', 'numero_serie', 'Numero_Serie']),
+      EquipoInterno: pickFirstValue(report, ['id_interna', 'codigo_interno', 'ID_Interna_Activo']),
+      EquipoUbicacion: pickFirstValue(report, ['ubicacion', 'direccion', 'cliente_direccion']),
+      Tecnico: pickFirstValue(report, ['tecnico', 'tecnico_asignado', 'Tecnico_Asignado']),
+      Observaciones: observacionesLimpias,
+      Repuestos: repuestosTexto,
+      RepuestosJSON: repuestosJSON,
+      ReporteJSON: reporteJSON,
+      GeneradoPor: normalizeTextValue(usuario)
+    };
+  },
+
+  guardar(data, usuario) {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Datos inválidos para generar el remito.');
+    }
+
+    const reporteData = data.reporteData;
+    if (!reporteData || typeof reporteData !== 'object') {
+      throw new Error('No se recibió la información del mantenimiento para generar el remito.');
+    }
+
+    const sheet = RemitosRepository.getSheet();
+    const numeroRemito = this.resolveNumeroRemito(sheet, reporteData);
+    const registro = this.buildRemitoRecord(reporteData, data.observaciones, numeroRemito, usuario);
+    const fila = REMITOS_HEADERS.map((header) => (Object.prototype.hasOwnProperty.call(registro, header) ? registro[header] : ''));
+
+    sheet.appendRow(fila);
+
+    return {
+      NumeroRemito: numeroRemito
+    };
+  }
+};
+
 const DashboardService = {
   obtenerDatos() {
     const { data } = SheetRepository.getSheetData();
@@ -705,6 +1079,9 @@ function doPost(e) {
         break;
       case 'eliminar':
         result = MantenimientoService.eliminar(data);
+        break;
+      case 'crear_remito':
+        result = RemitosService.guardar(data, usuario);
         break;
       case 'dashboard':
         result = DashboardService.obtenerDatos();
