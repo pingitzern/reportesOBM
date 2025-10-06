@@ -55,10 +55,11 @@
             <button class="tab-button active" id="tab-nuevo-btn">Nuevo Mantenimiento</button>
             <button class="tab-button" id="tab-buscar-btn">Buscar/Editar</button>
             <button class="tab-button" id="tab-dashboard-btn">Dashboard</button>
+            <button class="tab-button" id="nav-remitos-btn">Remitos</button>
         </div>
 
         <!-- Pestaña: Nuevo Mantenimiento -->
-        <div id="tab-nuevo" class="tab-content">
+        <div id="tab-nuevo" class="tab-content" data-view="tab-nuevo">
             <div id="maintenance-view">
             <form id="maintenance-form">
                 <!-- Sección A: Datos del Servicio y del Equipo -->
@@ -370,7 +371,7 @@
         </div>
 
         <!-- Pestaña: Buscar/Editar -->
-        <div id="tab-buscar" class="tab-content hidden">
+        <div id="tab-buscar" class="tab-content hidden" data-view="tab-buscar">
             <div class="form-section">
                 <h2>Buscar Mantenimientos</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -433,7 +434,7 @@
         </div>
 
         <!-- Pestaña: Dashboard -->
-        <div id="tab-dashboard" class="tab-content hidden">
+        <div id="tab-dashboard" class="tab-content hidden" data-view="tab-dashboard">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div class="dashboard-card">
                     <h3 class="text-lg font-semibold mb-2">Total Mantenimientos</h3>
@@ -480,6 +481,24 @@
                             <!-- Los próximos mantenimientos se cargarán aquí -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="remitos-gestion-view" class="hidden" data-view="remitos-gestion-view">
+            <div class="form-card">
+                <div class="form-section">
+                    <h2 class="text-2xl font-bold text-gray-800">Gestión de Remitos</h2>
+                    <p class="text-gray-600 mt-2">Consulta, navega y administrá los remitos generados desde el sistema.</p>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="form-section space-y-4">
+                    <div id="remitos-listado" class="overflow-x-auto text-sm text-gray-700">
+                        <p class="text-gray-500">Seleccioná "Remitos" para cargar el listado.</p>
+                    </div>
+                    <div id="remitos-pagination" class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"></div>
                 </div>
             </div>
         </div>

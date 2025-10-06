@@ -7,11 +7,13 @@ const _json = (payload) =>
 const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
 const CLIENTES_SHEET_NAME_PROPERTY = 'CLIENTES_SHEET_NAME';
+const REMITOS_SHEET_NAME_PROPERTY = 'REMITOS_SHEET_NAME';
 
 const DEFAULT_CONFIGURATION = Object.freeze({
   SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
   SHEET_NAME: 'Hoja 1',
-  CLIENTES_SHEET_NAME: 'clientes'
+  CLIENTES_SHEET_NAME: 'clientes',
+  REMITOS_SHEET_NAME: 'remitos'
 });
 
 const DEFAULT_AUTHORIZED_USERS = Object.freeze([
@@ -22,6 +24,7 @@ const DEFAULT_PROPERTY_VALUES = Object.freeze({
   SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
   SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
   [CLIENTES_SHEET_NAME_PROPERTY]: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME,
+  [REMITOS_SHEET_NAME_PROPERTY]: DEFAULT_CONFIGURATION.REMITOS_SHEET_NAME,
   [AUTHORIZED_USERS_PROPERTY]: JSON.stringify(DEFAULT_AUTHORIZED_USERS)
 });
 
@@ -53,6 +56,10 @@ const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEE
 const CLIENTES_SHEET_NAME = getPropertyOrDefault(
   CLIENTES_SHEET_NAME_PROPERTY,
   DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME
+);
+const REMITOS_SHEET_NAME = getPropertyOrDefault(
+  REMITOS_SHEET_NAME_PROPERTY,
+  DEFAULT_CONFIGURATION.REMITOS_SHEET_NAME
 );
 
 const CLIENTES_HEADERS = Object.freeze(['Nombre', 'Direccion', 'Telefono', 'Mail', 'CUIT']);
@@ -327,6 +334,137 @@ const ClientesService = {
     });
 
     return clientes;
+  }
+};
+
+function normalizeRemitoHeader(header) {
+  const sanitized = sanitizeCellValue(header);
+  if (!sanitized) {
+    return null;
+  }
+
+  var ascii = sanitized;
+  if (typeof ascii.normalize === 'function') {
+    ascii = ascii.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  const snake = ascii
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+
+  const camel = snake.replace(/_([a-z])/g, function(match, letter) {
+    return letter.toUpperCase();
+  });
+
+  return {
+    original: sanitized,
+    snake: snake,
+    camel: camel
+  };
+}
+
+const RemitoRepository = {
+  getSheet() {
+    if (!REMITOS_SHEET_NAME) {
+      throw new Error(
+        'Configura la propiedad de script REMITOS_SHEET_NAME con la pestaña que almacena los remitos.'
+      );
+    }
+
+    return SheetRepository.getSheetByName(REMITOS_SHEET_NAME);
+  },
+
+  findAll() {
+    const sheet = this.getSheet();
+    const values = sheet.getDataRange().getValues();
+
+    if (!values.length) {
+      return [];
+    }
+
+    const headers = values[0].map(function(header) {
+      return sanitizeCellValue(header);
+    });
+    const normalizedHeaders = headers.map(normalizeRemitoHeader);
+
+    const remitos = [];
+
+    for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
+      const row = values[rowIndex];
+      const remito = {};
+      let hasData = false;
+
+      normalizedHeaders.forEach(function(headerInfo, columnIndex) {
+        if (!headerInfo) {
+          return;
+        }
+
+        const value = sanitizeCellValue(row[columnIndex]);
+        if (value !== '') {
+          hasData = true;
+        }
+
+        if (headerInfo.original && remito[headerInfo.original] === undefined) {
+          remito[headerInfo.original] = value;
+        }
+
+        if (headerInfo.snake && remito[headerInfo.snake] === undefined) {
+          remito[headerInfo.snake] = value;
+        }
+
+        if (headerInfo.camel && remito[headerInfo.camel] === undefined) {
+          remito[headerInfo.camel] = value;
+        }
+      });
+
+      if (hasData) {
+        remitos.push(remito);
+      }
+    }
+
+    return remitos;
+  }
+};
+
+function toPositiveInteger(value, fallback) {
+  const numeric = Number(value);
+
+  if (!isFinite(numeric)) {
+    return fallback;
+  }
+
+  const integer = Math.floor(numeric);
+  return integer > 0 ? integer : fallback;
+}
+
+const RemitoService = {
+  obtenerRemitos(page, pageSize) {
+    const registros = RemitoRepository.findAll();
+    const normalizedPageSize = toPositiveInteger(pageSize, 20);
+
+    if (!registros.length) {
+      return {
+        remitos: [],
+        totalPages: 0,
+        currentPage: 0
+      };
+    }
+
+    const totalPages = Math.ceil(registros.length / normalizedPageSize);
+    let currentPage = toPositiveInteger(page, 1);
+    if (currentPage > totalPages) {
+      currentPage = totalPages;
+    }
+
+    const startIndex = (currentPage - 1) * normalizedPageSize;
+    const endIndex = startIndex + normalizedPageSize;
+
+    return {
+      remitos: registros.slice(startIndex, endIndex),
+      totalPages: totalPages,
+      currentPage: currentPage
+    };
   }
 };
 
@@ -711,6 +849,9 @@ function doPost(e) {
         break;
       case 'clientes':
         result = ClientesService.listar();
+        break;
+      case 'obtener_remitos':
+        result = RemitoService.obtenerRemitos(data.page, data.pageSize);
         break;
       case 'version': {
         return _json({

@@ -42,6 +42,7 @@ describe('handleGuardarClick', () => {
             eliminarMantenimiento: jest.fn(),
             obtenerDashboard: jest.fn(),
             obtenerClientes: jest.fn().mockResolvedValue([]),
+            obtenerRemitos: jest.fn(),
         }));
 
         jest.unstable_mockModule('../auth.js', () => ({
