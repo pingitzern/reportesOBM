@@ -91,6 +91,13 @@ describe('manejo del guardado de mantenimientos', () => {
             eliminarMantenimiento: jest.fn(),
             obtenerDashboard: jest.fn(),
             obtenerClientes: jest.fn().mockResolvedValue([]),
+            obtenerRemitos: jest.fn().mockResolvedValue({
+                remitos: [],
+                totalPages: 0,
+                currentPage: 0,
+                totalItems: 0,
+                pageSize: 20,
+            }),
         }));
 
         jest.unstable_mockModule('../modules/login/auth.js', () => ({
@@ -193,6 +200,13 @@ describe('flujo de generación y finalización de remito', () => {
             eliminarMantenimiento: jest.fn(),
             obtenerDashboard: jest.fn(),
             obtenerClientes: jest.fn().mockResolvedValue([]),
+            obtenerRemitos: jest.fn().mockResolvedValue({
+                remitos: [],
+                totalPages: 0,
+                currentPage: 0,
+                totalItems: 0,
+                pageSize: 20,
+            }),
         }));
 
         jest.unstable_mockModule('../modules/login/auth.js', () => ({

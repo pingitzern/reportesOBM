@@ -3,6 +3,7 @@ const MAIN_VIEW_IDS = [
     'tab-buscar',
     'tab-dashboard',
     'remito-view',
+    'remitos-gestion-view',
 ];
 
 function hideElement(element) {

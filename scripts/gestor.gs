@@ -950,6 +950,85 @@ const RemitosService = {
     };
   },
 
+  obtenerRemitos(page = 1, pageSize = 20) {
+    let normalizedPageSize = Number(pageSize);
+    if (!Number.isFinite(normalizedPageSize) || normalizedPageSize <= 0) {
+      normalizedPageSize = 20;
+    }
+    normalizedPageSize = Math.min(Math.max(Math.floor(normalizedPageSize), 1), 200);
+
+    const sheet = RemitosRepository.getSheet();
+    const lastRow = sheet.getLastRow();
+
+    if (lastRow <= 1) {
+      return {
+        remitos: [],
+        totalPages: 0,
+        currentPage: 0,
+        totalItems: 0,
+        pageSize: normalizedPageSize,
+      };
+    }
+
+    const lastColumn = Math.max(sheet.getLastColumn(), REMITOS_HEADERS.length, 1);
+    const values = sheet.getRange(1, 1, lastRow, lastColumn).getValues();
+    const totalItems = Math.max(values.length - 1, 0);
+    const totalPages = Math.max(1, Math.ceil(totalItems / normalizedPageSize));
+
+    let normalizedPage = Number(page);
+    if (!Number.isFinite(normalizedPage) || normalizedPage <= 0) {
+      normalizedPage = 1;
+    } else {
+      normalizedPage = Math.floor(normalizedPage);
+    }
+
+    if (normalizedPage > totalPages) {
+      normalizedPage = totalPages;
+    }
+
+    const startRowIndex = (normalizedPage - 1) * normalizedPageSize + 1;
+    const endRowIndex = Math.min(startRowIndex + normalizedPageSize, values.length);
+
+    const remitos = [];
+
+    for (let rowIndex = startRowIndex; rowIndex < endRowIndex; rowIndex += 1) {
+      const row = values[rowIndex];
+      const registro = {};
+
+      for (let columnIndex = 0; columnIndex < REMITOS_HEADERS.length; columnIndex += 1) {
+        const header = REMITOS_HEADERS[columnIndex];
+        registro[header] = row[columnIndex];
+      }
+
+      const fechaRemitoISO = normalizeDateToISO(registro.FechaRemitoISO) || normalizeDateToISO(registro.FechaRemito);
+      const fechaServicioISO = normalizeDateToISO(registro.FechaServicioISO) || normalizeDateToISO(registro.FechaServicio);
+
+      remitos.push({
+        numeroRemito: sanitizeCellValue(registro.NumeroRemito),
+        numeroReporte: sanitizeCellValue(registro.NumeroReporte),
+        reporteId: sanitizeCellValue(registro.ReporteID),
+        cliente: sanitizeCellValue(registro.Cliente),
+        fechaRemito: sanitizeCellValue(registro.FechaRemito) || formatIsoDateForDisplay(fechaRemitoISO),
+        fechaRemitoISO,
+        fechaServicio: sanitizeCellValue(registro.FechaServicio) || formatIsoDateForDisplay(fechaServicioISO),
+        fechaServicioISO,
+        tecnico: sanitizeCellValue(registro.Tecnico),
+        observaciones: sanitizeCellValue(registro.Observaciones),
+        direccion: sanitizeCellValue(registro.Direccion),
+        telefono: sanitizeCellValue(registro.Telefono),
+        email: sanitizeCellValue(registro.Email),
+      });
+    }
+
+    return {
+      remitos,
+      totalPages,
+      currentPage: normalizedPage,
+      totalItems,
+      pageSize: normalizedPageSize,
+    };
+  },
+
   guardar(data, usuario) {
     if (!data || typeof data !== 'object') {
       throw new Error('Datos inválidos para generar el remito.');
@@ -1088,6 +1167,9 @@ function doPost(e) {
         break;
       case 'clientes':
         result = ClientesService.listar();
+        break;
+      case 'obtener_remitos':
+        result = RemitosService.obtenerRemitos(data.page, data.pageSize);
         break;
       case 'version': {
         return _json({
