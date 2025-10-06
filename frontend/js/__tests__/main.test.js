@@ -343,6 +343,43 @@ describe('flujo de generación y finalización de remito', () => {
         });
     });
 
+    test('sincroniza y normaliza los repuestos editados antes de finalizar', async () => {
+        const savedReport = {
+            numero_reporte: 'REP-010',
+            componentes: [{ accion: 'Cambiado', detalles: 'Cartucho previo' }],
+            repuestos: [
+                { codigo: 'OLD-001', descripcion: 'Filtro viejo', cantidad: '1' },
+                { codigo: '', descripcion: '', cantidad: '' },
+            ],
+        };
+        setLastSavedReportData(savedReport);
+
+        const renderResult = handleGenerarRemitoClick();
+        expect(renderResult).toBe(true);
+
+        const rows = document.querySelectorAll('#remito-repuestos-body tr');
+        expect(rows.length).toBeGreaterThan(0);
+
+        const firstRow = rows[0];
+        firstRow.querySelector('input[data-field="codigo"]').value = 'NEW-123';
+        firstRow.querySelector('input[data-field="descripcion"]').value = 'Cartucho 5 µm';
+        firstRow.querySelector('input[data-field="cantidad"]').value = '2.5';
+
+        await handleFinalizarRemitoClick();
+
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+        const body = JSON.parse(global.fetch.mock.calls[0][1].body);
+        expect(body.reporteData.repuestos).toEqual([
+            { codigo: 'NEW-123', descripcion: 'Cartucho 5 µm', cantidad: '2.5' },
+        ]);
+        expect(body.reporteData.componentes).toEqual([]);
+
+        const rerenderedRows = document.querySelectorAll('#remito-repuestos-body tr');
+        expect(rerenderedRows.length).toBe(1);
+        const cantidadInput = rerenderedRows[0].querySelector('input[data-field="cantidad"]');
+        expect(cantidadInput.value).toBe('2.5');
+    });
+
     test('envía los datos al finalizar y actualiza el número de remito', async () => {
         const savedReport = {
             numero_reporte: 'REP-002',
