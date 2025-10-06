@@ -74,6 +74,7 @@ describe('manejo del guardado de mantenimientos', () => {
         }));
 
         jest.unstable_mockModule('../modules/mantenimiento/forms.js', () => ({
+            autoFillForm: jest.fn(),
             configureClientSelect: jest.fn(),
             generateReportNumber: generateReportNumberMock,
             getFormData: getFormDataMock,
@@ -175,6 +176,7 @@ describe('flujo de generación y finalización de remito', () => {
         }));
 
         jest.unstable_mockModule('../modules/mantenimiento/forms.js', () => ({
+            autoFillForm: jest.fn(),
             configureClientSelect: jest.fn(),
             generateReportNumber: jest.fn(),
             getFormData: jest.fn(),
