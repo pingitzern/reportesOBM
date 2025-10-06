@@ -286,6 +286,61 @@ function renderRepuestosList(repuestos = []) {
     });
 }
 
+function normalizeCantidadValue(value) {
+    const textValue = normalizeString(value);
+    if (!textValue) {
+        return '';
+    }
+
+    const numericValue = Number(textValue.replace(',', '.'));
+    if (Number.isFinite(numericValue)) {
+        return String(numericValue);
+    }
+
+    return textValue;
+}
+
+function collectRepuestosFromForm() {
+    const tbody = getElement('remito-repuestos-body');
+    if (!(tbody instanceof HTMLElement)) {
+        return [];
+    }
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    return rows.reduce((acc, row) => {
+        const inputs = Array.from(row.querySelectorAll('input[data-field]'));
+        if (inputs.length === 0) {
+            return acc;
+        }
+
+        const item = { codigo: '', descripcion: '', cantidad: '' };
+
+        inputs.forEach(input => {
+            if (!(input instanceof HTMLInputElement)) {
+                return;
+            }
+
+            const field = input.dataset.field;
+            if (!field) {
+                return;
+            }
+
+            if (field === 'cantidad') {
+                item.cantidad = normalizeCantidadValue(input.value);
+            } else {
+                item[field] = normalizeString(input.value);
+            }
+        });
+
+        const hasValues = hasContent(item.codigo) || hasContent(item.descripcion) || hasContent(item.cantidad);
+        if (hasValues) {
+            acc.push(item);
+        }
+
+        return acc;
+    }, []);
+}
+
 function addEmptyRepuestoRow({ focus = false } = {}) {
     const tbody = getElement('remito-repuestos-body');
     if (!(tbody instanceof HTMLElement)) {
@@ -451,6 +506,13 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
 
         const observacionesElement = getElement('remito-observaciones');
         const observaciones = observacionesElement instanceof HTMLTextAreaElement ? observacionesElement.value.trim() : '';
+
+        const repuestosEditados = collectRepuestosFromForm();
+        lastSavedReport.repuestos = repuestosEditados;
+        if (repuestosEditados.length > 0) {
+            lastSavedReport.componentes = [];
+        }
+        renderRepuestosList(repuestosEditados);
 
         const finalizarBtn = getElement('finalizar-remito-btn');
         let originalText = '';
