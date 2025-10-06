@@ -293,4 +293,12 @@
     .status-na {
         @apply bg-slate-100 text-slate-700 border border-slate-300;
     }
+
+    .remito-repuestos-table {
+        @apply min-w-full;
+    }
+
+    .repuestos-table-input {
+        @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition-colors duration-150 ease-out focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200;
+    }
 }
