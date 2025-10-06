@@ -278,6 +278,24 @@ describe('flujo de generación y finalización de remito', () => {
         expect(document.getElementById('remito-equipo-modelo').value).toBe('Equipo RO-5000');
     });
 
+    test('renderiza repuestos derivados cuando hay componentes marcados como cambiados', () => {
+        setLastSavedReportData({
+            NumeroRemito: 'REM-0003',
+            clienteNombre: 'Cliente Demo',
+            direccion: 'Av. Siempre Viva 742',
+            etapa1_accion: 'Cambiado',
+            etapa1_detalles: 'Filtro de sedimentos 5 µm',
+        });
+
+        const result = handleGenerarRemitoClick();
+        expect(result).toBe(true);
+
+        const rows = document.querySelectorAll('#remito-repuestos-body tr');
+        expect(rows.length).toBe(1);
+        expect(rows[0].textContent).toContain('Filtro de sedimentos 5 µm');
+        expect(rows[0].textContent).toContain('1ª Etapa');
+    });
+
     test('envía los datos al finalizar y actualiza el número de remito', async () => {
         const savedReport = {
             numero_reporte: 'REP-002',
