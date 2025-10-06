@@ -1,3 +1,5 @@
+import { COMPONENT_STAGES } from '../mantenimiento/templates.js';
+
 function getElement(id) {
     return typeof document !== 'undefined' ? document.getElementById(id) : null;
 }
@@ -39,6 +41,73 @@ function normalizeString(value) {
 
     const text = String(value).trim();
     return text;
+}
+
+function isReplacementAction(value) {
+    const normalized = normalizeString(value).toLowerCase();
+    if (!normalized) {
+        return false;
+    }
+
+    const replacementKeywords = ['cambi', 'reempl', 'instal', 'nuevo'];
+    return replacementKeywords.some(keyword => normalized.includes(keyword));
+}
+
+function buildComponentStageLookup(stages) {
+    if (!Array.isArray(stages)) {
+        return {};
+    }
+
+    return stages.reduce((map, stage) => {
+        if (stage?.id) {
+            map[stage.id] = normalizeString(stage.title) || stage.id;
+        }
+        return map;
+    }, {});
+}
+
+function buildStageIdList(stages) {
+    const defaultIds = Array.from({ length: 6 }, (_, index) => `etapa${index + 1}`);
+
+    if (!Array.isArray(stages) || stages.length === 0) {
+        return defaultIds;
+    }
+
+    const providedIds = stages
+        .map(stage => normalizeString(stage?.id))
+        .filter(Boolean);
+
+    const uniqueIds = new Set([...providedIds, ...defaultIds]);
+    return Array.from(uniqueIds);
+}
+
+function buildComponentesFromReport(report, stages = COMPONENT_STAGES) {
+    if (!report || typeof report !== 'object') {
+        return [];
+    }
+
+    const stageLookup = buildComponentStageLookup(stages);
+    const stageIds = buildStageIdList(stages);
+
+    return stageIds.reduce((acc, stageId) => {
+        const accionKey = `${stageId}_accion`;
+        const detallesKey = `${stageId}_detalles`;
+
+        const accion = normalizeString(report[accionKey]);
+        const detalles = normalizeString(report[detallesKey]);
+
+        if (!isReplacementAction(accion)) {
+            return acc;
+        }
+
+        acc.push({
+            accion,
+            detalles,
+            title: stageLookup[stageId] || stageId,
+        });
+
+        return acc;
+    }, []);
 }
 
 function formatDateValue(rawDate) {
@@ -165,6 +234,13 @@ function createReportSnapshot(rawData) {
     snapshot.cliente_cuit = snapshot.cliente_cuit || getInputValue('cliente_cuit');
     snapshot.fecha_display = snapshot.fecha_display || getInputValue('fecha_display');
 
+    const componentesDerivados = buildComponentesFromReport(snapshot);
+    snapshot.componentes = componentesDerivados;
+
+    if (!Array.isArray(snapshot.repuestos) || snapshot.repuestos.length === 0) {
+        snapshot.repuestos = componentesDerivados.map(item => ({ ...item }));
+    }
+
     return snapshot;
 }
 
@@ -199,11 +275,13 @@ function populateRemitoForm(report) {
         observaciones.removeAttribute('readonly');
     }
 
-    const repuestos = Array.isArray(report.repuestos)
+    const componentesDerivados = Array.isArray(report.componentes) && report.componentes.length > 0
+        ? report.componentes
+        : buildComponentesFromReport(report);
+
+    const repuestos = Array.isArray(report.repuestos) && report.repuestos.length > 0
         ? report.repuestos
-        : Array.isArray(report.componentes)
-            ? report.componentes.filter(item => normalizeString(item.accion) === 'Cambiado' || normalizeString(item.cantidad))
-            : [];
+        : componentesDerivados;
 
     renderRepuestosList(repuestos);
 }
