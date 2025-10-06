@@ -1,4 +1,5 @@
 import {
+    autoFillForm,
     configureClientSelect,
     generateReportNumber,
     getFormData,
@@ -51,6 +52,14 @@ export function createMaintenanceModule(api, callbacks = {}) {
             });
         }
 
+        const autoFillBtn = getElement('autoFillButton');
+        if (autoFillBtn) {
+            autoFillBtn.addEventListener('click', event => {
+                event.preventDefault();
+                handleAutoFillClick();
+            });
+        }
+
         eventsInitialized = true;
     }
 
@@ -78,6 +87,10 @@ export function createMaintenanceModule(api, callbacks = {}) {
     function handleResetClick() {
         resetForm();
         notifyReportReset();
+    }
+
+    function handleAutoFillClick() {
+        autoFillForm();
     }
 
     async function handleGuardarClick() {

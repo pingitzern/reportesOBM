@@ -1,4 +1,5 @@
 import { LMIN_TO_GPD, LMIN_TO_LPH } from '../../config.js';
+import { COMPONENT_STAGES } from './templates.js';
 
 function getElement(id) {
     return document.getElementById(id);
@@ -662,6 +663,135 @@ function clearConversionOutputs() {
             element.textContent = '';
         }
     });
+}
+
+function addDays(date, days) {
+    const clone = new Date(date.getTime());
+    clone.setDate(clone.getDate() + days);
+    return clone;
+}
+
+function setInputValue(id, value) {
+    const element = getElement(id);
+    if (!(element instanceof HTMLInputElement) && !(element instanceof HTMLTextAreaElement)) {
+        return;
+    }
+
+    element.value = value;
+    const inputEvent = new Event('input', { bubbles: true });
+    element.dispatchEvent(inputEvent);
+
+    if (element instanceof HTMLInputElement) {
+        autoResizeInput(element);
+    }
+}
+
+function setSelectValue(id, value) {
+    const element = getElement(id);
+    if (!(element instanceof HTMLSelectElement)) {
+        return;
+    }
+
+    element.value = value;
+    const changeEvent = new Event('change', { bubbles: true });
+    element.dispatchEvent(changeEvent);
+}
+
+export function autoFillForm() {
+    const now = new Date();
+    setServiceDateValue(now);
+
+    setInputValue('tecnico', 'Equipo Técnico Pruebas');
+    setInputValue('modelo', 'Sistema RO Residencial 6 etapas');
+    setInputValue('id_interna', 'ACT-PRUEBA-042');
+    setInputValue('n_serie', 'SN-PRB-998877');
+
+    const nextMaintenance = addDays(now, 180);
+    const proximoMantInput = getElement('proximo_mant');
+    if (proximoMantInput instanceof HTMLInputElement) {
+        proximoMantInput.value = normalizeDateToISO(nextMaintenance);
+        proximoMantInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    const numericValues = {
+        cond_red_found: 480,
+        cond_red_left: 460,
+        cond_perm_found: 28,
+        cond_perm_left: 16,
+        presion_found: 2.6,
+        presion_left: 3.9,
+        caudal_perm_found: 1.9,
+        caudal_perm_left: 2.5,
+        caudal_rech_found: 3.8,
+        caudal_rech_left: 4.3,
+        precarga_found: 1.1,
+        precarga_left: 1.5,
+    };
+
+    Object.entries(numericValues).forEach(([id, value]) => {
+        const element = getElement(id);
+        if (element instanceof HTMLInputElement) {
+            element.value = value;
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+    setSelectValue('fugas_found', 'Sí');
+    setSelectValue('fugas_left', 'No');
+    setSelectValue('presostato_alta_found', 'Pasa');
+    setSelectValue('presostato_alta_left', 'Pasa');
+    setSelectValue('presostato_baja_found', 'Pasa');
+    setSelectValue('presostato_baja_left', 'Pasa');
+
+    const stageDetails = {
+        etapa1: 'Filtro sedimentos 5µm (cambio)',
+        etapa2: 'Cartucho CTO 10" reemplazado',
+        etapa3: 'GAC + pulido final verificado',
+        etapa4: 'Membrana 75 GPD instalada',
+        etapa5: 'Postfiltro remineralizador nuevo',
+        etapa6: 'UV operativa y sanitizada',
+    };
+
+    COMPONENT_STAGES.forEach(stage => {
+        const detailId = `${stage.id}_detalles`;
+        setInputValue(detailId, stageDetails[stage.id] || stage.title);
+
+        const changedRadio = document.getElementById(`${stage.id}_accion_cambiado`);
+        if (changedRadio instanceof HTMLInputElement) {
+            changedRadio.checked = true;
+            changedRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+
+    const sanitizacionRadio = document.querySelector('input[name="sanitizacion"][value="Realizada"]');
+    if (sanitizacionRadio instanceof HTMLInputElement) {
+        sanitizacionRadio.checked = true;
+        sanitizacionRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    const comentarios = [
+        'Se reemplazaron todos los filtros y se normalizaron los parámetros.',
+        'Equipo calibrado tras cambio integral de cartuchos y sanitización completa.',
+        'Mantenimiento preventivo completado sin novedades, parámetros dentro de lo esperado.',
+        'Cambios realizados y pruebas finales exitosas, equipo queda operativo.',
+    ];
+    const resumen = document.getElementById('resumen');
+    if (resumen instanceof HTMLTextAreaElement) {
+        const comentarioAleatorio = comentarios[Math.floor(Math.random() * comentarios.length)];
+        resumen.value = comentarioAleatorio;
+        resumen.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    calculateAll();
+
+    ['caudal_perm_found', 'caudal_perm_left', 'caudal_rech_found', 'caudal_rech_left'].forEach(id => {
+        const element = getElement(id);
+        if (element instanceof HTMLInputElement) {
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+    configureSanitizacionRadios();
 }
 
 export function configureClientSelect(clientes = []) {
