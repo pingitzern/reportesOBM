@@ -123,3 +123,11 @@ export async function obtenerClientes({ forceRefresh = false } = {}) {
     return state.clientes;
 }
 
+export async function obtenerRemitos({ page = 1, pageSize = 20 } = {}) {
+    return postJSON({
+        action: 'obtener_remitos',
+        page,
+        pageSize,
+    });
+}
+

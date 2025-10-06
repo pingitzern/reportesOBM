@@ -14,6 +14,7 @@ import { createDashboardModule } from './modules/dashboard/dashboard.js';
 import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js';
 import { createSearchModule } from './modules/busqueda/busqueda.js';
 import { createRemitoModule } from './modules/remito/remito.js';
+import { createRemitosGestionModule } from './modules/remitos-gestion/remitos-gestion.js';
 
 const remitoModule = createRemitoModule({
     showView,
@@ -52,11 +53,14 @@ const dashboardModule = createDashboardModule(
     { showView },
 );
 
+const remitosGestionModule = createRemitosGestionModule();
+
 const appModules = {
     maintenance: maintenanceModule,
     remito: remitoModule,
     search: searchModule,
     dashboard: dashboardModule,
+    remitosGestion: remitosGestionModule,
 };
 
 function showAppVersion() {
@@ -78,9 +82,18 @@ function showAppVersion() {
     versionElement.classList.add('hidden');
 }
 
-function setActiveNavigation(tabName) {
+function setActiveNavigation(tabName, customButtonId) {
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-    const tabButton = document.getElementById(`tab-${tabName}-btn`);
+    let tabButton = null;
+
+    if (typeof customButtonId === 'string' && customButtonId) {
+        tabButton = document.getElementById(customButtonId);
+    }
+
+    if (!tabButton && typeof tabName === 'string' && tabName) {
+        tabButton = document.getElementById(`tab-${tabName}-btn`);
+    }
+
     if (tabButton) {
         tabButton.classList.add('active');
     }
@@ -122,6 +135,15 @@ function initializeNavigation() {
             void showDashboardTab();
         });
     }
+
+    const remitosBtn = document.getElementById('nav-remitos-btn');
+    if (remitosBtn) {
+        remitosBtn.addEventListener('click', () => {
+            showView('remitos-gestion-view');
+            setActiveNavigation(null, 'nav-remitos-btn');
+            void remitosGestionModule.renderListado({ page: 1 });
+        });
+    }
 }
 
 async function initializeApp() {
@@ -129,6 +151,7 @@ async function initializeApp() {
     initializeNavigation();
     appModules.remito.initialize();
     appModules.search.initialize();
+    appModules.remitosGestion.initialize();
 
     try {
         await initializeAuth();
