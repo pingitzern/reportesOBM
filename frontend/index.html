@@ -542,9 +542,16 @@
                                 <h3 class="text-lg font-semibold text-gray-800">Listado de Repuestos</h3>
                                 <p class="text-sm text-gray-500">Detalle de los repuestos utilizados durante el servicio.</p>
                             </div>
+                            <button
+                                type="button"
+                                id="remito-agregar-repuesto"
+                                class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg font-semibold text-sm bg-blue-600 text-white shadow-sm transition-colors duration-150 ease-out hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+                            >
+                                Agregar repuesto
+                            </button>
                         </div>
                         <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200">
-                            <table class="min-w-full divide-y divide-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200 remito-repuestos-table">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Código</th>
@@ -553,9 +560,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="remito-repuestos-body" class="bg-white divide-y divide-gray-200">
-                                    <tr>
-                                        <td colspan="3" class="px-4 py-3 text-sm text-gray-500 text-center">Sin repuestos registrados.</td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>

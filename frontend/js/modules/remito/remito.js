@@ -43,6 +43,39 @@ function normalizeString(value) {
     return text;
 }
 
+function hasContent(value) {
+    return Boolean(normalizeString(value));
+}
+
+function buildRepuestoDescripcion(item = {}) {
+    const descripcion = [item.descripcion, item.detalle, item.detalles, item.title, item.nombre]
+        .map(normalizeString)
+        .filter(Boolean)
+        .join(' - ');
+
+    return descripcion;
+}
+
+function normalizeRepuestoItem(item = {}) {
+    if (!item || typeof item !== 'object') {
+        return { codigo: '', descripcion: '', cantidad: '' };
+    }
+
+    const codigo = normalizeString(item.codigo || item.id || item.codigo_repuesto || item.cod || item.codigoArticulo);
+    const descripcion = buildRepuestoDescripcion(item);
+    const cantidadRaw = item.cantidad ?? item.cant ?? item.unidades ?? '';
+    const cantidadText = normalizeString(cantidadRaw);
+
+    if (cantidadText) {
+        const parsed = Number(String(cantidadText).replace(',', '.'));
+        if (Number.isFinite(parsed) && parsed >= 0) {
+            return { codigo, descripcion, cantidad: String(parsed) };
+        }
+    }
+
+    return { codigo, descripcion, cantidad: cantidadText };
+}
+
 function isReplacementAction(value) {
     const normalized = normalizeString(value).toLowerCase();
     if (!normalized) {
@@ -176,6 +209,57 @@ function clearReadonlyInputs(ids = []) {
     });
 }
 
+function createRepuestoRow(data = {}, { forceDefaultCantidad = false } = {}) {
+    if (typeof document === 'undefined') {
+        return null;
+    }
+
+    const { codigo = '', descripcion = '', cantidad = '' } = data;
+    const resolvedCantidad = forceDefaultCantidad && !hasContent(cantidad) ? '1' : cantidad;
+
+    const row = document.createElement('tr');
+    row.className = 'remito-repuesto-row transition-colors duration-150 hover:bg-gray-50';
+
+    const codigoCell = document.createElement('td');
+    codigoCell.className = 'px-4 py-3 align-top';
+    const codigoInput = document.createElement('input');
+    codigoInput.type = 'text';
+    codigoInput.name = 'repuesto-codigo';
+    codigoInput.placeholder = 'Código del repuesto';
+    codigoInput.value = codigo;
+    codigoInput.dataset.field = 'codigo';
+    codigoInput.className = 'repuestos-table-input';
+    codigoCell.appendChild(codigoInput);
+
+    const descripcionCell = document.createElement('td');
+    descripcionCell.className = 'px-4 py-3 align-top';
+    const descripcionInput = document.createElement('input');
+    descripcionInput.type = 'text';
+    descripcionInput.name = 'repuesto-descripcion';
+    descripcionInput.placeholder = 'Descripción del repuesto';
+    descripcionInput.value = descripcion;
+    descripcionInput.dataset.field = 'descripcion';
+    descripcionInput.className = 'repuestos-table-input';
+    descripcionCell.appendChild(descripcionInput);
+
+    const cantidadCell = document.createElement('td');
+    cantidadCell.className = 'px-4 py-3 align-top text-right';
+    const cantidadInput = document.createElement('input');
+    cantidadInput.type = 'number';
+    cantidadInput.name = 'repuesto-cantidad';
+    cantidadInput.placeholder = '0';
+    cantidadInput.inputMode = 'numeric';
+    cantidadInput.min = '0';
+    cantidadInput.step = '1';
+    cantidadInput.value = resolvedCantidad;
+    cantidadInput.dataset.field = 'cantidad';
+    cantidadInput.className = 'repuestos-table-input text-right';
+    cantidadCell.appendChild(cantidadInput);
+
+    row.append(codigoCell, descripcionCell, cantidadCell);
+    return row;
+}
+
 function renderRepuestosList(repuestos = []) {
     const tbody = getElement('remito-repuestos-body');
     if (!(tbody instanceof HTMLElement)) {
@@ -185,40 +269,42 @@ function renderRepuestosList(repuestos = []) {
     tbody.innerHTML = '';
 
     if (!Array.isArray(repuestos) || repuestos.length === 0) {
-        const emptyRow = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.colSpan = 3;
-        cell.className = 'px-4 py-3 text-sm text-gray-500 text-center';
-        cell.textContent = 'Sin repuestos registrados.';
-        emptyRow.appendChild(cell);
-        tbody.appendChild(emptyRow);
+        const emptyRow = createRepuestoRow();
+        if (emptyRow) {
+            tbody.appendChild(emptyRow);
+        }
         return;
     }
 
     repuestos.forEach(item => {
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-gray-50';
-
-        const codigoCell = document.createElement('td');
-        codigoCell.className = 'px-4 py-2 text-sm text-gray-700';
-        codigoCell.textContent = normalizeString(item.codigo || item.id || '');
-
-        const descripcionCell = document.createElement('td');
-        descripcionCell.className = 'px-4 py-2 text-sm text-gray-700';
-        const descripcion = [item.descripcion, item.detalle, item.detalles, item.title]
-            .map(normalizeString)
-            .filter(Boolean)
-            .join(' - ');
-        descripcionCell.textContent = descripcion || 'Repuesto sin descripción';
-
-        const cantidadCell = document.createElement('td');
-        cantidadCell.className = 'px-4 py-2 text-sm text-right text-gray-700';
-        const cantidad = Number(item.cantidad);
-        cantidadCell.textContent = Number.isFinite(cantidad) && cantidad > 0 ? String(cantidad) : '1';
-
-        row.append(codigoCell, descripcionCell, cantidadCell);
-        tbody.appendChild(row);
+        const normalized = normalizeRepuestoItem(item);
+        const hasValues = hasContent(normalized.codigo) || hasContent(normalized.descripcion) || hasContent(normalized.cantidad);
+        const row = createRepuestoRow(normalized, { forceDefaultCantidad: hasValues });
+        if (row) {
+            tbody.appendChild(row);
+        }
     });
+}
+
+function addEmptyRepuestoRow({ focus = false } = {}) {
+    const tbody = getElement('remito-repuestos-body');
+    if (!(tbody instanceof HTMLElement)) {
+        return;
+    }
+
+    const row = createRepuestoRow();
+    if (!row) {
+        return;
+    }
+
+    tbody.appendChild(row);
+
+    if (focus) {
+        const firstInput = row.querySelector('input');
+        if (firstInput instanceof HTMLInputElement) {
+            firstInput.focus();
+        }
+    }
 }
 
 function createReportSnapshot(rawData) {
@@ -442,6 +528,7 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         }
 
         disableButton('generar-remito-btn');
+        renderRepuestosList([]);
 
         const generarBtn = getElement('generar-remito-btn');
         if (generarBtn instanceof HTMLButtonElement) {
@@ -456,6 +543,14 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
             finalizarBtn.addEventListener('click', event => {
                 event.preventDefault();
                 void handleFinalizarRemitoClick();
+            });
+        }
+
+        const agregarRepuestoBtn = getElement('remito-agregar-repuesto');
+        if (agregarRepuestoBtn instanceof HTMLButtonElement) {
+            agregarRepuestoBtn.addEventListener('click', event => {
+                event.preventDefault();
+                addEmptyRepuestoRow({ focus: true });
             });
         }
 

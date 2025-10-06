@@ -147,6 +147,7 @@ export const __testables__ = {
     showView,
     setLastSavedReportDataForTests: data => appModules.remito.setLastSavedReportForTests(data),
     getLastSavedReportDataForTests: () => appModules.remito.getLastSavedReportForTests(),
+    initializeRemitoModuleForTests: () => appModules.remito.initialize(),
 };
 
 document.addEventListener('DOMContentLoaded', () => {

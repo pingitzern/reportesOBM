@@ -39,6 +39,7 @@ const FULL_DOM_TEMPLATE = `
     <input id="remito-equipo-ubicacion" readonly>
     <input id="remito-equipo-tecnico" readonly>
     <textarea id="remito-observaciones"></textarea>
+    <button id="remito-agregar-repuesto" type="button">Agregar repuesto</button>
     <table><tbody id="remito-repuestos-body"></tbody></table>
     <button id="finalizar-remito-btn">Finalizar y Guardar Remito</button>
 </div>
@@ -224,6 +225,7 @@ describe('flujo de generación y finalización de remito', () => {
         setLastSavedReportData = mainModule.__testables__.setLastSavedReportDataForTests;
 
         document.body.innerHTML = FULL_DOM_TEMPLATE;
+        mainModule.__testables__.initializeRemitoModuleForTests();
 
         originalAlert = window.alert;
         originalFetch = global.fetch;
@@ -292,8 +294,53 @@ describe('flujo de generación y finalización de remito', () => {
 
         const rows = document.querySelectorAll('#remito-repuestos-body tr');
         expect(rows.length).toBe(1);
-        expect(rows[0].textContent).toContain('Filtro de sedimentos 5 µm');
-        expect(rows[0].textContent).toContain('1ª Etapa');
+        const descripcionInput = rows[0].querySelector('input[data-field="descripcion"]');
+        expect(descripcionInput).toBeInstanceOf(HTMLInputElement);
+        expect(descripcionInput.value).toContain('Filtro de sedimentos 5 µm');
+        expect(descripcionInput.value).toContain('1ª Etapa');
+
+        const cantidadInput = rows[0].querySelector('input[data-field="cantidad"]');
+        expect(cantidadInput).toBeInstanceOf(HTMLInputElement);
+        expect(cantidadInput.value).toBe('1');
+    });
+
+    test('muestra al menos una fila vacía con inputs editables cuando no hay repuestos', () => {
+        setLastSavedReportData({ NumeroRemito: 'REM-0004' });
+
+        const result = handleGenerarRemitoClick();
+        expect(result).toBe(true);
+
+        const rows = document.querySelectorAll('#remito-repuestos-body tr');
+        expect(rows.length).toBe(1);
+
+        const inputs = rows[0].querySelectorAll('input');
+        expect(inputs.length).toBe(3);
+        inputs.forEach(input => {
+            expect(input.value).toBe('');
+        });
+    });
+
+    test('agrega una nueva fila vacía al presionar el botón de agregar repuesto', () => {
+        setLastSavedReportData({ NumeroRemito: 'REM-0005' });
+
+        const result = handleGenerarRemitoClick();
+        expect(result).toBe(true);
+
+        const body = document.getElementById('remito-repuestos-body');
+        const initialRows = body.querySelectorAll('tr');
+        expect(initialRows.length).toBe(1);
+
+        const addButton = document.getElementById('remito-agregar-repuesto');
+        addButton.click();
+
+        const updatedRows = body.querySelectorAll('tr');
+        expect(updatedRows.length).toBe(2);
+
+        const newRowInputs = updatedRows[1].querySelectorAll('input');
+        expect(newRowInputs.length).toBe(3);
+        newRowInputs.forEach(input => {
+            expect(input.value).toBe('');
+        });
     });
 
     test('envía los datos al finalizar y actualiza el número de remito', async () => {
