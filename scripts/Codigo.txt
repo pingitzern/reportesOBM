@@ -18,7 +18,8 @@ const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const DEFAULT_CONFIGURATION = Object.freeze({
   SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis', // ID del Spreadsheet principal
   SHEET_NAME: 'Hoja 1',                                    // pestaña de mantenimientos
-  CLIENTES_SHEET_NAME: 'clientes'                           // pestaña de clientes
+  CLIENTES_SHEET_NAME: 'clientes',                          // pestaña de clientes
+  REMITOS_SHEET_NAME: 'remitos'                             // pestaña de remitos
 });
 
 function getPropertyOrDefault(propertyName, fallback) {
@@ -29,6 +30,7 @@ function getPropertyOrDefault(propertyName, fallback) {
 const SHEET_ID = getPropertyOrDefault('SHEET_ID', DEFAULT_CONFIGURATION.SHEET_ID);
 const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
 const CLIENTES_SHEET_NAME = getPropertyOrDefault('CLIENTES_SHEET_NAME', DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME);
+const REMITOS_SHEET_NAME = getPropertyOrDefault('REMITOS_SHEET_NAME', DEFAULT_CONFIGURATION.REMITOS_SHEET_NAME);
 
 const SheetRepository = {
   getSpreadsheet() {
@@ -201,6 +203,119 @@ const ClientesService = {
 
     return clientes;
   }
+};
+
+
+/* =======================
+   RemitoService
+======================= */
+
+function normalizeRemitoHeader(header) {
+  const sanitized = sanitizeCellValue(header);
+  if (!sanitized) return null;
+
+  let ascii = sanitized;
+  if (typeof ascii.normalize === 'function') {
+    ascii = ascii.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  const snake = ascii
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+
+  const camel = snake.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+
+  return {
+    original: sanitized,
+    snake,
+    camel,
+  };
+}
+
+const RemitoRepository = {
+  getSheet() {
+    if (!REMITOS_SHEET_NAME) {
+      throw new Error('Configura REMITOS_SHEET_NAME para acceder a los remitos.');
+    }
+
+    return SheetRepository.getSheetByName(REMITOS_SHEET_NAME);
+  },
+
+  findAll() {
+    const sheet = this.getSheet();
+    const values = sheet.getDataRange().getValues();
+    if (!values.length) return [];
+
+    const headers = values[0].map((value) => sanitizeCellValue(value));
+    const normalizedHeaders = headers.map((header) => normalizeRemitoHeader(header));
+
+    const remitos = [];
+
+    for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
+      const row = values[rowIndex];
+      const remito = {};
+      let hasContent = false;
+
+      normalizedHeaders.forEach((headerInfo, columnIndex) => {
+        if (!headerInfo) return;
+
+        const value = sanitizeCellValue(row[columnIndex]);
+        if (value !== '') hasContent = true;
+
+        if (headerInfo.original && remito[headerInfo.original] === undefined) {
+          remito[headerInfo.original] = value;
+        }
+
+        if (headerInfo.snake && remito[headerInfo.snake] === undefined) {
+          remito[headerInfo.snake] = value;
+        }
+
+        if (headerInfo.camel && remito[headerInfo.camel] === undefined) {
+          remito[headerInfo.camel] = value;
+        }
+      });
+
+      if (hasContent) remitos.push(remito);
+    }
+
+    return remitos;
+  },
+};
+
+function toPositiveInteger(value, fallback) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  const integer = Math.floor(numeric);
+  return integer > 0 ? integer : fallback;
+}
+
+const RemitoService = {
+  obtenerRemitos(page = 1, pageSize = 20) {
+    const registros = RemitoRepository.findAll();
+    const normalizedPageSize = toPositiveInteger(pageSize, 20);
+
+    if (!registros.length) {
+      return {
+        remitos: [],
+        totalPages: 0,
+        currentPage: 0,
+      };
+    }
+
+    const totalPages = Math.ceil(registros.length / normalizedPageSize);
+    let currentPage = toPositiveInteger(page, 1);
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const startIndex = (currentPage - 1) * normalizedPageSize;
+    const endIndex = startIndex + normalizedPageSize;
+
+    return {
+      remitos: registros.slice(startIndex, endIndex),
+      totalPages,
+      currentPage,
+    };
+  },
 };
 
 
@@ -548,6 +663,11 @@ function doPost(e) {
       case 'clientes': {
         const sess = SessionService.validateSession(data.token);
         const result = ClientesService.listar();
+        return ResponseFactory.success(result);
+      }
+      case 'obtener_remitos': {
+        SessionService.validateSession(data.token);
+        const result = RemitoService.obtenerRemitos(data.page, data.pageSize);
         return ResponseFactory.success(result);
       }
 

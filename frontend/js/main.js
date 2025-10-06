@@ -6,6 +6,8 @@ import { renderDashboard } from './dashboard.js';
 import { configureClientSelect, generateReportNumber, getFormData, initializeForm, resetForm, setReportNumber } from './forms.js';
 import { clearSearchResults, getEditFormValues, openEditModal, closeEditModal, renderSearchResults } from './search.js';
 import { renderComponentStages, COMPONENT_STAGES } from './templates.js';
+import * as viewManager from './viewManager.js';
+import * as remitosGestion from './modules/remitos-gestion/remitos-gestion.js';
 
 const isApiConfigured = typeof API_URL === 'string' && API_URL.length > 0;
 
@@ -406,18 +408,8 @@ function showAppVersion() {
 }
 
 function showTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-
-    const tabElement = document.getElementById(`tab-${tabName}`);
-    if (tabElement) {
-        tabElement.classList.remove('hidden');
-    }
-
-    const tabButton = document.getElementById(`tab-${tabName}-btn`);
-    if (tabButton) {
-        tabButton.classList.add('active');
-    }
+    const viewId = `tab-${tabName}`;
+    viewManager.showView(viewId);
 
     if (tabName === 'nuevo') {
         showMaintenanceView();
@@ -648,6 +640,23 @@ function attachEventListeners() {
     const tabDashboardBtn = document.getElementById('tab-dashboard-btn');
     if (tabDashboardBtn) {
         tabDashboardBtn.addEventListener('click', () => showTab('dashboard'));
+    }
+
+    const navRemitosBtn = document.getElementById('nav-remitos-btn');
+    if (navRemitosBtn) {
+        navRemitosBtn.addEventListener('click', async () => {
+            const viewDisplayed = viewManager.showView('remitos-gestion-view');
+            if (!viewDisplayed) {
+                console.warn('La vista de gestión de remitos no está disponible en el DOM.');
+                return;
+            }
+
+            try {
+                await remitosGestion.renderListado();
+            } catch (error) {
+                console.error('Error al renderizar el listado de remitos:', error);
+            }
+        });
     }
 }
 
