@@ -9,6 +9,7 @@ const REMITOS_HEADERS = [
 ];
 
 const RemitoRepository = {
+  REMITOS_HEADERS,
   /**
    * Obtiene la hoja de Remitos. Si no existe, la crea con los encabezados.
    */
@@ -17,7 +18,7 @@ const RemitoRepository = {
     let sheet = ss.getSheetByName(REMITOS_SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(REMITOS_SHEET_NAME);
-      sheet.appendRow(REMITOS_HEADERS);
+      sheet.appendRow(this.REMITOS_HEADERS);
       // Inmovilizar la primera fila (encabezados)
       sheet.setFrozenRows(1);
     }
@@ -47,5 +48,13 @@ const RemitoRepository = {
   guardar(remitoRowData) {
     const sheet = this.getSheet_();
     sheet.appendRow(remitoRowData);
+  },
+
+  /**
+   * Devuelve los encabezados configurados para la hoja de remitos.
+   * @returns {string[]} Lista de encabezados.
+   */
+  getHeaders() {
+    return this.REMITOS_HEADERS;
   }
 };
