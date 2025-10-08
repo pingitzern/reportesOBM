@@ -1,0 +1,51 @@
+// Contenido para RemitoRepository.gs
+
+const REMITOS_SHEET_NAME = 'remitos';
+const REMITOS_HEADERS = [
+  'NumeroRemito', 'FechaCreacion', 'MailTecnico', 'NumeroReporte',
+  'NombreCliente', 'Direccion', 'CUIT', 'Telefono', 'MailCliente',
+  'ModeloEquipo', 'NumeroSerie', 'IDInterna',
+  'Repuestos', 'Observaciones', 'IdUnico'
+];
+
+const RemitoRepository = {
+  /**
+   * Obtiene la hoja de Remitos. Si no existe, la crea con los encabezados.
+   */
+  getSheet_() {
+    const ss = SheetRepository.getSpreadsheet();
+    let sheet = ss.getSheetByName(REMITOS_SHEET_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(REMITOS_SHEET_NAME);
+      sheet.appendRow(REMITOS_HEADERS);
+      // Inmovilizar la primera fila (encabezados)
+      sheet.setFrozenRows(1);
+    }
+    return sheet;
+  },
+
+  /**
+   * Busca el último número de remito y devuelve el siguiente.
+   * @returns {number} El siguiente número de remito a utilizar.
+   */
+  getNextRemitoNumber() {
+    const sheet = this.getSheet_();
+    // getLastRow() devuelve 0 si la hoja está vacía, 1 si solo tiene encabezado.
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return 1; // Si no hay datos, empezamos en 1.
+    }
+    // Obtenemos el valor de la última fila, primera columna (NumeroRemito)
+    const lastNumber = sheet.getRange(lastRow, 1).getValue();
+    return parseInt(lastNumber, 10) + 1;
+  },
+
+  /**
+   * Guarda una nueva fila con los datos de un remito.
+   * @param {Array} remitoRowData - Un array con los datos del remito en el orden de REMITOS_HEADERS.
+   */
+  guardar(remitoRowData) {
+    const sheet = this.getSheet_();
+    sheet.appendRow(remitoRowData);
+  }
+};
