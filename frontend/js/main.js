@@ -1,13 +1,6 @@
 /* global __APP_VERSION__ */
 import { showView } from './viewManager.js';
-import {
-    guardarMantenimiento,
-    buscarMantenimientos,
-    actualizarMantenimiento,
-    eliminarMantenimiento,
-    obtenerDashboard,
-    obtenerClientes,
-} from './api.js';
+import * as api from './api.js';
 import { API_URL } from './config.js';
 import { initializeAuth, getCurrentToken } from './modules/login/auth.js';
 import { createDashboardModule } from './modules/dashboard/dashboard.js';
@@ -15,6 +8,19 @@ import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js'
 import { createSearchModule } from './modules/busqueda/busqueda.js';
 import { createRemitoModule } from './modules/remito/remito.js';
 import { createRemitosGestionModule } from './modules/remitos-gestion/remitos-gestion.js';
+
+const {
+    guardarMantenimiento,
+    buscarMantenimientos,
+    actualizarMantenimiento,
+    eliminarMantenimiento,
+    obtenerDashboard,
+    obtenerClientes,
+    obtenerRemitos,
+    crearRemito,
+    actualizarRemito,
+    eliminarRemito,
+} = api;
 
 const remitoModule = createRemitoModule({
     showView,
@@ -53,7 +59,12 @@ const dashboardModule = createDashboardModule(
     { showView },
 );
 
-const remitosGestionModule = createRemitosGestionModule();
+const remitosGestionModule = createRemitosGestionModule({
+    obtenerRemitos,
+    crearRemito,
+    actualizarRemito,
+    eliminarRemito,
+});
 
 const appModules = {
     maintenance: maintenanceModule,
