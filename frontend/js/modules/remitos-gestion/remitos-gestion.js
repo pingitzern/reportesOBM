@@ -849,6 +849,7 @@ async function renderListado({ page } = {}) {
         }
         state.currentPage = currentPage || requestedPage;
 
+        state.isLoading = false;
         renderManagementView();
     } catch (error) {
         state.lastError = error;
