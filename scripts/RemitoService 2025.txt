@@ -79,7 +79,7 @@ const RemitoService = {
   obtenerRemitos(page = 1, pageSize = 20) {
     const sheet = RemitoRepository.getSheet_();
     const lastRow = sheet.getLastRow();
-    const headers = RemitoRepository.REMITOS_HEADERS; // Importante: Asegurarse de que REMITOS_HEADERS es accesible aquí
+    const headers = RemitoRepository.getHeaders();
 
     // Si solo hay encabezados o no hay datos, devolver un objeto vacío
     if (lastRow < 2) { 

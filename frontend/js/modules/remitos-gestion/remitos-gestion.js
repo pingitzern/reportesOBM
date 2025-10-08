@@ -2,6 +2,25 @@ import { obtenerRemitos } from '../../api.js';
 
 const DEFAULT_PAGE_SIZE = 20;
 
+function pickValue(source, keys) {
+    if (!source || typeof source !== 'object' || !Array.isArray(keys)) {
+        return undefined;
+    }
+
+    for (const key of keys) {
+        if (!key || typeof key !== 'string') {
+            continue;
+        }
+
+        const value = source[key];
+        if (value !== undefined && value !== null && value !== '') {
+            return value;
+        }
+    }
+
+    return undefined;
+}
+
 function sanitizeString(value) {
     if (value === null || value === undefined) {
         return '';
@@ -122,20 +141,36 @@ function normalizeRemitoForDisplay(remito) {
     const fechaRemitoISO = remito.fechaRemitoISO ?? remito.FechaRemitoISO;
     const fechaServicioISO = remito.fechaServicioISO ?? remito.FechaServicioISO;
 
+    const numeroRemitoValue = pickValue(remito, ['numeroRemito', 'NumeroRemito']);
+    const numeroReporteValue = pickValue(remito, ['numeroReporte', 'NumeroReporte']);
+    const clienteValue = pickValue(remito, ['cliente', 'Cliente', 'NombreCliente']);
+    const fechaRemitoValue = pickValue(remito, ['fechaRemito', 'FechaRemito', 'FechaCreacion']);
+    const fechaRemitoIsoValue = pickValue(remito, ['fechaRemitoISO', 'FechaRemitoISO', 'FechaCreacionISO']);
+    const fechaServicioValue = pickValue(remito, ['fechaServicio', 'FechaServicio']);
+    const tecnicoValue = pickValue(remito, ['tecnico', 'Tecnico', 'MailTecnico']);
+    const observacionesValue = pickValue(remito, ['observaciones', 'Observaciones']);
+    const direccionValue = pickValue(remito, ['direccion', 'Direccion']);
+    const telefonoValue = pickValue(remito, ['telefono', 'Telefono']);
+    const emailValue = pickValue(remito, ['email', 'Email', 'MailCliente']);
+    const reporteIdValue = pickValue(remito, ['reporteId', 'ReporteID', 'IdUnico', 'IDInterna']);
+
     return {
-        numeroRemito: sanitizeString(remito.numeroRemito ?? remito.NumeroRemito),
-        numeroReporte: sanitizeString(remito.numeroReporte ?? remito.NumeroReporte),
-        cliente: sanitizeString(remito.cliente ?? remito.Cliente),
-        fechaRemito: formatDateValue(remito.fechaRemito ?? remito.FechaRemito, fechaRemitoISO),
-        fechaRemitoISO: sanitizeString(fechaRemitoISO),
-        fechaServicio: formatDateValue(remito.fechaServicio ?? remito.FechaServicio, fechaServicioISO),
+        numeroRemito: sanitizeString(numeroRemitoValue),
+        numeroReporte: sanitizeString(numeroReporteValue),
+        cliente: sanitizeString(clienteValue),
+        fechaRemito: formatDateValue(
+            fechaRemitoValue,
+            fechaRemitoIsoValue ?? fechaRemitoISO
+        ),
+        fechaRemitoISO: sanitizeString(fechaRemitoIsoValue ?? fechaRemitoISO),
+        fechaServicio: formatDateValue(fechaServicioValue, fechaServicioISO),
         fechaServicioISO: sanitizeString(fechaServicioISO),
-        tecnico: sanitizeString(remito.tecnico ?? remito.Tecnico),
-        observaciones: sanitizeString(remito.observaciones ?? remito.Observaciones),
-        direccion: sanitizeString(remito.direccion ?? remito.Direccion),
-        telefono: sanitizeString(remito.telefono ?? remito.Telefono),
-        email: sanitizeString(remito.email ?? remito.Email),
-        reporteId: sanitizeString(remito.reporteId ?? remito.ReporteID),
+        tecnico: sanitizeString(tecnicoValue),
+        observaciones: sanitizeString(observacionesValue),
+        direccion: sanitizeString(direccionValue),
+        telefono: sanitizeString(telefonoValue),
+        email: sanitizeString(emailValue),
+        reporteId: sanitizeString(reporteIdValue),
     };
 }
 
