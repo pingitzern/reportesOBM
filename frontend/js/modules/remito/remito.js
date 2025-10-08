@@ -294,7 +294,8 @@ function normalizeCantidadValue(value) {
 
     const numericValue = Number(textValue.replace(',', '.'));
     if (Number.isFinite(numericValue)) {
-        return String(numericValue);
+        const clampedValue = Math.max(0, numericValue);
+        return String(clampedValue);
     }
 
     return textValue;
