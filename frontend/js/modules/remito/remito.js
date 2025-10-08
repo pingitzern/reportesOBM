@@ -307,6 +307,57 @@ function addEmptyRepuestoRow({ focus = false } = {}) {
     }
 }
 
+function extractRepuestosFromTable() {
+    if (typeof document === 'undefined') {
+        return [];
+    }
+
+    const tbody = getElement('remito-repuestos-body');
+    if (!(tbody instanceof HTMLElement)) {
+        return [];
+    }
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    if (rows.length === 0) {
+        return [];
+    }
+
+    return rows.reduce((items, row) => {
+        const inputs = Array.from(row.querySelectorAll('input[data-field]'));
+        if (inputs.length === 0) {
+            return items;
+        }
+
+        const repuesto = inputs.reduce((acc, input) => {
+            if (!(input instanceof HTMLInputElement)) {
+                return acc;
+            }
+
+            const field = normalizeString(input.dataset.field);
+            if (!field) {
+                return acc;
+            }
+
+            const value = normalizeString(input.value);
+            if (field === 'cantidad' && value) {
+                const parsed = Number(String(value).replace(',', '.'));
+                acc[field] = Number.isFinite(parsed) ? String(parsed) : value;
+            } else {
+                acc[field] = value;
+            }
+
+            return acc;
+        }, {});
+
+        const hasValues = ['codigo', 'descripcion', 'cantidad'].some(key => hasContent(repuesto[key]));
+        if (hasValues) {
+            items.push(repuesto);
+        }
+
+        return items;
+    }, []);
+}
+
 function createReportSnapshot(rawData) {
     const snapshot = cloneReportData(rawData);
 
@@ -447,6 +498,11 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         if (!lastSavedReport) {
             window.alert?.('No hay datos disponibles para generar el remito. Guardá el mantenimiento primero.');
             return;
+        }
+
+        const repuestos = extractRepuestosFromTable();
+        if (Array.isArray(repuestos)) {
+            lastSavedReport.repuestos = repuestos;
         }
 
         const observacionesElement = getElement('remito-observaciones');
