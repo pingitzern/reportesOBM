@@ -1,5 +1,3 @@
-import { obtenerRemitos } from '../../api.js';
-
 const DEFAULT_PAGE_SIZE = 20;
 
 function pickValue(source, keys) {
@@ -160,7 +158,7 @@ function normalizeRemitoForDisplay(remito) {
         cliente: sanitizeString(clienteValue),
         fechaRemito: formatDateValue(
             fechaRemitoValue,
-            fechaRemitoIsoValue ?? fechaRemitoISO
+            fechaRemitoIsoValue ?? fechaRemitoISO,
         ),
         fechaRemitoISO: sanitizeString(fechaRemitoIsoValue ?? fechaRemitoISO),
         fechaServicio: formatDateValue(fechaServicioValue, fechaServicioISO),
@@ -174,6 +172,104 @@ function normalizeRemitoForDisplay(remito) {
     };
 }
 
+function getEmptyFormData() {
+    return {
+        numeroRemito: '',
+        numeroReporte: '',
+        cliente: '',
+        fechaRemitoISO: '',
+        fechaServicioISO: '',
+        tecnico: '',
+        observaciones: '',
+        direccion: '',
+        telefono: '',
+        email: '',
+        reporteId: '',
+    };
+}
+
+function formatDateForInput(value) {
+    const sanitized = sanitizeString(value);
+    if (!sanitized) {
+        return '';
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(sanitized)) {
+        return sanitized.slice(0, 10);
+    }
+
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(sanitized)) {
+        const [day, month, year] = sanitized.split('/');
+        return `${year}-${month}-${day}`;
+    }
+
+    const parsed = new Date(sanitized);
+    if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString().split('T')[0];
+    }
+
+    return '';
+}
+
+function mapRemitoToFormData(remito = {}) {
+    return {
+        numeroRemito: sanitizeString(remito.numeroRemito),
+        numeroReporte: sanitizeString(remito.numeroReporte),
+        cliente: sanitizeString(remito.cliente),
+        fechaRemitoISO: formatDateForInput(remito.fechaRemitoISO || remito.fechaRemito),
+        fechaServicioISO: formatDateForInput(remito.fechaServicioISO || remito.fechaServicio),
+        tecnico: sanitizeString(remito.tecnico),
+        observaciones: sanitizeString(remito.observaciones),
+        direccion: sanitizeString(remito.direccion),
+        telefono: sanitizeString(remito.telefono),
+        email: sanitizeString(remito.email),
+        reporteId: sanitizeString(remito.reporteId),
+    };
+}
+
+function buildPayloadFromForm(formData = {}) {
+    const fechaRemitoISO = sanitizeString(formData.fechaRemitoISO);
+    const fechaServicioISO = sanitizeString(formData.fechaServicioISO);
+
+    return {
+        numeroRemito: sanitizeString(formData.numeroRemito),
+        numeroReporte: sanitizeString(formData.numeroReporte),
+        cliente: sanitizeString(formData.cliente),
+        fechaRemito: fechaRemitoISO,
+        fechaRemitoISO,
+        fechaServicio: fechaServicioISO,
+        fechaServicioISO,
+        tecnico: sanitizeString(formData.tecnico),
+        observaciones: sanitizeString(formData.observaciones),
+        direccion: sanitizeString(formData.direccion),
+        telefono: sanitizeString(formData.telefono),
+        email: sanitizeString(formData.email),
+        reporteId: sanitizeString(formData.reporteId),
+    };
+}
+
+function validateFormData(formData = {}) {
+    const errors = [];
+
+    if (!sanitizeString(formData.numeroRemito)) {
+        errors.push('El número de remito es obligatorio.');
+    }
+
+    if (!sanitizeString(formData.cliente)) {
+        errors.push('El nombre del cliente es obligatorio.');
+    }
+
+    return errors;
+}
+
+function getRemitoIdentifier(remito) {
+    if (!remito || typeof remito !== 'object') {
+        return '';
+    }
+
+    return sanitizeString(remito.reporteId) || sanitizeString(remito.numeroRemito);
+}
+
 const state = {
     remitos: [],
     currentPage: 1,
@@ -182,7 +278,37 @@ const state = {
     pageSize: DEFAULT_PAGE_SIZE,
     isLoading: false,
     lastError: null,
+    formMode: 'create',
+    formData: getEmptyFormData(),
+    editingRemitoId: null,
+    editingRemitoLabel: '',
+    editingRemitoOriginal: null,
+    isSaving: false,
+    isDeleting: false,
+    deletingIndex: null,
+    feedback: null,
 };
+
+const defaultDependencies = {
+    obtenerRemitos: async () => {
+        throw new Error('La función obtenerRemitos no fue provista.');
+    },
+    crearRemito: async () => {
+        throw new Error('La función crearRemito no fue provista.');
+    },
+    actualizarRemito: async () => {
+        throw new Error('La función actualizarRemito no fue provista.');
+    },
+    eliminarRemito: async () => {
+        throw new Error('La función eliminarRemito no fue provista.');
+    },
+};
+
+let dependencies = { ...defaultDependencies };
+
+function setDependencies(overrides = {}) {
+    dependencies = { ...defaultDependencies, ...(overrides || {}) };
+}
 
 function getContainerElement() {
     return document.getElementById('remitos-gestion-container');
@@ -220,51 +346,69 @@ function showErrorState(message) {
     `;
 }
 
-function showEmptyState() {
-    const container = getContainerElement();
-    if (!container) {
+function setFeedback(type, message) {
+    const messageText = sanitizeString(message);
+    if (!type || !messageText) {
+        state.feedback = null;
         return;
     }
 
-    container.innerHTML = `
-        <div class="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center shadow-sm">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">No se encontraron remitos</h3>
-            <p class="text-gray-500 mb-6">Aún no hay remitos generados o no coinciden con los filtros seleccionados.</p>
-            <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1" data-remitos-action="reload">
-                Actualizar
-            </button>
-        </div>
-    `;
+    state.feedback = { type, message: messageText };
 }
 
-function showTableState() {
+function resetFormState() {
+    state.formMode = 'create';
+    state.formData = getEmptyFormData();
+    state.editingRemitoId = null;
+    state.editingRemitoLabel = '';
+    state.editingRemitoOriginal = null;
+}
+
+function renderManagementView() {
     const container = getContainerElement();
     if (!container) {
         return;
     }
 
-    const rowsHtml = state.remitos
-        .map((remito, index) => {
-            const numeroRemito = escapeHtml(getDisplayValue(remito.numeroRemito));
-            const fecha = escapeHtml(getDisplayValue(remito.fechaRemito));
-            const cliente = escapeHtml(getDisplayValue(remito.cliente));
-            const numeroReporte = escapeHtml(getDisplayValue(remito.numeroReporte));
+    const rowsHtml = state.remitos.length
+        ? state.remitos
+            .map((remito, index) => {
+                const numeroRemito = escapeHtml(getDisplayValue(remito.numeroRemito));
+                const fecha = escapeHtml(getDisplayValue(remito.fechaRemito));
+                const cliente = escapeHtml(getDisplayValue(remito.cliente));
+                const numeroReporte = escapeHtml(getDisplayValue(remito.numeroReporte));
+                const isDeletingRow = state.isDeleting && state.deletingIndex === index;
 
-            return `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">${numeroRemito}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${fecha}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${cliente}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${numeroReporte}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <button type="button" class="text-sm font-semibold text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remito-detalle="${index}">
-                            Ver Detalle
-                        </button>
-                    </td>
-                </tr>
-            `;
-        })
-        .join('');
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">${numeroRemito}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${fecha}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${cliente}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${numeroReporte}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-3">
+                                <button type="button" class="text-sm font-semibold text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remito-detalle="${index}">
+                                    Ver detalle
+                                </button>
+                                <button type="button" class="text-sm font-semibold text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2" data-remito-edit="${index}">
+                                    Editar
+                                </button>
+                                <button type="button" class="text-sm font-semibold text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-delete="${index}" ${isDeletingRow ? 'disabled' : ''}>
+                                    ${isDeletingRow ? 'Eliminando...' : 'Eliminar'}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            })
+            .join('')
+        : `
+            <tr>
+                <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
+                    No hay remitos registrados todavía. Utilizá el formulario para cargar uno nuevo.
+                </td>
+            </tr>
+        `;
 
     const paginationInfo = state.totalPages > 0
         ? `Página ${state.currentPage} de ${state.totalPages}`
@@ -274,42 +418,129 @@ function showTableState() {
     const lastItemIndex = firstItemIndex + state.remitos.length - 1;
     const summaryInfo = state.totalItems > 0
         ? `Mostrando ${firstItemIndex} - ${lastItemIndex} de ${state.totalItems} remitos`
+        : 'No hay remitos registrados.';
+
+    const disableFormFields = state.isSaving || state.isLoading;
+    const disabledAttr = disableFormFields ? 'disabled' : '';
+    const submitLabel = state.formMode === 'edit'
+        ? (state.isSaving ? 'Guardando cambios...' : 'Actualizar remito')
+        : (state.isSaving ? 'Guardando remito...' : 'Crear remito');
+
+    const feedbackHtml = state.feedback
+        ? `<div class="rounded-lg border ${state.feedback.type === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700'} px-4 py-3 text-sm font-medium">${escapeHtml(state.feedback.message)}</div>`
         : '';
 
-    const prevDisabled = state.currentPage <= 1 ? 'disabled' : '';
-    const nextDisabled = state.totalPages === 0 || state.currentPage >= state.totalPages ? 'disabled' : '';
+    const formTitle = state.formMode === 'edit' ? 'Editar remito' : 'Registrar nuevo remito';
+    const editingLabel = escapeHtml(state.editingRemitoLabel || state.formData.numeroRemito || '');
+    const formSubtitle = state.formMode === 'edit'
+        ? `Estás editando el remito ${editingLabel}.`
+        : 'Completá los datos para registrar un remito manualmente.';
+
+    const cancelButtonHtml = state.formMode === 'edit'
+        ? `<button type="button" class="inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="cancel-edit" ${disabledAttr}>Cancelar</button>`
+        : '';
 
     container.innerHTML = `
-        <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-            <div class="flex flex-col gap-2 border-b border-gray-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
-                <h3 class="text-lg font-semibold text-gray-800">Listado de Remitos</h3>
-                <span class="text-sm text-gray-500">${escapeHtml(paginationInfo)}</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Número de Remito</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Fecha</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Cliente</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Número de Reporte</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
-                        ${rowsHtml}
-                    </tbody>
-                </table>
-            </div>
-            <div class="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
-                <div class="text-sm text-gray-500">${escapeHtml(summaryInfo)}</div>
-                <div class="flex items-center gap-3">
-                    <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="prev" ${prevDisabled}>
-                        Anterior
-                    </button>
-                    <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="next" ${nextDisabled}>
-                        Siguiente
-                    </button>
+        <div class="space-y-6">
+            ${feedbackHtml ? `<div>${feedbackHtml}</div>` : ''}
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div class="xl:col-span-2 space-y-4">
+                    <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                        <div class="flex flex-col gap-2 border-b border-gray-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
+                            <h3 class="text-lg font-semibold text-gray-800">Listado de Remitos</h3>
+                            <span class="text-sm text-gray-500">${escapeHtml(paginationInfo)}</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Número de Remito</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Fecha</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Cliente</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Número de Reporte</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 bg-white">
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
+                            <div class="text-sm text-gray-500">${escapeHtml(summaryInfo)}</div>
+                            <div class="flex items-center gap-3">
+                                <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="prev" ${state.currentPage <= 1 ? 'disabled' : ''}>
+                                    Anterior
+                                </button>
+                                <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="next" ${(state.totalPages === 0 || state.currentPage >= state.totalPages) ? 'disabled' : ''}>
+                                    Siguiente
+                                </button>
+                                <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remitos-action="reload">
+                                    Actualizar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="xl:col-span-1">
+                    <form id="remito-abm-form" class="rounded-xl border border-gray-200 bg-white shadow-sm p-6 space-y-5">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">${escapeHtml(formTitle)}</h3>
+                            <p class="mt-1 text-sm text-gray-500">${formSubtitle}</p>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-numero" class="text-sm font-medium text-gray-700">Número de remito *</label>
+                                <input id="remito-form-numero" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroRemito" value="${escapeHtml(state.formData.numeroRemito)}" placeholder="Ej. REM-2024-001" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-reporte" class="text-sm font-medium text-gray-700">Número de reporte</label>
+                                <input id="remito-form-reporte" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroReporte" value="${escapeHtml(state.formData.numeroReporte)}" placeholder="Ej. REP-2024-015" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-cliente" class="text-sm font-medium text-gray-700">Cliente *</label>
+                                <input id="remito-form-cliente" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="cliente" value="${escapeHtml(state.formData.cliente)}" placeholder="Nombre del cliente" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-fecha" class="text-sm font-medium text-gray-700">Fecha del remito</label>
+                                <input id="remito-form-fecha" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaRemitoISO" value="${escapeHtml(state.formData.fechaRemitoISO)}" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-fecha-servicio" class="text-sm font-medium text-gray-700">Fecha del servicio</label>
+                                <input id="remito-form-fecha-servicio" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaServicioISO" value="${escapeHtml(state.formData.fechaServicioISO)}" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-tecnico" class="text-sm font-medium text-gray-700">Técnico</label>
+                                <input id="remito-form-tecnico" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="tecnico" value="${escapeHtml(state.formData.tecnico)}" placeholder="Nombre del técnico" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-direccion" class="text-sm font-medium text-gray-700">Dirección</label>
+                                <input id="remito-form-direccion" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="direccion" value="${escapeHtml(state.formData.direccion)}" placeholder="Domicilio del servicio" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-telefono" class="text-sm font-medium text-gray-700">Teléfono</label>
+                                <input id="remito-form-telefono" type="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="telefono" value="${escapeHtml(state.formData.telefono)}" placeholder="Teléfono de contacto" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-email" class="text-sm font-medium text-gray-700">Email</label>
+                                <input id="remito-form-email" type="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="email" value="${escapeHtml(state.formData.email)}" placeholder="correo@cliente.com" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-reporte-id" class="text-sm font-medium text-gray-700">ID de reporte (opcional)</label>
+                                <input id="remito-form-reporte-id" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="reporteId" value="${escapeHtml(state.formData.reporteId)}" placeholder="Identificador interno" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-observaciones" class="text-sm font-medium text-gray-700">Observaciones</label>
+                                <textarea id="remito-form-observaciones" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="observaciones" placeholder="Notas adicionales" ${disabledAttr}>${escapeHtml(state.formData.observaciones)}</textarea>
+                            </div>
+                        </div>
+                        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            ${cancelButtonHtml}
+                            <button type="submit" class="inline-flex justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" ${disabledAttr}>
+                                ${escapeHtml(submitLabel)}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -360,6 +591,163 @@ function handleDetalleRemito(index) {
     }
 }
 
+function handleEditRemito(index) {
+    if (!Array.isArray(state.remitos) || state.remitos.length === 0) {
+        return;
+    }
+
+    if (!Number.isFinite(index) || index < 0 || index >= state.remitos.length) {
+        return;
+    }
+
+    const remito = state.remitos[index];
+    if (!remito) {
+        return;
+    }
+
+    state.formMode = 'edit';
+    state.formData = mapRemitoToFormData(remito);
+    state.editingRemitoId = getRemitoIdentifier(remito);
+    state.editingRemitoLabel = sanitizeString(remito.numeroRemito) || sanitizeString(remito.reporteId);
+    state.editingRemitoOriginal = remito;
+
+    renderManagementView();
+}
+
+async function handleDeleteRemito(index) {
+    if (state.isDeleting || state.isSaving) {
+        return;
+    }
+
+    if (!Array.isArray(state.remitos) || index < 0 || index >= state.remitos.length) {
+        return;
+    }
+
+    const remito = state.remitos[index];
+    if (!remito) {
+        return;
+    }
+
+    const identifier = getRemitoIdentifier(remito);
+    if (!identifier) {
+        setFeedback('error', 'No se pudo determinar el remito a eliminar.');
+        renderManagementView();
+        return;
+    }
+
+    if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+        const confirmed = window.confirm(`¿Seguro que querés eliminar el remito ${remito.numeroRemito || identifier}?`);
+        if (!confirmed) {
+            return;
+        }
+    }
+
+    state.isDeleting = true;
+    state.deletingIndex = index;
+    renderManagementView();
+
+    try {
+        await dependencies.eliminarRemito({
+            remitoId: identifier,
+            numeroRemito: remito.numeroRemito,
+            reporteId: remito.reporteId,
+        });
+
+        setFeedback('success', 'El remito se eliminó correctamente.');
+
+        const wasEditingDeleted = state.formMode === 'edit'
+            && identifier === state.editingRemitoId;
+        if (wasEditingDeleted) {
+            resetFormState();
+        }
+
+        state.isDeleting = false;
+        state.deletingIndex = null;
+
+        const remainingItems = state.remitos.length - 1;
+        const targetPage = remainingItems === 0 && state.currentPage > 1
+            ? state.currentPage - 1
+            : state.currentPage;
+
+        await renderListado({ page: targetPage });
+    } catch (error) {
+        state.isDeleting = false;
+        state.deletingIndex = null;
+        setFeedback('error', error?.message || 'No se pudo eliminar el remito.');
+        renderManagementView();
+    }
+}
+
+function handleFormInput(event) {
+    const field = event?.target?.dataset?.remitoField;
+    if (!field || !(field in state.formData)) {
+        return;
+    }
+
+    state.formData[field] = event.target.value;
+}
+
+function handleContainerInput(event) {
+    handleFormInput(event);
+}
+
+async function handleFormSubmit() {
+    if (state.isSaving || state.isLoading) {
+        return;
+    }
+
+    const errors = validateFormData(state.formData);
+    if (errors.length > 0) {
+        setFeedback('error', errors.join(' '));
+        renderManagementView();
+        return;
+    }
+
+    const payload = buildPayloadFromForm(state.formData);
+    const targetPage = state.currentPage || 1;
+    const wasEditMode = state.formMode === 'edit';
+
+    state.isSaving = true;
+    renderManagementView();
+
+    try {
+        if (wasEditMode) {
+            const remitoId = state.editingRemitoId
+                || getRemitoIdentifier(state.editingRemitoOriginal)
+                || sanitizeString(state.formData.reporteId)
+                || sanitizeString(state.formData.numeroRemito);
+
+            if (!remitoId) {
+                throw new Error('No se pudo determinar el remito a actualizar.');
+            }
+
+            await dependencies.actualizarRemito({
+                ...payload,
+                remitoId,
+            });
+            setFeedback('success', 'El remito se actualizó correctamente.');
+        } else {
+            await dependencies.crearRemito(payload);
+            setFeedback('success', 'El remito se creó correctamente.');
+        }
+
+        resetFormState();
+        state.isSaving = false;
+        await renderListado({ page: targetPage });
+    } catch (error) {
+        state.isSaving = false;
+        setFeedback('error', error?.message || 'No se pudo guardar el remito.');
+        renderManagementView();
+    }
+}
+
+function handleContainerSubmit(event) {
+    if (event.target && event.target.id === 'remito-abm-form') {
+        event.preventDefault();
+        void handleFormSubmit();
+    }
+}
+
 function handleAction(action) {
     if (!action || state.isLoading) {
         return;
@@ -382,6 +770,12 @@ function handleAction(action) {
     if (action === 'reload') {
         const targetPage = state.currentPage && state.currentPage > 0 ? state.currentPage : 1;
         void renderListado({ page: targetPage });
+        return;
+    }
+
+    if (action === 'cancel-edit') {
+        resetFormState();
+        renderManagementView();
     }
 }
 
@@ -400,6 +794,26 @@ function handleContainerClick(event) {
         if (Number.isFinite(index)) {
             handleDetalleRemito(index);
         }
+        return;
+    }
+
+    const editButton = event.target.closest('[data-remito-edit]');
+    if (editButton) {
+        event.preventDefault();
+        const index = Number.parseInt(editButton.dataset.remitoEdit, 10);
+        if (Number.isFinite(index)) {
+            handleEditRemito(index);
+        }
+        return;
+    }
+
+    const deleteButton = event.target.closest('[data-remito-delete]');
+    if (deleteButton) {
+        event.preventDefault();
+        const index = Number.parseInt(deleteButton.dataset.remitoDelete, 10);
+        if (Number.isFinite(index)) {
+            void handleDeleteRemito(index);
+        }
     }
 }
 
@@ -413,7 +827,7 @@ async function renderListado({ page } = {}) {
     showLoadingState();
 
     try {
-        const data = await obtenerRemitos({ page: requestedPage, pageSize: state.pageSize });
+        const data = await dependencies.obtenerRemitos({ page: requestedPage, pageSize: state.pageSize });
 
         const remitos = Array.isArray(data?.remitos) ? data.remitos : [];
         state.remitos = remitos.map((item) => normalizeRemitoForDisplay(item));
@@ -433,13 +847,9 @@ async function renderListado({ page } = {}) {
         if (!Number.isFinite(currentPage) || currentPage <= 0) {
             currentPage = state.totalPages > 0 ? 1 : 0;
         }
-        state.currentPage = currentPage;
+        state.currentPage = currentPage || requestedPage;
 
-        if (!state.remitos.length) {
-            showEmptyState();
-        } else {
-            showTableState();
-        }
+        renderManagementView();
     } catch (error) {
         state.lastError = error;
         const message = error?.message || 'No se pudieron obtener los remitos.';
@@ -449,7 +859,8 @@ async function renderListado({ page } = {}) {
     }
 }
 
-export function createRemitosGestionModule() {
+export function createRemitosGestionModule(overrides = {}) {
+    setDependencies(overrides);
     let initialized = false;
 
     function initialize() {
@@ -464,6 +875,8 @@ export function createRemitosGestionModule() {
         }
 
         container.addEventListener('click', handleContainerClick);
+        container.addEventListener('input', handleContainerInput);
+        container.addEventListener('submit', handleContainerSubmit);
         initialized = true;
     }
 
@@ -479,5 +892,7 @@ export const __testables__ = {
     formatDateValue,
     escapeHtml,
     normalizeRemitoForDisplay,
+    mapRemitoToFormData,
+    buildPayloadFromForm,
     state,
 };
