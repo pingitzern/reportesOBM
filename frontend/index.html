@@ -33,6 +33,16 @@
                     <nav class="user-menu__content" aria-label="Opciones de usuario">
                         <a href="#" class="user-menu__item" role="menuitem">Ayuda</a>
                         <a href="#" class="user-menu__item" role="menuitem">Configuración</a>
+                        <div class="user-menu__item user-menu__toggle" role="none">
+                            <div class="user-menu__toggle-info">
+                                <span class="user-menu__toggle-label">Modo oscuro</span>
+                                <span class="user-menu__toggle-state" id="theme-toggle-state" data-theme-state>Desactivado</span>
+                            </div>
+                            <label for="theme-toggle" class="toggle-switch" aria-label="Cambiar modo oscuro">
+                                <input type="checkbox" id="theme-toggle" class="toggle-switch-input" role="switch" aria-checked="false" aria-describedby="theme-toggle-state">
+                                <span class="toggle-switch-slider" aria-hidden="true"></span>
+                            </label>
+                        </div>
                         <button id="logout-button" type="button" class="user-menu__item user-menu__logout" role="menuitem" disabled>
                             Cerrar Sesión
                         </button>

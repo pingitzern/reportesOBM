@@ -3,6 +3,7 @@ import { showView } from './viewManager.js';
 import * as api from './api.js';
 import { API_URL } from './config.js';
 import { initializeAuth, getCurrentToken } from './modules/login/auth.js';
+import { initializeTheme } from './modules/theme/theme.js';
 import { createDashboardModule } from './modules/dashboard/dashboard.js';
 import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js';
 import { createSearchModule } from './modules/busqueda/busqueda.js';
@@ -21,6 +22,8 @@ const {
     actualizarRemito,
     eliminarRemito,
 } = api;
+
+initializeTheme();
 
 const remitoModule = createRemitoModule({
     showView,
