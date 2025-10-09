@@ -278,6 +278,7 @@ const state = {
     pageSize: DEFAULT_PAGE_SIZE,
     isLoading: false,
     lastError: null,
+    viewMode: 'list',
     formMode: 'create',
     formData: getEmptyFormData(),
     editingRemitoId: null,
@@ -356,17 +357,113 @@ function setFeedback(type, message) {
     state.feedback = { type, message: messageText };
 }
 
-function resetFormState() {
+function resetFormState({ viewMode = 'list' } = {}) {
     state.formMode = 'create';
     state.formData = getEmptyFormData();
     state.editingRemitoId = null;
     state.editingRemitoLabel = '';
     state.editingRemitoOriginal = null;
+    state.viewMode = viewMode;
 }
 
 function renderManagementView() {
     const container = getContainerElement();
     if (!container) {
+        return;
+    }
+
+    const disableFormFields = state.isSaving || state.isLoading;
+    const disabledAttr = disableFormFields ? 'disabled' : '';
+    const submitLabel = state.formMode === 'edit'
+        ? (state.isSaving ? 'Guardando cambios...' : 'Actualizar remito')
+        : (state.isSaving ? 'Guardando remito...' : 'Crear remito');
+
+    const feedbackHtml = state.feedback
+        ? `<div class="rounded-lg border ${state.feedback.type === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700'} px-4 py-3 text-sm font-medium">${escapeHtml(state.feedback.message)}</div>`
+        : '';
+
+    const formTitle = state.formMode === 'edit' ? 'Editar remito' : 'Registrar nuevo remito';
+    const editingLabel = escapeHtml(state.editingRemitoLabel || state.formData.numeroRemito || '');
+    const formSubtitle = state.formMode === 'edit'
+        ? `Estás editando el remito ${editingLabel}.`
+        : 'Completá los datos para registrar un remito manualmente.';
+
+    const secondaryButtons = [
+        `<button type="button" class="inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="back-to-list" ${disabledAttr}>Volver al listado</button>`,
+    ];
+
+    if (state.formMode === 'edit') {
+        secondaryButtons.unshift(`<button type="button" class="inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="cancel-edit" ${disabledAttr}>Cancelar edición</button>`);
+    }
+
+    const secondaryButtonHtml = secondaryButtons.join('');
+
+    if (state.viewMode === 'form') {
+        container.innerHTML = `
+            <div class="space-y-6">
+                ${feedbackHtml ? `<div>${feedbackHtml}</div>` : ''}
+                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                    <div class="border-b border-gray-100 px-6 py-5">
+                        <h3 class="text-lg font-semibold text-gray-800">${escapeHtml(formTitle)}</h3>
+                        <p class="mt-1 text-sm text-gray-500">${formSubtitle}</p>
+                    </div>
+                    <form id="remito-abm-form" class="space-y-5 px-6 py-6">
+                        <div class="space-y-4">
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-numero" class="text-sm font-medium text-gray-700">Número de remito *</label>
+                                <input id="remito-form-numero" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroRemito" value="${escapeHtml(state.formData.numeroRemito)}" placeholder="Ej. REM-2024-001" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-reporte" class="text-sm font-medium text-gray-700">Número de reporte</label>
+                                <input id="remito-form-reporte" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroReporte" value="${escapeHtml(state.formData.numeroReporte)}" placeholder="Ej. REP-2024-015" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-cliente" class="text-sm font-medium text-gray-700">Cliente *</label>
+                                <input id="remito-form-cliente" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="cliente" value="${escapeHtml(state.formData.cliente)}" placeholder="Nombre del cliente" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-fecha" class="text-sm font-medium text-gray-700">Fecha del remito</label>
+                                <input id="remito-form-fecha" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaRemitoISO" value="${escapeHtml(state.formData.fechaRemitoISO)}" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-fecha-servicio" class="text-sm font-medium text-gray-700">Fecha del servicio</label>
+                                <input id="remito-form-fecha-servicio" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaServicioISO" value="${escapeHtml(state.formData.fechaServicioISO)}" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-tecnico" class="text-sm font-medium text-gray-700">Técnico</label>
+                                <input id="remito-form-tecnico" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="tecnico" value="${escapeHtml(state.formData.tecnico)}" placeholder="Nombre del técnico" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-direccion" class="text-sm font-medium text-gray-700">Dirección</label>
+                                <input id="remito-form-direccion" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="direccion" value="${escapeHtml(state.formData.direccion)}" placeholder="Domicilio del servicio" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-telefono" class="text-sm font-medium text-gray-700">Teléfono</label>
+                                <input id="remito-form-telefono" type="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="telefono" value="${escapeHtml(state.formData.telefono)}" placeholder="Teléfono de contacto" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-email" class="text-sm font-medium text-gray-700">Email</label>
+                                <input id="remito-form-email" type="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="email" value="${escapeHtml(state.formData.email)}" placeholder="Correo electrónico del cliente" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-reporte-id" class="text-sm font-medium text-gray-700">ID del reporte</label>
+                                <input id="remito-form-reporte-id" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="reporteId" value="${escapeHtml(state.formData.reporteId)}" placeholder="Identificador del reporte asociado" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-observaciones" class="text-sm font-medium text-gray-700">Observaciones</label>
+                                <textarea id="remito-form-observaciones" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="observaciones" placeholder="Notas adicionales" ${disabledAttr}>${escapeHtml(state.formData.observaciones)}</textarea>
+                            </div>
+                        </div>
+                        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                            ${secondaryButtonHtml}
+                            <button type="submit" class="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" ${disabledAttr}>
+                                ${escapeHtml(submitLabel)}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
         return;
     }
 
@@ -405,7 +502,7 @@ function renderManagementView() {
         : `
             <tr>
                 <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
-                    No hay remitos registrados todavía. Utilizá el formulario para cargar uno nuevo.
+                    No hay remitos registrados todavía. Usá el botón "Crear nuevo remito" para cargar uno.
                 </td>
             </tr>
         `;
@@ -420,127 +517,50 @@ function renderManagementView() {
         ? `Mostrando ${firstItemIndex} - ${lastItemIndex} de ${state.totalItems} remitos`
         : 'No hay remitos registrados.';
 
-    const disableFormFields = state.isSaving || state.isLoading;
-    const disabledAttr = disableFormFields ? 'disabled' : '';
-    const submitLabel = state.formMode === 'edit'
-        ? (state.isSaving ? 'Guardando cambios...' : 'Actualizar remito')
-        : (state.isSaving ? 'Guardando remito...' : 'Crear remito');
-
-    const feedbackHtml = state.feedback
-        ? `<div class="rounded-lg border ${state.feedback.type === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700'} px-4 py-3 text-sm font-medium">${escapeHtml(state.feedback.message)}</div>`
-        : '';
-
-    const formTitle = state.formMode === 'edit' ? 'Editar remito' : 'Registrar nuevo remito';
-    const editingLabel = escapeHtml(state.editingRemitoLabel || state.formData.numeroRemito || '');
-    const formSubtitle = state.formMode === 'edit'
-        ? `Estás editando el remito ${editingLabel}.`
-        : 'Completá los datos para registrar un remito manualmente.';
-
-    const cancelButtonHtml = state.formMode === 'edit'
-        ? `<button type="button" class="inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="cancel-edit" ${disabledAttr}>Cancelar</button>`
-        : '';
+    const createDisabledAttr = (state.isLoading || state.isSaving) ? 'disabled' : '';
 
     container.innerHTML = `
         <div class="space-y-6">
             ${feedbackHtml ? `<div>${feedbackHtml}</div>` : ''}
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div class="xl:col-span-2 space-y-4">
-                    <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                        <div class="flex flex-col gap-2 border-b border-gray-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Listado de Remitos</h3>
-                            <span class="text-sm text-gray-500">${escapeHtml(paginationInfo)}</span>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Número de Remito</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Fecha</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Cliente</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Número de Reporte</th>
-                                        <th scope="col" class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 bg-white">
-                                    ${rowsHtml}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
-                            <div class="text-sm text-gray-500">${escapeHtml(summaryInfo)}</div>
-                            <div class="flex items-center gap-3">
-                                <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="prev" ${state.currentPage <= 1 ? 'disabled' : ''}>
-                                    Anterior
-                                </button>
-                                <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="next" ${(state.totalPages === 0 || state.currentPage >= state.totalPages) ? 'disabled' : ''}>
-                                    Siguiente
-                                </button>
-                                <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remitos-action="reload">
-                                    Actualizar
-                                </button>
-                            </div>
-                        </div>
+            <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div class="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
+                    <div class="flex flex-col">
+                        <h3 class="text-lg font-semibold text-gray-800">Listado de Remitos</h3>
+                        <span class="text-sm text-gray-500">${escapeHtml(paginationInfo)}</span>
                     </div>
+                    <button type="button" class="inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="open-create" ${createDisabledAttr}>
+                        Crear nuevo remito
+                    </button>
                 </div>
-                <div class="xl:col-span-1">
-                    <form id="remito-abm-form" class="rounded-xl border border-gray-200 bg-white shadow-sm p-6 space-y-5">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">${escapeHtml(formTitle)}</h3>
-                            <p class="mt-1 text-sm text-gray-500">${formSubtitle}</p>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-numero" class="text-sm font-medium text-gray-700">Número de remito *</label>
-                                <input id="remito-form-numero" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroRemito" value="${escapeHtml(state.formData.numeroRemito)}" placeholder="Ej. REM-2024-001" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-reporte" class="text-sm font-medium text-gray-700">Número de reporte</label>
-                                <input id="remito-form-reporte" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroReporte" value="${escapeHtml(state.formData.numeroReporte)}" placeholder="Ej. REP-2024-015" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-cliente" class="text-sm font-medium text-gray-700">Cliente *</label>
-                                <input id="remito-form-cliente" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="cliente" value="${escapeHtml(state.formData.cliente)}" placeholder="Nombre del cliente" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-fecha" class="text-sm font-medium text-gray-700">Fecha del remito</label>
-                                <input id="remito-form-fecha" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaRemitoISO" value="${escapeHtml(state.formData.fechaRemitoISO)}" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-fecha-servicio" class="text-sm font-medium text-gray-700">Fecha del servicio</label>
-                                <input id="remito-form-fecha-servicio" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaServicioISO" value="${escapeHtml(state.formData.fechaServicioISO)}" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-tecnico" class="text-sm font-medium text-gray-700">Técnico</label>
-                                <input id="remito-form-tecnico" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="tecnico" value="${escapeHtml(state.formData.tecnico)}" placeholder="Nombre del técnico" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-direccion" class="text-sm font-medium text-gray-700">Dirección</label>
-                                <input id="remito-form-direccion" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="direccion" value="${escapeHtml(state.formData.direccion)}" placeholder="Domicilio del servicio" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-telefono" class="text-sm font-medium text-gray-700">Teléfono</label>
-                                <input id="remito-form-telefono" type="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="telefono" value="${escapeHtml(state.formData.telefono)}" placeholder="Teléfono de contacto" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-email" class="text-sm font-medium text-gray-700">Email</label>
-                                <input id="remito-form-email" type="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="email" value="${escapeHtml(state.formData.email)}" placeholder="correo@cliente.com" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-reporte-id" class="text-sm font-medium text-gray-700">ID de reporte (opcional)</label>
-                                <input id="remito-form-reporte-id" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="reporteId" value="${escapeHtml(state.formData.reporteId)}" placeholder="Identificador interno" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-observaciones" class="text-sm font-medium text-gray-700">Observaciones</label>
-                                <textarea id="remito-form-observaciones" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="observaciones" placeholder="Notas adicionales" ${disabledAttr}>${escapeHtml(state.formData.observaciones)}</textarea>
-                            </div>
-                        </div>
-                        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            ${cancelButtonHtml}
-                            <button type="submit" class="inline-flex justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" ${disabledAttr}>
-                                ${escapeHtml(submitLabel)}
-                            </button>
-                        </div>
-                    </form>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Número de Remito</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Fecha</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Cliente</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Número de Reporte</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 md:flex-row md:items-center md:justify-between">
+                    <div class="text-sm text-gray-500">${escapeHtml(summaryInfo)}</div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="prev" ${state.currentPage <= 1 ? 'disabled' : ''}>
+                            Anterior
+                        </button>
+                        <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remitos-action="next" ${(state.totalPages === 0 || state.currentPage >= state.totalPages) ? 'disabled' : ''}>
+                            Siguiente
+                        </button>
+                        <button type="button" class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remitos-action="reload">
+                            Actualizar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -610,6 +630,7 @@ function handleEditRemito(index) {
     state.editingRemitoId = getRemitoIdentifier(remito);
     state.editingRemitoLabel = sanitizeString(remito.numeroRemito) || sanitizeString(remito.reporteId);
     state.editingRemitoOriginal = remito;
+    state.viewMode = 'form';
 
     renderManagementView();
 }
@@ -773,9 +794,22 @@ function handleAction(action) {
         return;
     }
 
-    if (action === 'cancel-edit') {
-        resetFormState();
+    if (action === 'open-create') {
+        resetFormState({ viewMode: 'form' });
         renderManagementView();
+        return;
+    }
+
+    if (action === 'back-to-list') {
+        resetFormState({ viewMode: 'list' });
+        renderManagementView();
+        return;
+    }
+
+    if (action === 'cancel-edit') {
+        resetFormState({ viewMode: 'form' });
+        renderManagementView();
+        return;
     }
 }
 
