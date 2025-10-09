@@ -567,6 +567,138 @@ function renderManagementView() {
     `;
 }
 
+function handleDetalleRemito(index) {
+    if (!Array.isArray(state.remitos) || state.remitos.length === 0) {
+        return;
+    }
+
+    if (!Number.isFinite(index) || index < 0 || index >= state.remitos.length) {
+        return;
+    }
+
+    const remito = state.remitos[index];
+    if (!remito) {
+        return;
+    }
+
+    const lines = [
+        `Número de Remito: ${getDisplayValue(remito.numeroRemito)}`,
+        `Fecha del Remito: ${getDisplayValue(remito.fechaRemito)}`,
+        `Cliente: ${getDisplayValue(remito.cliente)}`,
+        `Número de Reporte: ${getDisplayValue(remito.numeroReporte)}`,
+    ];
+
+    const optionalFields = [
+        ['ID del Reporte', remito.reporteId],
+        ['Fecha del Servicio', remito.fechaServicio],
+        ['Técnico', remito.tecnico],
+        ['Dirección', remito.direccion],
+        ['Teléfono', remito.telefono],
+        ['Email', remito.email],
+        ['Observaciones', remito.observaciones],
+    ];
+
+    optionalFields.forEach(([label, value]) => {
+        const sanitized = sanitizeString(value);
+        if (sanitized) {
+            lines.push(`${label}: ${sanitized}`);
+        }
+    });
+
+    const message = lines.join('\n');
+    if (message && typeof window !== 'undefined' && typeof window.alert === 'function') {
+        window.alert(message);
+    }
+}
+
+function handleEditRemito(index) {
+    if (!Array.isArray(state.remitos) || state.remitos.length === 0) {
+        return;
+    }
+
+    if (!Number.isFinite(index) || index < 0 || index >= state.remitos.length) {
+        return;
+    }
+
+    const remito = state.remitos[index];
+    if (!remito) {
+        return;
+    }
+
+    state.formMode = 'edit';
+    state.formData = mapRemitoToFormData(remito);
+    state.editingRemitoId = getRemitoIdentifier(remito);
+    state.editingRemitoLabel = sanitizeString(remito.numeroRemito) || sanitizeString(remito.reporteId);
+    state.editingRemitoOriginal = remito;
+    state.viewMode = 'form';
+
+    renderManagementView();
+}
+
+async function handleDeleteRemito(index) {
+    if (state.isDeleting || state.isSaving) {
+        return;
+    }
+
+    if (!Array.isArray(state.remitos) || index < 0 || index >= state.remitos.length) {
+        return;
+    }
+
+    const remito = state.remitos[index];
+    if (!remito) {
+        return;
+    }
+
+    const identifier = getRemitoIdentifier(remito);
+    if (!identifier) {
+        setFeedback('error', 'No se pudo determinar el remito a eliminar.');
+        renderManagementView();
+        return;
+    }
+
+    if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+        const confirmed = window.confirm(`¿Seguro que querés eliminar el remito ${remito.numeroRemito || identifier}?`);
+        if (!confirmed) {
+            return;
+        }
+    }
+
+    state.isDeleting = true;
+    state.deletingIndex = index;
+    renderManagementView();
+
+    try {
+        await dependencies.eliminarRemito({
+            remitoId: identifier,
+            numeroRemito: remito.numeroRemito,
+            reporteId: remito.reporteId,
+        });
+
+        setFeedback('success', 'El remito se eliminó correctamente.');
+
+        const wasEditingDeleted = state.formMode === 'edit'
+            && identifier === state.editingRemitoId;
+        if (wasEditingDeleted) {
+            resetFormState();
+        }
+
+        state.isDeleting = false;
+        state.deletingIndex = null;
+
+        const remainingItems = state.remitos.length - 1;
+        const targetPage = remainingItems === 0 && state.currentPage > 1
+            ? state.currentPage - 1
+            : state.currentPage;
+
+        await renderListado({ page: targetPage });
+    } catch (error) {
+        state.isDeleting = false;
+        state.deletingIndex = null;
+        setFeedback('error', error?.message || 'No se pudo eliminar el remito.');
+        renderManagementView();
+    }
+}
+
 function handleFormInput(event) {
     const field = event?.target?.dataset?.remitoField;
     if (!field || !(field in state.formData)) {
