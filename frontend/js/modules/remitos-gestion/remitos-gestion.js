@@ -248,6 +248,79 @@ function buildPayloadFromForm(formData = {}) {
     };
 }
 
+function buildReporteDataFromPayload(payload = {}) {
+    const numeroRemito = sanitizeString(payload.numeroRemito);
+    const numeroReporte = sanitizeString(payload.numeroReporte);
+    const cliente = sanitizeString(payload.cliente);
+    const fechaRemitoISO = sanitizeString(payload.fechaRemitoISO);
+    const fechaRemito = sanitizeString(payload.fechaRemito) || fechaRemitoISO;
+    const fechaServicioISO = sanitizeString(payload.fechaServicioISO);
+    const fechaServicio = sanitizeString(payload.fechaServicio) || fechaServicioISO;
+    const tecnico = sanitizeString(payload.tecnico);
+    const observaciones = sanitizeString(payload.observaciones);
+    const direccion = sanitizeString(payload.direccion);
+    const telefono = sanitizeString(payload.telefono);
+    const email = sanitizeString(payload.email);
+    const reporteId = sanitizeString(payload.reporteId);
+
+    const reporteData = {
+        NumeroRemito: numeroRemito || undefined,
+        numero_remito: numeroRemito || undefined,
+        remitoNumero: numeroRemito || undefined,
+        NumeroReporte: numeroReporte || undefined,
+        numero_reporte: numeroReporte || undefined,
+        numeroReporte: numeroReporte || undefined,
+        clienteNombre: cliente || undefined,
+        Cliente: cliente || undefined,
+        cliente: cliente || undefined,
+        fecha_display: fechaRemito || undefined,
+        FechaRemito: fechaRemito || undefined,
+        FechaRemitoISO: fechaRemitoISO || undefined,
+        fecha: fechaServicio || undefined,
+        fecha_servicio: fechaServicio || undefined,
+        Fecha_Servicio: fechaServicio || undefined,
+        FechaServicio: fechaServicio || undefined,
+        FechaServicioISO: fechaServicioISO || undefined,
+        tecnico: tecnico || undefined,
+        Tecnico: tecnico || undefined,
+        observaciones: observaciones || undefined,
+        Observaciones: observaciones || undefined,
+        direccion: direccion || undefined,
+        Direccion: direccion || undefined,
+        cliente_direccion: direccion || undefined,
+        cliente_telefono: telefono || undefined,
+        telefono_cliente: telefono || undefined,
+        Telefono: telefono || undefined,
+        cliente_email: email || undefined,
+        email: email || undefined,
+        Email: email || undefined,
+        reporteId: reporteId || undefined,
+        ID: reporteId || undefined,
+        Id: reporteId || undefined,
+        ID_Unico: reporteId || undefined,
+    };
+
+    return Object.fromEntries(
+        Object.entries(reporteData).filter(([, value]) => value !== undefined && value !== ''),
+    );
+}
+
+function buildCreateRemitoRequest(payload = {}) {
+    const reporteData = buildReporteDataFromPayload(payload);
+
+    if (!reporteData || Object.keys(reporteData).length === 0) {
+        throw new Error('No se pudo generar la información del remito para enviarla al servidor.');
+    }
+
+    const request = { reporteData };
+    const observaciones = sanitizeString(payload.observaciones);
+    if (observaciones) {
+        request.observaciones = observaciones;
+    }
+
+    return request;
+}
+
 function validateFormData(formData = {}) {
     const errors = [];
 
@@ -748,7 +821,8 @@ async function handleFormSubmit() {
             });
             setFeedback('success', 'El remito se actualizó correctamente.');
         } else {
-            await dependencies.crearRemito(payload);
+            const requestPayload = buildCreateRemitoRequest(payload);
+            await dependencies.crearRemito(requestPayload);
             setFeedback('success', 'El remito se creó correctamente.');
         }
 
@@ -930,5 +1004,8 @@ export const __testables__ = {
     normalizeRemitoForDisplay,
     mapRemitoToFormData,
     buildPayloadFromForm,
+    buildReporteDataFromPayload,
+    buildCreateRemitoRequest,
+    handleFormSubmit,
     state,
 };
