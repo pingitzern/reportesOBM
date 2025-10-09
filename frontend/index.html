@@ -15,8 +15,8 @@
                 <img src="/OHM-agua.png" alt="Logo OHM Agua" class="h-14 w-auto md:h-16">
             </div>
             <div class="order-3 w-full text-center md:order-2 md:flex-1">
-                <h1 class="text-3xl font-bold text-gray-800">Sistema de Gestión de Mantenimientos RO</h1>
-                <p class="text-gray-600 mt-2">ID del Protocolo: PMA-RO-RES-12</p>
+                <h1 class="text-2xl font-bold text-gray-800 md:text-3xl lg:text-4xl">Sistema de Gestión de Mantenimientos RO</h1>
+                <p class="mt-2 text-sm text-gray-600 md:text-base">ID del Protocolo: PMA-RO-RES-12</p>
             </div>
             <div class="order-2 md:order-3 relative ml-auto flex items-center gap-3">
                 <div id="auth-user-panel" class="hidden whitespace-nowrap text-sm font-medium text-gray-700">
@@ -51,7 +51,7 @@
         </div>
 
         <!-- Navegación por pestañas - SIN onclick -->
-        <div class="flex space-x-1 mb-6 no-print">
+        <div class="flex flex-wrap justify-center gap-2 mb-6 no-print md:justify-start">
             <button class="tab-button active" id="tab-nuevo-btn">Nuevo Mantenimiento</button>
             <button class="tab-button" id="tab-buscar-btn">Buscar/Editar</button>
             <button class="tab-button" id="tab-dashboard-btn">Dashboard</button>
@@ -275,7 +275,7 @@
                                     <input type="text" class="w-full stage-details">
                                 </div>
                                 <div class="sm:col-span-2">
-                                    <div class="stage-actions flex items-center gap-3"></div>
+                                    <div class="stage-actions flex flex-wrap items-center gap-2"></div>
                                 </div>
                             </div>
                         </template>
@@ -338,11 +338,11 @@
                 </div>
 
                 <!-- Botones de Acción -->
-                <div class="flex justify-end space-x-4 mt-8 no-print">
-                    <button type="button" id="autoFillButton" class="action-button reset-btn">Auto Rellenar</button>
-                    <button type="button" id="resetButton" class="action-button reset-btn">Limpiar Formulario</button>
-                    <button type="button" id="guardarButton" class="action-button print-btn">Guardar y Generar Reporte</button>
-                    <button type="button" id="generar-remito-btn" class="action-button print-btn" disabled>Generar Remito</button>
+                <div class="flex flex-col gap-3 mt-8 no-print sm:flex-row sm:justify-end sm:gap-4">
+                    <button type="button" id="autoFillButton" class="action-button reset-btn w-full sm:w-auto">Auto Rellenar</button>
+                    <button type="button" id="resetButton" class="action-button reset-btn w-full sm:w-auto">Limpiar Formulario</button>
+                    <button type="button" id="guardarButton" class="action-button print-btn w-full sm:w-auto">Guardar y Generar Reporte</button>
+                    <button type="button" id="generar-remito-btn" class="action-button print-btn w-full sm:w-auto" disabled>Generar Remito</button>
                 </div>
             </form>
         </section><!-- /tab-nuevo -->
