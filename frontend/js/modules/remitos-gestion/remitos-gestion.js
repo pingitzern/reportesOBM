@@ -883,10 +883,12 @@ async function renderListado({ page } = {}) {
         }
         state.currentPage = currentPage || requestedPage;
 
+        state.isLoading = false;
         renderManagementView();
     } catch (error) {
         state.lastError = error;
         const message = error?.message || 'No se pudieron obtener los remitos.';
+        state.isLoading = false;
         showErrorState(message);
     } finally {
         state.isLoading = false;
