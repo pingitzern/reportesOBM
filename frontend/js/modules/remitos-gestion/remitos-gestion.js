@@ -902,6 +902,18 @@ export function createRemitosGestionModule(overrides = {}) {
             return;
         }
 
+        if (typeof window !== 'undefined') {
+            window.handleDetalleRemito = (index) => {
+                handleDetalleRemito(Number.parseInt(index, 10));
+            };
+            window.handleEditRemito = (index) => {
+                handleEditRemito(Number.parseInt(index, 10));
+            };
+            window.handleDeleteRemito = (index) => {
+                void handleDeleteRemito(Number.parseInt(index, 10));
+            };
+        }
+
         const container = getContainerElement();
         if (!container) {
             console.warn('No se encontró el contenedor de gestión de remitos.');
