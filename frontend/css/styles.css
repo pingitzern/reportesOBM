@@ -2,7 +2,142 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    :root {
+        color-scheme: light;
+        --app-color-bg: #f1f5f9;
+        --app-color-surface: #ffffff;
+        --app-color-surface-strong: rgba(255, 255, 255, 0.95);
+        --app-color-surface-soft: rgba(255, 255, 255, 0.88);
+        --app-color-surface-muted: #f8fafc;
+        --app-color-border: #e2e8f0;
+        --app-color-border-strong: #cbd5f5;
+        --app-color-text-strong: #1f2937;
+        --app-color-text-default: #334155;
+        --app-color-text-muted: #475569;
+        --app-color-text-soft: #64748b;
+        --app-color-overlay: rgba(15, 23, 42, 0.55);
+        --app-color-menu-hover: rgba(59, 130, 246, 0.08);
+    }
+
+    .dark-theme {
+        color-scheme: dark;
+        --app-color-bg: #0f172a;
+        --app-color-surface: #1e293b;
+        --app-color-surface-strong: rgba(30, 41, 59, 0.96);
+        --app-color-surface-soft: rgba(30, 41, 59, 0.88);
+        --app-color-surface-muted: #111c2e;
+        --app-color-border: #334155;
+        --app-color-border-strong: #475569;
+        --app-color-text-strong: #f8fafc;
+        --app-color-text-default: #e2e8f0;
+        --app-color-text-muted: #cbd5f5;
+        --app-color-text-soft: #94a3b8;
+        --app-color-overlay: rgba(15, 23, 42, 0.72);
+        --app-color-menu-hover: rgba(59, 130, 246, 0.18);
+    }
+
+    body {
+        background-color: var(--app-color-bg);
+        color: var(--app-color-text-default);
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body,
+    button,
+    input,
+    select,
+    textarea {
+        color: inherit;
+    }
+
+    input,
+    select,
+    textarea {
+        background-color: var(--app-color-surface);
+    }
+
+    .dark-theme input::placeholder,
+    .dark-theme textarea::placeholder {
+        color: var(--app-color-text-soft);
+    }
+}
+
 @layer components {
+    .user-menu-toggle {
+        @apply inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-gray-600 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 shadow-sm;
+        background-color: var(--app-color-surface-soft);
+        color: var(--app-color-text-muted);
+    }
+
+    .user-menu-toggle:hover {
+        @apply text-blue-600;
+    }
+
+    .dark-theme .user-menu-toggle {
+        color: var(--app-color-text-soft);
+    }
+
+    .user-menu {
+        @apply absolute right-0 top-full mt-3 w-60 rounded-2xl border shadow-xl;
+        background-color: var(--app-color-surface);
+        border-color: var(--app-color-border);
+        z-index: 40;
+    }
+
+    .user-menu__content {
+        @apply flex flex-col gap-1 py-2;
+    }
+
+    .user-menu__item {
+        @apply flex items-center justify-between gap-3 rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition-colors duration-150 ease-out;
+        color: var(--app-color-text-default);
+        cursor: pointer;
+    }
+
+    .user-menu__item:hover,
+    .user-menu__item:focus-visible {
+        background-color: var(--app-color-menu-hover);
+    }
+
+    .user-menu__item:focus-visible {
+        @apply outline-none ring-2 ring-offset-2 ring-blue-400;
+    }
+
+    .user-menu__item:not(:first-child) {
+        border-top: 1px solid var(--app-color-border);
+    }
+
+    .user-menu__logout {
+        @apply text-rose-600;
+    }
+
+    .user-menu__logout:hover,
+    .user-menu__logout:focus-visible {
+        @apply text-rose-500;
+    }
+
+    .user-menu__toggle {
+        cursor: default;
+    }
+
+    .user-menu__toggle-info {
+        @apply flex flex-col;
+    }
+
+    .user-menu__toggle-label {
+        @apply text-sm font-semibold;
+        color: var(--app-color-text-strong);
+    }
+
+    .user-menu__toggle-state {
+        @apply text-xs font-medium text-gray-500;
+    }
+
+    .user-menu__toggle .toggle-switch {
+        cursor: pointer;
+    }
+
     .app-header {
         @apply mb-8 flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm md:flex-row md:items-center md:gap-8;
     }
@@ -300,5 +435,63 @@
 
     .repuestos-table-input {
         @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition-colors duration-150 ease-out focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200;
+    }
+}
+
+@layer utilities {
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700 {
+        color: var(--app-color-text-strong) !important;
+    }
+
+    .text-gray-600 {
+        color: var(--app-color-text-default) !important;
+    }
+
+    .text-gray-500 {
+        color: var(--app-color-text-muted) !important;
+    }
+
+    .text-gray-400 {
+        color: var(--app-color-text-soft) !important;
+    }
+
+    .bg-white {
+        background-color: var(--app-color-surface) !important;
+    }
+
+    .bg-white\/95,
+    .bg-white\/90 {
+        background-color: var(--app-color-surface-strong) !important;
+    }
+
+    .bg-white\/80 {
+        background-color: var(--app-color-surface-soft) !important;
+    }
+
+    .bg-gray-100,
+    .bg-gray-50 {
+        background-color: var(--app-color-surface-muted) !important;
+    }
+
+    .bg-gray-300 {
+        background-color: var(--app-color-border) !important;
+    }
+
+    .border-gray-200 {
+        border-color: var(--app-color-border) !important;
+    }
+
+    .border-gray-300 {
+        border-color: var(--app-color-border-strong) !important;
+    }
+
+    .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+        border-color: var(--app-color-border) !important;
+    }
+
+    .bg-gray-600 {
+        background-color: var(--app-color-overlay) !important;
     }
 }

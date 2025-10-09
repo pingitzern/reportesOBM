@@ -1,4 +1,11 @@
 import { API_URL } from '../../config.js';
+import {
+    THEME_DARK,
+    THEME_LIGHT,
+    getCurrentTheme,
+    onThemeChange,
+    setTheme,
+} from '../theme/theme.js';
 
 const STORAGE_KEY = 'reportesOBM.user';
 
@@ -7,6 +14,7 @@ let listenersBound = false;
 let pendingAuth = null;
 let menuIsOpen = false;
 let documentMenuHandlersActive = false;
+let unsubscribeThemeChange = null;
 
 function getStorage() {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -192,6 +200,7 @@ function getElements() {
     let userNameDisplay = null;
     let helpLink = null;
     let settingsLink = null;
+    let themeToggleState = null;
 
     if (menu && typeof menu.querySelector === 'function') {
         userNameDisplay = menu.querySelector('[data-user-name]')
@@ -199,6 +208,7 @@ function getElements() {
             || null;
         helpLink = menu.querySelector('[data-auth-action="help"]');
         settingsLink = menu.querySelector('[data-auth-action="settings"]');
+        themeToggleState = menu.querySelector('[data-theme-state]');
     }
 
     if (menu && typeof menu.querySelectorAll === 'function') {
@@ -230,7 +240,30 @@ function getElements() {
         helpLink,
         settingsLink,
         userNameDisplay,
+        themeToggle: document.getElementById('theme-toggle'),
+        themeToggleState,
     };
+}
+
+function updateThemeToggleUI(theme) {
+    const { themeToggle, themeToggleState } = getElements();
+    if (!themeToggle) {
+        return;
+    }
+
+    const isDark = theme === THEME_DARK;
+    themeToggle.checked = isDark;
+    themeToggle.setAttribute?.('aria-checked', isDark ? 'true' : 'false');
+
+    if (themeToggleState) {
+        themeToggleState.textContent = isDark ? 'Activado' : 'Desactivado';
+    }
+}
+
+function handleThemeToggleChange(event) {
+    event?.stopPropagation?.();
+    const isChecked = Boolean(event?.target?.checked);
+    setTheme(isChecked ? THEME_DARK : THEME_LIGHT);
 }
 
 function showLoginModal() {
@@ -706,7 +739,7 @@ function bindEventListeners() {
         return;
     }
 
-    const { form, logoutButton, menuButton, helpLink, settingsLink } = getElements();
+    const { form, logoutButton, menuButton, helpLink, settingsLink, themeToggle } = getElements();
     if (form) {
         form.addEventListener('submit', handleLoginSubmit);
     }
@@ -721,6 +754,14 @@ function bindEventListeners() {
     }
     if (settingsLink) {
         settingsLink.addEventListener('click', handleSettingsClick);
+    }
+    if (themeToggle) {
+        themeToggle.addEventListener('change', handleThemeToggleChange);
+        if (!unsubscribeThemeChange) {
+            unsubscribeThemeChange = onThemeChange(updateThemeToggleUI);
+        } else {
+            updateThemeToggleUI(getCurrentTheme());
+        }
     }
 
     listenersBound = true;
