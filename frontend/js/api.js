@@ -134,14 +134,14 @@ export async function obtenerRemitos({ page = 1, pageSize = 20 } = {}) {
 export async function crearRemito(datos) {
     return postJSON({
         action: 'crear_remito',
-        ...datos,
+        ...(datos ?? {}),
     });
 }
 
 export async function actualizarRemito(datos) {
     return postJSON({
         action: 'actualizar_remito',
-        ...datos,
+        ...(datos ?? {}),
     });
 }
 
