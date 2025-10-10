@@ -1,4 +1,22 @@
 const DEFAULT_PAGE_SIZE = 20;
+const MAX_REMITO_PHOTOS = 4;
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+const REMITO_FOTO_KEYS = Object.freeze([
+    ['Foto1URL', 'Foto1Url', 'foto1URL', 'foto1Url', 'foto1', 'Foto1', 'foto_1', 'Foto_1'],
+    ['Foto2URL', 'Foto2Url', 'foto2URL', 'foto2Url', 'foto2', 'Foto2', 'foto_2', 'Foto_2'],
+    ['Foto3URL', 'Foto3Url', 'foto3URL', 'foto3Url', 'foto3', 'Foto3', 'foto_3', 'Foto_3'],
+    ['Foto4URL', 'Foto4Url', 'foto4URL', 'foto4Url', 'foto4', 'Foto4', 'foto_4', 'Foto_4'],
+]);
+
+const PHOTO_MIME_EXTENSION_MAP = Object.freeze({
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/heic': 'heic',
+    'image/heif': 'heif',
+});
 
 function pickValue(source, keys) {
     if (!source || typeof source !== 'object' || !Array.isArray(keys)) {
@@ -117,6 +135,136 @@ function getDisplayValue(value) {
     return sanitized || '—';
 }
 
+function guessExtensionFromMimeType(mimeType) {
+    const normalized = sanitizeString(mimeType).toLowerCase();
+    return PHOTO_MIME_EXTENSION_MAP[normalized] || 'jpg';
+}
+
+function sanitizePhotoFileName(name, fallbackBase, index, mimeType) {
+    const base = sanitizeString(name) || `${fallbackBase}-foto-${index + 1}`;
+    const withoutSeparators = base.replace(/[\\/]/g, '-');
+    const normalized = withoutSeparators.replace(/[^a-zA-Z0-9._-]+/g, '_');
+    const extension = guessExtensionFromMimeType(mimeType);
+
+    if (normalized.toLowerCase().endsWith(`.${extension}`)) {
+        return normalized;
+    }
+
+    const withoutExtension = normalized.replace(/\.[^.]+$/, '');
+    return `${withoutExtension}.${extension}`;
+}
+
+function createEmptyPhotoSlot(index = 0) {
+    return {
+        index,
+        previewUrl: '',
+        base64Data: '',
+        mimeType: '',
+        fileName: '',
+        url: '',
+        shouldRemove: false,
+    };
+}
+
+function createEmptyPhotoSlots() {
+    return Array.from({ length: MAX_REMITO_PHOTOS }, (_, index) => createEmptyPhotoSlot(index));
+}
+
+function normalizePhotoSlots(slots) {
+    const baseSlots = createEmptyPhotoSlots();
+
+    if (!Array.isArray(slots)) {
+        return baseSlots;
+    }
+
+    return baseSlots.map((slot, index) => {
+        const source = slots[index];
+        if (!source || typeof source !== 'object') {
+            return slot;
+        }
+
+        return {
+            ...slot,
+            previewUrl: sanitizeString(source.previewUrl),
+            base64Data: sanitizeString(source.base64Data),
+            mimeType: sanitizeString(source.mimeType),
+            fileName: sanitizeString(source.fileName),
+            url: sanitizeString(source.url),
+            shouldRemove: Boolean(source.shouldRemove),
+        };
+    });
+}
+
+function buildPhotoSlotsFromUrls(urls = []) {
+    const slots = createEmptyPhotoSlots();
+
+    urls.forEach((value, index) => {
+        if (index >= slots.length) {
+            return;
+        }
+
+        slots[index].url = sanitizeString(value);
+    });
+
+    return slots;
+}
+
+function extractBase64FromDataUrl(dataUrl) {
+    const text = sanitizeString(dataUrl);
+    if (!text) {
+        return '';
+    }
+
+    const commaIndex = text.indexOf(',');
+    if (commaIndex !== -1) {
+        return text.slice(commaIndex + 1);
+    }
+
+    return text;
+}
+
+function getPhotoPreviewSource(slot) {
+    if (!slot || typeof slot !== 'object') {
+        return '';
+    }
+
+    return sanitizeString(slot.previewUrl) || sanitizeString(slot.url);
+}
+
+function formatPhotoFileLabel(slot) {
+    if (!slot || typeof slot !== 'object') {
+        return 'Sin foto seleccionada';
+    }
+
+    if (sanitizeString(slot.fileName)) {
+        return slot.fileName;
+    }
+
+    if (sanitizeString(slot.url)) {
+        return slot.url;
+    }
+
+    return 'Sin foto seleccionada';
+}
+
+function isFileReaderSupported() {
+    return typeof FileReader !== 'undefined';
+}
+
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        if (!file || typeof FileReader === 'undefined') {
+            reject(new Error('La lectura de archivos no es compatible.'));
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('No se pudo leer el archivo seleccionado.'));
+        reader.readAsDataURL(file);
+    });
+}
+
 const CLIENT_NAME_KEYS = Object.freeze([
     'nombre',
     'Nombre',
@@ -216,6 +364,7 @@ function normalizeRemitoForDisplay(remito) {
     const emailValue = pickValue(remito, ['email', 'Email', 'MailCliente']);
     const cuitValue = pickValue(remito, ['cuit', 'CUIT', 'cliente_cuit']);
     const reporteIdValue = pickValue(remito, ['reporteId', 'ReporteID', 'IdUnico', 'IDInterna']);
+    const fotos = REMITO_FOTO_KEYS.map(keys => sanitizeString(pickValue(remito, keys)) || '');
 
     return {
         numeroRemito: sanitizeString(numeroRemitoValue),
@@ -235,6 +384,11 @@ function normalizeRemitoForDisplay(remito) {
         email: sanitizeString(emailValue),
         cuit: sanitizeString(cuitValue),
         reporteId: sanitizeString(reporteIdValue),
+        Foto1URL: fotos[0] || '',
+        Foto2URL: fotos[1] || '',
+        Foto3URL: fotos[2] || '',
+        Foto4URL: fotos[3] || '',
+        fotos,
     };
 }
 
@@ -252,6 +406,7 @@ function getEmptyFormData() {
         email: '',
         cuit: '',
         reporteId: '',
+        fotos: createEmptyPhotoSlots(),
     };
 }
 
@@ -292,6 +447,7 @@ function mapRemitoToFormData(remito = {}) {
         email: sanitizeString(remito.email),
         cuit: sanitizeString(remito.cuit),
         reporteId: sanitizeString(remito.reporteId),
+        fotos: buildPhotoSlotsFromUrls(Array.isArray(remito.fotos) ? remito.fotos : []),
     };
 }
 
@@ -428,9 +584,63 @@ function buildClienteOptionsHtml() {
         .join('');
 }
 
+function buildPhotoSlotHtml(slot, index, disabledAttr) {
+    const previewSource = getPhotoPreviewSource(slot);
+    const hasPreview = Boolean(previewSource);
+    const previewContent = hasPreview
+        ? `<img src="${escapeHtml(previewSource)}" alt="Foto ${index + 1}" class="h-40 w-full rounded-lg border border-gray-200 object-cover">`
+        : '<div class="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">Sin foto</div>';
+
+    const removeButton = hasPreview
+        ? `<button type="button" class="text-sm font-semibold text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="remove" data-remito-photo-index="${index}"${disabledAttr}>Quitar</button>`
+        : '';
+
+    const labelText = escapeHtml(formatPhotoFileLabel(slot));
+
+    return `
+        <div class="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Foto ${index + 1}</p>
+                    <p class="text-xs text-gray-500">${labelText}</p>
+                </div>
+                ${removeButton}
+            </div>
+            <div class="overflow-hidden rounded-lg">
+                ${previewContent}
+            </div>
+            <div class="flex flex-col gap-2 sm:flex-row">
+                <button type="button" class="inline-flex items-center justify-center rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-600 shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="capture" data-remito-photo-index="${index}"${disabledAttr}>Tomar foto</button>
+                <button type="button" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="upload" data-remito-photo-index="${index}"${disabledAttr}>Subir foto</button>
+            </div>
+            <input type="file" accept="image/*" capture="environment" class="hidden" data-remito-photo-input="capture" data-remito-photo-index="${index}"${disabledAttr}>
+            <input type="file" accept="image/*" class="hidden" data-remito-photo-input="upload" data-remito-photo-index="${index}"${disabledAttr}>
+        </div>
+    `;
+}
+
+function buildPhotoSectionHtml(disableFormFields) {
+    const disabledAttr = disableFormFields ? ' disabled' : '';
+    const slots = normalizePhotoSlots(state.formData?.fotos);
+    const slotsHtml = slots.map((slot, index) => buildPhotoSlotHtml(slot, index, disabledAttr)).join('');
+
+    return `
+        <div class="space-y-3">
+            <div class="flex flex-col gap-1">
+                <span class="text-sm font-medium text-gray-700">Fotos del servicio</span>
+                <span class="text-xs text-gray-500">Podés subir hasta cuatro imágenes. Cada archivo puede pesar hasta 5 MB.</span>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                ${slotsHtml}
+            </div>
+        </div>
+    `;
+}
+
 function buildPayloadFromForm(formData = {}) {
     const fechaRemitoISO = sanitizeString(formData.fechaRemitoISO);
     const fechaServicioISO = sanitizeString(formData.fechaServicioISO);
+    const fotoSlots = normalizePhotoSlots(formData.fotos);
 
     return {
         numeroRemito: sanitizeString(formData.numeroRemito),
@@ -447,6 +657,14 @@ function buildPayloadFromForm(formData = {}) {
         email: sanitizeString(formData.email),
         cuit: sanitizeString(formData.cuit),
         reporteId: sanitizeString(formData.reporteId),
+        fotos: fotoSlots.map((slot, index) => ({
+            slot: index + 1,
+            url: sanitizeString(slot.url),
+            base64Data: sanitizeString(slot.base64Data),
+            mimeType: sanitizeString(slot.mimeType),
+            fileName: sanitizeString(slot.fileName),
+            shouldRemove: Boolean(slot.shouldRemove),
+        })),
     };
 }
 
@@ -524,6 +742,53 @@ function buildCreateRemitoRequest(payload = {}) {
         request.observaciones = observaciones;
     }
 
+    if (Array.isArray(payload.fotos)) {
+        const fotos = payload.fotos
+            .map((item) => {
+                if (!item || typeof item !== 'object') {
+                    return null;
+                }
+
+                const slot = Number(item.slot);
+                const base64Data = sanitizeString(item.base64Data);
+                const mimeType = sanitizeString(item.mimeType);
+                const fileName = sanitizeString(item.fileName);
+                const url = sanitizeString(item.url);
+                const shouldRemove = Boolean(item.shouldRemove);
+
+                if (!base64Data && !url && !shouldRemove) {
+                    return null;
+                }
+
+                const normalized = {};
+                if (Number.isFinite(slot) && slot > 0) {
+                    normalized.slot = slot;
+                }
+                if (base64Data) {
+                    normalized.base64Data = base64Data;
+                }
+                if (mimeType) {
+                    normalized.mimeType = mimeType;
+                }
+                if (fileName) {
+                    normalized.fileName = fileName;
+                }
+                if (url) {
+                    normalized.url = url;
+                }
+                if (shouldRemove) {
+                    normalized.shouldRemove = true;
+                }
+
+                return normalized;
+            })
+            .filter(Boolean);
+
+        if (fotos.length > 0) {
+            request.fotos = fotos;
+        }
+    }
+
     return request;
 }
 
@@ -574,6 +839,14 @@ const state = {
     clientesError: null,
     selectedClienteKey: '',
 };
+
+function ensurePhotoSlotsInFormData() {
+    if (!state.formData || typeof state.formData !== 'object') {
+        state.formData = getEmptyFormData();
+    }
+
+    state.formData.fotos = normalizePhotoSlots(state.formData.fotos);
+}
 
 const defaultDependencies = {
     obtenerRemitos: async () => {
@@ -692,6 +965,7 @@ function setFeedback(type, message) {
 function resetFormState({ viewMode = 'list' } = {}) {
     state.formMode = 'create';
     state.formData = getEmptyFormData();
+    ensurePhotoSlotsInFormData();
     state.editingRemitoId = null;
     state.editingRemitoLabel = '';
     state.editingRemitoOriginal = null;
@@ -705,6 +979,7 @@ function renderManagementView() {
         return;
     }
 
+    ensurePhotoSlotsInFormData();
     const disableFormFields = state.isSaving || state.isLoading;
     const disabledAttr = disableFormFields ? 'disabled' : '';
     const clienteOptionsHtml = buildClienteOptionsHtml();
@@ -754,6 +1029,7 @@ function renderManagementView() {
     }
 
     const secondaryButtonHtml = secondaryButtons.join('');
+    const photoSectionHtml = buildPhotoSectionHtml(disableFormFields);
 
     if (state.viewMode === 'form') {
         container.innerHTML = `
@@ -817,6 +1093,7 @@ function renderManagementView() {
                                 <textarea id="remito-form-observaciones" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="observaciones" placeholder="Notas adicionales" ${disabledAttr}>${escapeHtml(state.formData.observaciones)}</textarea>
                             </div>
                         </div>
+                        ${photoSectionHtml}
                         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                             ${secondaryButtonHtml}
                             <button type="submit" class="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" ${disabledAttr}>
@@ -990,6 +1267,7 @@ function handleEditRemito(index) {
 
     state.formMode = 'edit';
     state.formData = mapRemitoToFormData(remito);
+    ensurePhotoSlotsInFormData();
     state.editingRemitoId = getRemitoIdentifier(remito);
     state.editingRemitoLabel = sanitizeString(remito.numeroRemito) || sanitizeString(remito.reporteId);
     state.editingRemitoOriginal = remito;
@@ -1064,6 +1342,114 @@ async function handleDeleteRemito(index) {
     }
 }
 
+async function handlePhotoFileSelection(index, file) {
+    if (state.isSaving || state.isLoading) {
+        return;
+    }
+
+    const normalizedIndex = Number(index);
+    if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= MAX_REMITO_PHOTOS) {
+        return;
+    }
+
+    if (!file) {
+        return;
+    }
+
+    if (!file.type || !file.type.startsWith('image/')) {
+        setFeedback('error', 'Solo se pueden cargar archivos de imagen.');
+        renderManagementView();
+        return;
+    }
+
+    if (file.size && file.size > MAX_PHOTO_SIZE_BYTES) {
+        setFeedback('error', 'La foto supera el límite de 5 MB permitido.');
+        renderManagementView();
+        return;
+    }
+
+    if (!isFileReaderSupported()) {
+        setFeedback('error', 'El navegador no permite procesar imágenes desde este formulario.');
+        renderManagementView();
+        return;
+    }
+
+    try {
+        const dataUrl = await readFileAsDataUrl(file);
+        const base64Data = extractBase64FromDataUrl(dataUrl);
+        const mimeType = sanitizeString(file.type) || 'image/jpeg';
+        const numeroRemito = sanitizeString(state.formData?.numeroRemito) || 'remito';
+        const fileName = sanitizePhotoFileName(file.name, numeroRemito, normalizedIndex, mimeType);
+
+        ensurePhotoSlotsInFormData();
+        const slots = normalizePhotoSlots(state.formData.fotos);
+        slots[normalizedIndex] = {
+            index: normalizedIndex,
+            previewUrl: typeof dataUrl === 'string' ? dataUrl : '',
+            base64Data,
+            mimeType,
+            fileName,
+            url: '',
+            shouldRemove: false,
+        };
+        state.formData.fotos = slots;
+        setFeedback(null);
+        renderManagementView();
+    } catch (error) {
+        setFeedback('error', error?.message || 'No se pudo procesar la foto seleccionada.');
+        renderManagementView();
+    }
+}
+
+function removePhotoSlot(index) {
+    const normalizedIndex = Number(index);
+    if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= MAX_REMITO_PHOTOS) {
+        return;
+    }
+
+    ensurePhotoSlotsInFormData();
+    const slots = normalizePhotoSlots(state.formData.fotos);
+    const previous = slots[normalizedIndex];
+    const hadExistingUrl = Boolean(previous?.url);
+    slots[normalizedIndex] = {
+        ...createEmptyPhotoSlot(normalizedIndex),
+        shouldRemove: hadExistingUrl,
+    };
+    state.formData.fotos = slots;
+    renderManagementView();
+}
+
+function handlePhotoAction(action, index) {
+    if (!action) {
+        return;
+    }
+
+    const normalizedIndex = Number(index);
+    if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= MAX_REMITO_PHOTOS) {
+        return;
+    }
+
+    if (action === 'remove') {
+        removePhotoSlot(normalizedIndex);
+        return;
+    }
+
+    if (state.isSaving || state.isLoading) {
+        return;
+    }
+
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const selector = `[data-remito-photo-input="${action}"][data-remito-photo-index="${normalizedIndex}"]`;
+    const input = document.querySelector(selector);
+    if (input) {
+        input.value = '';
+        input.click();
+    }
+}
+
 function handleFormInput(event) {
     const field = event?.target?.dataset?.remitoField;
     if (!field || !(field in state.formData)) {
@@ -1080,6 +1466,18 @@ function handleContainerInput(event) {
 function handleContainerChange(event) {
     const target = event?.target;
     if (!target) {
+        return;
+    }
+
+    const photoInputMode = target.dataset?.remitoPhotoInput;
+    if (photoInputMode) {
+        const index = Number.parseInt(target.dataset.remitoPhotoIndex ?? '', 10);
+        const file = target.files && target.files[0];
+        if (Number.isFinite(index) && index >= 0 && index < MAX_REMITO_PHOTOS && file) {
+            void handlePhotoFileSelection(index, file);
+        }
+
+        target.value = '';
         return;
     }
 
@@ -1207,6 +1605,13 @@ function handleContainerClick(event) {
     if (actionButton) {
         event.preventDefault();
         handleAction(actionButton.dataset.remitosAction);
+        return;
+    }
+
+    const photoButton = event.target.closest('[data-remito-photo-action]');
+    if (photoButton) {
+        event.preventDefault();
+        handlePhotoAction(photoButton.dataset.remitoPhotoAction, photoButton.dataset.remitoPhotoIndex);
         return;
     }
 

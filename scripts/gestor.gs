@@ -103,8 +103,15 @@ const REMITOS_HEADERS = Object.freeze([
   'Repuestos',
   'RepuestosJSON',
   'ReporteJSON',
+  'Foto1URL',
+  'Foto2URL',
+  'Foto3URL',
+  'Foto4URL',
   'GeneradoPor'
 ]);
+
+const REMITOS_FOTOS_FOLDER_ID = '1SH7Zz7g_2sbYsFHMfVQj3Admdy8L3FVz';
+const MAX_REMITO_FOTOS = 4;
 
 const CAMPOS_ACTUALIZABLES = [
   'Cliente', 'Fecha_Servicio', 'Direccion', 'Tecnico_Asignado', 'Modelo_Equipo',
@@ -769,6 +776,132 @@ const MantenimientoService = {
 };
 
 const RemitosService = {
+  fotosFolderCache: null,
+
+  getFotosFolder() {
+    if (!REMITOS_FOTOS_FOLDER_ID) {
+      throw new Error('Configura la propiedad REMITOS_FOTOS_FOLDER_ID con el ID de la carpeta de Drive para las fotos.');
+    }
+
+    if (this.fotosFolderCache) {
+      return this.fotosFolderCache;
+    }
+
+    try {
+      this.fotosFolderCache = DriveApp.getFolderById(REMITOS_FOTOS_FOLDER_ID);
+    } catch (error) {
+      throw new Error('No se pudo acceder a la carpeta configurada para almacenar las fotos de los remitos.');
+    }
+
+    return this.fotosFolderCache;
+  },
+
+  guessExtension(mimeType) {
+    const normalized = normalizeTextValue(mimeType).toLowerCase();
+    if (normalized === 'image/jpeg' || normalized === 'image/jpg') {
+      return 'jpg';
+    }
+    if (normalized === 'image/png') {
+      return 'png';
+    }
+    if (normalized === 'image/webp') {
+      return 'webp';
+    }
+    if (normalized === 'image/heic') {
+      return 'heic';
+    }
+    if (normalized === 'image/heif') {
+      return 'heif';
+    }
+
+    return 'jpg';
+  },
+
+  sanitizeFileName(fileName, numeroRemito, index, mimeType) {
+    const baseNumero = normalizeTextValue(numeroRemito) || 'remito';
+    const fallbackBase = baseNumero.replace(/[^A-Za-z0-9_-]+/g, '-');
+    const rawName = normalizeTextValue(fileName);
+    const baseName = (rawName || `${fallbackBase}-foto-${index + 1}`)
+      .replace(/[/\\]/g, '-');
+
+    const extension = this.guessExtension(mimeType);
+    const normalized = baseName.replace(/[^A-Za-z0-9._-]+/g, '_');
+    if (normalized.toLowerCase().endsWith(`.${extension}`)) {
+      return normalized;
+    }
+
+    const withoutExistingExtension = normalized.replace(/\.[^.]+$/, '');
+    return `${withoutExistingExtension}.${extension}`;
+  },
+
+  extractBase64Data(value) {
+    const text = normalizeTextValue(value);
+    if (!text) {
+      return '';
+    }
+
+    const commaIndex = text.indexOf(',');
+    if (commaIndex !== -1) {
+      return text.slice(commaIndex + 1);
+    }
+
+    return text;
+  },
+
+  procesarFotos(fotos, numeroRemito) {
+    const resultados = new Array(MAX_REMITO_FOTOS).fill('');
+
+    if (!Array.isArray(fotos) || fotos.length === 0) {
+      return resultados;
+    }
+
+    let folder = null;
+
+    for (let i = 0; i < Math.min(fotos.length, MAX_REMITO_FOTOS); i += 1) {
+      const foto = fotos[i];
+      if (!foto || typeof foto !== 'object') {
+        continue;
+      }
+
+      if (foto.shouldRemove) {
+        resultados[i] = '';
+        continue;
+      }
+
+      const base64Data = this.extractBase64Data(foto.base64Data || foto.data || foto.contenido);
+      const existingUrl = normalizeTextValue(foto.url);
+
+      if (!base64Data) {
+        resultados[i] = existingUrl;
+        continue;
+      }
+
+      if (!folder) {
+        folder = this.getFotosFolder();
+      }
+
+      const mimeType = normalizeTextValue(foto.mimeType) || 'image/jpeg';
+      const fileName = this.sanitizeFileName(foto.fileName, numeroRemito, i, mimeType);
+
+      let blob;
+      try {
+        blob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, fileName);
+      } catch (error) {
+        throw new Error(`No se pudo procesar la foto ${i + 1}: ${error.message}`);
+      }
+
+      try {
+        const file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        resultados[i] = file.getUrl();
+      } catch (error) {
+        throw new Error(`No se pudo guardar la foto ${i + 1} en Drive: ${error.message}`);
+      }
+    }
+
+    return resultados;
+  },
+
   extractRepuestos(report) {
     if (!report || typeof report !== 'object') {
       return [];
@@ -946,6 +1079,10 @@ const RemitosService = {
       Repuestos: repuestosTexto,
       RepuestosJSON: repuestosJSON,
       ReporteJSON: reporteJSON,
+      Foto1URL: '',
+      Foto2URL: '',
+      Foto3URL: '',
+      Foto4URL: '',
       GeneradoPor: normalizeTextValue(usuario)
     };
   },
@@ -1003,6 +1140,12 @@ const RemitosService = {
       const fechaRemitoISO = normalizeDateToISO(registro.FechaRemitoISO) || normalizeDateToISO(registro.FechaRemito);
       const fechaServicioISO = normalizeDateToISO(registro.FechaServicioISO) || normalizeDateToISO(registro.FechaServicio);
 
+      const fotoUrls = [];
+      for (let fotoIndex = 1; fotoIndex <= MAX_REMITO_FOTOS; fotoIndex += 1) {
+        const key = `Foto${fotoIndex}URL`;
+        fotoUrls.push(sanitizeCellValue(registro[key]));
+      }
+
       remitos.push({
         numeroRemito: sanitizeCellValue(registro.NumeroRemito),
         numeroReporte: sanitizeCellValue(registro.NumeroReporte),
@@ -1017,6 +1160,11 @@ const RemitosService = {
         direccion: sanitizeCellValue(registro.Direccion),
         telefono: sanitizeCellValue(registro.Telefono),
         email: sanitizeCellValue(registro.Email),
+        Foto1URL: fotoUrls[0] || '',
+        Foto2URL: fotoUrls[1] || '',
+        Foto3URL: fotoUrls[2] || '',
+        Foto4URL: fotoUrls[3] || '',
+        fotos: fotoUrls,
       });
     }
 
@@ -1042,12 +1190,22 @@ const RemitosService = {
     const sheet = RemitosRepository.getSheet();
     const numeroRemito = this.resolveNumeroRemito(sheet, reporteData);
     const registro = this.buildRemitoRecord(reporteData, data.observaciones, numeroRemito, usuario);
+
+    const fotoUrls = this.procesarFotos(data.fotos, numeroRemito);
+    for (let i = 0; i < MAX_REMITO_FOTOS; i += 1) {
+      registro[`Foto${i + 1}URL`] = fotoUrls[i] || '';
+    }
+
     const fila = REMITOS_HEADERS.map((header) => (Object.prototype.hasOwnProperty.call(registro, header) ? registro[header] : ''));
 
     sheet.appendRow(fila);
 
     return {
-      NumeroRemito: numeroRemito
+      NumeroRemito: numeroRemito,
+      Foto1URL: registro.Foto1URL,
+      Foto2URL: registro.Foto2URL,
+      Foto3URL: registro.Foto3URL,
+      Foto4URL: registro.Foto4URL
     };
   }
 };
