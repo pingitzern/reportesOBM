@@ -15,6 +15,7 @@ describe('normalizeRemitoForDisplay', () => {
             MailTecnico: 'tecnico@example.com',
             Observaciones: 'Sin novedades',
             IdUnico: 'ID-XYZ-123',
+            CUIT: '30-12345678-9',
         });
 
         expect(remito).toMatchObject({
@@ -28,6 +29,7 @@ describe('normalizeRemitoForDisplay', () => {
             tecnico: 'tecnico@example.com',
             observaciones: 'Sin novedades',
             reporteId: 'ID-XYZ-123',
+            cuit: '30-12345678-9',
         });
     });
 });

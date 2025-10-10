@@ -67,6 +67,7 @@ const remitosGestionModule = createRemitosGestionModule({
     crearRemito,
     actualizarRemito,
     eliminarRemito,
+    obtenerClientes,
 });
 
 const appModules = {

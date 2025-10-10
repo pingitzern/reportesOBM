@@ -98,6 +98,9 @@ describe('manejo del guardado de mantenimientos', () => {
                 totalItems: 0,
                 pageSize: 20,
             }),
+            crearRemito: jest.fn(),
+            actualizarRemito: jest.fn(),
+            eliminarRemito: jest.fn(),
         }));
 
         jest.unstable_mockModule('../modules/login/auth.js', () => ({
@@ -207,6 +210,9 @@ describe('flujo de generación y finalización de remito', () => {
                 totalItems: 0,
                 pageSize: 20,
             }),
+            crearRemito: jest.fn(),
+            actualizarRemito: jest.fn(),
+            eliminarRemito: jest.fn(),
         }));
 
         jest.unstable_mockModule('../modules/login/auth.js', () => ({
