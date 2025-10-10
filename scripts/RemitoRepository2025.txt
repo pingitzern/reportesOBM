@@ -31,14 +31,51 @@ const RemitoRepository = {
    */
   getNextRemitoNumber() {
     const sheet = this.getSheet_();
-    // getLastRow() devuelve 0 si la hoja está vacía, 1 si solo tiene encabezado.
+    const DEFAULT_PREFIX = 'REM-';
+    const DEFAULT_PADDING = 4;
+
+    // getLastRow() devuelve 0 si la hoja está vacía y 1 si solo tiene encabezados.
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) {
-      return 1; // Si no hay datos, empezamos en 1.
+      return `${DEFAULT_PREFIX}${String(1).padStart(DEFAULT_PADDING, '0')}`;
     }
+
     // Obtenemos el valor de la última fila, primera columna (NumeroRemito)
-    const lastNumber = sheet.getRange(lastRow, 1).getValue();
-    return parseInt(lastNumber, 10) + 1;
+    const rawValue = sheet.getRange(lastRow, 1).getValue();
+
+    let prefix = DEFAULT_PREFIX;
+    let numericPart = Number.NaN;
+    let padding = DEFAULT_PADDING;
+
+    if (typeof rawValue === 'number' && !Number.isNaN(rawValue)) {
+      numericPart = rawValue;
+      padding = Math.max(String(Math.trunc(rawValue)).length, DEFAULT_PADDING);
+    } else if (typeof rawValue === 'string') {
+      const normalized = rawValue.trim();
+      if (normalized) {
+        const match = normalized.match(/^(.*?)(\d+)$/);
+        if (match) {
+          prefix = match[1] || prefix;
+          numericPart = parseInt(match[2], 10);
+          padding = Math.max(match[2].length, DEFAULT_PADDING);
+        } else {
+          const fallback = parseInt(normalized, 10);
+          if (!Number.isNaN(fallback)) {
+            numericPart = fallback;
+            padding = Math.max(String(fallback).length, DEFAULT_PADDING);
+          }
+        }
+      }
+    }
+
+    if (!Number.isFinite(numericPart)) {
+      // Si no pudimos interpretar el número anterior, usamos la cantidad de filas como base.
+      numericPart = lastRow - 1; // No contamos la fila de encabezados.
+    }
+
+    const nextNumber = Math.max(0, Math.trunc(numericPart)) + 1;
+    const padded = String(nextNumber).padStart(padding, '0');
+    return `${prefix}${padded}`;
   },
 
   /**
