@@ -117,6 +117,69 @@ function getDisplayValue(value) {
     return sanitized || '—';
 }
 
+const CLIENT_NAME_KEYS = Object.freeze([
+    'nombre',
+    'Nombre',
+    'cliente',
+    'Cliente',
+    'razon_social',
+    'RazonSocial',
+]);
+
+const CLIENT_ID_KEYS = Object.freeze([
+    'id',
+    'ID',
+    'id_cliente',
+    'IdCliente',
+    'codigo',
+    'Codigo',
+    'cuit',
+    'CUIT',
+]);
+
+const CLIENT_ADDRESS_KEYS = Object.freeze([
+    'direccion',
+    'Direccion',
+    'domicilio',
+    'Domicilio',
+]);
+
+const CLIENT_PHONE_KEYS = Object.freeze([
+    'telefono',
+    'Telefono',
+    'tel',
+    'Tel',
+    'celular',
+    'Celular',
+]);
+
+const CLIENT_EMAIL_KEYS = Object.freeze([
+    'email',
+    'Email',
+    'mail',
+    'Mail',
+    'correo',
+    'Correo',
+]);
+
+const CLIENT_CUIT_KEYS = Object.freeze([
+    'cuit',
+    'CUIT',
+]);
+
+function getTodayInputDate() {
+    const now = new Date();
+    if (Number.isNaN(now.getTime())) {
+        return '';
+    }
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
 function normalizeRemitoForDisplay(remito) {
     if (!remito || typeof remito !== 'object') {
         return {
@@ -132,6 +195,7 @@ function normalizeRemitoForDisplay(remito) {
             direccion: '',
             telefono: '',
             email: '',
+            cuit: '',
             reporteId: '',
         };
     }
@@ -150,6 +214,7 @@ function normalizeRemitoForDisplay(remito) {
     const direccionValue = pickValue(remito, ['direccion', 'Direccion']);
     const telefonoValue = pickValue(remito, ['telefono', 'Telefono']);
     const emailValue = pickValue(remito, ['email', 'Email', 'MailCliente']);
+    const cuitValue = pickValue(remito, ['cuit', 'CUIT', 'cliente_cuit']);
     const reporteIdValue = pickValue(remito, ['reporteId', 'ReporteID', 'IdUnico', 'IDInterna']);
 
     return {
@@ -168,6 +233,7 @@ function normalizeRemitoForDisplay(remito) {
         direccion: sanitizeString(direccionValue),
         telefono: sanitizeString(telefonoValue),
         email: sanitizeString(emailValue),
+        cuit: sanitizeString(cuitValue),
         reporteId: sanitizeString(reporteIdValue),
     };
 }
@@ -177,13 +243,14 @@ function getEmptyFormData() {
         numeroRemito: '',
         numeroReporte: '',
         cliente: '',
-        fechaRemitoISO: '',
+        fechaRemitoISO: getTodayInputDate(),
         fechaServicioISO: '',
         tecnico: '',
         observaciones: '',
         direccion: '',
         telefono: '',
         email: '',
+        cuit: '',
         reporteId: '',
     };
 }
@@ -223,8 +290,142 @@ function mapRemitoToFormData(remito = {}) {
         direccion: sanitizeString(remito.direccion),
         telefono: sanitizeString(remito.telefono),
         email: sanitizeString(remito.email),
+        cuit: sanitizeString(remito.cuit),
         reporteId: sanitizeString(remito.reporteId),
     };
+}
+
+function createClientOptionKey(identifier, label, index = 0) {
+    const candidate = sanitizeString(identifier) || sanitizeString(label);
+    if (candidate) {
+        const normalized = candidate
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+        if (normalized) {
+            return `cliente-${normalized}-${index}`;
+        }
+    }
+
+    return `cliente-${index}`;
+}
+
+function normalizeClientRecord(cliente, index = 0) {
+    if (!cliente || typeof cliente !== 'object') {
+        return null;
+    }
+
+    const nombre = sanitizeString(pickValue(cliente, CLIENT_NAME_KEYS));
+    const identificador = sanitizeString(pickValue(cliente, CLIENT_ID_KEYS));
+    const direccion = sanitizeString(pickValue(cliente, CLIENT_ADDRESS_KEYS));
+    const telefono = sanitizeString(pickValue(cliente, CLIENT_PHONE_KEYS));
+    const email = sanitizeString(pickValue(cliente, CLIENT_EMAIL_KEYS));
+    const cuit = sanitizeString(pickValue(cliente, CLIENT_CUIT_KEYS));
+
+    const label = nombre || identificador;
+    if (!label) {
+        return null;
+    }
+
+    const key = createClientOptionKey(identificador, label, index);
+    const matchValues = Array.from(
+        new Set(
+            [nombre, identificador, label]
+                .map(value => sanitizeString(value).toLowerCase())
+                .filter(value => !!value),
+        ),
+    );
+
+    return {
+        key,
+        id: identificador,
+        label,
+        nombre: nombre || identificador || '',
+        direccion,
+        telefono,
+        email,
+        cuit,
+        matchValues,
+    };
+}
+
+function normalizeClientesList(clientes = []) {
+    if (!Array.isArray(clientes)) {
+        return [];
+    }
+
+    return clientes
+        .map((cliente, index) => normalizeClientRecord(cliente, index))
+        .filter(item => item !== null);
+}
+
+function findClienteByKey(key) {
+    if (!key) {
+        return null;
+    }
+
+    if (!Array.isArray(state.clienteOptions)) {
+        return null;
+    }
+
+    return state.clienteOptions.find(option => option.key === key) || null;
+}
+
+function findClienteByMatch(value) {
+    const target = sanitizeString(value).toLowerCase();
+    if (!target || !Array.isArray(state.clienteOptions)) {
+        return null;
+    }
+
+    return state.clienteOptions.find(option => option.matchValues.includes(target)) || null;
+}
+
+function syncSelectedClienteFromForm() {
+    const currentKey = sanitizeString(state.selectedClienteKey);
+    if (currentKey && findClienteByKey(currentKey)) {
+        return;
+    }
+
+    const currentCliente = sanitizeString(state.formData?.cliente);
+    if (!currentCliente) {
+        state.selectedClienteKey = '';
+        return;
+    }
+
+    const match = findClienteByMatch(currentCliente);
+    state.selectedClienteKey = match ? match.key : '';
+}
+
+function applyClienteSelection(key) {
+    const option = findClienteByKey(key);
+    state.selectedClienteKey = option ? option.key : '';
+
+    if (!option) {
+        return;
+    }
+
+    state.formData.cliente = option.nombre || option.label || '';
+    state.formData.direccion = option.direccion || '';
+    state.formData.telefono = option.telefono || '';
+    state.formData.email = option.email || '';
+    state.formData.cuit = option.cuit || '';
+}
+
+function buildClienteOptionsHtml() {
+    if (!Array.isArray(state.clienteOptions) || state.clienteOptions.length === 0) {
+        return '';
+    }
+
+    const selectedKey = sanitizeString(state.selectedClienteKey);
+
+    return state.clienteOptions
+        .map(option => {
+            const selectedAttr = selectedKey && option.key === selectedKey ? ' selected' : '';
+            const label = escapeHtml(option.label || option.nombre || option.id || '');
+            return `<option value="${option.key}"${selectedAttr}>${label}</option>`;
+        })
+        .join('');
 }
 
 function buildPayloadFromForm(formData = {}) {
@@ -244,6 +445,7 @@ function buildPayloadFromForm(formData = {}) {
         direccion: sanitizeString(formData.direccion),
         telefono: sanitizeString(formData.telefono),
         email: sanitizeString(formData.email),
+        cuit: sanitizeString(formData.cuit),
         reporteId: sanitizeString(formData.reporteId),
     };
 }
@@ -261,6 +463,7 @@ function buildReporteDataFromPayload(payload = {}) {
     const direccion = sanitizeString(payload.direccion);
     const telefono = sanitizeString(payload.telefono);
     const email = sanitizeString(payload.email);
+    const cuit = sanitizeString(payload.cuit);
     const reporteId = sanitizeString(payload.reporteId);
 
     const reporteData = {
@@ -294,6 +497,9 @@ function buildReporteDataFromPayload(payload = {}) {
         cliente_email: email || undefined,
         email: email || undefined,
         Email: email || undefined,
+        cliente_cuit: cuit || undefined,
+        cuit: cuit || undefined,
+        CUIT: cuit || undefined,
         reporteId: reporteId || undefined,
         ID: reporteId || undefined,
         Id: reporteId || undefined,
@@ -324,7 +530,8 @@ function buildCreateRemitoRequest(payload = {}) {
 function validateFormData(formData = {}) {
     const errors = [];
 
-    if (!sanitizeString(formData.numeroRemito)) {
+    const requireNumeroRemito = state.formMode === 'edit';
+    if (requireNumeroRemito && !sanitizeString(formData.numeroRemito)) {
         errors.push('El número de remito es obligatorio.');
     }
 
@@ -361,6 +568,11 @@ const state = {
     isDeleting: false,
     deletingIndex: null,
     feedback: null,
+    clienteOptions: [],
+    clientesLoaded: false,
+    isLoadingClientes: false,
+    clientesError: null,
+    selectedClienteKey: '',
 };
 
 const defaultDependencies = {
@@ -376,12 +588,59 @@ const defaultDependencies = {
     eliminarRemito: async () => {
         throw new Error('La función eliminarRemito no fue provista.');
     },
+    obtenerClientes: async () => {
+        throw new Error('La función obtenerClientes no fue provista.');
+    },
 };
 
 let dependencies = { ...defaultDependencies };
 
 function setDependencies(overrides = {}) {
     dependencies = { ...defaultDependencies, ...(overrides || {}) };
+}
+
+async function ensureClientesLoaded({ force = false, reRender = false } = {}) {
+    const obtenerClientes = dependencies.obtenerClientes;
+    if (typeof obtenerClientes !== 'function') {
+        state.clienteOptions = [];
+        state.clientesLoaded = false;
+        state.clientesError = 'No se configuró la función para obtener clientes.';
+        if (reRender) {
+            renderManagementView();
+        }
+        return;
+    }
+
+    if (state.isLoadingClientes) {
+        return;
+    }
+
+    if (!force && state.clientesLoaded && Array.isArray(state.clienteOptions) && state.clienteOptions.length > 0) {
+        syncSelectedClienteFromForm();
+        return;
+    }
+
+    state.isLoadingClientes = true;
+    if (reRender) {
+        renderManagementView();
+    }
+
+    try {
+        const clientes = await obtenerClientes({ forceRefresh: Boolean(force) });
+        state.clienteOptions = normalizeClientesList(clientes);
+        state.clientesLoaded = true;
+        state.clientesError = null;
+        syncSelectedClienteFromForm();
+    } catch (error) {
+        state.clienteOptions = [];
+        state.clientesLoaded = false;
+        state.clientesError = error?.message || 'No se pudieron cargar los clientes.';
+    } finally {
+        state.isLoadingClientes = false;
+        if (reRender) {
+            renderManagementView();
+        }
+    }
 }
 
 function getContainerElement() {
@@ -437,6 +696,7 @@ function resetFormState({ viewMode = 'list' } = {}) {
     state.editingRemitoLabel = '';
     state.editingRemitoOriginal = null;
     state.viewMode = viewMode;
+    state.selectedClienteKey = '';
 }
 
 function renderManagementView() {
@@ -447,6 +707,30 @@ function renderManagementView() {
 
     const disableFormFields = state.isSaving || state.isLoading;
     const disabledAttr = disableFormFields ? 'disabled' : '';
+    const clienteOptionsHtml = buildClienteOptionsHtml();
+    const clientePlaceholder = state.isLoadingClientes
+        ? 'Cargando clientes...'
+        : 'Seleccioná un cliente';
+    const clienteHelperHtml = state.clientesError
+        ? `<p class="mt-1 text-xs text-red-600">${escapeHtml(state.clientesError)}</p>`
+        : '<p class="mt-1 text-xs text-gray-500">Seleccioná un cliente para completar los datos automáticamente.</p>';
+    const clienteSelectDisabledAttr = (disableFormFields || state.isLoadingClientes) ? 'disabled' : '';
+    const shouldShowNumeroRemitoPlaceholder = state.formMode === 'create'
+        && !sanitizeString(state.formData.numeroRemito);
+    const numeroRemitoPlaceholderAttr = shouldShowNumeroRemitoPlaceholder
+        ? ' placeholder="Se asignará automáticamente"'
+        : '';
+    const numeroRemitoHelpHtml = shouldShowNumeroRemitoPlaceholder
+        ? '<p class="mt-1 text-xs text-gray-500">Se asignará automáticamente al guardar.</p>'
+        : '';
+    const numeroReporteFieldHtml = state.formMode === 'edit' && sanitizeString(state.formData.numeroReporte)
+        ? `
+            <div class="flex flex-col gap-1">
+                <label for="remito-form-reporte" class="text-sm font-medium text-gray-700">Número de reporte</label>
+                <input id="remito-form-reporte" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${escapeHtml(state.formData.numeroReporte)}" readonly ${disabledAttr}>
+            </div>
+        `
+        : '';
     const submitLabel = state.formMode === 'edit'
         ? (state.isSaving ? 'Guardando cambios...' : 'Actualizar remito')
         : (state.isSaving ? 'Guardando remito...' : 'Crear remito');
@@ -483,24 +767,26 @@ function renderManagementView() {
                     <form id="remito-abm-form" class="space-y-5 px-6 py-6">
                         <div class="space-y-4">
                             <div class="flex flex-col gap-1">
-                                <label for="remito-form-numero" class="text-sm font-medium text-gray-700">Número de remito *</label>
-                                <input id="remito-form-numero" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroRemito" value="${escapeHtml(state.formData.numeroRemito)}" placeholder="Ej. REM-2024-001" ${disabledAttr}>
+                                <label for="remito-form-numero" class="text-sm font-medium text-gray-700">Número de remito</label>
+                                <input id="remito-form-numero" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroRemito" value="${escapeHtml(state.formData.numeroRemito)}"${numeroRemitoPlaceholderAttr} readonly ${disabledAttr}>
+                                ${numeroRemitoHelpHtml}
+                            </div>
+                            ${numeroReporteFieldHtml}
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-cliente-select" class="text-sm font-medium text-gray-700">Cliente *</label>
+                                <select id="remito-form-cliente-select" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" ${clienteSelectDisabledAttr}>
+                                    <option value="">${escapeHtml(clientePlaceholder)}</option>
+                                    ${clienteOptionsHtml}
+                                </select>
+                                ${clienteHelperHtml}
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label for="remito-form-reporte" class="text-sm font-medium text-gray-700">Número de reporte</label>
-                                <input id="remito-form-reporte" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroReporte" value="${escapeHtml(state.formData.numeroReporte)}" placeholder="Ej. REP-2024-015" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-cliente" class="text-sm font-medium text-gray-700">Cliente *</label>
+                                <label for="remito-form-cliente" class="text-sm font-medium text-gray-700">Razón social / Cliente *</label>
                                 <input id="remito-form-cliente" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="cliente" value="${escapeHtml(state.formData.cliente)}" placeholder="Nombre del cliente" ${disabledAttr}>
                             </div>
                             <div class="flex flex-col gap-1">
                                 <label for="remito-form-fecha" class="text-sm font-medium text-gray-700">Fecha del remito</label>
                                 <input id="remito-form-fecha" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaRemitoISO" value="${escapeHtml(state.formData.fechaRemitoISO)}" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-fecha-servicio" class="text-sm font-medium text-gray-700">Fecha del servicio</label>
-                                <input id="remito-form-fecha-servicio" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaServicioISO" value="${escapeHtml(state.formData.fechaServicioISO)}" ${disabledAttr}>
                             </div>
                             <div class="flex flex-col gap-1">
                                 <label for="remito-form-tecnico" class="text-sm font-medium text-gray-700">Técnico</label>
@@ -519,8 +805,12 @@ function renderManagementView() {
                                 <input id="remito-form-email" type="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="email" value="${escapeHtml(state.formData.email)}" placeholder="Correo electrónico del cliente" ${disabledAttr}>
                             </div>
                             <div class="flex flex-col gap-1">
-                                <label for="remito-form-reporte-id" class="text-sm font-medium text-gray-700">ID del reporte</label>
-                                <input id="remito-form-reporte-id" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="reporteId" value="${escapeHtml(state.formData.reporteId)}" placeholder="Identificador del reporte asociado" ${disabledAttr}>
+                                <label for="remito-form-cuit" class="text-sm font-medium text-gray-700">CUIT</label>
+                                <input id="remito-form-cuit" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="cuit" value="${escapeHtml(state.formData.cuit)}" placeholder="CUIT del cliente" ${disabledAttr}>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <label for="remito-form-reporte-id" class="text-sm font-medium text-gray-700">Número de referencia, O.C, Presupuesto</label>
+                                <input id="remito-form-reporte-id" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="reporteId" value="${escapeHtml(state.formData.reporteId)}" placeholder="Identificador asociado" ${disabledAttr}>
                             </div>
                             <div class="flex flex-col gap-1">
                                 <label for="remito-form-observaciones" class="text-sm font-medium text-gray-700">Observaciones</label>
@@ -662,7 +952,7 @@ function handleDetalleRemito(index) {
     ];
 
     const optionalFields = [
-        ['ID del Reporte', remito.reporteId],
+        ['Número de referencia, O.C, Presupuesto', remito.reporteId],
         ['Fecha del Servicio', remito.fechaServicio],
         ['Técnico', remito.tecnico],
         ['Dirección', remito.direccion],
@@ -703,9 +993,11 @@ function handleEditRemito(index) {
     state.editingRemitoId = getRemitoIdentifier(remito);
     state.editingRemitoLabel = sanitizeString(remito.numeroRemito) || sanitizeString(remito.reporteId);
     state.editingRemitoOriginal = remito;
+    syncSelectedClienteFromForm();
     state.viewMode = 'form';
 
     renderManagementView();
+    void ensureClientesLoaded({ reRender: true });
 }
 
 async function handleDeleteRemito(index) {
@@ -785,6 +1077,22 @@ function handleContainerInput(event) {
     handleFormInput(event);
 }
 
+function handleContainerChange(event) {
+    const target = event?.target;
+    if (!target) {
+        return;
+    }
+
+    if (target.id === 'remito-form-cliente-select') {
+        const value = typeof target.value === 'string' ? target.value : '';
+        applyClienteSelection(value);
+        renderManagementView();
+        return;
+    }
+
+    handleFormInput(event);
+}
+
 async function handleFormSubmit() {
     if (state.isSaving || state.isLoading) {
         return;
@@ -822,8 +1130,14 @@ async function handleFormSubmit() {
             setFeedback('success', 'El remito se actualizó correctamente.');
         } else {
             const requestPayload = buildCreateRemitoRequest(payload);
-            await dependencies.crearRemito(requestPayload);
-            setFeedback('success', 'El remito se creó correctamente.');
+            const response = await dependencies.crearRemito(requestPayload);
+            const nuevoNumero = sanitizeString(response?.NumeroRemito || response?.numeroRemito);
+            setFeedback(
+                'success',
+                nuevoNumero
+                    ? `El remito ${nuevoNumero} se creó correctamente.`
+                    : 'El remito se creó correctamente.',
+            );
         }
 
         resetFormState();
@@ -871,6 +1185,7 @@ function handleAction(action) {
     if (action === 'open-create') {
         resetFormState({ viewMode: 'form' });
         renderManagementView();
+        void ensureClientesLoaded({ reRender: true });
         return;
     }
 
@@ -986,6 +1301,7 @@ export function createRemitosGestionModule(overrides = {}) {
 
         container.addEventListener('click', handleContainerClick);
         container.addEventListener('input', handleContainerInput);
+        container.addEventListener('change', handleContainerChange);
         container.addEventListener('submit', handleContainerSubmit);
         initialized = true;
     }
