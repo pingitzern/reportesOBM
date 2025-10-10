@@ -298,17 +298,60 @@ function collectNumeroRemitoSequences(remitos) {
 async function determineNextNumeroRemito() {
     const sequences = collectNumeroRemitoSequences(state.remitos);
     let remoteSequences = [];
-    let fetchError = null;
+    const fetchErrors = [];
 
     const obtenerRemitos = dependencies.obtenerRemitos;
-    if (typeof obtenerRemitos === 'function') {
-        try {
-            const data = await obtenerRemitos({ page: Number.MAX_SAFE_INTEGER, pageSize: 1 });
-            const remitos = Array.isArray(data?.remitos) ? data.remitos : [];
-            remoteSequences = collectNumeroRemitoSequences(remitos);
-        } catch (error) {
-            fetchError = error;
+    const safePageSize = Number.isFinite(state.pageSize) && state.pageSize > 0
+        ? Math.max(1, Math.floor(state.pageSize))
+        : DEFAULT_PAGE_SIZE;
+
+    let reportedTotalPages = null;
+    const attemptedPages = new Set();
+
+    async function fetchPageSequences(page) {
+        if (typeof obtenerRemitos !== 'function') {
+            return null;
         }
+
+        if (!Number.isFinite(page) || page <= 0 || attemptedPages.has(page)) {
+            return null;
+        }
+
+        attemptedPages.add(page);
+
+        try {
+            const response = await obtenerRemitos({ page, pageSize: safePageSize });
+            const remitos = Array.isArray(response?.remitos) ? response.remitos : [];
+            const sequencesFromResponse = collectNumeroRemitoSequences(remitos);
+            if (sequencesFromResponse.length > 0) {
+                remoteSequences = remoteSequences.concat(sequencesFromResponse);
+            }
+
+            const totalPagesValue = Number(response?.totalPages);
+            if (Number.isFinite(totalPagesValue) && totalPagesValue > 0) {
+                const normalizedTotalPages = Math.floor(totalPagesValue);
+                reportedTotalPages = Math.max(reportedTotalPages ?? 0, normalizedTotalPages);
+            }
+
+            return response;
+        } catch (error) {
+            fetchErrors.push(error);
+            return null;
+        }
+    }
+
+    const currentPage = Number.isFinite(state.currentPage) && state.currentPage > 0
+        ? Math.floor(state.currentPage)
+        : 1;
+
+    await fetchPageSequences(currentPage);
+
+    if (remoteSequences.length === 0) {
+        await fetchPageSequences(1);
+    }
+
+    if (remoteSequences.length === 0 && Number.isFinite(reportedTotalPages) && reportedTotalPages > 1) {
+        await fetchPageSequences(reportedTotalPages);
     }
 
     const allSequences = sequences.concat(remoteSequences);
@@ -318,8 +361,9 @@ async function determineNextNumeroRemito() {
         return { numero: formatRemitoNumero(maxSequence + 1), error: null };
     }
 
-    if (fetchError) {
-        return { numero: '', error: fetchError };
+    if (remoteSequences.length === 0 && fetchErrors.length > 0) {
+        const lastError = fetchErrors[fetchErrors.length - 1];
+        return { numero: '', error: lastError };
     }
 
     return { numero: formatRemitoNumero(1), error: null };

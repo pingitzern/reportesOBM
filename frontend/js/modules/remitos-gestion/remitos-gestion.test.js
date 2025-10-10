@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { __testables__ } from './remitos-gestion.js';
 
 const {
@@ -72,13 +73,29 @@ describe('determineNextNumeroRemito', () => {
         ];
 
         setDependencies({
-            obtenerRemitos: async () => ({
+            obtenerRemitos: jest.fn().mockResolvedValue({
                 remitos: [{ numeroRemito: 'REM-0020' }],
+                totalPages: 1,
             }),
         });
 
         const result = await determineNextNumeroRemito();
         expect(result).toEqual({ numero: 'REM-0021', error: null });
+    });
+
+    it('consulta la última página cuando la primera no devuelve números', async () => {
+        const obtenerRemitos = jest.fn()
+            .mockResolvedValueOnce({ remitos: [], totalPages: 3 })
+            .mockResolvedValueOnce({ remitos: [{ numeroRemito: 'REM-0010' }], totalPages: 3 });
+
+        setDependencies({ obtenerRemitos });
+
+        const result = await determineNextNumeroRemito();
+
+        expect(result).toEqual({ numero: 'REM-0011', error: null });
+        expect(obtenerRemitos).toHaveBeenCalledTimes(2);
+        expect(obtenerRemitos).toHaveBeenNthCalledWith(1, expect.objectContaining({ page: 1 }));
+        expect(obtenerRemitos).toHaveBeenNthCalledWith(2, expect.objectContaining({ page: 3 }));
     });
 
     it('retorna error cuando no puede obtener números', async () => {
