@@ -552,7 +552,12 @@ function doPost(e) {
         const sess = SessionService.validateSession(data.token);
         // data.reporteData debe contener el objeto completo del reporte guardado
         // data.observaciones es el texto que el técnico añade en la vista del remito
-        const result = RemitoService.crearRemito(data.reporteData, data.observaciones, sess.mail);
+        const result = RemitoService.crearRemito(
+          data.reporteData,
+          data.observaciones,
+          sess.mail,
+          data.fotos
+        );
         return ResponseFactory.success(result);
       }
       case 'obtener_remitos': {

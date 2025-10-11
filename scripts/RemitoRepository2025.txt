@@ -5,7 +5,8 @@ const REMITOS_HEADERS = [
   'NumeroRemito', 'FechaCreacion', 'MailTecnico', 'NumeroReporte',
   'NombreCliente', 'Direccion', 'CUIT', 'Telefono', 'MailCliente',
   'ModeloEquipo', 'NumeroSerie', 'IDInterna',
-  'Repuestos', 'Observaciones', 'IdUnico'
+  'Repuestos', 'Observaciones', 'IdUnico',
+  'Foto1URL', 'Foto2URL', 'Foto3URL', 'Foto4URL'
 ];
 
 const RemitoRepository = {
