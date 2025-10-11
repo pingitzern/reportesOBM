@@ -1,5 +1,130 @@
 import { COMPONENT_STAGES } from '../mantenimiento/templates.js';
 
+const MAX_REMITO_PHOTOS = 4;
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+const PHOTO_MIME_EXTENSION_MAP = Object.freeze({
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/heic': 'heic',
+    'image/heif': 'heif',
+});
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function guessExtensionFromMimeType(mimeType) {
+    const normalized = normalizeString(mimeType).toLowerCase();
+    return PHOTO_MIME_EXTENSION_MAP[normalized] || 'jpg';
+}
+
+function sanitizePhotoFileName(name, fallbackBase, index, mimeType) {
+    const base = normalizeString(name) || `${fallbackBase}-foto-${index + 1}`;
+    const withoutSeparators = base.replace(/[\\/]/g, '-');
+    const normalized = withoutSeparators.replace(/[^a-zA-Z0-9._-]+/g, '_');
+    const extension = guessExtensionFromMimeType(mimeType);
+
+    if (normalized.toLowerCase().endsWith(`.${extension}`)) {
+        return normalized;
+    }
+
+    const withoutExtension = normalized.replace(/\.[^.]+$/, '');
+    return `${withoutExtension}.${extension}`;
+}
+
+function createEmptyPhotoSlot(index = 0) {
+    return {
+        index,
+        previewUrl: '',
+        base64Data: '',
+        mimeType: '',
+        fileName: '',
+        url: '',
+        shouldRemove: false,
+    };
+}
+
+function createEmptyPhotoSlots() {
+    return Array.from({ length: MAX_REMITO_PHOTOS }, (_, index) => createEmptyPhotoSlot(index));
+}
+
+function getPhotoPreviewSource(slot) {
+    if (!slot || typeof slot !== 'object') {
+        return '';
+    }
+
+    const previewUrl = normalizeString(slot.previewUrl);
+    if (previewUrl) {
+        return previewUrl;
+    }
+
+    const url = normalizeString(slot.url);
+    return url;
+}
+
+function formatPhotoFileLabel(slot) {
+    if (!slot || typeof slot !== 'object') {
+        return 'Sin archivo seleccionado';
+    }
+
+    const fileName = normalizeString(slot.fileName);
+    if (fileName) {
+        return fileName;
+    }
+
+    const url = normalizeString(slot.url);
+    if (url) {
+        try {
+            const parsed = new URL(url);
+            const segments = parsed.pathname.split('/');
+            const lastSegment = segments[segments.length - 1];
+            return lastSegment || 'Foto subida';
+        } catch (error) {
+            return 'Foto subida';
+        }
+    }
+
+    return 'Sin archivo seleccionado';
+}
+
+function isFileReaderSupported() {
+    return typeof window !== 'undefined' && typeof window.FileReader !== 'undefined';
+}
+
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            resolve(reader.result);
+        };
+        reader.onerror = () => {
+            reject(new Error('No se pudo leer el archivo seleccionado.'));
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function extractBase64FromDataUrl(dataUrl) {
+    if (typeof dataUrl !== 'string') {
+        throw new Error('No se pudo interpretar la imagen seleccionada.');
+    }
+
+    const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) {
+        throw new Error('El formato de la imagen no es compatible.');
+    }
+
+    return match[2];
+}
+
 function getElement(id) {
     return typeof document !== 'undefined' ? document.getElementById(id) : null;
 }
@@ -446,6 +571,300 @@ function enableButton(buttonId) {
 export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
     let lastSavedReport = null;
     let eventsInitialized = false;
+    let photoSlots = createEmptyPhotoSlots();
+    let photoEventsInitialized = false;
+
+    function getPhotoContainer() {
+        const container = getElement('remito-fotos-container');
+        return container instanceof HTMLElement ? container : null;
+    }
+
+    function renderPhotoSlots() {
+        const container = getPhotoContainer();
+        if (!container) {
+            return;
+        }
+
+        const slotsHtml = photoSlots
+            .map((slot, index) => {
+                const previewSource = getPhotoPreviewSource(slot);
+                const hasPreview = Boolean(previewSource);
+                const labelText = escapeHtml(formatPhotoFileLabel(slot));
+                const buttonClasses = [
+                    'group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border-2',
+                    hasPreview ? 'border-transparent bg-gray-900/5' : 'border-dashed border-gray-300 bg-gray-50',
+                    'text-gray-400 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                ].join(' ');
+                const triggerContent = hasPreview
+                    ? `<img src="${escapeHtml(previewSource)}" alt="Foto ${index + 1}" class="h-full w-full object-cover">`
+                    : `
+                        <div class="flex flex-col items-center justify-center gap-2 text-gray-400">
+                            <span class="text-5xl font-light leading-none">+</span>
+                            <span class="text-xs font-medium">Agregar foto</span>
+                        </div>
+                    `;
+                const removeButton = hasPreview
+                    ? `
+                        <button type="button" class="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 shadow-md transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2" data-remito-photo-action="remove" data-remito-photo-index="${index}" title="Eliminar foto" aria-label="Eliminar foto">
+                            <span aria-hidden="true" class="text-lg leading-none">&times;</span>
+                        </button>
+                    `
+                    : '';
+
+                const menuHtml = `
+                    <div class="absolute inset-0 z-10 hidden items-center justify-center rounded-xl bg-black/40 p-4" data-remito-photo-menu="${index}" aria-hidden="true">
+                        <button type="button" class="absolute inset-0 cursor-default" data-remito-photo-menu-dismiss></button>
+                        <div class="relative z-10 w-full max-w-[220px] space-y-2 rounded-lg bg-white p-4 text-center shadow-lg">
+                            <p class="text-sm font-semibold text-gray-700">Seleccioná una opción</p>
+                            <button type="button" class="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remito-photo-action="capture" data-remito-photo-index="${index}">Tomar foto</button>
+                            <button type="button" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remito-photo-action="upload" data-remito-photo-index="${index}">Subir foto</button>
+                            <button type="button" class="w-full rounded-lg border border-transparent bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remito-photo-menu-dismiss>Cerrar</button>
+                        </div>
+                    </div>
+                `;
+
+                return `
+                    <div class="space-y-2" data-remito-photo-slot="${index}">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-sm font-medium text-gray-700">Foto ${index + 1}</p>
+                            <p class="max-w-[60%] truncate text-[11px] text-gray-500">${labelText}</p>
+                        </div>
+                        <div class="relative">
+                            <button type="button" class="${buttonClasses}" data-remito-photo-trigger data-remito-photo-index="${index}" aria-label="Agregar o reemplazar foto ${index + 1}">
+                                ${triggerContent}
+                            </button>
+                            ${removeButton}
+                            ${menuHtml}
+                        </div>
+                        <input type="file" accept="image/*" capture="environment" class="hidden" data-remito-photo-input="capture" data-remito-photo-index="${index}">
+                        <input type="file" accept="image/*" class="hidden" data-remito-photo-input="upload" data-remito-photo-index="${index}">
+                    </div>
+                `;
+            })
+            .join('');
+
+        container.innerHTML = slotsHtml;
+    }
+
+    function resetPhotoSlots() {
+        photoSlots = createEmptyPhotoSlots();
+        renderPhotoSlots();
+    }
+
+    function closeAllPhotoMenus() {
+        const container = getPhotoContainer();
+        if (!container) {
+            return;
+        }
+
+        const menus = container.querySelectorAll('[data-remito-photo-menu]');
+        menus.forEach(menu => {
+            menu.classList.add('hidden');
+            menu.setAttribute('aria-hidden', 'true');
+        });
+    }
+
+    function togglePhotoMenu(index) {
+        const container = getPhotoContainer();
+        if (!container) {
+            return;
+        }
+
+        const normalizedIndex = Number(index);
+        if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= MAX_REMITO_PHOTOS) {
+            return;
+        }
+
+        const selector = `[data-remito-photo-menu="${normalizedIndex}"]`;
+        const menu = container.querySelector(selector);
+        if (!menu) {
+            return;
+        }
+
+        const isHidden = menu.classList.contains('hidden');
+        closeAllPhotoMenus();
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            menu.setAttribute('aria-hidden', 'false');
+        }
+    }
+
+    function openPhotoFileDialog(mode, index) {
+        const container = getPhotoContainer();
+        if (!container) {
+            return;
+        }
+
+        const selector = `[data-remito-photo-input="${mode}"][data-remito-photo-index="${index}"]`;
+        const input = container.querySelector(selector);
+        if (input instanceof HTMLInputElement) {
+            input.value = '';
+            input.click();
+        }
+    }
+
+    function removePhotoSlot(index) {
+        const normalizedIndex = Number(index);
+        if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= photoSlots.length) {
+            return;
+        }
+
+        closeAllPhotoMenus();
+        photoSlots[normalizedIndex] = createEmptyPhotoSlot(normalizedIndex);
+        renderPhotoSlots();
+    }
+
+    async function handlePhotoFileSelection(index, file) {
+        const normalizedIndex = Number(index);
+        if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= photoSlots.length) {
+            return;
+        }
+
+        if (!file) {
+            return;
+        }
+
+        if (!file.type || !file.type.startsWith('image/')) {
+            window.alert?.('Solo se pueden cargar archivos de imagen.');
+            return;
+        }
+
+        if (file.size && file.size > MAX_PHOTO_SIZE_BYTES) {
+            window.alert?.('La foto supera el límite de 5 MB permitido.');
+            return;
+        }
+
+        if (!isFileReaderSupported()) {
+            window.alert?.('El navegador no permite procesar imágenes desde este formulario.');
+            return;
+        }
+
+        try {
+            const dataUrl = await readFileAsDataUrl(file);
+            const base64Data = extractBase64FromDataUrl(dataUrl);
+            const mimeType = normalizeString(file.type) || 'image/jpeg';
+            const numeroRemitoInput = getElement('remito-numero');
+            const numeroRemito = numeroRemitoInput instanceof HTMLInputElement
+                ? normalizeString(numeroRemitoInput.value)
+                : '';
+            const fallbackBase = numeroRemito || 'remito';
+            const fileName = sanitizePhotoFileName(file.name, fallbackBase, normalizedIndex, mimeType);
+
+            photoSlots[normalizedIndex] = {
+                index: normalizedIndex,
+                previewUrl: typeof dataUrl === 'string' ? dataUrl : '',
+                base64Data,
+                mimeType,
+                fileName,
+                url: '',
+                shouldRemove: false,
+            };
+            closeAllPhotoMenus();
+            renderPhotoSlots();
+        } catch (error) {
+            const message = error instanceof Error
+                ? error.message
+                : 'No se pudo procesar la foto seleccionada.';
+            window.alert?.(message);
+        }
+    }
+
+    function handlePhotoAction(action, index) {
+        if (!action) {
+            return;
+        }
+
+        const normalizedIndex = Number(index);
+        if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= photoSlots.length) {
+            return;
+        }
+
+        if (action === 'remove') {
+            removePhotoSlot(normalizedIndex);
+            return;
+        }
+
+        if (action === 'capture' || action === 'upload') {
+            closeAllPhotoMenus();
+            openPhotoFileDialog(action, normalizedIndex);
+        }
+    }
+
+    function handlePhotoContainerClick(event) {
+        const dismiss = event.target.closest?.('[data-remito-photo-menu-dismiss]');
+        if (dismiss) {
+            event.preventDefault();
+            closeAllPhotoMenus();
+            return;
+        }
+
+        const actionButton = event.target.closest?.('[data-remito-photo-action]');
+        if (actionButton) {
+            event.preventDefault();
+            const action = actionButton.dataset.remitoPhotoAction;
+            const index = actionButton.dataset.remitoPhotoIndex;
+            handlePhotoAction(action, index);
+            return;
+        }
+
+        const trigger = event.target.closest?.('[data-remito-photo-trigger]');
+        if (trigger) {
+            event.preventDefault();
+            togglePhotoMenu(trigger.dataset.remitoPhotoIndex);
+            return;
+        }
+
+        const clickedInsideMenu = Boolean(event.target.closest?.('[data-remito-photo-menu]'));
+        if (!clickedInsideMenu) {
+            closeAllPhotoMenus();
+        }
+    }
+
+    function handlePhotoContainerChange(event) {
+        const input = event.target;
+        if (!(input instanceof HTMLInputElement)) {
+            return;
+        }
+
+        const mode = input.dataset.remitoPhotoInput;
+        if (!mode) {
+            return;
+        }
+
+        const index = Number.parseInt(input.dataset.remitoPhotoIndex ?? '', 10);
+        const file = input.files && input.files[0];
+        if (Number.isFinite(index) && file) {
+            void handlePhotoFileSelection(index, file);
+        }
+
+        input.value = '';
+    }
+
+    function ensurePhotoEvents() {
+        if (photoEventsInitialized) {
+            return;
+        }
+
+        const container = getPhotoContainer();
+        if (!container) {
+            return;
+        }
+
+        container.addEventListener('click', handlePhotoContainerClick);
+        container.addEventListener('change', handlePhotoContainerChange);
+        photoEventsInitialized = true;
+    }
+
+    function buildPhotosPayload() {
+        return photoSlots
+            .map((slot, index) => ({
+                slot: index + 1,
+                base64Data: normalizeString(slot.base64Data),
+                mimeType: normalizeString(slot.mimeType) || 'image/jpeg',
+                fileName: normalizeString(slot.fileName) || `remito-foto-${index + 1}.jpg`,
+            }))
+            .filter(item => Boolean(item.base64Data));
+    }
 
     function ensureReportAvailable() {
         if (!lastSavedReport) {
@@ -464,6 +883,8 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
     function reset() {
         lastSavedReport = null;
         disableButton('generar-remito-btn');
+        resetPhotoSlots();
+        closeAllPhotoMenus();
         clearReadonlyInputs([
             'remito-numero',
             'remito-fecha',
@@ -491,6 +912,8 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
             return false;
         }
 
+        resetPhotoSlots();
+        closeAllPhotoMenus();
         populateRemitoForm(lastSavedReport);
         if (typeof showView === 'function') {
             showView('remito-view');
@@ -514,6 +937,7 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         }
         renderRepuestosList(repuestosEditados);
 
+        const fotosPayload = buildPhotosPayload();
         const finalizarBtn = getElement('finalizar-remito-btn');
         let originalText = '';
         if (finalizarBtn instanceof HTMLButtonElement) {
@@ -532,17 +956,23 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 throw new Error('No hay una sesión activa. Ingresá nuevamente.');
             }
 
+            const requestBody = {
+                action: 'crear_remito',
+                token,
+                reporteData: lastSavedReport,
+                observaciones,
+            };
+
+            if (Array.isArray(fotosPayload) && fotosPayload.length > 0) {
+                requestBody.fotos = fotosPayload;
+            }
+
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'text/plain; charset=utf-8',
                 },
-                body: JSON.stringify({
-                    action: 'crear_remito',
-                    token,
-                    reporteData: lastSavedReport,
-                    observaciones,
-                }),
+                body: JSON.stringify(requestBody),
             });
 
             if (!response.ok) {
@@ -591,6 +1021,8 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
 
         disableButton('generar-remito-btn');
         renderRepuestosList([]);
+        renderPhotoSlots();
+        ensurePhotoEvents();
 
         const generarBtn = getElement('generar-remito-btn');
         if (generarBtn instanceof HTMLButtonElement) {
