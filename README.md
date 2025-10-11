@@ -117,6 +117,8 @@ Si no se define ninguna de las opciones, la consola mostrará una advertencia y 
 
 Al iniciar la aplicación el usuario debe autenticarse mediante el modal integrado en la interfaz. Las credenciales se verifican contra la pestaña `login` del spreadsheet (gestionada por `AuthService.gs`) y, si son válidas, se genera un token temporal almacenado en la pestaña `sessions` mediante `SessionService.gs`. El token y el correo se guardan en `localStorage` para reutilizarlos en sesiones posteriores. Todas las peticiones `guardar`, `buscar`, `actualizar`, `eliminar`, `dashboard` y remitos incluyen automáticamente esas credenciales, y también es posible cerrar sesión desde el encabezado para forzar un nuevo inicio de sesión.
 
+Para entornos de desarrollo compartidos mantenemos una cuenta administrativa de referencia. Las credenciales actuales se documentan en `docs/credentials.md`; cada vez que se actualice la contraseña en la pestaña `login` conviene reflejar el cambio en ese archivo para que el equipo disponga de un único punto de consulta.
+
 ### Ejecutar en desarrollo
 1. Clona el repositorio y entra en la carpeta `reportesOBM`.
 2. Instala las dependencias con `npm install`.
