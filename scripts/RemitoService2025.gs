@@ -4,12 +4,6 @@ const REMITO_FOTOS_FOLDER_ID = '1SH7Zz7g_2sbYsFHMfVQj3Admdy8L3FVz';
 const REMITO_PDF_FOLDER_ID = '1BKBPmndOGet7yVZ4UtFCkhrt402eXH4X';
 const MAX_REMITO_FOTOS = 4;
 
-const A4_PAGE_WIDTH_POINTS = 595.28; // 210 mm
-const A4_PAGE_HEIGHT_POINTS = 841.89; // 297 mm
-const A4_PAGE_MARGIN_POINTS = 36; // ~0.5 pulgadas
-const REMITO_FOTO_MAX_WIDTH_POINTS = A4_PAGE_WIDTH_POINTS - (A4_PAGE_MARGIN_POINTS * 2);
-const REMITO_FOTO_MAX_HEIGHT_POINTS = 260;
-
 const RemitoService = {
   fotosFolderCache: null,
   pdfFolderCache: null,
@@ -91,96 +85,59 @@ const RemitoService = {
     return rawBase.replace(/[^A-Za-z0-9_-]+/g, '-');
   },
 
-  configurarPaginaPdf_(body) {
-    if (!body || typeof body.setAttributes !== 'function') {
-      return;
-    }
+  buildPdfTemplateData_(remito) {
+    const normalize = value => this.normalizeForPdf_(value);
+    const fallback = value => {
+      const normalized = normalize(value);
+      return normalized || '—';
+    };
 
-    const atributosPagina = {};
-    atributosPagina[DocumentApp.Attribute.PAGE_WIDTH] = A4_PAGE_WIDTH_POINTS;
-    atributosPagina[DocumentApp.Attribute.PAGE_HEIGHT] = A4_PAGE_HEIGHT_POINTS;
-    atributosPagina[DocumentApp.Attribute.MARGIN_TOP] = A4_PAGE_MARGIN_POINTS;
-    atributosPagina[DocumentApp.Attribute.MARGIN_BOTTOM] = A4_PAGE_MARGIN_POINTS;
-    atributosPagina[DocumentApp.Attribute.MARGIN_LEFT] = A4_PAGE_MARGIN_POINTS;
-    atributosPagina[DocumentApp.Attribute.MARGIN_RIGHT] = A4_PAGE_MARGIN_POINTS;
+    const fotos = [
+      normalize(remito.Foto1URL),
+      normalize(remito.Foto2URL),
+      normalize(remito.Foto3URL),
+      normalize(remito.Foto4URL)
+    ].filter(url => !!url);
 
-    try {
-      body.setAttributes(atributosPagina);
-    } catch (error) {
-      Logger.log('No se pudieron aplicar los márgenes y el tamaño de página A4: %s', error);
-    }
+    const detalles = [
+      { label: 'Número de remito', value: fallback(remito.NumeroRemito) },
+      { label: 'Fecha de creación', value: this.formatDateForPdf_(remito.FechaCreacion) || '—' },
+      { label: 'Número de reporte', value: fallback(remito.NumeroReporte) },
+      { label: 'Cliente', value: fallback(remito.NombreCliente) },
+      { label: 'Dirección', value: fallback(remito.Direccion) },
+      { label: 'Teléfono', value: fallback(remito.Telefono) },
+      { label: 'Correo del cliente', value: fallback(remito.MailCliente) },
+      { label: 'CUIT', value: fallback(remito.CUIT) },
+      { label: 'Modelo de equipo', value: fallback(remito.ModeloEquipo) },
+      { label: 'Número de serie', value: fallback(remito.NumeroSerie) },
+      { label: 'ID interna', value: fallback(remito.IDInterna) },
+      { label: 'Técnico responsable', value: fallback(remito.MailTecnico) }
+    ];
+
+    return {
+      titulo: 'Remito de Servicio',
+      fechaGeneracion: this.formatDateForPdf_(new Date()),
+      detalles,
+      repuestos: normalize(remito.Repuestos) || 'No se registraron repuestos reemplazados.',
+      observaciones: normalize(remito.Observaciones) || 'Sin observaciones adicionales.',
+      fotos: fotos.map(url => ({ url })),
+      nota: 'Documento generado automáticamente a partir del sistema de reportes OBM.'
+    };
   },
 
   generarPdfRemito_(remito) {
     const folder = this.getPdfFolder_();
     const fileBase = this.buildPdfFileBase_(remito.NumeroRemito, remito.NombreCliente);
     const documentName = `Remito-${fileBase}`;
-
-    const document = DocumentApp.create(documentName);
-    const documentId = document.getId();
-    let pdfFile = null;
-
     try {
-      const body = document.getBody();
-      body.clear();
+      const template = HtmlService.createTemplateFromFile('remito-pdf-template');
+      template.reporte = this.buildPdfTemplateData_(remito);
 
-      this.configurarPaginaPdf_(body);
-
-      body.appendParagraph('Remito de Servicio').setHeading(DocumentApp.ParagraphHeading.HEADING1);
-      body.appendParagraph(`Generado el ${this.formatDateForPdf_(new Date())}`)
-        .setHeading(DocumentApp.ParagraphHeading.HEADING3);
-
-      const detalles = [
-        ['Número de remito', this.normalizeForPdf_(remito.NumeroRemito)],
-        ['Fecha de creación', this.formatDateForPdf_(remito.FechaCreacion)],
-        ['Número de reporte', this.normalizeForPdf_(remito.NumeroReporte)],
-        ['Cliente', this.normalizeForPdf_(remito.NombreCliente)],
-        ['Dirección', this.normalizeForPdf_(remito.Direccion)],
-        ['Teléfono', this.normalizeForPdf_(remito.Telefono)],
-        ['Correo del cliente', this.normalizeForPdf_(remito.MailCliente)],
-        ['CUIT', this.normalizeForPdf_(remito.CUIT)],
-        ['Modelo de equipo', this.normalizeForPdf_(remito.ModeloEquipo)],
-        ['Número de serie', this.normalizeForPdf_(remito.NumeroSerie)],
-        ['ID interna', this.normalizeForPdf_(remito.IDInterna)],
-        ['Técnico responsable', this.normalizeForPdf_(remito.MailTecnico)]
-      ];
-
-      const table = body.appendTable(detalles);
-      for (let i = 0; i < table.getNumRows(); i += 1) {
-        const cell = table.getRow(i).getCell(0);
-        cell.setBackgroundColor('#f1f5f9');
-        const text = cell.editAsText();
-        if (text) {
-          text.setBold(true);
-        }
-      }
-
-      body.appendParagraph('Repuestos reemplazados').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-      body.appendParagraph(this.normalizeForPdf_(remito.Repuestos) || 'No se registraron repuestos reemplazados.');
-
-      body.appendParagraph('Observaciones').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-      body.appendParagraph(this.normalizeForPdf_(remito.Observaciones) || 'Sin observaciones adicionales.');
-
-      const fotos = [
-        this.normalizeForPdf_(remito.Foto1URL),
-        this.normalizeForPdf_(remito.Foto2URL),
-        this.normalizeForPdf_(remito.Foto3URL),
-        this.normalizeForPdf_(remito.Foto4URL)
-      ].filter(url => !!url);
-
-      if (fotos.length > 0) {
-        body.appendParagraph('Registro fotográfico').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-        this.appendFotosGrid_(body, fotos);
-      }
-
-      body.appendParagraph(' ');
-      body.appendParagraph('Documento generado automáticamente a partir del sistema de reportes OBM.');
-
-      document.saveAndClose();
-
-      const docFile = DriveApp.getFileById(documentId);
-      const pdfBlob = docFile.getAs(MimeType.PDF).setName(`${documentName}.pdf`);
-      pdfFile = folder.createFile(pdfBlob);
+      const htmlOutput = template.evaluate();
+      const htmlContent = htmlOutput.getContent();
+      const htmlBlob = Utilities.newBlob(htmlContent, 'text/html', `${documentName}.html`);
+      const pdfBlob = htmlBlob.getAs(MimeType.PDF).setName(`${documentName}.pdf`);
+      const pdfFile = folder.createFile(pdfBlob);
       pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
       return {
@@ -190,20 +147,6 @@ const RemitoService = {
       };
     } catch (error) {
       throw new Error(`No se pudo componer el PDF del remito: ${error.message}`);
-    } finally {
-      try {
-        document.saveAndClose();
-      } catch (closeError) {
-        // Ignorar errores al cerrar si ya está cerrado
-      }
-
-      if (documentId) {
-        try {
-          DriveApp.getFileById(documentId).setTrashed(true);
-        } catch (cleanupError) {
-          Logger.log('No se pudo eliminar el documento temporal del remito %s: %s', remito.NumeroRemito, cleanupError);
-        }
-      }
     }
   },
 
@@ -247,171 +190,6 @@ const RemitoService = {
 
     const withoutExistingExtension = normalized.replace(/\.[^.]+$/, '');
     return `${withoutExistingExtension}.${extension}`;
-  },
-
-  extractDriveFileId_(url) {
-    if (typeof url !== 'string') {
-      return '';
-    }
-
-    const trimmed = url.trim();
-    if (!trimmed) {
-      return '';
-    }
-
-    const idMatch = trimmed.match(/[-\w]{25,}/);
-    return idMatch ? idMatch[0] : '';
-  },
-
-  ajustarImagenParaPdf_(image) {
-    if (!image || typeof image.getWidth !== 'function' || typeof image.getHeight !== 'function') {
-      return;
-    }
-
-    const anchoActual = typeof image.getWidth === 'function' ? Number(image.getWidth()) : 0;
-    const altoActual = typeof image.getHeight === 'function' ? Number(image.getHeight()) : 0;
-
-    if (anchoActual <= 0 || altoActual <= 0) {
-      return;
-    }
-
-    const factorAncho = REMITO_FOTO_MAX_WIDTH_POINTS / anchoActual;
-    const factorAlto = REMITO_FOTO_MAX_HEIGHT_POINTS / altoActual;
-    const factorEscala = Math.min(factorAncho, factorAlto, 1);
-
-    if (factorEscala >= 1) {
-      return;
-    }
-
-    const nuevoAncho = Math.max(1, Math.round(anchoActual * factorEscala));
-    const nuevoAlto = Math.max(1, Math.round(altoActual * factorEscala));
-
-    try {
-      image.setWidth(nuevoAncho);
-      image.setHeight(nuevoAlto);
-    } catch (error) {
-      Logger.log('No se pudo ajustar la imagen del remito: %s', error);
-    }
-  },
-
-  tryAppendImageFromUrl_(container, url) {
-    if (!container || typeof container.appendImage !== 'function') {
-      return false;
-    }
-
-    const driveFileId = this.extractDriveFileId_(url);
-    if (!driveFileId) {
-      return false;
-    }
-
-    try {
-      const blob = DriveApp.getFileById(driveFileId).getBlob();
-      const image = container.appendImage(blob);
-      this.ajustarImagenParaPdf_(image);
-      const parent = typeof image.getParent === 'function' ? image.getParent() : null;
-      if (parent && typeof parent.setAlignment === 'function') {
-        parent.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        if (typeof parent.setSpacingBefore === 'function') {
-          parent.setSpacingBefore(0);
-        }
-        if (typeof parent.setSpacingAfter === 'function') {
-          parent.setSpacingAfter(0);
-        }
-      }
-      return true;
-    } catch (error) {
-      Logger.log('No se pudo insertar la imagen %s en el PDF: %s', url, error);
-      return false;
-    }
-  },
-
-  appendFotosGrid_(body, fotos) {
-    if (!body || typeof body.appendTable !== 'function') {
-      return;
-    }
-
-    if (!Array.isArray(fotos) || fotos.length === 0) {
-      return;
-    }
-
-    const columnas = 2;
-    const filas = Math.ceil(fotos.length / columnas);
-    const tablaInicial = Array.from({ length: filas }, () => new Array(columnas).fill(''));
-    const tabla = body.appendTable(tablaInicial);
-    tabla.setBorderWidth(0);
-
-    for (let fila = 0; fila < filas; fila += 1) {
-      const filaTabla = tabla.getRow(fila);
-
-      for (let columna = 0; columna < columnas; columna += 1) {
-        const indiceFoto = (fila * columnas) + columna;
-        const celda = filaTabla.getCell(columna);
-        celda.clear();
-        if (typeof celda.setPaddingTop === 'function') {
-          celda.setPaddingTop(8);
-        }
-        if (typeof celda.setPaddingBottom === 'function') {
-          celda.setPaddingBottom(8);
-        }
-        if (typeof celda.setPaddingLeft === 'function') {
-          celda.setPaddingLeft(8);
-        }
-        if (typeof celda.setPaddingRight === 'function') {
-          celda.setPaddingRight(8);
-        }
-        if (typeof celda.setVerticalAlignment === 'function') {
-          celda.setVerticalAlignment(DocumentApp.VerticalAlignment.TOP);
-        }
-
-        if (indiceFoto >= fotos.length) {
-          if (typeof celda.setBorderWidth === 'function') {
-            celda.setBorderWidth(0);
-          }
-          continue;
-        }
-
-        if (typeof celda.setBorderWidth === 'function') {
-          celda.setBorderWidth(1);
-        }
-        if (typeof celda.setBorderColor === 'function') {
-          celda.setBorderColor('#eeeeee');
-        }
-
-        const titulo = celda.appendParagraph(`Foto ${indiceFoto + 1}`);
-        if (typeof titulo.setAlignment === 'function') {
-          titulo.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        }
-        if (typeof titulo.setBold === 'function') {
-          titulo.setBold(true);
-        }
-        if (typeof titulo.setFontSize === 'function') {
-          titulo.setFontSize(10);
-        }
-        if (typeof titulo.setSpacingBefore === 'function') {
-          titulo.setSpacingBefore(0);
-        }
-        if (typeof titulo.setSpacingAfter === 'function') {
-          titulo.setSpacingAfter(4);
-        }
-        if (typeof titulo.setKeepWithNext === 'function') {
-          titulo.setKeepWithNext(true);
-        }
-
-        const imagenInsertada = this.tryAppendImageFromUrl_(celda, fotos[indiceFoto]);
-        if (!imagenInsertada) {
-          const enlace = celda.appendParagraph(fotos[indiceFoto]);
-          if (typeof enlace.setAlignment === 'function') {
-            enlace.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          }
-          if (typeof enlace.setFontSize === 'function') {
-            enlace.setFontSize(9);
-          }
-          if (typeof enlace.setSpacingBefore === 'function') {
-            enlace.setSpacingBefore(4);
-          }
-        }
-      }
-    }
   },
 
   extractBase64Data_(value) {
