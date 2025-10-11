@@ -1,10 +1,12 @@
 // Contenido para RemitoService.gs
 
 const REMITO_FOTOS_FOLDER_ID = '1SH7Zz7g_2sbYsFHMfVQj3Admdy8L3FVz';
+const REMITO_PDF_FOLDER_ID = '1BKBPmndOGet7yVZ4UtFCkhrt402eXH4X';
 const MAX_REMITO_FOTOS = 4;
 
 const RemitoService = {
   fotosFolderCache: null,
+  pdfFolderCache: null,
 
   getFotosFolder_() {
     if (!REMITO_FOTOS_FOLDER_ID) {
@@ -22,6 +24,161 @@ const RemitoService = {
     }
 
     return this.fotosFolderCache;
+  },
+
+  getPdfFolder_() {
+    if (!REMITO_PDF_FOLDER_ID) {
+      throw new Error('Configura el ID de la carpeta de PDFs de remitos antes de generar archivos.');
+    }
+
+    if (this.pdfFolderCache) {
+      return this.pdfFolderCache;
+    }
+
+    try {
+      this.pdfFolderCache = DriveApp.getFolderById(REMITO_PDF_FOLDER_ID);
+    } catch (error) {
+      throw new Error('No se pudo acceder a la carpeta configurada para los PDFs de remitos.');
+    }
+
+    return this.pdfFolderCache;
+  },
+
+  normalizeForPdf_(value) {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    if (value instanceof Date) {
+      return this.formatDateForPdf_(value);
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+    if (typeof value === 'string') {
+      return value.trim();
+    }
+    return String(value);
+  },
+
+  formatDateForPdf_(value) {
+    if (value instanceof Date) {
+      return Utilities.formatDate(value, Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return this.formatDateForPdf_(new Date(value));
+    }
+    if (typeof value === 'string') {
+      return value.trim();
+    }
+    return '';
+  },
+
+  buildPdfFileBase_(numeroRemito, nombreCliente) {
+    const baseParts = [];
+    if (numeroRemito) {
+      baseParts.push(String(numeroRemito));
+    }
+    if (nombreCliente) {
+      baseParts.push(String(nombreCliente));
+    }
+    const rawBase = baseParts.length > 0 ? baseParts.join('-') : 'remito';
+    return rawBase.replace(/[^A-Za-z0-9_-]+/g, '-');
+  },
+
+  generarPdfRemito_(remito) {
+    const folder = this.getPdfFolder_();
+    const fileBase = this.buildPdfFileBase_(remito.NumeroRemito, remito.NombreCliente);
+    const documentName = `Remito-${fileBase}`;
+
+    const document = DocumentApp.create(documentName);
+    const documentId = document.getId();
+    let pdfFile = null;
+
+    try {
+      const body = document.getBody();
+      body.clear();
+
+      body.appendParagraph('Remito de Servicio').setHeading(DocumentApp.ParagraphHeading.HEADING1);
+      body.appendParagraph(`Generado el ${this.formatDateForPdf_(new Date())}`)
+        .setHeading(DocumentApp.ParagraphHeading.HEADING3);
+
+      const detalles = [
+        ['Número de remito', this.normalizeForPdf_(remito.NumeroRemito)],
+        ['Fecha de creación', this.formatDateForPdf_(remito.FechaCreacion)],
+        ['Número de reporte', this.normalizeForPdf_(remito.NumeroReporte)],
+        ['Cliente', this.normalizeForPdf_(remito.NombreCliente)],
+        ['Dirección', this.normalizeForPdf_(remito.Direccion)],
+        ['Teléfono', this.normalizeForPdf_(remito.Telefono)],
+        ['Correo del cliente', this.normalizeForPdf_(remito.MailCliente)],
+        ['CUIT', this.normalizeForPdf_(remito.CUIT)],
+        ['Modelo de equipo', this.normalizeForPdf_(remito.ModeloEquipo)],
+        ['Número de serie', this.normalizeForPdf_(remito.NumeroSerie)],
+        ['ID interna', this.normalizeForPdf_(remito.IDInterna)],
+        ['Técnico responsable', this.normalizeForPdf_(remito.MailTecnico)]
+      ];
+
+      const table = body.appendTable(detalles);
+      for (let i = 0; i < table.getNumRows(); i += 1) {
+        const cell = table.getRow(i).getCell(0);
+        cell.setBackgroundColor('#f1f5f9');
+        const paragraphs = cell.getParagraphs();
+        for (let j = 0; j < paragraphs.length; j += 1) {
+          paragraphs[j].setBold(true);
+        }
+      }
+
+      body.appendParagraph('Repuestos reemplazados').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+      body.appendParagraph(this.normalizeForPdf_(remito.Repuestos) || 'No se registraron repuestos reemplazados.');
+
+      body.appendParagraph('Observaciones').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+      body.appendParagraph(this.normalizeForPdf_(remito.Observaciones) || 'Sin observaciones adicionales.');
+
+      const fotos = [
+        this.normalizeForPdf_(remito.Foto1URL),
+        this.normalizeForPdf_(remito.Foto2URL),
+        this.normalizeForPdf_(remito.Foto3URL),
+        this.normalizeForPdf_(remito.Foto4URL)
+      ].filter(url => !!url);
+
+      if (fotos.length > 0) {
+        body.appendParagraph('Enlaces a fotografías').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+        fotos.forEach((url, index) => {
+          body.appendListItem(`Foto ${index + 1}: ${url}`);
+        });
+      }
+
+      body.appendParagraph(' ');
+      body.appendParagraph('Documento generado automáticamente a partir del sistema de reportes OBM.');
+
+      document.saveAndClose();
+
+      const docFile = DriveApp.getFileById(documentId);
+      const pdfBlob = docFile.getAs(MimeType.PDF).setName(`${documentName}.pdf`);
+      pdfFile = folder.createFile(pdfBlob);
+      pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+      return {
+        id: pdfFile.getId(),
+        url: pdfFile.getUrl(),
+        name: pdfFile.getName()
+      };
+    } catch (error) {
+      throw new Error(`No se pudo componer el PDF del remito: ${error.message}`);
+    } finally {
+      try {
+        document.saveAndClose();
+      } catch (closeError) {
+        // Ignorar errores al cerrar si ya está cerrado
+      }
+
+      if (documentId) {
+        try {
+          DriveApp.getFileById(documentId).setTrashed(true);
+        } catch (cleanupError) {
+          Logger.log('No se pudo eliminar el documento temporal del remito %s: %s', remito.NumeroRemito, cleanupError);
+        }
+      }
+    }
   },
 
   guessExtension_(mimeType) {
@@ -183,12 +340,23 @@ const RemitoService = {
       IDInterna: reporteData.id_interna,
       Repuestos: repuestosCambiados || 'No se reemplazaron componentes.',
       Observaciones: observaciones,
-      IdUnico: idUnico
+      IdUnico: idUnico,
+      PdfURL: '',
+      PdfFileId: ''
     };
 
     const fotosProcesadas = this.procesarFotos_(fotos, remito.NumeroRemito, idUnico);
     for (let i = 0; i < MAX_REMITO_FOTOS; i += 1) {
       remito[`Foto${i + 1}URL`] = fotosProcesadas[i] || '';
+    }
+
+    let pdfInfo = null;
+    try {
+      pdfInfo = this.generarPdfRemito_(remito);
+      remito.PdfURL = pdfInfo.url || '';
+      remito.PdfFileId = pdfInfo.id || '';
+    } catch (error) {
+      throw new Error(`No se pudo generar el PDF del remito: ${error.message}`);
     }
 
     // 4. Preparar los datos del remito como un array, en el orden de los encabezados de la hoja
@@ -211,12 +379,24 @@ const RemitoService = {
       remito.Foto1URL,
       remito.Foto2URL,
       remito.Foto3URL,
-      remito.Foto4URL
+      remito.Foto4URL,
+      remito.PdfURL
     ];
 
     // 5. GUARDAR EL REMITO REALMENTE EN LA HOJA DE CÁLCULO
-    RemitoRepository.guardar(remitoRowData);
-    
+    try {
+      RemitoRepository.guardar(remitoRowData);
+    } catch (error) {
+      if (pdfInfo && pdfInfo.id) {
+        try {
+          DriveApp.getFileById(pdfInfo.id).setTrashed(true);
+        } catch (cleanupError) {
+          Logger.log('No se pudo eliminar el PDF del remito %s tras un error al guardar: %s', remito.NumeroRemito, cleanupError);
+        }
+      }
+      throw error;
+    }
+
     // 6. Devolver el objeto remito completo (con su número asignado) al frontend
     return remito;
   },

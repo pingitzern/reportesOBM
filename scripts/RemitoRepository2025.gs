@@ -6,7 +6,8 @@ const REMITOS_HEADERS = [
   'NombreCliente', 'Direccion', 'CUIT', 'Telefono', 'MailCliente',
   'ModeloEquipo', 'NumeroSerie', 'IDInterna',
   'Repuestos', 'Observaciones', 'IdUnico',
-  'Foto1URL', 'Foto2URL', 'Foto3URL', 'Foto4URL'
+  'Foto1URL', 'Foto2URL', 'Foto3URL', 'Foto4URL',
+  'PdfURL'
 ];
 
 const RemitoRepository = {
@@ -22,6 +23,19 @@ const RemitoRepository = {
       sheet.appendRow(this.REMITOS_HEADERS);
       // Inmovilizar la primera fila (encabezados)
       sheet.setFrozenRows(1);
+    } else {
+      const lastColumn = sheet.getLastColumn();
+      if (lastColumn >= 1) {
+        const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+        const missingHeaders = this.REMITOS_HEADERS.filter(header => currentHeaders.indexOf(header) === -1);
+        if (missingHeaders.length > 0) {
+          sheet.insertColumnsAfter(lastColumn, missingHeaders.length);
+          sheet.getRange(1, lastColumn + 1, 1, missingHeaders.length).setValues([missingHeaders]);
+        }
+      } else {
+        sheet.appendRow(this.REMITOS_HEADERS);
+        sheet.setFrozenRows(1);
+      }
     }
     return sheet;
   },
