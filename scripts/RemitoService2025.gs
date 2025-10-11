@@ -170,20 +170,7 @@ const RemitoService = {
 
       if (fotos.length > 0) {
         body.appendParagraph('Registro fotográfico').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-        fotos.forEach((url, index) => {
-          const titulo = body.appendParagraph(`Foto ${index + 1}`);
-          const tituloTexto = titulo.editAsText();
-          if (tituloTexto) {
-            tituloTexto.setBold(true);
-          }
-
-          const imagenInsertada = this.tryAppendImageFromUrl_(body, url);
-          if (!imagenInsertada) {
-            body.appendParagraph(url);
-          }
-
-          body.appendParagraph(' ');
-        });
+        this.appendFotosGrid_(body, fotos);
       }
 
       body.appendParagraph(' ');
@@ -307,8 +294,8 @@ const RemitoService = {
     }
   },
 
-  tryAppendImageFromUrl_(body, url) {
-    if (!body || typeof body.appendImage !== 'function') {
+  tryAppendImageFromUrl_(container, url) {
+    if (!container || typeof container.appendImage !== 'function') {
       return false;
     }
 
@@ -319,12 +306,77 @@ const RemitoService = {
 
     try {
       const blob = DriveApp.getFileById(driveFileId).getBlob();
-      const image = body.appendImage(blob);
+      const image = container.appendImage(blob);
       this.ajustarImagenParaPdf_(image);
+      const parent = typeof image.getParent === 'function' ? image.getParent() : null;
+      if (parent && typeof parent.setAlignment === 'function') {
+        parent.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        if (typeof parent.setSpacingBefore === 'function') {
+          parent.setSpacingBefore(0);
+        }
+        if (typeof parent.setSpacingAfter === 'function') {
+          parent.setSpacingAfter(0);
+        }
+      }
       return true;
     } catch (error) {
       Logger.log('No se pudo insertar la imagen %s en el PDF: %s', url, error);
       return false;
+    }
+  },
+
+  appendFotosGrid_(body, fotos) {
+    if (!body || typeof body.appendTable !== 'function') {
+      return;
+    }
+
+    if (!Array.isArray(fotos) || fotos.length === 0) {
+      return;
+    }
+
+    const columnas = 2;
+    const filas = Math.ceil(fotos.length / columnas);
+    const tablaInicial = Array.from({ length: filas }, () => new Array(columnas).fill(''));
+    const tabla = body.appendTable(tablaInicial);
+    tabla.setBorderWidth(0);
+
+    for (let fila = 0; fila < filas; fila += 1) {
+      const filaTabla = tabla.getRow(fila);
+
+      for (let columna = 0; columna < columnas; columna += 1) {
+        const indiceFoto = (fila * columnas) + columna;
+        const celda = filaTabla.getCell(columna);
+        celda.clear();
+        celda.setPaddingTop(8);
+        celda.setPaddingBottom(8);
+        celda.setPaddingLeft(8);
+        celda.setPaddingRight(8);
+        celda.setVerticalAlignment(DocumentApp.VerticalAlignment.TOP);
+
+        if (indiceFoto >= fotos.length) {
+          celda.setBorderWidth(0);
+          continue;
+        }
+
+        celda.setBorderWidth(1);
+        celda.setBorderColor('#eeeeee');
+
+        const titulo = celda.appendParagraph(`Foto ${indiceFoto + 1}`);
+        titulo.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        titulo.setBold(true);
+        titulo.setFontSize(10);
+        titulo.setSpacingBefore(0);
+        titulo.setSpacingAfter(4);
+        titulo.setKeepWithNext(true);
+
+        const imagenInsertada = this.tryAppendImageFromUrl_(celda, fotos[indiceFoto]);
+        if (!imagenInsertada) {
+          const enlace = celda.appendParagraph(fotos[indiceFoto]);
+          enlace.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+          enlace.setFontSize(9);
+          enlace.setSpacingBefore(4);
+        }
+      }
     }
   },
 
