@@ -591,12 +591,15 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 const hasPreview = Boolean(previewSource);
                 const labelText = escapeHtml(formatPhotoFileLabel(slot));
                 const buttonClasses = [
-                    'group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border-2',
+                    'group relative flex w-full items-center justify-center overflow-hidden rounded-xl border-2',
+                    'min-h-[180px]',
                     hasPreview ? 'border-transparent bg-gray-900/5' : 'border-dashed border-gray-300 bg-gray-50',
                     'text-gray-400 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
                 ].join(' ');
                 const triggerContent = hasPreview
-                    ? `<img src="${escapeHtml(previewSource)}" alt="Foto ${index + 1}" class="h-full w-full object-cover">`
+                    ? `
+                        <img src="${escapeHtml(previewSource)}" alt="Foto ${index + 1}" class="max-h-72 w-full object-contain" loading="lazy">
+                    `
                     : `
                         <div class="flex flex-col items-center justify-center gap-2 text-gray-400">
                             <span class="text-5xl font-light leading-none">+</span>
