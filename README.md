@@ -79,17 +79,20 @@ Cada archivo `.txt` contiene el código que debes pegar en un archivo `.gs` con 
 
 ### 2. Configurar el proyecto de Apps Script
 1. Abre la hoja y navega a **Extensiones > Apps Script**.
-2. Crea los archivos necesarios en tu proyecto de Apps Script y pega el contenido correspondiente:
+2. Si todavía conservas un archivo histórico llamado `gestor.gs`, elimínalo del proyecto antes de continuar. El código está dividido en módulos independientes y mantener ese archivo provoca conflictos al actualizar.
+3. Crea los archivos necesarios en tu proyecto de Apps Script y pega el contenido correspondiente:
    - `Codigo2025.gs` ⟵ [`scripts/Codigo2025.txt`](scripts/Codigo2025.txt)
    - `AuthService.gs` ⟵ [`scripts/AuthService.txt`](scripts/AuthService.txt)
    - `SessionService.gs` ⟵ [`scripts/SessionService.txt`](scripts/SessionService.txt)
    - `RemitoRepository2025.gs` ⟵ [`scripts/RemitoRepository2025.txt`](scripts/RemitoRepository2025.txt)
    - `RemitoService 2025.gs` ⟵ [`scripts/RemitoService 2025.txt`](scripts/RemitoService%202025.txt)
-3. Ajusta los IDs y constantes según tu entorno:
+4. Ajusta los IDs y constantes según tu entorno:
    - `Codigo2025.gs` expone los valores por defecto `SHEET_ID`, `SHEET_NAME` y `CLIENTES_SHEET_NAME`. Modifícalos al inicio del archivo o crea propiedades de script con esos nombres para evitar hardcodear los datos.
    - `AuthService.gs` comparte el `SHEET_ID` y espera una pestaña `login` con las columnas `mail` y `password`.
    - `RemitoService 2025.gs` define `REMITO_FOTOS_FOLDER_ID` (carpeta de Drive donde se guardan las fotos) y `MAX_REMITO_FOTOS`. Actualiza el ID con el de tu carpeta (`1SH7Zz7g_2sbYsFHMfVQj3Admdy8L3FVz` según la configuración proporcionada).
-4. Guarda el proyecto (por ejemplo `Gestor Reportes OBM`).
+5. Guarda el proyecto (por ejemplo `Gestor Reportes OBM`).
+
+> 📘 ¿Vienes de la versión anterior con un único `gestor.gs`? Sigue la guía de migración [`docs/migracion-apps-script.md`](docs/migracion-apps-script.md) para limpiar archivos viejos y copiar los nuevos módulos sin conflictos.
 
 ### 3. Publicar la API
 1. En el editor de Apps Script ve a **Deploy > Test deployments** para comprobar que `doPost` responde sin errores con un payload de prueba.
