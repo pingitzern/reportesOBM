@@ -85,6 +85,19 @@ const RemitoService = {
     return rawBase.replace(/[^A-Za-z0-9_-]+/g, '-');
   },
 
+  getDirectDriveImageUrl_(fileId) {
+    if (!fileId) {
+      return '';
+    }
+
+    const trimmedId = String(fileId).trim();
+    if (!trimmedId) {
+      return '';
+    }
+
+    return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(trimmedId)}`;
+  },
+
   normalizeDriveUrl_(value) {
     if (value === null || value === undefined) {
       return '';
@@ -99,16 +112,20 @@ const RemitoService = {
       return text;
     }
 
-    const idMatch = text.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    const queryMatch = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    const fileId = idMatch && idMatch[1]
-      ? idMatch[1]
-      : queryMatch && queryMatch[1]
-        ? queryMatch[1]
-        : '';
+    const directMatch = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    const pathMatch = text.match(/\/d\/([a-zA-Z0-9_-]+)/);
+
+    let fileId = '';
+    if (directMatch && directMatch[1]) {
+      fileId = directMatch[1];
+    } else if (pathMatch && pathMatch[1]) {
+      fileId = pathMatch[1];
+    } else if (/^[a-zA-Z0-9_-]{10,}$/.test(text)) {
+      fileId = text;
+    }
 
     if (fileId) {
-      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+      return this.getDirectDriveImageUrl_(fileId);
     }
 
     return text;
@@ -160,7 +177,9 @@ const RemitoService = {
     const documentName = `Remito-${fileBase}`;
     try {
       const template = HtmlService.createTemplateFromFile('remito-pdf-template');
-      template.reporte = this.buildPdfTemplateData_(remito);
+      const reporte = this.buildPdfTemplateData_(remito);
+      Logger.log('URLs de fotos finales pasadas al template del PDF: %s', JSON.stringify(reporte.fotos.map(f => f.url)));
+      template.reporte = reporte;
 
       const htmlOutput = template.evaluate();
       const htmlContent = htmlOutput.getContent();
@@ -288,7 +307,7 @@ const RemitoService = {
       try {
         const file = folder.createFile(blob);
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        resultados[i] = this.normalizeDriveUrl_(`https://drive.google.com/file/d/${file.getId()}/view`);
+        resultados[i] = this.getDirectDriveImageUrl_(file.getId());
       } catch (error) {
         throw new Error(`No se pudo guardar la foto ${i + 1} en Drive: ${error.message}`);
       }
