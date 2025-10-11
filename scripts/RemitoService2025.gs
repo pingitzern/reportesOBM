@@ -347,34 +347,68 @@ const RemitoService = {
         const indiceFoto = (fila * columnas) + columna;
         const celda = filaTabla.getCell(columna);
         celda.clear();
-        celda.setPaddingTop(8);
-        celda.setPaddingBottom(8);
-        celda.setPaddingLeft(8);
-        celda.setPaddingRight(8);
-        celda.setVerticalAlignment(DocumentApp.VerticalAlignment.TOP);
+        if (typeof celda.setPaddingTop === 'function') {
+          celda.setPaddingTop(8);
+        }
+        if (typeof celda.setPaddingBottom === 'function') {
+          celda.setPaddingBottom(8);
+        }
+        if (typeof celda.setPaddingLeft === 'function') {
+          celda.setPaddingLeft(8);
+        }
+        if (typeof celda.setPaddingRight === 'function') {
+          celda.setPaddingRight(8);
+        }
+        if (typeof celda.setVerticalAlignment === 'function') {
+          celda.setVerticalAlignment(DocumentApp.VerticalAlignment.TOP);
+        }
 
         if (indiceFoto >= fotos.length) {
-          celda.setBorderWidth(0);
+          if (typeof celda.setBorderWidth === 'function') {
+            celda.setBorderWidth(0);
+          }
           continue;
         }
 
-        celda.setBorderWidth(1);
-        celda.setBorderColor('#eeeeee');
+        if (typeof celda.setBorderWidth === 'function') {
+          celda.setBorderWidth(1);
+        }
+        if (typeof celda.setBorderColor === 'function') {
+          celda.setBorderColor('#eeeeee');
+        }
 
         const titulo = celda.appendParagraph(`Foto ${indiceFoto + 1}`);
-        titulo.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        titulo.setBold(true);
-        titulo.setFontSize(10);
-        titulo.setSpacingBefore(0);
-        titulo.setSpacingAfter(4);
-        titulo.setKeepWithNext(true);
+        if (typeof titulo.setAlignment === 'function') {
+          titulo.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        }
+        if (typeof titulo.setBold === 'function') {
+          titulo.setBold(true);
+        }
+        if (typeof titulo.setFontSize === 'function') {
+          titulo.setFontSize(10);
+        }
+        if (typeof titulo.setSpacingBefore === 'function') {
+          titulo.setSpacingBefore(0);
+        }
+        if (typeof titulo.setSpacingAfter === 'function') {
+          titulo.setSpacingAfter(4);
+        }
+        if (typeof titulo.setKeepWithNext === 'function') {
+          titulo.setKeepWithNext(true);
+        }
 
         const imagenInsertada = this.tryAppendImageFromUrl_(celda, fotos[indiceFoto]);
         if (!imagenInsertada) {
           const enlace = celda.appendParagraph(fotos[indiceFoto]);
-          enlace.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          enlace.setFontSize(9);
-          enlace.setSpacingBefore(4);
+          if (typeof enlace.setAlignment === 'function') {
+            enlace.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+          }
+          if (typeof enlace.setFontSize === 'function') {
+            enlace.setFontSize(9);
+          }
+          if (typeof enlace.setSpacingBefore === 'function') {
+            enlace.setSpacingBefore(4);
+          }
         }
       }
     }
