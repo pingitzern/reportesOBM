@@ -85,6 +85,35 @@ const RemitoService = {
     return rawBase.replace(/[^A-Za-z0-9_-]+/g, '-');
   },
 
+  normalizeDriveUrl_(value) {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    const text = String(value).trim();
+    if (!text) {
+      return '';
+    }
+
+    if (text.startsWith('data:')) {
+      return text;
+    }
+
+    const idMatch = text.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    const queryMatch = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    const fileId = idMatch && idMatch[1]
+      ? idMatch[1]
+      : queryMatch && queryMatch[1]
+        ? queryMatch[1]
+        : '';
+
+    if (fileId) {
+      return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+
+    return text;
+  },
+
   buildPdfTemplateData_(remito) {
     const normalize = value => this.normalizeForPdf_(value);
     const fallback = value => {
@@ -93,10 +122,10 @@ const RemitoService = {
     };
 
     const fotos = [
-      normalize(remito.Foto1URL),
-      normalize(remito.Foto2URL),
-      normalize(remito.Foto3URL),
-      normalize(remito.Foto4URL)
+      this.normalizeDriveUrl_(remito.Foto1URL),
+      this.normalizeDriveUrl_(remito.Foto2URL),
+      this.normalizeDriveUrl_(remito.Foto3URL),
+      this.normalizeDriveUrl_(remito.Foto4URL)
     ].filter(url => !!url);
 
     const detalles = [
@@ -231,7 +260,7 @@ const RemitoService = {
       }
 
       const base64Data = this.extractBase64Data_(foto.base64Data || foto.data || foto.contenido);
-      const existingUrl = typeof foto.url === 'string' ? foto.url.trim() : '';
+      const existingUrl = typeof foto.url === 'string' ? this.normalizeDriveUrl_(foto.url) : '';
 
       if (!base64Data) {
         resultados[i] = existingUrl;
@@ -259,7 +288,7 @@ const RemitoService = {
       try {
         const file = folder.createFile(blob);
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        resultados[i] = file.getUrl();
+        resultados[i] = this.normalizeDriveUrl_(`https://drive.google.com/file/d/${file.getId()}/view`);
       } catch (error) {
         throw new Error(`No se pudo guardar la foto ${i + 1} en Drive: ${error.message}`);
       }
