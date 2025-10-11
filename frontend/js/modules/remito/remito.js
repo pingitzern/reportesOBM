@@ -598,7 +598,7 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 ].join(' ');
                 const triggerContent = hasPreview
                     ? `
-                        <img src="${escapeHtml(previewSource)}" alt="Foto ${index + 1}" class="max-h-72 w-full object-contain" loading="lazy">
+                        <img src="${escapeHtml(previewSource)}" alt="Foto ${index + 1}" class="max-h-72 max-w-full object-contain mx-auto" loading="lazy">
                     `
                     : `
                         <div class="flex flex-col items-center justify-center gap-2 text-gray-400">
@@ -627,7 +627,7 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 `;
 
                 return `
-                    <div class="space-y-2" data-remito-photo-slot="${index}">
+                    <div class="remito-photo-slot space-y-2" data-remito-photo-slot="${index}">
                         <div class="flex items-center justify-between gap-2">
                             <p class="text-sm font-medium text-gray-700">Foto ${index + 1}</p>
                             <p class="max-w-[60%] truncate text-[11px] text-gray-500">${labelText}</p>
