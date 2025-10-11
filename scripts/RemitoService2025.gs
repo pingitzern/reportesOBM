@@ -98,6 +98,33 @@ const RemitoService = {
     return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(trimmedId)}`;
   },
 
+  extractDriveFileIdFromValue_(value) {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    const text = String(value).trim();
+    if (!text || text.startsWith('data:')) {
+      return '';
+    }
+
+    const directMatch = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (directMatch && directMatch[1]) {
+      return directMatch[1];
+    }
+
+    const pathMatch = text.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (pathMatch && pathMatch[1]) {
+      return pathMatch[1];
+    }
+
+    if (/^[a-zA-Z0-9_-]{10,}$/.test(text)) {
+      return text;
+    }
+
+    return '';
+  },
+
   normalizeDriveUrl_(value) {
     if (value === null || value === undefined) {
       return '';
@@ -112,18 +139,7 @@ const RemitoService = {
       return text;
     }
 
-    const directMatch = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    const pathMatch = text.match(/\/d\/([a-zA-Z0-9_-]+)/);
-
-    let fileId = '';
-    if (directMatch && directMatch[1]) {
-      fileId = directMatch[1];
-    } else if (pathMatch && pathMatch[1]) {
-      fileId = pathMatch[1];
-    } else if (/^[a-zA-Z0-9_-]{10,}$/.test(text)) {
-      fileId = text;
-    }
-
+    const fileId = this.extractDriveFileIdFromValue_(text);
     if (fileId) {
       return this.getDirectDriveImageUrl_(fileId);
     }
@@ -139,10 +155,10 @@ const RemitoService = {
     };
 
     const fotos = [
-      this.normalizeDriveUrl_(remito.Foto1URL),
-      this.normalizeDriveUrl_(remito.Foto2URL),
-      this.normalizeDriveUrl_(remito.Foto3URL),
-      this.normalizeDriveUrl_(remito.Foto4URL)
+      this.normalizeDriveUrl_(remito.Foto1Id || remito.Foto1URL),
+      this.normalizeDriveUrl_(remito.Foto2Id || remito.Foto2URL),
+      this.normalizeDriveUrl_(remito.Foto3Id || remito.Foto3URL),
+      this.normalizeDriveUrl_(remito.Foto4Id || remito.Foto4URL)
     ].filter(url => !!url);
 
     const detalles = [
@@ -279,10 +295,12 @@ const RemitoService = {
       }
 
       const base64Data = this.extractBase64Data_(foto.base64Data || foto.data || foto.contenido);
-      const existingUrl = typeof foto.url === 'string' ? this.normalizeDriveUrl_(foto.url) : '';
+      const existingId = this.extractDriveFileIdFromValue_(
+        foto.driveFileId || foto.driveId || foto.fileId || foto.id || foto.url
+      );
 
       if (!base64Data) {
-        resultados[i] = existingUrl;
+        resultados[i] = existingId;
         continue;
       }
 
@@ -307,7 +325,7 @@ const RemitoService = {
       try {
         const file = folder.createFile(blob);
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        resultados[i] = this.getDirectDriveImageUrl_(file.getId());
+        resultados[i] = file.getId();
       } catch (error) {
         throw new Error(`No se pudo guardar la foto ${i + 1} en Drive: ${error.message}`);
       }
@@ -363,9 +381,18 @@ const RemitoService = {
     };
 
     const fotosProcesadas = this.procesarFotos_(fotos, remito.NumeroRemito, idUnico);
+    const fotoDriveIds = [];
+    const fotoUrls = [];
     for (let i = 0; i < MAX_REMITO_FOTOS; i += 1) {
-      remito[`Foto${i + 1}URL`] = fotosProcesadas[i] || '';
+      const fileId = fotosProcesadas[i] || '';
+      const url = this.getDirectDriveImageUrl_(fileId);
+      remito[`Foto${i + 1}Id`] = fileId;
+      remito[`Foto${i + 1}URL`] = url;
+      fotoDriveIds.push(fileId);
+      fotoUrls.push(url);
     }
+    remito.fotosDriveIds = fotoDriveIds;
+    remito.fotos = fotoUrls;
 
     let pdfInfo = null;
     try {
@@ -393,10 +420,10 @@ const RemitoService = {
       remito.Repuestos,
       remito.Observaciones,
       remito.IdUnico,
-      remito.Foto1URL,
-      remito.Foto2URL,
-      remito.Foto3URL,
-      remito.Foto4URL,
+      remito.Foto1Id,
+      remito.Foto2Id,
+      remito.Foto3Id,
+      remito.Foto4Id,
       remito.PdfURL
     ];
 
@@ -465,6 +492,25 @@ const RemitoService = {
             remito[header] = row[index];
         }
       });
+
+      const fotosDriveIds = [];
+      const fotosUrls = [];
+      for (let i = 1; i <= MAX_REMITO_FOTOS; i += 1) {
+        const idKey = `Foto${i}Id`;
+        const urlKey = `Foto${i}URL`;
+        const rawValue = remito[idKey] || remito[urlKey];
+        const fileId = this.extractDriveFileIdFromValue_(rawValue);
+        const directUrl = this.getDirectDriveImageUrl_(fileId);
+
+        remito[idKey] = fileId || '';
+        remito[urlKey] = directUrl || '';
+
+        fotosDriveIds.push(fileId || '');
+        fotosUrls.push(directUrl || '');
+      }
+
+      remito.fotosDriveIds = fotosDriveIds;
+      remito.fotos = fotosUrls;
       return remito;
     });
 
