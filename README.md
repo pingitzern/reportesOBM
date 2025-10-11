@@ -122,7 +122,8 @@ Al iniciar la aplicación el usuario debe autenticarse mediante el modal integra
 2. Instala las dependencias con `npm install`.
 3. Lanza el entorno de desarrollo con `npm run dev`. El script ejecuta previamente `npm run build:css` para garantizar que `styles.build.css` esté actualizado y luego inicia el servidor de Vite (por defecto en `http://localhost:5173/`).
 4. Abre la URL indicada en la consola y verifica que las pestañas y formularios respondan correctamente.
-5. Ajusta `window.__APP_CONFIG__` en el HTML o inyecta la configuración antes de cargar `frontend/js/main.js`.
+5. Si necesitas probar desde otro dispositivo en la misma red local (por ejemplo, un celular), mantén el servidor en ejecución y abre `http://<IP-de-tu-notebook>:5173/` desde el navegador del dispositivo. Puedes obtener la IP local con `ipconfig` (Windows) o `ifconfig`/`ip addr` (macOS/Linux). El servidor de Vite ya está configurado para aceptar conexiones externas, solo asegúrate de que ambos dispositivos estén en la misma red y que el firewall permita el acceso.
+6. Ajusta `window.__APP_CONFIG__` en el HTML o inyecta la configuración antes de cargar `frontend/js/main.js`.
 
 ### Regenerar el CSS de Tailwind
 - Edita los estilos base en `frontend/css/styles.css`. El archivo generado `frontend/css/styles.build.css` no debe modificarse a mano.
