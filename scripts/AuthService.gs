@@ -1,10 +1,9 @@
 const AuthService = {
-  // ⚠️ ID de tu planilla con la pestaña 'login'
-  SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
+  LOGIN_SHEET_NAME: 'login',
 
   getLoginSheet_() {
-    const ss = SpreadsheetApp.openById(this.SHEET_ID);
-    const sheet = ss.getSheetByName('login');
+    const ss = SheetRepository.getSpreadsheet();
+    const sheet = ss.getSheetByName(this.LOGIN_SHEET_NAME);
     if (!sheet) throw new Error("No se encontró la hoja 'login'.");
     return sheet;
   },

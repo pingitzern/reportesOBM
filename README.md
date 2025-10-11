@@ -11,7 +11,11 @@ Sistema para gestionar el mantenimiento preventivo de equipos de ósmosis bajo m
 │   ├── js/                  # Código JavaScript modular de la SPA
 │   └── public/              # Activos estáticos servidos por Vite (logo OHM Agua accesible como /OHM-agua.png, etc.)
 ├── scripts/
-│   └── gestor.gs            # Backend en Google Apps Script que expone la API REST
+│   ├── Codigo2025.gs        # Punto de entrada (router) que expone la API REST
+│   ├── AuthService.gs       # Validación de usuarios contra la pestaña `login`
+│   ├── SessionService.gs    # Manejo de tokens de sesión y limpieza programada
+│   ├── RemitoRepository2025.gs # Utilidades para la hoja de remitos
+│   └── RemitoService2025.gs # Lógica de generación y almacenamiento de remitos con fotos
 └── README.md
 ```
 
@@ -29,7 +33,11 @@ Sistema para gestionar el mantenimiento preventivo de equipos de ósmosis bajo m
 Los módulos se cargan desde `frontend/index.html` mediante `<script type="module" src="frontend/js/main.js"></script>`.
 
 ### scripts/
-- `gestor.gs`: implementa el backend usando Google Apps Script. Define el contrato de datos con la hoja de cálculo, operaciones CRUD, los agregados que alimentan el dashboard y valida los tokens configurados antes de atender cada acción, actualizando además las columnas de auditoría (`Actualizado_por` y `Timestamp`).
+- `Codigo2025.gs`: implementa el router principal del backend en Google Apps Script. Define el contrato de datos con la hoja de cálculo, operaciones CRUD, los agregados que alimentan el dashboard y delega la autenticación y manejo de remitos a los servicios específicos.
+- `AuthService.gs`: encapsula la autenticación contra la pestaña `login` del spreadsheet.
+- `SessionService.gs`: gestiona los tokens temporales para el frontend (creación, validación, limpieza periódica) almacenados en la pestaña `sessions`.
+- `RemitoRepository2025.gs`: funciones utilitarias para manipular la hoja donde se guardan los remitos y para generar numeración correlativa.
+- `RemitoService2025.gs`: compone y persiste los remitos a partir de reportes existentes y maneja la subida de fotografías al Drive configurado.
 
 ## Configuración de Google Sheets y Apps Script
 
@@ -66,14 +74,15 @@ Los módulos se cargan desde `frontend/index.html` mediante `<script type="modul
    Nombre, Direccion, Telefono, Mail, CUIT
    ```
    Cada fila debe contener los datos normalizados del cliente que quieras exponer a través de la API.
+6. Añade una pestaña `login` con las columnas mínimas `mail` y `password` (puedes sumar `Nombre`, `Cargo`, `Rol` y otras columnas informativas). El backend validará las credenciales contra esta pestaña.
+   - El servicio de sesiones (`SessionService.gs`) creará automáticamente una pestaña `sessions` la primera vez que se ejecute, por lo que no es necesario crearla a mano.
 
 ### 2. Configurar el proyecto de Apps Script
 1. Abre la hoja y navega a **Extensiones > Apps Script**.
-2. Copia el contenido de [`scripts/gestor.gs`](scripts/gestor.gs) en el editor.
-3. Define las propiedades del script `SHEET_ID`, `SHEET_NAME`, `CLIENTES_SHEET_NAME` y `AUTHORIZED_USERS`:
+2. Copia el contenido de los archivos `scripts/Codigo2025.gs`, `scripts/AuthService.gs`, `scripts/SessionService.gs`, `scripts/RemitoRepository2025.gs` y `scripts/RemitoService2025.gs` en el editor (un archivo por pestaña del proyecto de Apps Script).
+3. Define las propiedades del script `SHEET_ID`, `SHEET_NAME` y `CLIENTES_SHEET_NAME`:
    - Abre **Project Settings** (icono de engranaje en la barra lateral). En la sección **Script properties**, pulsa **Add script property** y crea las claves `SHEET_ID` (con el ID del documento de Google Sheets), `SHEET_NAME` (con el nombre exacto de la pestaña que actúa como base de datos principal) y `CLIENTES_SHEET_NAME` (con el nombre de la pestaña que contiene el padrón de clientes; si usas el valor por defecto basta con indicar `clientes`).
-   - Añade la propiedad `AUTHORIZED_USERS` con un JSON que mapee los tokens válidos, por ejemplo: `[{"usuario": "tecnico@example.com", "token": "token-seguro"}]`. Cada entrada puede asociar explícitamente un token con el nombre del usuario que lo utilizará.
-   - Como alternativa, edita la función `initProperties()` incluida al inicio de `gestor.gs` con tus valores y ejecútala una vez desde **Run > Run function > initProperties**. Esto almacenará los campos en las propiedades del script; posteriormente puedes volver a dejar la función con valores genéricos si lo prefieres.
+   - Como alternativa, edita la función `initProperties()` incluida al inicio de `Codigo2025.gs` con tus valores y ejecútala una vez desde **Run > Run function > initProperties**. Esto almacenará los campos en las propiedades del script; posteriormente puedes volver a dejar la función con valores genéricos si lo prefieres.
 4. Guarda el proyecto (por ejemplo `Gestor Reportes OBM`).
 
 ### 3. Publicar la API
@@ -84,7 +93,7 @@ Los módulos se cargan desde `frontend/index.html` mediante `<script type="modul
    - *Execute as*: `Me`.
    - *Who has access*: `Anyone` (o `Anyone with Google account` si el consumo estará autenticado).
 4. Haz clic en **Deploy** y copia la URL generada; será tu `API_URL`.
-5. Cada cambio en `gestor.gs` requiere una nueva implementación o actualización de la existente.
+5. Cada cambio en cualquiera de los archivos `.gs` requiere una nueva implementación o actualización de la existente.
 
 ## Configuración del frontend
 
@@ -106,7 +115,7 @@ Si no se define ninguna de las opciones, la consola mostrará una advertencia y 
 
 ### Autenticación en la SPA
 
-Al iniciar la aplicación el usuario debe autenticarse mediante el modal integrado en la interfaz. El token y el nombre de usuario se validan contra los valores configurados en la propiedad `AUTHORIZED_USERS` del Apps Script y, una vez aceptados, se almacenan en `localStorage` para reutilizarlos en sesiones posteriores. Todas las peticiones `guardar`, `buscar`, `actualizar`, `eliminar` y `dashboard` incluyen automáticamente esas credenciales, y también es posible cerrar sesión desde el encabezado para forzar un nuevo inicio de sesión.
+Al iniciar la aplicación el usuario debe autenticarse mediante el modal integrado en la interfaz. Las credenciales se verifican contra la pestaña `login` del spreadsheet (gestionada por `AuthService.gs`) y, si son válidas, se genera un token temporal almacenado en la pestaña `sessions` mediante `SessionService.gs`. El token y el correo se guardan en `localStorage` para reutilizarlos en sesiones posteriores. Todas las peticiones `guardar`, `buscar`, `actualizar`, `eliminar`, `dashboard` y remitos incluyen automáticamente esas credenciales, y también es posible cerrar sesión desde el encabezado para forzar un nuevo inicio de sesión.
 
 ### Ejecutar en desarrollo
 1. Clona el repositorio y entra en la carpeta `reportesOBM`.
@@ -125,7 +134,7 @@ Al iniciar la aplicación el usuario debe autenticarse mediante el modal integra
 2. Sube el contenido de `dist/` al servicio de hosting elegido (Firebase Hosting, Netlify, GitHub Pages, etc.).
 3. Inserta la configuración `window.__APP_CONFIG__` en el HTML del entorno productivo apuntando al despliegue del Apps Script.
 4. Habilita HTTPS; Google Apps Script solo acepta solicitudes seguras.
-5. Mantén sincronizados los encabezados de la hoja con el script; si agregas columnas, actualiza `gestor.gs` y redepliega la API.
+5. Mantén sincronizados los encabezados de la hoja con el script; si agregas columnas, actualiza `Codigo2025.gs` (y los servicios relacionados si corresponde) y redepliega la API.
 
 ## Requisitos y flujo de trabajo para colaboradores
 
@@ -140,8 +149,8 @@ Al iniciar la aplicación el usuario debe autenticarse mediante el modal integra
 2. **Entorno local:** clona el repositorio, configura un Sheet de prueba (puedes duplicar el existente) y despliega un Apps Script propio siguiendo los pasos anteriores.
 3. **Rama de trabajo:** crea una rama descriptiva (`feature/…` o `fix/…`) y realiza commits atómicos con mensajes en imperativo.
 4. **Pruebas manuales:** ejecuta el servidor estático, verifica flujo de carga/edición/búsqueda, revisa la consola y, si se modifican datos, confirma que aparecen correctamente en el Sheet.
-5. **Actualización de documentación:** cualquier cambio en la estructura de datos debe reflejarse tanto en este README como en los comentarios de `gestor.gs`.
+5. **Actualización de documentación:** cualquier cambio en la estructura de datos debe reflejarse tanto en este README como en los comentarios de `Codigo2025.gs` y los servicios relacionados.
 6. **Pull Request:** abre una PR enlazando el issue, describe el cambio y añade capturas si afectan a la UI. Asegúrate de que la rama esté actualizada con `main` antes de solicitar revisión.
 7. **Revisión y despliegue:** atiende comentarios de revisión, actualiza el Apps Script y la configuración de `API_URL` en los entornos necesarios una vez fusionado el cambio.
 
-Mantén la coherencia entre el frontend y la hoja de cálculo: los campos que se envían desde `frontend/js/forms.js` deben coincidir con los encabezados definidos en `scripts/gestor.gs` para evitar errores en producción.
+Mantén la coherencia entre el frontend y la hoja de cálculo: los campos que se envían desde `frontend/js/forms.js` deben coincidir con los encabezados definidos en `scripts/Codigo2025.gs` para evitar errores en producción.

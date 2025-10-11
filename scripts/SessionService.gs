@@ -1,6 +1,5 @@
 const SessionService = {
   // guardamos sesiones en la MISMA planilla, pestaña 'sessions'
-  SHEET_ID: AuthService.SHEET_ID,
   SHEET_NAME: 'sessions',
 
   // Configuraciones
@@ -8,7 +7,7 @@ const SessionService = {
   CLEAN_KEEP_DAYS: 7,      // borrar sesiones expiradas hace > 7 días
 
   getSheet_() {
-    const ss = SpreadsheetApp.openById(this.SHEET_ID);
+    const ss = SheetRepository.getSpreadsheet();
     let sheet = ss.getSheetByName(this.SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(this.SHEET_NAME);
