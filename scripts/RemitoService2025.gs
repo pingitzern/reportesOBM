@@ -121,9 +121,9 @@ const RemitoService = {
       for (let i = 0; i < table.getNumRows(); i += 1) {
         const cell = table.getRow(i).getCell(0);
         cell.setBackgroundColor('#f1f5f9');
-        const paragraphs = cell.getParagraphs();
-        for (let j = 0; j < paragraphs.length; j += 1) {
-          paragraphs[j].setBold(true);
+        const text = cell.editAsText();
+        if (text) {
+          text.setBold(true);
         }
       }
 
