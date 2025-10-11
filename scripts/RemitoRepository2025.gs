@@ -6,7 +6,7 @@ const REMITOS_HEADERS = [
   'NombreCliente', 'Direccion', 'CUIT', 'Telefono', 'MailCliente',
   'ModeloEquipo', 'NumeroSerie', 'IDInterna',
   'Repuestos', 'Observaciones', 'IdUnico',
-  'Foto1URL', 'Foto2URL', 'Foto3URL', 'Foto4URL',
+  'Foto1Id', 'Foto2Id', 'Foto3Id', 'Foto4Id',
   'PdfURL'
 ];
 

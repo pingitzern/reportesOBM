@@ -3,11 +3,12 @@ const MAX_REMITO_PHOTOS = 4;
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 const REMITO_FOTO_KEYS = Object.freeze([
-    ['Foto1URL', 'Foto1Url', 'foto1URL', 'foto1Url', 'foto1', 'Foto1', 'foto_1', 'Foto_1'],
-    ['Foto2URL', 'Foto2Url', 'foto2URL', 'foto2Url', 'foto2', 'Foto2', 'foto_2', 'Foto_2'],
-    ['Foto3URL', 'Foto3Url', 'foto3URL', 'foto3Url', 'foto3', 'Foto3', 'foto_3', 'Foto_3'],
-    ['Foto4URL', 'Foto4Url', 'foto4URL', 'foto4Url', 'foto4', 'Foto4', 'foto_4', 'Foto_4'],
+    ['Foto1Id', 'Foto1ID', 'foto1Id', 'foto1ID', 'Foto1URL', 'Foto1Url', 'foto1URL', 'foto1Url', 'foto1', 'Foto1', 'foto_1', 'Foto_1'],
+    ['Foto2Id', 'Foto2ID', 'foto2Id', 'foto2ID', 'Foto2URL', 'Foto2Url', 'foto2URL', 'foto2Url', 'foto2', 'Foto2', 'foto_2', 'Foto_2'],
+    ['Foto3Id', 'Foto3ID', 'foto3Id', 'foto3ID', 'Foto3URL', 'Foto3Url', 'foto3URL', 'foto3Url', 'foto3', 'Foto3', 'foto_3', 'Foto_3'],
+    ['Foto4Id', 'Foto4ID', 'foto4Id', 'foto4ID', 'Foto4URL', 'Foto4Url', 'foto4URL', 'foto4Url', 'foto4', 'Foto4', 'foto_4', 'Foto_4'],
 ]);
+const DRIVE_DIRECT_URL_BASE = 'https://drive.google.com/uc?export=view&id=';
 
 const PHOTO_MIME_EXTENSION_MAP = Object.freeze({
     'image/jpeg': 'jpg',
@@ -154,6 +155,42 @@ function sanitizePhotoFileName(name, fallbackBase, index, mimeType) {
     return `${withoutExtension}.${extension}`;
 }
 
+function buildDriveDirectUrl(fileId) {
+    const id = sanitizeString(fileId);
+    if (!id) {
+        return '';
+    }
+
+    try {
+        return `${DRIVE_DIRECT_URL_BASE}${encodeURIComponent(id)}`;
+    } catch (error) {
+        return `${DRIVE_DIRECT_URL_BASE}${id}`;
+    }
+}
+
+function extractDriveFileId(value) {
+    const text = sanitizeString(value);
+    if (!text || text.startsWith('data:')) {
+        return '';
+    }
+
+    const directMatch = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (directMatch && directMatch[1]) {
+        return directMatch[1];
+    }
+
+    const pathMatch = text.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (pathMatch && pathMatch[1]) {
+        return pathMatch[1];
+    }
+
+    if (/^[a-zA-Z0-9_-]{10,}$/.test(text)) {
+        return text;
+    }
+
+    return '';
+}
+
 function createEmptyPhotoSlot(index = 0) {
     return {
         index,
@@ -162,6 +199,7 @@ function createEmptyPhotoSlot(index = 0) {
         mimeType: '',
         fileName: '',
         url: '',
+        driveId: '',
         shouldRemove: false,
     };
 }
@@ -183,27 +221,38 @@ function normalizePhotoSlots(slots) {
             return slot;
         }
 
+        const normalizedUrl = sanitizeString(source.url);
+        const driveId = sanitizeString(source.driveId || source.driveFileId)
+            || extractDriveFileId(normalizedUrl);
+
         return {
             ...slot,
             previewUrl: sanitizeString(source.previewUrl),
             base64Data: sanitizeString(source.base64Data),
             mimeType: sanitizeString(source.mimeType),
             fileName: sanitizeString(source.fileName),
-            url: sanitizeString(source.url),
+            url: driveId ? buildDriveDirectUrl(driveId) : normalizedUrl,
+            driveId,
             shouldRemove: Boolean(source.shouldRemove),
         };
     });
 }
 
-function buildPhotoSlotsFromUrls(urls = []) {
+function buildPhotoSlotsFromSources(ids = [], urls = []) {
     const slots = createEmptyPhotoSlots();
 
-    urls.forEach((value, index) => {
+    slots.forEach((slot, index) => {
         if (index >= slots.length) {
             return;
         }
 
-        slots[index].url = sanitizeString(value);
+        const id = Array.isArray(ids) ? sanitizeString(ids[index]) : '';
+        const rawUrl = Array.isArray(urls) ? sanitizeString(urls[index]) : '';
+        const driveId = id || extractDriveFileId(rawUrl);
+        const directUrl = driveId ? buildDriveDirectUrl(driveId) : rawUrl;
+
+        slot.driveId = driveId;
+        slot.url = directUrl;
     });
 
     return slots;
@@ -228,7 +277,23 @@ function getPhotoPreviewSource(slot) {
         return '';
     }
 
-    return sanitizeString(slot.previewUrl) || sanitizeString(slot.url);
+    const previewUrl = sanitizeString(slot.previewUrl);
+    if (previewUrl) {
+        return previewUrl;
+    }
+
+    const driveId = sanitizeString(slot.driveId);
+    if (driveId) {
+        return buildDriveDirectUrl(driveId);
+    }
+
+    const url = sanitizeString(slot.url);
+    const derivedId = extractDriveFileId(url);
+    if (derivedId) {
+        return buildDriveDirectUrl(derivedId);
+    }
+
+    return url;
 }
 
 function hasPhotoContent(slot) {
@@ -239,6 +304,7 @@ function hasPhotoContent(slot) {
     return Boolean(
         sanitizeString(slot.previewUrl)
         || sanitizeString(slot.url)
+        || sanitizeString(slot.driveId)
         || sanitizeString(slot.base64Data),
     );
 }
@@ -250,6 +316,11 @@ function formatPhotoFileLabel(slot) {
 
     if (sanitizeString(slot.fileName)) {
         return slot.fileName;
+    }
+
+    const driveId = sanitizeString(slot.driveId);
+    if (driveId) {
+        return `Foto en Drive (${driveId.slice(0, 8)}...)`;
     }
 
     if (sanitizeString(slot.url)) {
@@ -376,7 +447,15 @@ function normalizeRemitoForDisplay(remito) {
     const emailValue = pickValue(remito, ['email', 'Email', 'MailCliente']);
     const cuitValue = pickValue(remito, ['cuit', 'CUIT', 'cliente_cuit']);
     const reporteIdValue = pickValue(remito, ['reporteId', 'ReporteID', 'IdUnico', 'IDInterna']);
-    const fotos = REMITO_FOTO_KEYS.map(keys => sanitizeString(pickValue(remito, keys)) || '');
+    const fotoValues = REMITO_FOTO_KEYS.map(keys => sanitizeString(pickValue(remito, keys)) || '');
+    const fotoDriveIds = fotoValues.map(value => extractDriveFileId(value));
+    const fotoUrls = fotoValues.map((value, index) => {
+        const driveId = fotoDriveIds[index];
+        if (driveId) {
+            return buildDriveDirectUrl(driveId);
+        }
+        return value;
+    });
 
     return {
         numeroRemito: sanitizeString(numeroRemitoValue),
@@ -396,11 +475,16 @@ function normalizeRemitoForDisplay(remito) {
         email: sanitizeString(emailValue),
         cuit: sanitizeString(cuitValue),
         reporteId: sanitizeString(reporteIdValue),
-        Foto1URL: fotos[0] || '',
-        Foto2URL: fotos[1] || '',
-        Foto3URL: fotos[2] || '',
-        Foto4URL: fotos[3] || '',
-        fotos,
+        Foto1Id: fotoDriveIds[0] || '',
+        Foto2Id: fotoDriveIds[1] || '',
+        Foto3Id: fotoDriveIds[2] || '',
+        Foto4Id: fotoDriveIds[3] || '',
+        Foto1URL: fotoUrls[0] || '',
+        Foto2URL: fotoUrls[1] || '',
+        Foto3URL: fotoUrls[2] || '',
+        Foto4URL: fotoUrls[3] || '',
+        fotos: fotoUrls,
+        fotosDriveIds: fotoDriveIds,
     };
 }
 
@@ -459,7 +543,10 @@ function mapRemitoToFormData(remito = {}) {
         email: sanitizeString(remito.email),
         cuit: sanitizeString(remito.cuit),
         reporteId: sanitizeString(remito.reporteId),
-        fotos: buildPhotoSlotsFromUrls(Array.isArray(remito.fotos) ? remito.fotos : []),
+        fotos: buildPhotoSlotsFromSources(
+            Array.isArray(remito.fotosDriveIds) ? remito.fotosDriveIds : [],
+            Array.isArray(remito.fotos) ? remito.fotos : [],
+        ),
     };
 }
 
@@ -762,6 +849,7 @@ function buildPayloadFromForm(formData = {}) {
             base64Data: sanitizeString(slot.base64Data),
             mimeType: sanitizeString(slot.mimeType),
             fileName: sanitizeString(slot.fileName),
+            driveFileId: sanitizeString(slot.driveId),
             shouldRemove: Boolean(slot.shouldRemove),
         })),
     };
@@ -823,6 +911,17 @@ function buildReporteDataFromPayload(payload = {}) {
         ID_Unico: reporteId || undefined,
     };
 
+    const fotoSlots = normalizePhotoSlots(payload.fotos);
+    const fotoIds = fotoSlots
+        .map(slot => sanitizeString(slot.driveId))
+        .filter(id => !!id);
+
+    if (fotoIds.length > 0) {
+        reporteData.fotosDriveIds = fotoIds;
+        reporteData.fotos_drive_ids = fotoIds;
+        reporteData.fotoIds = fotoIds;
+    }
+
     return Object.fromEntries(
         Object.entries(reporteData).filter(([, value]) => value !== undefined && value !== ''),
     );
@@ -853,9 +952,10 @@ function buildCreateRemitoRequest(payload = {}) {
                 const mimeType = sanitizeString(item.mimeType);
                 const fileName = sanitizeString(item.fileName);
                 const url = sanitizeString(item.url);
+                const driveFileId = sanitizeString(item.driveFileId || item.driveId);
                 const shouldRemove = Boolean(item.shouldRemove);
 
-                if (!base64Data && !url && !shouldRemove) {
+                if (!base64Data && !url && !driveFileId && !shouldRemove) {
                     return null;
                 }
 
@@ -874,6 +974,9 @@ function buildCreateRemitoRequest(payload = {}) {
                 }
                 if (url) {
                     normalized.url = url;
+                }
+                if (driveFileId) {
+                    normalized.driveFileId = driveFileId;
                 }
                 if (shouldRemove) {
                     normalized.shouldRemove = true;
@@ -1489,6 +1592,7 @@ async function handlePhotoFileSelection(index, file) {
             mimeType,
             fileName,
             url: '',
+            driveId: '',
             shouldRemove: false,
         };
         state.formData.fotos = slots;

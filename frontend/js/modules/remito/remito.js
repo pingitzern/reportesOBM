@@ -2,6 +2,7 @@ import { COMPONENT_STAGES } from '../mantenimiento/templates.js';
 
 const MAX_REMITO_PHOTOS = 4;
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const DRIVE_DIRECT_URL_BASE = 'https://drive.google.com/uc?export=view&id=';
 
 const PHOTO_MIME_EXTENSION_MAP = Object.freeze({
     'image/jpeg': 'jpg',
@@ -40,6 +41,42 @@ function sanitizePhotoFileName(name, fallbackBase, index, mimeType) {
     return `${withoutExtension}.${extension}`;
 }
 
+function buildDriveDirectUrl(fileId) {
+    const id = normalizeString(fileId);
+    if (!id) {
+        return '';
+    }
+
+    try {
+        return `${DRIVE_DIRECT_URL_BASE}${encodeURIComponent(id)}`;
+    } catch (error) {
+        return `${DRIVE_DIRECT_URL_BASE}${id}`;
+    }
+}
+
+function extractDriveFileId(value) {
+    const text = normalizeString(value);
+    if (!text || text.startsWith('data:')) {
+        return '';
+    }
+
+    const directMatch = text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (directMatch && directMatch[1]) {
+        return directMatch[1];
+    }
+
+    const pathMatch = text.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (pathMatch && pathMatch[1]) {
+        return pathMatch[1];
+    }
+
+    if (/^[a-zA-Z0-9_-]{10,}$/.test(text)) {
+        return text;
+    }
+
+    return '';
+}
+
 function createEmptyPhotoSlot(index = 0) {
     return {
         index,
@@ -48,6 +85,7 @@ function createEmptyPhotoSlot(index = 0) {
         mimeType: '',
         fileName: '',
         url: '',
+        driveId: '',
         shouldRemove: false,
     };
 }
@@ -66,7 +104,17 @@ function getPhotoPreviewSource(slot) {
         return previewUrl;
     }
 
+    const driveId = normalizeString(slot.driveId || slot.driveFileId || slot.id);
+    if (driveId) {
+        return buildDriveDirectUrl(driveId);
+    }
+
     const url = normalizeString(slot.url);
+    const derivedId = extractDriveFileId(url);
+    if (derivedId) {
+        return buildDriveDirectUrl(derivedId);
+    }
+
     return url;
 }
 
@@ -78,6 +126,11 @@ function formatPhotoFileLabel(slot) {
     const fileName = normalizeString(slot.fileName);
     if (fileName) {
         return fileName;
+    }
+
+    const driveId = normalizeString(slot.driveId || slot.driveFileId || slot.id);
+    if (driveId) {
+        return `Foto en Drive (${driveId.slice(0, 8)}...)`;
     }
 
     const url = normalizeString(slot.url);
@@ -760,6 +813,7 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 mimeType,
                 fileName,
                 url: '',
+                driveId: '',
                 shouldRemove: false,
             };
             closeAllPhotoMenus();
@@ -865,8 +919,9 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 base64Data: normalizeString(slot.base64Data),
                 mimeType: normalizeString(slot.mimeType) || 'image/jpeg',
                 fileName: normalizeString(slot.fileName) || `remito-foto-${index + 1}.jpg`,
+                driveFileId: normalizeString(slot.driveId),
             }))
-            .filter(item => Boolean(item.base64Data));
+            .filter(item => Boolean(item.base64Data) || Boolean(item.driveFileId));
     }
 
     function ensureReportAvailable() {

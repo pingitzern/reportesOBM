@@ -8,12 +8,12 @@ En `scripts/RemitoRepository2025.txt` la aplicación define los encabezados que 
 
 Agregá cuatro nuevas columnas al final de esa hoja llamadas, por ejemplo:
 
-- `Foto1URL`
-- `Foto2URL`
-- `Foto3URL`
-- `Foto4URL`
+- `Foto1Id`
+- `Foto2Id`
+- `Foto3Id`
+- `Foto4Id`
 
-La aplicación podrá usar esas celdas para guardar los enlaces (URLs públicas o compartidas) de las imágenes que se suban desde el celular. Si preferís otro nombre, asegurate de actualizar los encabezados en el código para que coincidan.
+La aplicación usa esas celdas para guardar únicamente el ID del archivo en Google Drive (no la URL completa). Si preferís otro nombre, asegurate de actualizar los encabezados en el código para que coincidan.
 
 ## 2. Alinear los encabezados en el código
 
@@ -27,7 +27,7 @@ const REMITOS_HEADERS = [
   'NombreCliente', 'Direccion', 'CUIT', 'Telefono', 'MailCliente',
   'ModeloEquipo', 'NumeroSerie', 'IDInterna',
   'Repuestos', 'Observaciones', 'IdUnico',
-  'Foto1URL', 'Foto2URL', 'Foto3URL', 'Foto4URL'
+  'Foto1Id', 'Foto2Id', 'Foto3Id', 'Foto4Id'
 ];
 ```
 
@@ -41,7 +41,7 @@ Añadí cuatro entradas vacías (o con las URLs si ya las tenés disponibles) al
 const remitoRowData = [
   // ... columnas existentes ...
   remito.IdUnico,
-  '', '', '', '' // Foto1URL, Foto2URL, Foto3URL, Foto4URL
+  '', '', '', '' // Foto1Id, Foto2Id, Foto3Id, Foto4Id
 ];
 ```
 
@@ -49,7 +49,7 @@ Cuando el frontend se actualice para enviar las URLs de las imágenes, reemplaz�
 
 ## 4. Almacenamiento de las imágenes
 
-Las celdas nuevas solo guardan el enlace de cada foto. Para que los técnicos suban imágenes desde el celular necesitás definir dónde se alojarán (por ejemplo, Google Drive, Firebase Storage, Amazon S3, etc.) y generar un enlace compartible para cada imagen. Ese enlace es el que se guarda en las columnas `FotoXURL`.
+Las celdas nuevas solo guardan el ID de cada archivo en Drive. Para que los técnicos suban imágenes desde el celular necesitás definir dónde se alojarán (por ejemplo, Google Drive, Firebase Storage, Amazon S3, etc.) y generar un enlace compartible para cada imagen. En el caso de Drive, el backend se encarga de subir la foto, dejarla compartida y construir la URL directa (`https://drive.google.com/uc?export=view&id=...`) cuando se necesite renderizarla.
 
 ## 5. Siguientes pasos en el frontend
 
