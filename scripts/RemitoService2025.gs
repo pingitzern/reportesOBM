@@ -4,6 +4,12 @@ const REMITO_FOTOS_FOLDER_ID = '1SH7Zz7g_2sbYsFHMfVQj3Admdy8L3FVz';
 const REMITO_PDF_FOLDER_ID = '1BKBPmndOGet7yVZ4UtFCkhrt402eXH4X';
 const MAX_REMITO_FOTOS = 4;
 
+const A4_PAGE_WIDTH_POINTS = 595.28; // 210 mm
+const A4_PAGE_HEIGHT_POINTS = 841.89; // 297 mm
+const A4_PAGE_MARGIN_POINTS = 36; // ~0.5 pulgadas
+const REMITO_FOTO_MAX_WIDTH_POINTS = A4_PAGE_WIDTH_POINTS - (A4_PAGE_MARGIN_POINTS * 2);
+const REMITO_FOTO_MAX_HEIGHT_POINTS = 260;
+
 const RemitoService = {
   fotosFolderCache: null,
   pdfFolderCache: null,
@@ -85,6 +91,26 @@ const RemitoService = {
     return rawBase.replace(/[^A-Za-z0-9_-]+/g, '-');
   },
 
+  configurarPaginaPdf_(body) {
+    if (!body || typeof body.setAttributes !== 'function') {
+      return;
+    }
+
+    const atributosPagina = {};
+    atributosPagina[DocumentApp.Attribute.PAGE_WIDTH] = A4_PAGE_WIDTH_POINTS;
+    atributosPagina[DocumentApp.Attribute.PAGE_HEIGHT] = A4_PAGE_HEIGHT_POINTS;
+    atributosPagina[DocumentApp.Attribute.MARGIN_TOP] = A4_PAGE_MARGIN_POINTS;
+    atributosPagina[DocumentApp.Attribute.MARGIN_BOTTOM] = A4_PAGE_MARGIN_POINTS;
+    atributosPagina[DocumentApp.Attribute.MARGIN_LEFT] = A4_PAGE_MARGIN_POINTS;
+    atributosPagina[DocumentApp.Attribute.MARGIN_RIGHT] = A4_PAGE_MARGIN_POINTS;
+
+    try {
+      body.setAttributes(atributosPagina);
+    } catch (error) {
+      Logger.log('No se pudieron aplicar los márgenes y el tamaño de página A4: %s', error);
+    }
+  },
+
   generarPdfRemito_(remito) {
     const folder = this.getPdfFolder_();
     const fileBase = this.buildPdfFileBase_(remito.NumeroRemito, remito.NombreCliente);
@@ -97,6 +123,8 @@ const RemitoService = {
     try {
       const body = document.getBody();
       body.clear();
+
+      this.configurarPaginaPdf_(body);
 
       body.appendParagraph('Remito de Servicio').setHeading(DocumentApp.ParagraphHeading.HEADING1);
       body.appendParagraph(`Generado el ${this.formatDateForPdf_(new Date())}`)
@@ -248,6 +276,37 @@ const RemitoService = {
     return idMatch ? idMatch[0] : '';
   },
 
+  ajustarImagenParaPdf_(image) {
+    if (!image || typeof image.getWidth !== 'function' || typeof image.getHeight !== 'function') {
+      return;
+    }
+
+    const anchoActual = typeof image.getWidth === 'function' ? Number(image.getWidth()) : 0;
+    const altoActual = typeof image.getHeight === 'function' ? Number(image.getHeight()) : 0;
+
+    if (anchoActual <= 0 || altoActual <= 0) {
+      return;
+    }
+
+    const factorAncho = REMITO_FOTO_MAX_WIDTH_POINTS / anchoActual;
+    const factorAlto = REMITO_FOTO_MAX_HEIGHT_POINTS / altoActual;
+    const factorEscala = Math.min(factorAncho, factorAlto, 1);
+
+    if (factorEscala >= 1) {
+      return;
+    }
+
+    const nuevoAncho = Math.max(1, Math.round(anchoActual * factorEscala));
+    const nuevoAlto = Math.max(1, Math.round(altoActual * factorEscala));
+
+    try {
+      image.setWidth(nuevoAncho);
+      image.setHeight(nuevoAlto);
+    } catch (error) {
+      Logger.log('No se pudo ajustar la imagen del remito: %s', error);
+    }
+  },
+
   tryAppendImageFromUrl_(body, url) {
     if (!body || typeof body.appendImage !== 'function') {
       return false;
@@ -261,11 +320,7 @@ const RemitoService = {
     try {
       const blob = DriveApp.getFileById(driveFileId).getBlob();
       const image = body.appendImage(blob);
-      try {
-        image.setWidth(400);
-      } catch (resizeError) {
-        // Ignorar errores al ajustar el tamaño de la imagen
-      }
+      this.ajustarImagenParaPdf_(image);
       return true;
     } catch (error) {
       Logger.log('No se pudo insertar la imagen %s en el PDF: %s', url, error);
