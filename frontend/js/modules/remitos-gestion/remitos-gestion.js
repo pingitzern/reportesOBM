@@ -231,6 +231,18 @@ function getPhotoPreviewSource(slot) {
     return sanitizeString(slot.previewUrl) || sanitizeString(slot.url);
 }
 
+function hasPhotoContent(slot) {
+    if (!slot || typeof slot !== 'object') {
+        return false;
+    }
+
+    return Boolean(
+        sanitizeString(slot.previewUrl)
+        || sanitizeString(slot.url)
+        || sanitizeString(slot.base64Data),
+    );
+}
+
 function formatPhotoFileLabel(slot) {
     if (!slot || typeof slot !== 'object') {
         return 'Sin foto seleccionada';
@@ -587,31 +599,52 @@ function buildClienteOptionsHtml() {
 function buildPhotoSlotHtml(slot, index, disabledAttr) {
     const previewSource = getPhotoPreviewSource(slot);
     const hasPreview = Boolean(previewSource);
-    const previewContent = hasPreview
-        ? `<img src="${escapeHtml(previewSource)}" alt="Foto ${index + 1}" class="h-40 w-full rounded-lg border border-gray-200 object-cover">`
-        : '<div class="flex h-40 w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-400">Sin foto</div>';
-
+    const labelText = escapeHtml(formatPhotoFileLabel(slot));
+    const buttonClasses = [
+        'group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border-2',
+        hasPreview ? 'border-transparent bg-gray-900/5' : 'border-dashed border-gray-300 bg-gray-50',
+        'text-gray-400 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60',
+    ].join(' ');
+    const triggerContent = hasPreview
+        ? `<img src="${escapeHtml(previewSource)}" alt="Foto ${index + 1}" class="h-full w-full object-cover">`
+        : `
+            <div class="flex flex-col items-center justify-center gap-2 text-gray-400">
+                <span class="text-5xl font-light leading-none">+</span>
+                <span class="text-xs font-medium">Agregar foto</span>
+            </div>
+        `;
     const removeButton = hasPreview
-        ? `<button type="button" class="text-sm font-semibold text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="remove" data-remito-photo-index="${index}"${disabledAttr}>Quitar</button>`
+        ? `
+            <button type="button" class="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 shadow-md transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="remove" data-remito-photo-index="${index}" title="Eliminar foto" aria-label="Eliminar foto"${disabledAttr}>
+                <span aria-hidden="true" class="text-lg leading-none">&times;</span>
+            </button>
+        `
         : '';
 
-    const labelText = escapeHtml(formatPhotoFileLabel(slot));
+    const menuHtml = `
+        <div class="absolute inset-0 z-10 hidden items-center justify-center rounded-xl bg-black/40 p-4" data-remito-photo-menu="${index}" aria-hidden="true">
+            <button type="button" class="absolute inset-0 cursor-default" data-remito-photo-menu-dismiss></button>
+            <div class="relative z-10 w-full max-w-[220px] space-y-2 rounded-lg bg-white p-4 text-center shadow-lg">
+                <p class="text-sm font-semibold text-gray-700">Seleccioná una opción</p>
+                <button type="button" class="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="capture" data-remito-photo-index="${index}"${disabledAttr}>Tomar foto</button>
+                <button type="button" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="upload" data-remito-photo-index="${index}"${disabledAttr}>Subir foto</button>
+                <button type="button" class="w-full rounded-lg border border-transparent bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remito-photo-menu-dismiss>Cerrar</button>
+            </div>
+        </div>
+    `;
 
     return `
-        <div class="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <p class="text-sm font-medium text-gray-700">Foto ${index + 1}</p>
-                    <p class="text-xs text-gray-500">${labelText}</p>
-                </div>
+        <div class="space-y-2" data-remito-photo-slot="${index}">
+            <div class="flex items-center justify-between gap-2">
+                <p class="text-sm font-medium text-gray-700">Foto ${index + 1}</p>
+                <p class="max-w-[60%] truncate text-[11px] text-gray-500">${labelText}</p>
+            </div>
+            <div class="relative">
+                <button type="button" class="${buttonClasses}" data-remito-photo-trigger data-remito-photo-index="${index}" aria-label="Agregar o reemplazar foto ${index + 1}"${disabledAttr}>
+                    ${triggerContent}
+                </button>
                 ${removeButton}
-            </div>
-            <div class="overflow-hidden rounded-lg">
-                ${previewContent}
-            </div>
-            <div class="flex flex-col gap-2 sm:flex-row">
-                <button type="button" class="inline-flex items-center justify-center rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-600 shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="capture" data-remito-photo-index="${index}"${disabledAttr}>Tomar foto</button>
-                <button type="button" class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-photo-action="upload" data-remito-photo-index="${index}"${disabledAttr}>Subir foto</button>
+                ${menuHtml}
             </div>
             <input type="file" accept="image/*" capture="environment" class="hidden" data-remito-photo-input="capture" data-remito-photo-index="${index}"${disabledAttr}>
             <input type="file" accept="image/*" class="hidden" data-remito-photo-input="upload" data-remito-photo-index="${index}"${disabledAttr}>
@@ -622,7 +655,34 @@ function buildPhotoSlotHtml(slot, index, disabledAttr) {
 function buildPhotoSectionHtml(disableFormFields) {
     const disabledAttr = disableFormFields ? ' disabled' : '';
     const slots = normalizePhotoSlots(state.formData?.fotos);
-    const slotsHtml = slots.map((slot, index) => buildPhotoSlotHtml(slot, index, disabledAttr)).join('');
+
+    let highestSequentialFilled = -1;
+    for (let i = 0; i < slots.length; i += 1) {
+        if (hasPhotoContent(slots[i]) && i === highestSequentialFilled + 1) {
+            highestSequentialFilled = i;
+            continue;
+        }
+
+        if (i === highestSequentialFilled + 1 && !hasPhotoContent(slots[i])) {
+            break;
+        }
+    }
+
+    let lastExistingIndex = -1;
+    for (let i = 0; i < slots.length; i += 1) {
+        if (hasPhotoContent(slots[i])) {
+            lastExistingIndex = i;
+        }
+    }
+
+    const nextSequentialIndex = Math.min(highestSequentialFilled + 1, MAX_REMITO_PHOTOS - 1);
+    const displayUntil = Math.max(nextSequentialIndex, lastExistingIndex);
+    const totalSlotsToShow = Math.max(1, Math.min(slots.length, displayUntil + 1));
+
+    const slotsHtml = slots
+        .slice(0, totalSlotsToShow)
+        .map((slot, index) => buildPhotoSlotHtml(slot, index, disabledAttr))
+        .join('');
 
     return `
         <div class="space-y-3">
@@ -635,6 +695,42 @@ function buildPhotoSectionHtml(disableFormFields) {
             </div>
         </div>
     `;
+}
+
+function closeAllPhotoMenus() {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const menus = document.querySelectorAll('[data-remito-photo-menu]');
+    menus.forEach((menu) => {
+        menu.classList.add('hidden');
+        menu.setAttribute('aria-hidden', 'true');
+    });
+}
+
+function togglePhotoMenu(index) {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const normalizedIndex = Number(index);
+    if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= MAX_REMITO_PHOTOS) {
+        return;
+    }
+
+    const selector = `[data-remito-photo-menu="${normalizedIndex}"]`;
+    const menu = document.querySelector(selector);
+    if (!menu) {
+        return;
+    }
+
+    const isHidden = menu.classList.contains('hidden');
+    closeAllPhotoMenus();
+    if (isHidden) {
+        menu.classList.remove('hidden');
+        menu.setAttribute('aria-hidden', 'false');
+    }
 }
 
 function buildPayloadFromForm(formData = {}) {
@@ -1407,6 +1503,7 @@ function removePhotoSlot(index) {
         return;
     }
 
+    closeAllPhotoMenus();
     ensurePhotoSlotsInFormData();
     const slots = normalizePhotoSlots(state.formData.fotos);
     const previous = slots[normalizedIndex];
@@ -1442,6 +1539,7 @@ function handlePhotoAction(action, index) {
         return;
     }
 
+    closeAllPhotoMenus();
     const selector = `[data-remito-photo-input="${action}"][data-remito-photo-index="${normalizedIndex}"]`;
     const input = document.querySelector(selector);
     if (input) {
@@ -1601,6 +1699,25 @@ function handleAction(action) {
 }
 
 function handleContainerClick(event) {
+    const clickedInsidePhotoMenu = Boolean(event.target.closest('[data-remito-photo-menu]'));
+    if (!clickedInsidePhotoMenu) {
+        closeAllPhotoMenus();
+    }
+
+    const photoMenuDismiss = event.target.closest('[data-remito-photo-menu-dismiss]');
+    if (photoMenuDismiss) {
+        event.preventDefault();
+        closeAllPhotoMenus();
+        return;
+    }
+
+    const photoTrigger = event.target.closest('[data-remito-photo-trigger]');
+    if (photoTrigger) {
+        event.preventDefault();
+        togglePhotoMenu(photoTrigger.dataset.remitoPhotoIndex);
+        return;
+    }
+
     const actionButton = event.target.closest('[data-remitos-action]');
     if (actionButton) {
         event.preventDefault();
