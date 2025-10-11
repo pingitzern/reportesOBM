@@ -141,9 +141,20 @@ const RemitoService = {
       ].filter(url => !!url);
 
       if (fotos.length > 0) {
-        body.appendParagraph('Enlaces a fotografías').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+        body.appendParagraph('Registro fotográfico').setHeading(DocumentApp.ParagraphHeading.HEADING2);
         fotos.forEach((url, index) => {
-          body.appendListItem(`Foto ${index + 1}: ${url}`);
+          const titulo = body.appendParagraph(`Foto ${index + 1}`);
+          const tituloTexto = titulo.editAsText();
+          if (tituloTexto) {
+            tituloTexto.setBold(true);
+          }
+
+          const imagenInsertada = this.tryAppendImageFromUrl_(body, url);
+          if (!imagenInsertada) {
+            body.appendParagraph(url);
+          }
+
+          body.appendParagraph(' ');
         });
       }
 
@@ -221,6 +232,45 @@ const RemitoService = {
 
     const withoutExistingExtension = normalized.replace(/\.[^.]+$/, '');
     return `${withoutExistingExtension}.${extension}`;
+  },
+
+  extractDriveFileId_(url) {
+    if (typeof url !== 'string') {
+      return '';
+    }
+
+    const trimmed = url.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    const idMatch = trimmed.match(/[-\w]{25,}/);
+    return idMatch ? idMatch[0] : '';
+  },
+
+  tryAppendImageFromUrl_(body, url) {
+    if (!body || typeof body.appendImage !== 'function') {
+      return false;
+    }
+
+    const driveFileId = this.extractDriveFileId_(url);
+    if (!driveFileId) {
+      return false;
+    }
+
+    try {
+      const blob = DriveApp.getFileById(driveFileId).getBlob();
+      const image = body.appendImage(blob);
+      try {
+        image.setWidth(400);
+      } catch (resizeError) {
+        // Ignorar errores al ajustar el tamaño de la imagen
+      }
+      return true;
+    } catch (error) {
+      Logger.log('No se pudo insertar la imagen %s en el PDF: %s', url, error);
+      return false;
+    }
   },
 
   extractBase64Data_(value) {
