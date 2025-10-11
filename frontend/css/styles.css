@@ -433,6 +433,27 @@
         @apply min-w-full;
     }
 
+    .remito-photo-slot {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    @media print {
+        #remito-fotos-container {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+            break-inside: avoid;
+            page-break-inside: avoid;
+            page-break-before: auto;
+            page-break-after: auto;
+        }
+
+        #remito-fotos-container .remito-photo-slot {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+    }
+
     .repuestos-table-input {
         @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition-colors duration-150 ease-out focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200;
     }
