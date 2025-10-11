@@ -26,6 +26,17 @@ function getPropertyOrDefault(propertyName, fallback) {
   return (typeof value === 'string' && value.trim()) ? value.trim() : fallback;
 }
 
+function initProperties(overrides) {
+  const defaults = {
+    SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
+    SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
+    CLIENTES_SHEET_NAME: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME
+  };
+
+  const properties = Object.assign({}, defaults, overrides || {});
+  SCRIPT_PROPERTIES.setProperties(properties, true);
+}
+
 const SHEET_ID = getPropertyOrDefault('SHEET_ID', DEFAULT_CONFIGURATION.SHEET_ID);
 const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
 const CLIENTES_SHEET_NAME = getPropertyOrDefault('CLIENTES_SHEET_NAME', DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME);
