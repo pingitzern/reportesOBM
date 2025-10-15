@@ -78,7 +78,7 @@ function crearRemitoPDF(remitoData) {
   while (photoTable.getNumRows() > 0) {
     photoTable.removeRow(0);
   }
-  photoTable.setBorderWidth(1);
+  photoTable.setBorderWidth(0);
   var maxWidth = 240;
   var maxHeight = 320;
 
@@ -112,17 +112,25 @@ function crearRemitoPDF(remitoData) {
             image.setWidth(Math.round(width * scale));
             image.setHeight(Math.round(height * scale));
           }
+          var caption = cell.appendParagraph('Foto ' + (photoIndex + 1));
+          caption.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+          caption.setSpacingBefore(4);
+          caption.setFontSize(9);
         } catch (e) {
           while (cell.getNumChildren() > 0) {
             cell.removeChild(cell.getChild(0));
           }
-          cell.appendParagraph('Foto no disponible').setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+          var errorParagraph = cell.appendParagraph('Foto no disponible');
+          errorParagraph.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+          errorParagraph.editAsText().setForegroundColor('#888888');
         }
       } else {
         while (cell.getNumChildren() > 0) {
           cell.removeChild(cell.getChild(0));
         }
-        cell.appendParagraph('—').setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        var placeholderParagraph = cell.appendParagraph('—');
+        placeholderParagraph.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        placeholderParagraph.editAsText().setForegroundColor('#888888');
       }
     }
   }
