@@ -462,7 +462,8 @@ const RemitoService = {
     }
 
     // Obtener todos los datos excluyendo la fila de encabezados
-    const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+    const columnCount = Math.min(headers.length, sheet.getLastColumn());
+    const dataRange = sheet.getRange(2, 1, lastRow - 1, columnCount);
     const allRemitosData = dataRange.getValues();
 
     // Verificación adicional: si no hay datos después de los encabezados
