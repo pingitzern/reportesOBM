@@ -86,6 +86,15 @@ const RemitoService = {
   },
 
   getDirectDriveImageUrl_(fileId) {
+    const normalizedId = this.extractDriveFileIdFromValue_(fileId);
+    if (!normalizedId) {
+      return '';
+    }
+
+    return this.buildPublicDriveImageUrl_(normalizedId);
+  },
+
+  buildPublicDriveImageUrl_(fileId) {
     if (!fileId) {
       return '';
     }
@@ -95,7 +104,7 @@ const RemitoService = {
       return '';
     }
 
-    return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(trimmedId)}`;
+    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(trimmedId)}`;
   },
 
   extractDriveFileIdFromValue_(value) {
@@ -147,6 +156,54 @@ const RemitoService = {
     return text;
   },
 
+  buildDriveImageDataUrl_(fileId) {
+    const normalizedId = this.extractDriveFileIdFromValue_(fileId);
+    if (!normalizedId) {
+      return '';
+    }
+
+    let blob = null;
+
+    try {
+      const file = DriveApp.getFileById(normalizedId);
+      blob = file.getBlob();
+    } catch (error) {
+      Logger.log('No se pudo obtener el blob directo de Drive para la imagen %s: %s', normalizedId, error);
+    }
+
+    if (!blob) {
+      const publicUrl = this.buildPublicDriveImageUrl_(normalizedId);
+      if (publicUrl) {
+        try {
+          const response = UrlFetchApp.fetch(publicUrl, { muteHttpExceptions: true });
+          const status = response.getResponseCode();
+          if (status >= 200 && status < 300) {
+            blob = response.getBlob();
+          } else {
+            Logger.log('La descarga HTTP de la imagen %s devolvió el estado %s', normalizedId, status);
+          }
+        } catch (fetchError) {
+          Logger.log('No se pudo descargar la imagen %s desde su URL pública: %s', normalizedId, fetchError);
+        }
+      }
+    }
+
+    if (!blob) {
+      return '';
+    }
+
+    let workingBlob = blob;
+    try {
+      workingBlob = blob.getAs(MimeType.JPEG);
+    } catch (convertError) {
+      Logger.log('No se pudo convertir la imagen %s a JPEG, se usará el blob original: %s', normalizedId, convertError);
+    }
+
+    const mimeType = workingBlob.getContentType() || blob.getContentType() || 'image/jpeg';
+    const base64 = Utilities.base64Encode(workingBlob.getBytes());
+    return `data:${mimeType};base64,${base64}`;
+  },
+
   buildPdfTemplateData_(remito) {
     const normalize = value => this.normalizeForPdf_(value);
     const fallback = value => {
@@ -154,12 +211,26 @@ const RemitoService = {
       return normalized || '—';
     };
 
-    const fotos = [
-      this.normalizeDriveUrl_(remito.Foto1Id || remito.Foto1URL),
-      this.normalizeDriveUrl_(remito.Foto2Id || remito.Foto2URL),
-      this.normalizeDriveUrl_(remito.Foto3Id || remito.Foto3URL),
-      this.normalizeDriveUrl_(remito.Foto4Id || remito.Foto4URL)
-    ].filter(url => !!url);
+    const fotoSources = [
+      remito.Foto1Id || remito.Foto1URL,
+      remito.Foto2Id || remito.Foto2URL,
+      remito.Foto3Id || remito.Foto3URL,
+      remito.Foto4Id || remito.Foto4URL
+    ];
+
+    const fotos = fotoSources.map((source, index) => {
+      const embedded = this.buildDriveImageDataUrl_(source);
+      if (embedded) {
+        return { url: embedded, index };
+      }
+
+      const fallback = this.normalizeDriveUrl_(source);
+      if (fallback) {
+        return { url: fallback, index };
+      }
+
+      return { url: '', index };
+    }).filter(entry => !!entry.url);
 
     const detalles = [
       { label: 'Número de remito', value: fallback(remito.NumeroRemito) },
@@ -182,7 +253,7 @@ const RemitoService = {
       detalles,
       repuestos: normalize(remito.Repuestos) || 'No se registraron repuestos reemplazados.',
       observaciones: normalize(remito.Observaciones) || 'Sin observaciones adicionales.',
-      fotos: fotos.map(url => ({ url })),
+      fotos: fotos.map(entry => ({ url: entry.url })),
       nota: 'Documento generado automáticamente a partir del sistema de reportes OBM.'
     };
   },
@@ -324,14 +395,29 @@ const RemitoService = {
 
       try {
         const file = folder.createFile(blob);
+        const fileId = file.getId();
+        try {
+          const renamed = this.buildPhotoFileNameFromId_(fileId, uniqueBase, i, mimeType);
+          file.setName(renamed);
+        } catch (renameError) {
+          Logger.log('No se pudo renombrar la foto %s (%s): %s', i + 1, fileId, renameError);
+        }
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        resultados[i] = file.getId();
+        resultados[i] = fileId;
       } catch (error) {
         throw new Error(`No se pudo guardar la foto ${i + 1} en Drive: ${error.message}`);
       }
     }
 
     return resultados;
+  },
+
+  buildPhotoFileNameFromId_(fileId, uniqueBase, index, mimeType) {
+    const safeBase = (uniqueBase || 'remito').replace(/[^A-Za-z0-9_-]+/g, '-');
+    const extension = this.guessExtension_(mimeType);
+    const safeId = String(fileId || '').replace(/[^A-Za-z0-9_-]+/g, '');
+    const paddedIndex = String(index + 1).padStart(2, '0');
+    return `${safeBase}-foto-${paddedIndex}-${safeId}.${extension}`;
   },
 
   /**
@@ -462,7 +548,8 @@ const RemitoService = {
     }
 
     // Obtener todos los datos excluyendo la fila de encabezados
-    const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+    const columnCount = Math.min(headers.length, sheet.getLastColumn());
+    const dataRange = sheet.getRange(2, 1, lastRow - 1, columnCount);
     const allRemitosData = dataRange.getValues();
 
     // Verificación adicional: si no hay datos después de los encabezados
