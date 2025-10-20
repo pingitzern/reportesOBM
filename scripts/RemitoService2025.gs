@@ -147,6 +147,25 @@ const RemitoService = {
     return text;
   },
 
+  buildDriveImageDataUrl_(fileId) {
+    const normalizedId = this.extractDriveFileIdFromValue_(fileId);
+    if (!normalizedId) {
+      return '';
+    }
+
+    try {
+      const file = DriveApp.getFileById(normalizedId);
+      const blob = file.getBlob();
+      const mimeType = blob.getContentType() || 'image/jpeg';
+      const base64 = Utilities.base64Encode(blob.getBytes());
+      return `data:${mimeType};base64,${base64}`;
+    } catch (error) {
+      Logger.log('No se pudo obtener el blob de la imagen %s para incrustarla en el PDF: %s', normalizedId, error);
+    }
+
+    return '';
+  },
+
   buildPdfTemplateData_(remito) {
     const normalize = value => this.normalizeForPdf_(value);
     const fallback = value => {
@@ -154,12 +173,22 @@ const RemitoService = {
       return normalized || '—';
     };
 
-    const fotos = [
-      this.normalizeDriveUrl_(remito.Foto1Id || remito.Foto1URL),
-      this.normalizeDriveUrl_(remito.Foto2Id || remito.Foto2URL),
-      this.normalizeDriveUrl_(remito.Foto3Id || remito.Foto3URL),
-      this.normalizeDriveUrl_(remito.Foto4Id || remito.Foto4URL)
-    ].filter(url => !!url);
+    const fotoSources = [
+      remito.Foto1Id || remito.Foto1URL,
+      remito.Foto2Id || remito.Foto2URL,
+      remito.Foto3Id || remito.Foto3URL,
+      remito.Foto4Id || remito.Foto4URL
+    ];
+
+    const fotos = fotoSources
+      .map(source => {
+        const embedded = this.buildDriveImageDataUrl_(source);
+        if (embedded) {
+          return embedded;
+        }
+        return this.normalizeDriveUrl_(source);
+      })
+      .filter(url => !!url);
 
     const detalles = [
       { label: 'Número de remito', value: fallback(remito.NumeroRemito) },
@@ -324,14 +353,29 @@ const RemitoService = {
 
       try {
         const file = folder.createFile(blob);
+        const fileId = file.getId();
+        try {
+          const renamed = this.buildPhotoFileNameFromId_(fileId, uniqueBase, i, mimeType);
+          file.setName(renamed);
+        } catch (renameError) {
+          Logger.log('No se pudo renombrar la foto %s (%s): %s', i + 1, fileId, renameError);
+        }
         file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        resultados[i] = file.getId();
+        resultados[i] = fileId;
       } catch (error) {
         throw new Error(`No se pudo guardar la foto ${i + 1} en Drive: ${error.message}`);
       }
     }
 
     return resultados;
+  },
+
+  buildPhotoFileNameFromId_(fileId, uniqueBase, index, mimeType) {
+    const safeBase = (uniqueBase || 'remito').replace(/[^A-Za-z0-9_-]+/g, '-');
+    const extension = this.guessExtension_(mimeType);
+    const safeId = String(fileId || '').replace(/[^A-Za-z0-9_-]+/g, '');
+    const paddedIndex = String(index + 1).padStart(2, '0');
+    return `${safeBase}-foto-${paddedIndex}-${safeId}.${extension}`;
   },
 
   /**
