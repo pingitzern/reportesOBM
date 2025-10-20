@@ -155,8 +155,20 @@ const RemitoService = {
 
     try {
       const file = DriveApp.getFileById(normalizedId);
-      const blob = file.getBlob();
-      const mimeType = blob.getContentType() || 'image/jpeg';
+      let blob = file.getBlob();
+
+      const originalMime = blob.getContentType() || '';
+      const isSupportedMime = /^image\/(png|jpe?g|gif|bmp|webp)$/i.test(originalMime);
+
+      if (!isSupportedMime) {
+        try {
+          blob = blob.getAs('image/png');
+        } catch (conversionError) {
+          Logger.log('No se pudo convertir la imagen %s a PNG para incrustarla en el PDF: %s', normalizedId, conversionError);
+        }
+      }
+
+      const mimeType = blob.getContentType() || (isSupportedMime ? originalMime : 'image/png') || 'image/jpeg';
       const base64 = Utilities.base64Encode(blob.getBytes());
       return `data:${mimeType};base64,${base64}`;
     } catch (error) {
