@@ -7,7 +7,7 @@ const REMITOS_HEADERS = [
   'ModeloEquipo', 'NumeroSerie', 'IDInterna',
   'Repuestos', 'Observaciones', 'IdUnico',
   'Foto1Id', 'Foto2Id', 'Foto3Id', 'Foto4Id',
-  'PdfURL'
+  'PdfURL', 'DocFileId', 'DocURL'
 ];
 
 const RemitoRepository = {
@@ -24,61 +24,35 @@ const RemitoRepository = {
       // Inmovilizar la primera fila (encabezados)
       sheet.setFrozenRows(1);
     } else {
+      // Ensure desired headers exist, but DO NOT delete or reorder custom columns added by users.
       const desiredHeaders = this.REMITOS_HEADERS;
-      const lastColumn = sheet.getLastColumn();
+      const lastColumn = Math.max(1, sheet.getLastColumn());
       let currentHeaders = lastColumn > 0
         ? sheet.getRange(1, 1, 1, lastColumn).getValues()[0]
         : [];
 
+      // If header row is empty, populate with desired headers
       const hasHeaders = currentHeaders.some(value => String(value || '').trim() !== '');
       if (!hasHeaders) {
         sheet.getRange(1, 1, 1, desiredHeaders.length).setValues([desiredHeaders]);
       } else {
+        // For each desired header, if it's missing, append a new column at the end and set it.
         currentHeaders = currentHeaders.slice();
-        const totalRows = sheet.getMaxRows();
-
-        desiredHeaders.forEach((desiredHeader, index) => {
-          const desiredPosition = index + 1;
-          let currentIndex = currentHeaders.indexOf(desiredHeader);
-
-          if (currentIndex === -1) {
-            const appendPosition = sheet.getLastColumn();
-            if (appendPosition === 0) {
-              sheet.insertColumnBefore(1);
-            } else {
-              sheet.insertColumnsAfter(appendPosition, 1);
-            }
-            const newColumnPosition = sheet.getLastColumn();
-            sheet.getRange(1, newColumnPosition).setValue(desiredHeader);
+        desiredHeaders.forEach(function(desiredHeader) {
+          if (currentHeaders.indexOf(desiredHeader) === -1) {
+            // Append column at the end
+            const appendAfter = sheet.getLastColumn();
+            sheet.insertColumnAfter(appendAfter || 1);
+            const newCol = sheet.getLastColumn();
+            sheet.getRange(1, newCol).setValue(desiredHeader);
             currentHeaders.push(desiredHeader);
-
-            sheet.moveColumns(sheet.getRange(1, newColumnPosition, totalRows, 1), desiredPosition);
-            currentHeaders.pop();
-            currentHeaders.splice(desiredPosition - 1, 0, desiredHeader);
-          } else {
-            const currentPosition = currentIndex + 1;
-            if (currentPosition !== desiredPosition) {
-              sheet.moveColumns(sheet.getRange(1, currentPosition, totalRows, 1), desiredPosition);
-              const [movedHeader] = currentHeaders.splice(currentIndex, 1);
-              currentHeaders.splice(desiredPosition - 1, 0, movedHeader);
-            }
           }
         });
 
-        const finalHeadersRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
-        const finalHeaders = finalHeadersRange.getValues()[0];
-        for (let columnIndex = finalHeaders.length; columnIndex >= 1; columnIndex -= 1) {
-          const header = String(finalHeaders[columnIndex - 1] || '').trim();
-          if (header && desiredHeaders.indexOf(header) === -1) {
-            sheet.deleteColumn(columnIndex);
-            continue;
-          }
-          if (!header && columnIndex > desiredHeaders.length) {
-            sheet.deleteColumn(columnIndex);
-          }
-        }
-
-        sheet.getRange(1, 1, 1, desiredHeaders.length).setValues([desiredHeaders]);
+        // Do NOT delete extra columns. Finally, ensure the first row contains at least the desired headers
+        // by writing desired headers into their existing positions if they are in the sheet already.
+        // (We avoid reordering to preserve user columns and formulas.)
+        // No further action required.
       }
     }
     sheet.setFrozenRows(1);

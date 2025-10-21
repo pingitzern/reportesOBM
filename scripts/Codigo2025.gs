@@ -560,23 +560,26 @@ function doPost(e) {
         return ResponseFactory.success(result);
       }
       case 'crear_remito': {
+        // REMITOS HANDLER NEUTRALIZED (remitos-reset)
+        // Validate session but do not perform any remito actions. This branch
+        // archives the remitos functionality so callers receive a consistent
+        // 'archived' response while preserving auth checks.
         const sess = SessionService.validateSession(data.token);
-        // data.reporteData debe contener el objeto completo del reporte guardado
-        // data.observaciones es el texto que el técnico añade en la vista del remito
-        const result = RemitoService.crearRemito(
-          data.reporteData,
-          data.observaciones,
-          sess.mail,
-          data.fotos
-        );
-        return ResponseFactory.success(result);
+        return ResponseFactory.success({
+          archived: true,
+          message: 'Remitos functionality archived in this branch. See archive/remitos/ for previous implementation.',
+          user: sess.mail
+        });
       }
       case 'obtener_remitos': {
-        const sess = SessionService.validateSession(data.token); // Validar sesión
-        const page = data.page || 1; // Obtener página de la solicitud, por defecto 1
-        const pageSize = data.pageSize || 20; // Obtener tamaño de página, por defecto 20
-        const result = RemitoService.obtenerRemitos(page, pageSize);
-        return ResponseFactory.success(result);
+        // REMITOS LIST HANDLER NEUTRALIZED (remitos-reset)
+        const sess = SessionService.validateSession(data.token);
+        return ResponseFactory.success({
+          archived: true,
+          message: 'Remitos listing archived on this branch.',
+          user: sess.mail,
+          remitos: [] // empty list to avoid accidental data leakage
+        });
       }
 
       default:

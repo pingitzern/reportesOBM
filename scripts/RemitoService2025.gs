@@ -235,8 +235,37 @@ const RemitoService = {
     try {
       const template = HtmlService.createTemplateFromFile('remito-pdf-template');
       const reporte = this.buildPdfTemplateData_(remito);
+      // Log básico de URLs/fuentes de las fotos y tamaños/base-type para diagnóstico
+      try {
+        Logger.log('=== Fotos pasadas al template (count=%s) ===', (reporte.fotos || []).length);
+        (reporte.fotos || []).forEach(function(f, idx) {
+          const u = String((f && f.url) || '');
+          const isData = u.indexOf('data:') === 0;
+          const len = u.length || 0;
+          Logger.log('Foto %s: isData=%s, length=%s, preview=%s', idx + 1, isData, len, isData ? u.slice(0, 100) + (len > 100 ? '...[truncated]' : '') : u);
+        });
+      } catch (logErr) {
+        Logger.log('No se pudo loggear detalles de fotos: %s', logErr && logErr.message ? logErr.message : logErr);
+      }
       Logger.log('URLs de fotos finales pasadas al template del PDF: %s', JSON.stringify(reporte.fotos.map(f => f.url)));
       template.reporte = reporte;
+
+      // Si hay fotos que NO están embebidas como data: (es decir quedaron como URLs directas),
+      // usamos una ruta más robusta que inserta las imágenes en un Google Doc y lo exporta a PDF.
+      const hasNonEmbeddedFotos = (reporte.fotos || []).some(function(f) {
+        const u = String((f && f.url) || '');
+        return u && u.indexOf('data:') !== 0;
+      });
+
+      if (hasNonEmbeddedFotos) {
+        Logger.log('Se detectaron fotos no embebidas; usando fallback por Google Docs para incrustar imágenes.');
+        try {
+          return this.generarPdfRemitoViaDoc_(reporte, documentName, folder);
+        } catch (docErr) {
+          Logger.log('Fallo el fallback por Google Docs: %s', docErr && docErr.message ? docErr.message : docErr);
+          // Continuar y reintentar con HTML -> PDF como último recurso
+        }
+      }
 
       const htmlOutput = template.evaluate();
       const htmlContent = htmlOutput.getContent();
@@ -253,6 +282,120 @@ const RemitoService = {
     } catch (error) {
       throw new Error(`No se pudo componer el PDF del remito: ${error.message}`);
     }
+  },
+
+  /**
+   * Genera el PDF insertando el contenido y las imágenes en un Google Doc y exportándolo a PDF.
+   * Este método es más robusto para incrustar imágenes tomadas desde Drive o data URIs.
+   */
+  generarPdfRemitoViaDoc_(reporte, documentName, folder) {
+    // Crear documento temporal
+    const doc = DocumentApp.create(`${documentName}-doc`);
+    const body = doc.getBody();
+
+    // Título
+    body.appendParagraph(reporte.titulo || 'Remito').setHeading(DocumentApp.ParagraphHeading.HEADING1);
+    body.appendParagraph(`Generado el: ${reporte.fechaGeneracion || ''}`).setSpacingAfter(8);
+
+    // Detalles (tabla simple)
+    try {
+      const details = reporte.detalles || [];
+      if (details.length > 0) {
+        const table = body.appendTable();
+        details.forEach(function(d) {
+          const row = table.appendTableRow();
+          row.appendTableCell(String(d.label || '')).setBackgroundColor('#f3f4f6');
+          row.appendTableCell(String(d.value || ''));
+        });
+        body.appendParagraph('');
+      }
+    } catch (e) {
+      Logger.log('Error al generar tabla de detalles en Doc: %s', e && e.message ? e.message : e);
+    }
+
+    // Repuestos y observaciones
+    body.appendParagraph('Repuestos reemplazados').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    body.appendParagraph(String(reporte.repuestos || 'No se registraron repuestos reemplazados.'));
+    body.appendParagraph('');
+    body.appendParagraph('Observaciones').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    body.appendParagraph(String(reporte.observaciones || 'Sin observaciones adicionales.'));
+    body.appendParagraph('');
+
+    // Registro fotográfico: insert images
+    try {
+      const fotos = reporte.fotos || [];
+      if (fotos.length > 0) {
+        body.appendParagraph('Registro Fotográfico').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+
+        fotos.forEach(function(f, idx) {
+          const u = String((f && f.url) || '');
+          let blob = null;
+          if (!u) {
+            return;
+          }
+
+          if (u.indexOf('data:') === 0) {
+            // data URI: extraer base64 y mime
+            try {
+              const comma = u.indexOf(',');
+              const meta = u.slice(5, comma);
+              const base64 = u.slice(comma + 1);
+              const mime = meta.split(';')[0] || 'image/jpeg';
+              blob = Utilities.newBlob(Utilities.base64Decode(base64), mime, `foto-${idx + 1}`);
+            } catch (err) {
+              Logger.log('No se pudo convertir data URI a blob para foto %s: %s', idx + 1, err && err.message ? err.message : err);
+            }
+          } else {
+            // intentar extraer fileId y obtener blob desde Drive
+            try {
+              const fileId = this.extractDriveFileIdFromValue_(u);
+              if (fileId) {
+                const file = DriveApp.getFileById(fileId);
+                blob = file.getBlob();
+              }
+            } catch (err) {
+              Logger.log('No se pudo obtener blob de Drive para foto %s (%s): %s', idx + 1, u, err && err.message ? err.message : err);
+            }
+          }
+
+          if (blob) {
+            try {
+              const image = body.appendImage(blob);
+              // limitar ancho para que no rompa el layout
+              try { image.setWidth(400); } catch (e) { /* ignore */ }
+              body.appendParagraph(`Foto ${idx + 1}`).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+            } catch (err) {
+              Logger.log('No se pudo insertar la imagen %s en el Doc: %s', idx + 1, err && err.message ? err.message : err);
+            }
+          }
+        }, this);
+      }
+    } catch (err) {
+      Logger.log('Error al insertar fotos en Doc: %s', err && err.message ? err.message : err);
+    }
+
+    // Guardar y exportar a PDF
+    doc.saveAndClose();
+    const docFile = DriveApp.getFileById(doc.getId());
+    const pdfBlob = docFile.getAs(MimeType.PDF).setName(`${documentName}.pdf`);
+    const pdfFile = folder.createFile(pdfBlob);
+    pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    // Compartir también el Google Doc fuente (no lo eliminamos) para permitir visualización
+    try {
+      docFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (e) {
+      Logger.log('No se pudo compartir el documento temporal %s: %s', doc.getId(), e && e.message ? e.message : e);
+    }
+
+    // Devolver tanto el PDF como información del Doc fuente (id + url)
+    return {
+      id: pdfFile.getId(),
+      url: pdfFile.getUrl(),
+      name: pdfFile.getName(),
+      docId: docFile.getId(),
+      docUrl: docFile.getUrl()
+    };
   },
 
   guessExtension_(mimeType) {
@@ -455,6 +598,11 @@ const RemitoService = {
       pdfInfo = this.generarPdfRemito_(remito);
       remito.PdfURL = pdfInfo.url || '';
       remito.PdfFileId = pdfInfo.id || '';
+      // Si el fallback generó también un Google Doc fuente (docId/docUrl), lo dejamos en el objeto
+      if (pdfInfo.docId) {
+        remito.DocFileId = pdfInfo.docId;
+        remito.DocURL = pdfInfo.docUrl || '';
+      }
     } catch (error) {
       throw new Error(`No se pudo generar el PDF del remito: ${error.message}`);
     }
@@ -480,7 +628,9 @@ const RemitoService = {
       remito.Foto2Id,
       remito.Foto3Id,
       remito.Foto4Id,
-      remito.PdfURL
+      remito.PdfURL,
+      remito.DocFileId || '',
+      remito.DocURL || ''
     ];
 
     // 5. GUARDAR EL REMITO REALMENTE EN LA HOJA DE CÁLCULO
@@ -584,3 +734,41 @@ const RemitoService = {
     };
   }
 };
+
+/**
+ * Función de prueba para ejecutar desde el editor de Apps Script.
+ * Genera un remito de ejemplo y llama a generarPdfRemito_ para que se puedan ver logs
+ * y comprobar si el código en el editor está actualizado.
+ */
+function testGenerarPdfRemito() {
+  const ejemplo = {
+    NumeroRemito: 'TEST-001',
+    FechaCreacion: new Date(),
+    MailTecnico: 'test@example.com',
+    NumeroReporte: 'REP-123',
+    NombreCliente: 'Cliente Test',
+    Direccion: 'Calle Falsa 123',
+    CUIT: '20-12345678-9',
+    Telefono: '1112345678',
+    MailCliente: 'cliente@example.com',
+    ModeloEquipo: 'Modelo X',
+    NumeroSerie: 'SN12345',
+    IDInterna: 'ID-TEST',
+    Repuestos: 'Ninguno',
+    Observaciones: 'Prueba de generación de PDF desde editor',
+    // Puedes dejar fotos vacías o poner aquí un ID de Drive que exista en tu cuenta para probar
+    Foto1Id: '',
+    Foto2Id: '',
+    Foto3Id: '',
+    Foto4Id: ''
+  };
+
+  try {
+    const resultado = RemitoService.generarPdfRemito_(ejemplo);
+    Logger.log('Resultado testGenerarPdfRemito: %s', JSON.stringify(resultado));
+    return resultado;
+  } catch (err) {
+    Logger.log('Error en testGenerarPdfRemito: %s', err && err.message ? err.message : err);
+    throw err;
+  }
+}
