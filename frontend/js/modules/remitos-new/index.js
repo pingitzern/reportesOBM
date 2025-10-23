@@ -22,3 +22,12 @@ export function createRemitosModule({ showView, apiUrl, getToken } = {}) {
 
   return { initialize, handleMaintenanceSaved, generateRemito };
 }
+
+// Test helper: sends a tiny 1x1 PNG (transparent) to the new endpoint
+export async function sendTestRemito(apiUrl, token) {
+  const tinyPngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
+  const fotos = [{ base64Data: tinyPngBase64, mimeType: 'image/png', fileName: 'test.png' }];
+  const payload = { action: 'crear_remito_new', token, reporteData: { cliente: 'Prueba' }, observaciones: 'test-e2e', fotos };
+  const resp = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain; charset=utf-8' }, body: JSON.stringify(payload) });
+  return resp.json();
+}

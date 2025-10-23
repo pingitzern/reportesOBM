@@ -569,6 +569,12 @@ function doPost(e) {
           user: sess.mail
         });
       }
+      case 'crear_remito_new': {
+        // New remitos MVP endpoint (saves photos, creates Doc, exports PDF)
+        const sess = SessionService.validateSession(data.token);
+        const result = RemitoServiceNew.crearRemito(data.reporteData, data.observaciones, sess.mail, data.fotos);
+        return ResponseFactory.success(result);
+      }
       case 'obtener_remitos': {
         // REMITOS LIST HANDLER NEUTRALIZED (remitos-reset)
         const sess = SessionService.validateSession(data.token);
