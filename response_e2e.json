@@ -1,0 +1,13 @@
+﻿{
+    "result":  "success",
+    "data":  {
+                 "NumeroRemito":  "R-20251023-210702",
+                 "DocFileId":  "1HRaOtzDB_ZpcVEzsm-7gwKRaA9F7sUz8XaSwpYtaUA0",
+                 "DocUrl":  "https://drive.google.com/uc?export=view\u0026id=1HRaOtzDB_ZpcVEzsm-7gwKRaA9F7sUz8XaSwpYtaUA0",
+                 "PdfFileId":  "1C3_Ux36CEux88O9HQTSGVsPFIhjASLv3",
+                 "PdfUrl":  "https://drive.google.com/uc?export=view\u0026id=1C3_Ux36CEux88O9HQTSGVsPFIhjASLv3",
+                 "PhotoFileIds":  [
+                                      "1LqO3Fd6eUzN_nc1Vkwy7iSzDqxFxOZwF"
+                                  ]
+             }
+}

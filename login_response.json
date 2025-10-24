@@ -1,0 +1,13 @@
+﻿{
+    "result":  "success",
+    "data":  {
+                 "token":  "4973e9b7-0905-4184-9c1a-52433f1a03ec",
+                 "expiresAt":  "2025-10-23T22:06:57-03:00",
+                 "usuario":  {
+                                 "mail":  "lorena.goni@ohminstrumental.net",
+                                 "Nombre":  "Lorena Goñi",
+                                 "Cargo":  "Jefa de servicio",
+                                 "Rol":  "admin"
+                             }
+             }
+}

@@ -28,7 +28,8 @@ function saveExistingDriveFileToFolder(fileId) {
   return copy;
 }
 
-function createDocWithImages(reportInfo, photoFileIds, docName) {
+function createDocWithImages(reportInfo, photoEntries, docName) {
+  // Create a document but do not embed images. Instead include links to the saved photos.
   const doc = DocumentApp.create(docName || `Remito ${new Date().toISOString()}`);
   const body = doc.getBody();
 
@@ -44,18 +45,21 @@ function createDocWithImages(reportInfo, photoFileIds, docName) {
     lines.forEach(l => body.appendParagraph(l));
   }
 
-  // Append images
-  if (Array.isArray(photoFileIds) && photoFileIds.length) {
-    body.appendParagraph('Fotos:');
-    photoFileIds.forEach((fid) => {
+  // Add a page for photos but do not insert the image blobs to avoid layout problems.
+  body.appendPageBreak();
+  body.appendParagraph('Fotos del Servicio').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  const entries = Array.isArray(photoEntries) ? photoEntries.slice(0, 100) : [];
+  if (entries.length === 0) {
+    body.appendParagraph('No hay fotos adjuntas.');
+  } else {
+    entries.forEach((entry, idx) => {
+      const fid = entry && entry.id ? entry.id : entry;
       try {
-        const blob = DriveApp.getFileById(fid).getBlob();
-        const img = body.appendImage(blob);
-        try { img.setWidth(500); } catch (e) { /* ignore if not supported */ }
-        body.appendParagraph('');
+        const url = buildDriveDirectUrl(fid);
+        const p = body.appendParagraph(`${idx + 1}. ${url}`);
+        p.setLinkUrl && p.setLinkUrl(url);
       } catch (e) {
-        // ignore missing files
-        body.appendParagraph(`(imagen no disponible: ${fid})`);
+        body.appendParagraph(`${idx + 1}. (imagen no disponible: ${fid})`);
       }
     });
   }
@@ -76,6 +80,7 @@ const RemitoServiceNew = {
     // reporteData: object
     // fotos: array of { base64Data, mimeType, fileName } or { driveFileId }
     const createdPhotoFileIds = [];
+    const createdPhotosMeta = [];
     try {
       if (Array.isArray(fotos)) {
         fotos.forEach((f, idx) => {
@@ -83,10 +88,12 @@ const RemitoServiceNew = {
           if (f.driveFileId) {
             const copy = saveExistingDriveFileToFolder(f.driveFileId);
             createdPhotoFileIds.push(copy.getId());
+            createdPhotosMeta.push({ id: copy.getId(), width: f.width || f.displayWidth || null, height: f.height || null, displayWidth: f.displayWidth || f.width || null, origWidth: f.origWidth || null, origHeight: f.origHeight || null });
           } else if (f.base64Data) {
             const name = f.fileName || `remito-photo-${Date.now()}-${idx + 1}`;
             const file = savePhotoBase64ToDrive(f.base64Data, f.mimeType || 'image/jpeg', name);
             createdPhotoFileIds.push(file.getId());
+            createdPhotosMeta.push({ id: file.getId(), width: f.width || f.displayWidth || null, height: f.height || null, displayWidth: f.displayWidth || f.width || null, origWidth: f.origWidth || null, origHeight: f.origHeight || null });
           }
         });
       }
@@ -98,17 +105,19 @@ const RemitoServiceNew = {
       mergedReport.observaciones = observaciones || mergedReport.observaciones || '';
       mergedReport.NumeroRemito = numero;
 
-      const docId = createDocWithImages(mergedReport, createdPhotoFileIds, docName);
-      const pdfFile = exportDocToPdfInFolder(docId, `${docName}.pdf`);
+  // pass entries with display sizes when available
+  const photoEntries = createdPhotosMeta && createdPhotosMeta.length ? createdPhotosMeta : createdPhotoFileIds;
+  const docId = createDocWithImages(mergedReport, photoEntries, docName);
+  const pdfFile = exportDocToPdfInFolder(docId, `${docName}.pdf`);
 
-      return {
-        NumeroRemito: numero,
-        DocFileId: docId,
-        DocUrl: buildDriveDirectUrl(docId),
-        PdfFileId: pdfFile.getId(),
-        PdfUrl: buildDriveDirectUrl(pdfFile.getId()),
-        PhotoFileIds: createdPhotoFileIds
-      };
+  return {
+    NumeroRemito: numero,
+    DocFileId: docId,
+    DocUrl: buildDriveDirectUrl(docId),
+    PdfFileId: pdfFile.getId(),
+    PdfUrl: buildDriveDirectUrl(pdfFile.getId()),
+    PhotoFileIds: createdPhotoFileIds
+  };
     } catch (error) {
       throw new Error(`Error creando remito: ${error.message}`);
     }

@@ -159,6 +159,54 @@ function initializeNavigation() {
             void remitosGestionModule.renderListado({ page: 1 });
         });
     }
+
+    // Basic quick-test button: allow uploading a photo and creating a remito (minimal flow)
+    const generarRemitoBtn = document.getElementById('generar-remito-btn');
+    if (generarRemitoBtn) {
+        generarRemitoBtn.disabled = false; // enable for quick test
+        generarRemitoBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                // dynamic import of the experimental remitos-new scaffold
+                const mod = await import('./modules/remitos-new/index.js');
+                const remitos = mod.createRemitosModule({ apiUrl: API_URL, getToken: getCurrentToken });
+
+                // build a minimal reporteData from form fields so backend has some context
+                const reporteData = {
+                    cliente: document.getElementById('cliente')?.value || 'Prueba',
+                    direccion: document.getElementById('direccion')?.value || '',
+                    tecnico: document.getElementById('tecnico')?.value || '',
+                    numero_reporte: document.getElementById('report-number-display')?.textContent || undefined,
+                };
+
+                // provide the minimal report to the module
+                if (typeof remitos.handleMaintenanceSaved === 'function') {
+                    remitos.handleMaintenanceSaved(reporteData);
+                }
+
+                // Observaciones textarea in remito form
+                const observaciones = document.getElementById('remito-observaciones')?.value || 'Prueba rápida desde UI';
+
+                // open picker and send (user selects 1..4 photos)
+                const result = await remitos.pickAndSendPhotos({ observaciones });
+                console.log('Remito creado result:', result);
+
+                if (result && result.result === 'success' && result.data && result.data.PdfUrl) {
+                    alert('Remito creado correctamente. Abriendo PDF en nueva pestaña.');
+                    window.open(result.data.PdfUrl, '_blank');
+                } else if (result && result.result === 'success' && result.data && result.data.PdfFileId) {
+                    alert('Remito creado correctamente. PDF creado con ID: ' + result.data.PdfFileId);
+                } else if (result && result.result === 'cancelled') {
+                    // user cancelled
+                } else {
+                    alert('Respuesta recibida: ' + JSON.stringify(result));
+                }
+            } catch (err) {
+                console.error('Error creando remito rápido:', err);
+                alert('Error al crear remito: ' + (err?.message || err));
+            }
+        });
+    }
 }
 
 async function initializeApp() {
