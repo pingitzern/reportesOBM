@@ -94,6 +94,26 @@ function createEmptyPhotoSlots() {
     return Array.from({ length: MAX_REMITO_PHOTOS }, (_, index) => createEmptyPhotoSlot(index));
 }
 
+function clonePhotoSlots(slots = []) {
+    return Array.from({ length: MAX_REMITO_PHOTOS }, (_, index) => {
+        const slot = Array.isArray(slots) ? slots[index] : undefined;
+        if (!slot || typeof slot !== 'object') {
+            return createEmptyPhotoSlot(index);
+        }
+
+        return {
+            index: Number.isFinite(Number(slot.index)) ? Number(slot.index) : index,
+            previewUrl: typeof slot.previewUrl === 'string' ? slot.previewUrl : '',
+            base64Data: typeof slot.base64Data === 'string' ? slot.base64Data : '',
+            mimeType: typeof slot.mimeType === 'string' ? slot.mimeType : '',
+            fileName: typeof slot.fileName === 'string' ? slot.fileName : '',
+            url: typeof slot.url === 'string' ? slot.url : '',
+            driveId: typeof slot.driveId === 'string' ? slot.driveId : '',
+            shouldRemove: Boolean(slot.shouldRemove),
+        };
+    });
+}
+
 function getPhotoPreviewSource(slot) {
     if (!slot || typeof slot !== 'object') {
         return '';
@@ -365,6 +385,594 @@ function resolveReportValue(report, keys, fallback = '') {
     return fallback;
 }
 
+function getRemitoLogoUrl() {
+    if (typeof window === 'undefined') {
+        return '';
+    }
+
+    try {
+        const base = window.location?.origin || '';
+        if (base) {
+            const url = new URL('/OHM-agua.png', base);
+            return url.href;
+        }
+    } catch (error) {
+        console.warn('No se pudo determinar la URL del logo del remito.', error);
+    }
+
+    return '/OHM-agua.png';
+}
+
+function buildPrintableRepuestosList(repuestos, report) {
+    if (Array.isArray(repuestos) && repuestos.length > 0) {
+        return repuestos;
+    }
+
+    if (Array.isArray(report?.repuestos) && report.repuestos.length > 0) {
+        return report.repuestos;
+    }
+
+    return buildComponentesFromReport(report);
+}
+
+function buildPrintablePhotos(photoSlots = []) {
+    if (!Array.isArray(photoSlots) || photoSlots.length === 0) {
+        return [];
+    }
+
+    return photoSlots
+        .map((slot, index) => {
+            if (!slot || typeof slot !== 'object') {
+                return null;
+            }
+
+            const previewSource = normalizeString(getPhotoPreviewSource(slot));
+            let photoSource = previewSource;
+
+            if (!photoSource) {
+                const base64Data = normalizeString(slot.base64Data);
+                const mimeType = normalizeString(slot.mimeType) || 'image/jpeg';
+                if (base64Data) {
+                    photoSource = `data:${mimeType};base64,${base64Data}`;
+                }
+            }
+
+            if (!photoSource) {
+                return null;
+            }
+
+            const label = normalizeString(formatPhotoFileLabel(slot)) || `Foto ${index + 1}`;
+
+            return {
+                src: photoSource,
+                label,
+            };
+        })
+        .filter(Boolean);
+}
+
+function buildPrintableRemitoData(report, { observaciones = '', repuestos = [], photoSlots = [] } = {}) {
+    if (!report || typeof report !== 'object') {
+        return null;
+    }
+
+    const numero = resolveReportValue(report, ['NumeroRemito', 'numero_remito', 'remitoNumero', 'numero_reporte']);
+    const fecha = formatDateValue(resolveReportValue(report, ['fecha_display', 'fecha']));
+
+    const cliente = {
+        nombre: resolveReportValue(report, ['clienteNombre', 'cliente_nombre', 'cliente']),
+        direccion: resolveReportValue(report, ['direccion', 'cliente_direccion', 'ubicacion']),
+        telefono: resolveReportValue(report, ['cliente_telefono', 'telefono_cliente', 'telefono']),
+        email: resolveReportValue(report, ['cliente_email', 'email']),
+        cuit: resolveReportValue(report, ['cliente_cuit', 'cuit']),
+    };
+
+    const equipo = {
+        descripcion: resolveReportValue(report, ['equipo', 'modelo', 'descripcion_equipo']),
+        modelo: resolveReportValue(report, ['modelo', 'modelo_equipo']),
+        serie: resolveReportValue(report, ['n_serie', 'numero_serie']),
+        interno: resolveReportValue(report, ['id_interna', 'codigo_interno']),
+        ubicacion: resolveReportValue(report, ['ubicacion', 'direccion', 'cliente_direccion']),
+        tecnico: resolveReportValue(report, ['tecnico', 'tecnico_asignado']),
+    };
+
+    const repuestosFuente = buildPrintableRepuestosList(repuestos, report);
+    const repuestosNormalizados = Array.isArray(repuestosFuente)
+        ? repuestosFuente
+              .map(item => normalizeRepuestoItem(item))
+              .map(item => ({
+                  codigo: normalizeString(item.codigo),
+                  descripcion: normalizeString(item.descripcion),
+                  cantidad: normalizeString(item.cantidad),
+              }))
+              .filter(item => hasContent(item.codigo) || hasContent(item.descripcion) || hasContent(item.cantidad))
+        : [];
+
+    const observacionesTexto = normalizeString(observaciones || report.observaciones || report.resumen || '');
+    const fotos = buildPrintablePhotos(photoSlots);
+
+    return {
+        numero: normalizeString(numero),
+        fecha: normalizeString(fecha),
+        cliente,
+        equipo,
+        repuestos: repuestosNormalizados,
+        observaciones: observacionesTexto,
+        fotos,
+    };
+}
+
+function buildInfoTableRows(entries = []) {
+    return entries
+        .map(entry => {
+            const label = escapeHtml(entry?.label || '');
+            const value = escapeHtml(normalizeString(entry?.value || ''));
+            return `
+                <tr>
+                    <th scope="row">${label}</th>
+                    <td>${value || '<span class="placeholder">—</span>'}</td>
+                </tr>
+            `;
+        })
+        .join('');
+}
+
+function buildRepuestosTableRows(repuestos = []) {
+    if (!Array.isArray(repuestos) || repuestos.length === 0) {
+        return `
+            <tr class="empty-row">
+                <td colspan="4">Sin repuestos registrados.</td>
+            </tr>
+        `;
+    }
+
+    return repuestos
+        .map((item, index) => {
+            const posicion = escapeHtml(String(index + 1));
+            const codigo = escapeHtml(item.codigo);
+            const descripcion = escapeHtml(item.descripcion);
+            const cantidad = escapeHtml(item.cantidad);
+
+            return `
+                <tr>
+                    <td class="index">${posicion}</td>
+                    <td>${codigo || '<span class="placeholder">—</span>'}</td>
+                    <td>${descripcion || '<span class="placeholder">—</span>'}</td>
+                    <td class="cantidad">${cantidad || '<span class="placeholder">—</span>'}</td>
+                </tr>
+            `;
+        })
+        .join('');
+}
+
+function buildPhotosSection(fotos = []) {
+    if (!Array.isArray(fotos) || fotos.length === 0) {
+        return '<p class="placeholder">Sin fotos adjuntas para este remito.</p>';
+    }
+
+    return `
+        <div class="photo-grid">
+            ${fotos
+                .map((foto, index) => {
+                    const labelValue = normalizeString(foto?.label) || `Foto ${index + 1}`;
+                    const sanitizedLabel = escapeHtml(labelValue);
+                    const sourceValue = normalizeString(foto?.src);
+                    if (!sourceValue) {
+                        return '';
+                    }
+
+                    const sanitizedSource = escapeHtml(sourceValue);
+                    const altText = escapeHtml(`Registro fotográfico ${labelValue}`);
+                    return `
+                        <figure class="photo-item">
+                            <div class="photo-item__frame">
+                                <img src="${sanitizedSource}" alt="${altText}" loading="lazy">
+                            </div>
+                            <figcaption>${sanitizedLabel}</figcaption>
+                        </figure>
+                    `;
+                })
+                .join('')}
+        </div>
+    `;
+}
+
+function createRemitoPrintHtml(data) {
+    if (!data) {
+        return '';
+    }
+
+    const numero = escapeHtml(data.numero || '—');
+    const fecha = escapeHtml(data.fecha || '—');
+    const logoUrl = escapeHtml(getRemitoLogoUrl());
+    const observaciones = data.observaciones
+        ? escapeHtml(data.observaciones).replace(/\r?\n/g, '<br>')
+        : '<span class="placeholder">Sin observaciones registradas.</span>';
+
+    const clienteRows = buildInfoTableRows([
+        { label: 'Razón social', value: data.cliente?.nombre },
+        { label: 'Dirección', value: data.cliente?.direccion },
+        { label: 'Teléfono', value: data.cliente?.telefono },
+        { label: 'Email', value: data.cliente?.email },
+        { label: 'CUIT', value: data.cliente?.cuit },
+    ]);
+
+    const equipoRows = buildInfoTableRows([
+        { label: 'Descripción', value: data.equipo?.descripcion },
+        { label: 'Modelo', value: data.equipo?.modelo },
+        { label: 'N° de serie', value: data.equipo?.serie },
+        { label: 'Activo / ID interno', value: data.equipo?.interno },
+        { label: 'Ubicación', value: data.equipo?.ubicacion },
+        { label: 'Técnico responsable', value: data.equipo?.tecnico },
+    ]);
+
+    const repuestosRows = buildRepuestosTableRows(data.repuestos);
+    const fotosSection = buildPhotosSection(data.fotos);
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Remito ${numero}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            color-scheme: only light;
+        }
+
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #111827;
+            background: #f3f4f6;
+        }
+
+        .document {
+            background: #ffffff;
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        }
+
+        .document__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 18px;
+            margin-bottom: 24px;
+        }
+
+        .document__identity {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .document__title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        .document__meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .document__logo {
+            flex: none;
+            max-width: 140px;
+        }
+
+        .document__logo img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section__title {
+            font-size: 15px;
+            font-weight: 700;
+            margin: 0 0 12px;
+            color: #1f2937;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .info-table,
+        .repuestos-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .info-table th,
+        .info-table td {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        .info-table th {
+            width: 32%;
+            font-weight: 600;
+            background: #f9fafb;
+            color: #1f2937;
+        }
+
+        .info-table tr:last-child th,
+        .info-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .repuestos-table thead {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .repuestos-table th,
+        .repuestos-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .repuestos-table th {
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+
+        .repuestos-table td.index {
+            width: 48px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .repuestos-table td.cantidad {
+            text-align: right;
+            width: 80px;
+            font-weight: 600;
+        }
+
+        .repuestos-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .placeholder {
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .observaciones {
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background: #f9fafb;
+            min-height: 90px;
+            white-space: pre-line;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .photo-item {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .photo-item__frame {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: #111827;
+            aspect-ratio: 3 / 2;
+        }
+
+        .photo-item__frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #111827;
+        }
+
+        .photo-item figcaption {
+            font-size: 11px;
+            color: #4b5563;
+            text-align: center;
+        }
+
+        .document__footer {
+            margin-top: 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+        }
+
+        .firma {
+            border-top: 1px solid #9ca3af;
+            padding-top: 12px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        @media print {
+            body {
+                background: #ffffff;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .document {
+                box-shadow: none;
+            }
+
+            .document__header {
+                margin-bottom: 18px;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            .photo-item {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <header class="document__header">
+            <div class="document__identity">
+                <p class="document__title">Remito de servicio</p>
+                <div class="document__meta">
+                    <span>Número: <strong>${numero}</strong></span>
+                    <span>Fecha: <strong>${fecha}</strong></span>
+                </div>
+            </div>
+            <div class="document__logo">
+                <img src="${logoUrl}" alt="Logo de OHM Agua">
+            </div>
+        </header>
+
+        <section class="section">
+            <h2 class="section__title">Datos del cliente</h2>
+            <table class="info-table">
+                <tbody>
+                    ${clienteRows}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section__title">Datos del equipo</h2>
+            <table class="info-table">
+                <tbody>
+                    ${equipoRows}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section__title">Repuestos y materiales</h2>
+            <table class="repuestos-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${repuestosRows}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section__title">Observaciones</h2>
+            <div class="observaciones">${observaciones}</div>
+        </section>
+
+        <section class="section">
+            <h2 class="section__title">Registro fotográfico</h2>
+            ${fotosSection}
+        </section>
+
+        <footer class="document__footer">
+            <div class="firma">
+                <p>Firma del responsable de OHM Agua</p>
+            </div>
+            <div class="firma">
+                <p>Firma y aclaración del cliente</p>
+            </div>
+        </footer>
+    </div>
+    <script>
+        window.addEventListener('load', () => {
+            window.focus();
+            setTimeout(() => {
+                try {
+                    window.print();
+                } catch (error) {
+                    console.error('No se pudo iniciar la impresión automática.', error);
+                }
+            }, 150);
+        });
+
+        window.addEventListener('afterprint', () => {
+            setTimeout(() => {
+                window.close();
+            }, 250);
+        });
+    </script>
+</body>
+</html>`;
+}
+
+function openRemitoPrintPreview(report, options = {}) {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    const printableData = buildPrintableRemitoData(report, options);
+    if (!printableData) {
+        return false;
+    }
+
+    const html = createRemitoPrintHtml(printableData);
+    if (!html) {
+        return false;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        return false;
+    }
+
+    try {
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.opener = null;
+        return true;
+    } catch (error) {
+        console.error('No se pudo abrir la vista de impresión del remito.', error);
+        return false;
+    }
+}
+
 function setReadonlyInputValue(id, value) {
     const element = getElement(id);
     if (!(element instanceof HTMLInputElement)) {
@@ -626,10 +1234,45 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
     let eventsInitialized = false;
     let photoSlots = createEmptyPhotoSlots();
     let photoEventsInitialized = false;
+    let lastPrintableSnapshot = null;
 
     function getPhotoContainer() {
         const container = getElement('remito-fotos-container');
         return container instanceof HTMLElement ? container : null;
+    }
+
+    function getPrintButton() {
+        const button = getElement('imprimir-remito-btn');
+        return button instanceof HTMLButtonElement ? button : null;
+    }
+
+    function setPrintButtonVisibility(visible) {
+        const button = getPrintButton();
+        if (!button) {
+            return;
+        }
+
+        if (visible) {
+            button.classList.remove('hidden');
+            button.disabled = false;
+        } else {
+            button.classList.add('hidden');
+            button.disabled = true;
+        }
+    }
+
+    function buildPrintableSnapshot() {
+        if (!lastSavedReport) {
+            return null;
+        }
+
+        const reportClone = cloneReportData(lastSavedReport);
+        const slotsClone = clonePhotoSlots(photoSlots);
+
+        return {
+            report: reportClone,
+            photoSlots: slotsClone,
+        };
     }
 
     function renderPhotoSlots() {
@@ -936,6 +1579,8 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
     function handleMaintenanceSaved(reportData) {
         lastSavedReport = createReportSnapshot(reportData);
         enableButton('generar-remito-btn');
+        lastPrintableSnapshot = null;
+        setPrintButtonVisibility(false);
     }
 
     function reset() {
@@ -943,6 +1588,8 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         disableButton('generar-remito-btn');
         resetPhotoSlots();
         closeAllPhotoMenus();
+        lastPrintableSnapshot = null;
+        setPrintButtonVisibility(false);
         clearReadonlyInputs([
             'remito-numero',
             'remito-fecha',
@@ -986,13 +1633,16 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         }
 
         const observacionesElement = getElement('remito-observaciones');
-        const observaciones = observacionesElement instanceof HTMLTextAreaElement ? observacionesElement.value.trim() : '';
+        const observacionesTexto = observacionesElement instanceof HTMLTextAreaElement
+            ? normalizeString(observacionesElement.value)
+            : '';
 
         const repuestosEditados = collectRepuestosFromForm();
         lastSavedReport.repuestos = repuestosEditados;
         if (repuestosEditados.length > 0) {
             lastSavedReport.componentes = [];
         }
+        lastSavedReport.observaciones = observacionesTexto;
         renderRepuestosList(repuestosEditados);
 
         const fotosPayload = buildPhotosPayload();
@@ -1018,7 +1668,7 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 action: 'crear_remito',
                 token,
                 reporteData: lastSavedReport,
-                observaciones,
+                observaciones: observacionesTexto,
             };
 
             if (Array.isArray(fotosPayload) && fotosPayload.length > 0) {
@@ -1055,11 +1705,22 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 setReadonlyInputValue('remito-numero', numeroRemito);
             }
 
-            if (observaciones) {
-                lastSavedReport.observaciones = observaciones;
-            }
+            lastPrintableSnapshot = buildPrintableSnapshot();
+            setPrintButtonVisibility(Boolean(lastPrintableSnapshot));
 
-            window.alert?.('✅ Remito generado correctamente.');
+            const printableReport = lastPrintableSnapshot?.report || lastSavedReport;
+            const printablePhotoSlots = lastPrintableSnapshot?.photoSlots || clonePhotoSlots(photoSlots);
+            const didOpenPrintPreview = openRemitoPrintPreview(printableReport, {
+                observaciones: printableReport?.observaciones,
+                repuestos: printableReport?.repuestos,
+                photoSlots: printablePhotoSlots,
+            });
+
+            if (didOpenPrintPreview) {
+                window.alert?.('✅ Remito generado correctamente. Se abrirá la vista de impresión para descargar o imprimir el PDF.');
+            } else {
+                window.alert?.('✅ Remito generado correctamente. No pudimos abrir la vista de impresión automáticamente. Revisá el bloqueador de ventanas emergentes y utilizá el botón "Imprimir remito" para reintentarlo.');
+            }
         } catch (error) {
             console.error('Error al generar el remito:', error);
             const message = error instanceof Error ? error.message : 'Error desconocido al generar el remito.';
@@ -1081,6 +1742,7 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         renderRepuestosList([]);
         renderPhotoSlots();
         ensurePhotoEvents();
+        setPrintButtonVisibility(Boolean(lastPrintableSnapshot));
 
         const generarBtn = getElement('generar-remito-btn');
         if (generarBtn instanceof HTMLButtonElement) {
@@ -1095,6 +1757,29 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
             finalizarBtn.addEventListener('click', event => {
                 event.preventDefault();
                 void handleFinalizarRemitoClick();
+            });
+        }
+
+        const imprimirBtn = getPrintButton();
+        if (imprimirBtn) {
+            imprimirBtn.addEventListener('click', event => {
+                event.preventDefault();
+                if (!lastPrintableSnapshot) {
+                    window.alert?.('Generá y guardá un remito antes de intentar imprimirlo.');
+                    return;
+                }
+
+                const printableReport = lastPrintableSnapshot.report;
+                const printablePhotoSlots = lastPrintableSnapshot.photoSlots || [];
+                const didOpen = openRemitoPrintPreview(printableReport, {
+                    observaciones: printableReport?.observaciones,
+                    repuestos: printableReport?.repuestos,
+                    photoSlots: printablePhotoSlots,
+                });
+
+                if (!didOpen) {
+                    window.alert?.('No pudimos abrir la vista de impresión. Revisá el bloqueador de ventanas emergentes e intentá nuevamente.');
+                }
             });
         }
 
