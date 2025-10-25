@@ -1,5 +1,24 @@
 import { jest } from '@jest/globals';
 
+let originalWindowOpen;
+
+beforeAll(() => {
+    originalWindowOpen = window.open;
+    window.open = jest.fn(() => ({
+        document: {
+            open: jest.fn(),
+            write: jest.fn(),
+            close: jest.fn(),
+        },
+        close: jest.fn(),
+        focus: jest.fn(),
+    }));
+});
+
+afterAll(() => {
+    window.open = originalWindowOpen;
+});
+
 const REPORT_NUMBER = 'REP-TEST-123456';
 const FULL_DOM_TEMPLATE = `
 <div id="tab-nuevo" class="tab-content">
@@ -423,6 +442,6 @@ describe('flujo de generación y finalización de remito', () => {
         });
 
         expect(document.getElementById('remito-numero').value).toBe('REM-0099');
-        expect(window.alert).toHaveBeenCalledWith('✅ Remito generado correctamente.');
+        expect(window.alert).toHaveBeenCalledWith('✅ Remito generado correctamente. Se abrirá la vista de impresión para descargar o imprimir el PDF.');
     });
 });
