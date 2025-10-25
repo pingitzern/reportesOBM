@@ -1,6 +1,37 @@
-const REMITOS_FOLDER_ID = 'REEMPLAZAR_CON_ID_DE_CARPETA';
+const REMITOS_FOLDER_ID = '1BKBPmndOGet7yVZ4UtFCkhrt402eXH4X';
 
 function crearRemitoPDF(remitoData) {
+  validarRemitoData_(remitoData);
+
+  if (!REMITOS_FOLDER_ID) {
+    throw new Error('NEEDS_INFO: Configurar REMITOS_FOLDER_ID.');
+  }
+
+  const folder = DriveApp.getFolderById(REMITOS_FOLDER_ID);
+  const templateData = buildTemplateData_(remitoData);
+
+  const template = HtmlService.createTemplateFromFile('remito-pdf-template');
+  template.reporte = templateData;
+
+  const htmlOutput = template.evaluate();
+  const htmlContent = htmlOutput.getContent();
+  const pdfBaseName = buildPdfBaseName_(remitoData);
+  const pdfBlob = Utilities
+    .newBlob(htmlContent, 'text/html', `${pdfBaseName}.html`)
+    .getAs(MimeType.PDF)
+    .setName(`${pdfBaseName}.pdf`);
+
+  const pdfFile = folder.createFile(pdfBlob);
+  pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+  return {
+    pdfFileId: pdfFile.getId(),
+    pdfUrl: pdfFile.getUrl(),
+    name: pdfFile.getName()
+  };
+}
+
+function validarRemitoData_(remitoData) {
   if (!remitoData || typeof remitoData !== 'object') {
     throw new Error('NEEDS_INFO: remitoData es requerido.');
   }
@@ -13,142 +44,109 @@ function crearRemitoPDF(remitoData) {
   if (!remitoData.fecha) {
     throw new Error('NEEDS_INFO: fecha es requerida.');
   }
-  if (!REMITOS_FOLDER_ID) {
-    throw new Error('NEEDS_INFO: Configurar REMITOS_FOLDER_ID.');
-  }
+}
 
-  const folder = DriveApp.getFolderById(REMITOS_FOLDER_ID);
-  const timestamp = new Date().getTime();
-  const doc = DocumentApp.create('Remito Temporal ' + remitoData.numero + ' ' + timestamp);
-  const docId = doc.getId();
-  const body = doc.getBody();
-  body.clear();
+function buildTemplateData_(remitoData) {
+  const detalles = [
+    { label: 'Número de remito', value: normalizeText_(remitoData.numero) },
+    { label: 'Fecha de creación', value: formatDate_(remitoData.fecha) },
+    { label: 'Número de reporte', value: normalizeText_(remitoData.reporte) },
+    { label: 'Cliente', value: normalizeText_(remitoData.cliente) },
+    { label: 'Dirección', value: normalizeText_(remitoData.direccion) },
+    { label: 'Teléfono', value: normalizeText_(remitoData.telefono) },
+    { label: 'Correo del cliente', value: normalizeText_(remitoData.correo) },
+    { label: 'CUIT', value: normalizeText_(remitoData.cuit) },
+    { label: 'Modelo de equipo', value: normalizeText_(remitoData.modelo) },
+    { label: 'Número de serie', value: normalizeText_(remitoData.serie) },
+    { label: 'ID interna', value: normalizeText_(remitoData.idInterna) },
+    { label: 'Técnico responsable', value: normalizeText_(remitoData.tecnico) }
+  ];
 
-  body.setMarginTop(36);
-  body.setMarginBottom(36);
-  body.setMarginLeft(36);
-  body.setMarginRight(36);
-
-  body.appendParagraph('Remito de Servicio').setHeading(DocumentApp.ParagraphHeading.HEADING1);
-
-  const metaTable = body.appendTable([
-    ['Número', remitoData.numero],
-    ['Fecha', remitoData.fecha],
-    ['Reporte', remitoData.reporte || ''],
-    ['Cliente', remitoData.cliente],
-    ['Dirección', remitoData.direccion || ''],
-    ['Teléfono', remitoData.telefono || ''],
-    ['Correo', remitoData.correo || ''],
-    ['CUIT', remitoData.cuit || ''],
-    ['Modelo', remitoData.modelo || ''],
-    ['Serie', remitoData.serie || ''],
-    ['ID Interna', remitoData.idInterna || ''],
-    ['Técnico', remitoData.tecnico || '']
-  ]);
-  metaTable.setBorderWidth(0);
-  for (var i = 0; i < metaTable.getNumRows(); i++) {
-    var row = metaTable.getRow(i);
-    row.getCell(0).setBackgroundColor('#f2f2f2');
-    row.getCell(0).setPaddingLeft(6);
-    row.getCell(0).setPaddingRight(6);
-    row.getCell(1).setPaddingLeft(6);
-    row.getCell(1).setPaddingRight(6);
-    row.getCell(0).editAsText().setBold(true);
-  }
-
-  body.appendParagraph('Repuestos Utilizados').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  if (remitoData.repuestos && remitoData.repuestos.length) {
-    var repuestosList = body.appendListItem(remitoData.repuestos[0]);
-    repuestosList.setGlyphType(DocumentApp.GlyphType.BULLET);
-    for (var r = 1; r < remitoData.repuestos.length; r++) {
-      body.appendListItem(remitoData.repuestos[r]).setGlyphType(DocumentApp.GlyphType.BULLET);
-    }
-  } else {
-    body.appendParagraph('Sin repuestos declarados.');
-  }
-
-  body.appendParagraph('Observaciones').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-  body.appendParagraph(remitoData.observaciones || '');
-
-  body.appendPageBreak();
-  body.appendParagraph('Registro Fotográfico').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-
-  var fotos = Array.isArray(remitoData.fotosIds) ? remitoData.fotosIds.slice(0, 4) : [];
-  var photoTable = body.appendTable();
-  while (photoTable.getNumRows() > 0) {
-    photoTable.removeRow(0);
-  }
-  photoTable.setBorderWidth(0);
-  var maxWidth = 240;
-  var maxHeight = 320;
-
-  for (var rowIndex = 0; rowIndex < 2; rowIndex++) {
-    var row = photoTable.appendTableRow();
-    for (var colIndex = 0; colIndex < 2; colIndex++) {
-      var cell = row.appendTableCell();
-      cell.setPaddingTop(6);
-      cell.setPaddingBottom(6);
-      cell.setPaddingLeft(6);
-      cell.setPaddingRight(6);
-      cell.setVerticalAlignment(DocumentApp.VerticalAlignment.MIDDLE);
-      var photoIndex = rowIndex * 2 + colIndex;
-      if (photoIndex < fotos.length) {
-        try {
-          var file = DriveApp.getFileById(fotos[photoIndex]);
-          var blob = file.getBlob();
-          var pngBlob = Utilities.newBlob(blob.getBytes(), blob.getContentType(), file.getName());
-          pngBlob = pngBlob.getAs('image/png');
-          pngBlob.setName(file.getName() + '.png');
-          while (cell.getNumChildren() > 0) {
-            cell.removeChild(cell.getChild(0));
-          }
-          var paragraph = cell.appendParagraph('');
-          paragraph.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          var image = paragraph.addInlineImage(pngBlob);
-          var width = image.getWidth();
-          var height = image.getHeight();
-          if (width > 0 && height > 0) {
-            var scale = Math.min(maxWidth / width, maxHeight / height, 1);
-            image.setWidth(Math.round(width * scale));
-            image.setHeight(Math.round(height * scale));
-          }
-          var caption = cell.appendParagraph('Foto ' + (photoIndex + 1));
-          caption.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          caption.setSpacingBefore(4);
-          caption.setFontSize(9);
-        } catch (e) {
-          while (cell.getNumChildren() > 0) {
-            cell.removeChild(cell.getChild(0));
-          }
-          var errorParagraph = cell.appendParagraph('Foto no disponible');
-          errorParagraph.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          errorParagraph.editAsText().setForegroundColor('#888888');
-        }
-      } else {
-        while (cell.getNumChildren() > 0) {
-          cell.removeChild(cell.getChild(0));
-        }
-        var placeholderParagraph = cell.appendParagraph('—');
-        placeholderParagraph.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        placeholderParagraph.editAsText().setForegroundColor('#888888');
-      }
-    }
-  }
-
-  doc.saveAndClose();
-
-  var docFile = DriveApp.getFileById(docId);
-  var pdfName = 'Remito ' + remitoData.numero + ' - ' + remitoData.cliente + '.pdf';
-  var pdfBlob = docFile.getAs('application/pdf').setName(pdfName);
-  var pdfFile = folder.createFile(pdfBlob);
-
-  docFile.setTrashed(true);
+  const repuestos = Array.isArray(remitoData.repuestos)
+    ? remitoData.repuestos
+      .map(item => normalizeText_(item))
+      .filter(text => text !== '—')
+      .map(text => `• ${text}`)
+      .join('\n')
+    : normalizeText_(remitoData.repuestos);
 
   return {
-    pdfFileId: pdfFile.getId(),
-    pdfUrl: pdfFile.getUrl(),
-    name: pdfFile.getName()
+    titulo: 'Remito de Servicio',
+    fechaGeneracion: formatDate_(new Date()),
+    detalles,
+    repuestos: repuestos !== '—' ? repuestos : 'No se registraron repuestos reemplazados.',
+    observaciones: (function () {
+      const observacionesNormalizadas = normalizeText_(remitoData.observaciones);
+      return observacionesNormalizadas !== '—'
+        ? observacionesNormalizadas
+        : 'Sin observaciones adicionales.';
+    }()),
+    fotos: buildFotosParaTemplate_(remitoData.fotosIds),
+    nota: 'Documento generado automáticamente a partir del sistema de reportes OBM.'
   };
+}
+
+function buildFotosParaTemplate_(fotosIds) {
+  if (!Array.isArray(fotosIds) || fotosIds.length === 0) {
+    return [];
+  }
+
+  const maxFotos = 4;
+  const fotos = [];
+
+  for (let index = 0; index < fotosIds.length && fotos.length < maxFotos; index += 1) {
+    const fotoId = fotosIds[index];
+    if (!fotoId) {
+      continue;
+    }
+
+    try {
+      const file = DriveApp.getFileById(fotoId);
+      const blob = file.getBlob().getAs(MimeType.PNG);
+      const base64 = Utilities.base64Encode(blob.getBytes());
+      fotos.push({
+        url: `data:image/png;base64,${base64}`
+      });
+    } catch (error) {
+      Logger.log('No se pudo agregar la foto %s al PDF del remito: %s', fotoId, error && error.message);
+    }
+  }
+
+  return fotos;
+}
+
+function buildPdfBaseName_(remitoData) {
+  const numero = (remitoData.numero || 'REMITO').replace(/[\\/:*?"<>|]+/g, '-');
+  const cliente = (remitoData.cliente || '').trim();
+  const sanitizedCliente = cliente ? cliente.replace(/[\\/:*?"<>|]+/g, '-').slice(0, 120) : 'Sin-cliente';
+  return `Remito ${numero} - ${sanitizedCliente}`.trim();
+}
+
+function normalizeText_(value) {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+
+  const text = String(value).trim();
+  return text ? text : '—';
+}
+
+function formatDate_(value) {
+  const timezone = Session.getScriptTimeZone ? Session.getScriptTimeZone() : 'America/Buenos_Aires';
+
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return Utilities.formatDate(value, timezone, 'dd/MM/yyyy HH:mm');
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) {
+      return Utilities.formatDate(parsed, timezone, 'dd/MM/yyyy HH:mm');
+    }
+    return value.trim();
+  }
+
+  return '—';
 }
 
 // Ejemplo de uso:
