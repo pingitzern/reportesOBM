@@ -14,6 +14,8 @@ const REPLACEMENT_KEYWORDS = ['cambi', 'reempl', 'instal', 'nuevo'];
 
 const REMITO_NOTIFICATIONS_EMAIL = 'pingitzernicolas@gmail.com';
 
+const REMITO_PDF_LOGO_URL = 'https://raw.githubusercontent.com/pingitzer/reportesOBM/main/frontend/public/OHM-agua.png';
+
 const RemitoService = {
   fotosFolderCache: null,
 
@@ -129,6 +131,37 @@ const RemitoService = {
   normalizeString_(value) {
     const normalized = this.normalizeOutputValue_(value);
     return typeof normalized === 'string' ? normalized : '';
+  },
+
+  escapeHtml_(value) {
+    const text = this.normalizeString_(value);
+    if (!text) {
+      return '';
+    }
+
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+
+    return text.replace(/[&<>"']/g, char => map[char] || char);
+  },
+
+  formatDateForDisplay_(value, { includeTime = false } = {}) {
+    if (!value) {
+      return '';
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    const pattern = includeTime ? 'dd/MM/yyyy HH:mm' : 'dd/MM/yyyy';
+    return Utilities.formatDate(date, Session.getScriptTimeZone(), pattern);
   },
 
   hasContent_(value) {
@@ -715,49 +748,528 @@ const RemitoService = {
     return lineas.join('\n');
   },
 
+  buildRemitoPrintableData_(remito, resumen) {
+    if (!remito || typeof remito !== 'object') {
+      return null;
+    }
+
+    const numero = this.resolveRemitoValue_(remito, ['NumeroRemito', 'numero_remito', 'remitoNumero', 'NumeroReporte', 'numero_reporte']);
+    const fecha = this.formatDateForDisplay_(remito.FechaCreacion || remito.FechaRemito || remito.fechaRemito || remito.FechaRemitoISO);
+
+    const cliente = {
+      nombre: this.resolveRemitoValue_(remito, ['NombreCliente', 'clienteNombre', 'cliente']),
+      direccion: this.resolveRemitoValue_(remito, ['Direccion', 'cliente_direccion', 'ubicacion']),
+      telefono: this.resolveRemitoValue_(remito, ['Telefono', 'cliente_telefono']),
+      email: this.resolveRemitoValue_(remito, ['MailCliente', 'cliente_email']),
+      cuit: this.resolveRemitoValue_(remito, ['CUIT', 'cliente_cuit']),
+    };
+
+    const equipo = {
+      descripcion: this.resolveRemitoValue_(remito, ['DescripcionEquipo', 'EquipoDescripcion', 'ModeloSistema', 'ModeloEquipo', 'modelo']),
+      modelo: this.resolveRemitoValue_(remito, ['ModeloEquipo', 'Modelo', 'ModeloSistema']),
+      serie: this.resolveRemitoValue_(remito, ['NumeroSerie', 'n_serie', 'numero_serie']),
+      interno: this.resolveRemitoValue_(remito, ['IDInterna', 'id_interna', 'ActivoInterno']),
+      ubicacion: this.resolveRemitoValue_(remito, ['Ubicacion', 'ubicacion', 'Direccion', 'cliente_direccion']),
+      tecnico: this.resolveRemitoValue_(remito, ['TecnicoResponsable', 'tecnico', 'MailTecnico']),
+    };
+
+    const repuestosFuente = Array.isArray(remito.RepuestosDetalle) && remito.RepuestosDetalle.length
+      ? remito.RepuestosDetalle
+      : (Array.isArray(remito.repuestos) ? remito.repuestos : []);
+
+    const repuestosLista = Array.isArray(repuestosFuente) && repuestosFuente.length
+      ? repuestosFuente
+      : this.buildComponentesFromRemitoData_(remito);
+
+    const repuestos = Array.isArray(repuestosLista)
+      ? repuestosLista
+        .map(item => this.normalizeRepuestoItem_(item))
+        .filter(Boolean)
+        .map(item => ({
+          codigo: this.normalizeString_(item.codigo),
+          descripcion: this.normalizeString_(item.descripcion),
+          cantidad: this.normalizeString_(item.cantidad),
+        }))
+        .filter(item => this.hasContent_(item.codigo) || this.hasContent_(item.descripcion) || this.hasContent_(item.cantidad))
+      : [];
+
+    const observaciones = this.normalizeString_(remito.Observaciones || remito.observaciones || resumen);
+    const fotos = this.buildPrintablePhotos_(remito);
+
+    return {
+      numero,
+      fecha,
+      cliente,
+      equipo,
+      repuestos,
+      observaciones,
+      fotos,
+    };
+  },
+
+  buildPrintablePhotos_(remito) {
+    const fotos = [];
+    const seen = new Set();
+
+    const appendPhoto = (src, label) => {
+      const normalizedSrc = this.normalizeString_(src);
+      if (!normalizedSrc || seen.has(normalizedSrc)) {
+        return;
+      }
+
+      seen.add(normalizedSrc);
+      fotos.push({
+        src: normalizedSrc,
+        label: this.normalizeString_(label),
+      });
+    };
+
+    if (Array.isArray(remito?.fotos)) {
+      remito.fotos.forEach((src, index) => {
+        const label = Array.isArray(remito?.fotosLabels) ? remito.fotosLabels[index] : '';
+        appendPhoto(src, label || remito[`Foto${index + 1}Label`]);
+      });
+    }
+
+    for (let index = 1; index <= MAX_REMITO_FOTOS; index += 1) {
+      appendPhoto(remito[`Foto${index}URL`], remito[`Foto${index}Label`]);
+    }
+
+    return fotos;
+  },
+
+  buildRemitoPdfInfoRows_(entries = []) {
+    return entries
+      .map(entry => {
+        const label = this.escapeHtml_(entry?.label || '');
+        const value = this.escapeHtml_(entry?.value || '');
+        const displayValue = value || '<span class="placeholder">—</span>';
+        return `<tr><th scope="row">${label}</th><td>${displayValue}</td></tr>`;
+      })
+      .join('');
+  },
+
+  buildRemitoPdfRepuestosRows_(repuestos = []) {
+    if (!Array.isArray(repuestos) || repuestos.length === 0) {
+      return '<tr class="empty-row"><td colspan="4">Sin repuestos registrados.</td></tr>';
+    }
+
+    return repuestos
+      .map((item, index) => {
+        const posicion = this.escapeHtml_(String(index + 1));
+        const codigo = this.escapeHtml_(item.codigo);
+        const descripcion = this.escapeHtml_(item.descripcion);
+        const cantidad = this.escapeHtml_(item.cantidad);
+        return `
+          <tr>
+            <td class="index">${posicion}</td>
+            <td>${codigo || '<span class="placeholder">—</span>'}</td>
+            <td>${descripcion || '<span class="placeholder">—</span>'}</td>
+            <td class="cantidad">${cantidad || '<span class="placeholder">—</span>'}</td>
+          </tr>
+        `;
+      })
+      .join('');
+  },
+
+  buildRemitoPdfPhotosSection_(fotos = []) {
+    if (!Array.isArray(fotos) || fotos.length === 0) {
+      return '<p class="placeholder">Sin fotos adjuntas para este remito.</p>';
+    }
+
+    const items = fotos
+      .map((foto, index) => {
+        const labelValue = this.normalizeString_(foto?.label) || `Foto ${index + 1}`;
+        const sanitizedLabel = this.escapeHtml_(labelValue);
+        const sourceValue = this.normalizeString_(foto?.src);
+        if (!sourceValue) {
+          return '';
+        }
+
+        const sanitizedSource = this.escapeHtml_(sourceValue);
+        const altText = this.escapeHtml_(`Registro fotográfico ${labelValue}`);
+        return `
+          <figure class="photo-item">
+            <div class="photo-item__frame">
+              <img src="${sanitizedSource}" alt="${altText}">
+            </div>
+            <figcaption>${sanitizedLabel}</figcaption>
+          </figure>
+        `;
+      })
+      .filter(Boolean)
+      .join('');
+
+    return `<div class="photo-grid">${items}</div>`;
+  },
+
+  buildRemitoPdfHtml_(data) {
+    if (!data) {
+      return '';
+    }
+
+    const numero = this.escapeHtml_(data.numero) || '—';
+    const fecha = this.escapeHtml_(data.fecha) || '—';
+    const logoUrl = this.escapeHtml_(data.logoUrl || REMITO_PDF_LOGO_URL || '');
+    const observaciones = data.observaciones
+      ? this.escapeHtml_(data.observaciones).replace(/\r?\n/g, '<br>')
+      : '<span class="placeholder">Sin observaciones registradas.</span>';
+
+    const clienteRows = this.buildRemitoPdfInfoRows_([
+      { label: 'Razón social', value: data.cliente?.nombre },
+      { label: 'Dirección', value: data.cliente?.direccion },
+      { label: 'Teléfono', value: data.cliente?.telefono },
+      { label: 'Email', value: data.cliente?.email },
+      { label: 'CUIT', value: data.cliente?.cuit },
+    ]);
+
+    const equipoRows = this.buildRemitoPdfInfoRows_([
+      { label: 'Descripción', value: data.equipo?.descripcion },
+      { label: 'Modelo', value: data.equipo?.modelo },
+      { label: 'N° de serie', value: data.equipo?.serie },
+      { label: 'Activo / ID interno', value: data.equipo?.interno },
+      { label: 'Ubicación', value: data.equipo?.ubicacion },
+      { label: 'Técnico responsable', value: data.equipo?.tecnico },
+    ]);
+
+    const repuestosRows = this.buildRemitoPdfRepuestosRows_(data.repuestos);
+    const fotosSection = this.buildRemitoPdfPhotosSection_(data.fotos);
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Remito ${numero}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      color-scheme: only light;
+    }
+
+    @page {
+      size: A4;
+      margin: 1.5cm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #111827;
+      background: #f3f4f6;
+    }
+
+    .document {
+      background: #ffffff;
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+
+    .document__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+
+    .document__identity {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .document__title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0;
+    }
+
+    .document__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: #374151;
+      font-weight: 600;
+    }
+
+    .document__logo {
+      flex: none;
+      max-width: 140px;
+    }
+
+    .document__logo img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section__title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 12px;
+      color: #1f2937;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #f9fafb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .info-table th,
+    .info-table td {
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    .info-table th {
+      width: 180px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      background: #e5e7eb;
+    }
+
+    .info-table td {
+      color: #1f2937;
+      font-weight: 500;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .repuestos-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .repuestos-table th,
+    .repuestos-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .repuestos-table th {
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      color: #4b5563;
+      background: #f3f4f6;
+    }
+
+    .repuestos-table td.index {
+      width: 48px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .repuestos-table td.cantidad {
+      text-align: right;
+      width: 80px;
+      font-weight: 600;
+    }
+
+    .repuestos-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .placeholder {
+      color: #9ca3af;
+      font-style: italic;
+    }
+
+    .observaciones {
+      padding: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #f9fafb;
+      min-height: 90px;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .photo-item {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .photo-item__frame {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #111827;
+      aspect-ratio: 3 / 2;
+    }
+
+    .photo-item__frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #111827;
+    }
+
+    .photo-item figcaption {
+      font-size: 11px;
+      color: #4b5563;
+      text-align: center;
+    }
+
+    .document__footer {
+      margin-top: 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+    }
+
+    .firma {
+      border-top: 1px solid #9ca3af;
+      padding-top: 12px;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .document {
+        box-shadow: none;
+      }
+
+      .document__header {
+        margin-bottom: 18px;
+      }
+
+      .section {
+        page-break-inside: avoid;
+      }
+
+      .photo-item {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    <header class="document__header">
+      <div class="document__identity">
+        <p class="document__title">Remito de servicio</p>
+        <div class="document__meta">
+          <span>Número: <strong>${numero}</strong></span>
+          <span>Fecha: <strong>${fecha}</strong></span>
+        </div>
+      </div>
+      ${logoUrl ? `<div class="document__logo"><img src="${logoUrl}" alt="Logo de OHM Agua"></div>` : ''}
+    </header>
+
+    <section class="section">
+      <h2 class="section__title">Datos del cliente</h2>
+      <table class="info-table">
+        <tbody>
+          ${clienteRows}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 class="section__title">Datos del equipo</h2>
+      <table class="info-table">
+        <tbody>
+          ${equipoRows}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 class="section__title">Repuestos y materiales</h2>
+      <table class="repuestos-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${repuestosRows}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 class="section__title">Observaciones</h2>
+      <div class="observaciones">${observaciones}</div>
+    </section>
+
+    <section class="section">
+      <h2 class="section__title">Registro fotográfico</h2>
+      ${fotosSection}
+    </section>
+
+    <footer class="document__footer">
+      <div class="firma">
+        <p>Firma del responsable de OHM Agua</p>
+      </div>
+      <div class="firma">
+        <p>Firma y aclaración del cliente</p>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>`;
+  },
+
   buildRemitoPdfAdjunto_(remito, resumen) {
     try {
-      const doc = DocumentApp.create(`Remito-${remito.NumeroRemito || Utilities.getUuid()}`);
-      const body = doc.getBody();
-      body.appendParagraph('Remito de Servicio').setHeading(DocumentApp.ParagraphHeading.HEADING1);
-      body.appendParagraph(`Número: ${remito.NumeroRemito || 'Sin número'}`);
-      if (remito.FechaCreacion) {
-        const fecha = Utilities.formatDate(new Date(remito.FechaCreacion), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
-        body.appendParagraph(`Fecha: ${fecha}`);
+      const printableData = this.buildRemitoPrintableData_(remito, resumen);
+      if (!printableData) {
+        return null;
       }
-      body.appendParagraph(`Cliente: ${remito.NombreCliente || 'Sin cliente'}`);
-      if (remito.Direccion) {
-        body.appendParagraph(`Dirección: ${remito.Direccion}`);
-      }
-      if (remito.NumeroReporte) {
-        body.appendParagraph(`Reporte asociado: ${remito.NumeroReporte}`);
-      }
-      if (remito.ModeloEquipo || remito.NumeroSerie) {
-        const partes = [];
-        if (remito.ModeloEquipo) {
-          partes.push(`Modelo ${remito.ModeloEquipo}`);
-        }
-        if (remito.NumeroSerie) {
-          partes.push(`N° Serie ${remito.NumeroSerie}`);
-        }
-        body.appendParagraph(`Equipo: ${partes.join(' - ')}`);
-      }
-      if (remito.Repuestos) {
-        body.appendParagraph(`Repuestos utilizados: ${remito.Repuestos}`);
-      }
-      if (remito.Observaciones) {
-        body.appendParagraph(`Observaciones: ${remito.Observaciones}`);
-      }
-      if (resumen) {
-        body.appendParagraph('').appendText(resumen);
-      }
-      doc.saveAndClose();
 
-      const file = DriveApp.getFileById(doc.getId());
-      const pdfBlob = file.getAs('application/pdf');
+      const html = this.buildRemitoPdfHtml_(printableData);
+      if (!html) {
+        return null;
+      }
+
+      const htmlOutput = HtmlService.createHtmlOutput(html).setWidth(794).setHeight(1123);
+      const pdfBlob = htmlOutput.getAs('application/pdf');
       pdfBlob.setName(`Remito-${remito.NumeroRemito || 'sin-numero'}.pdf`);
-      file.setTrashed(true);
-
       return pdfBlob;
     } catch (error) {
       Logger.log('No se pudo generar el PDF del remito %s: %s', remito.NumeroRemito, error);
