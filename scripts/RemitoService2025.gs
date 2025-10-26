@@ -16,7 +16,7 @@ const REMITO_NOTIFICATIONS_EMAIL = 'pingitzernicolas@gmail.com';
 
 // Carpeta de Drive donde se guardarán automáticamente los PDF de remitos.
 // Configurar con el ID correspondiente o dejar vacío para deshabilitar el guardado automático.
-const REMITO_PDF_FOLDER_ID = '';
+const REMITO_PDF_FOLDER_ID = '1uBFPFT-rcfkbeaSFPCMNtmJAcMedEuwa';
 
 const REMITO_PDF_LOGO_URL = 'https://raw.githubusercontent.com/pingitzer/reportesOBM/main/frontend/public/OHM-agua.png';
 
