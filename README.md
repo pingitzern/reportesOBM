@@ -104,7 +104,7 @@ La aplicación necesita conocer la URL publicada en el paso anterior. Puedes con
   ```html
   <script>
     window.__APP_CONFIG__ = {
-      API_URL: 'https://script.google.com/macros/s/AKfycbxgtAC_CSAu2X_TA19mk6GLi0VYPY5WDu2fS0-_mM8DLqO5TuYdEgfXfDj-2Hl9lNdU0w/exec',
+      API_URL: 'https://script.google.com/macros/s/AKfycbwdY4ezKYNjGPSVvIpwxboHo-tc_FqylgdO6CoXlhsLgY7Pf8FOB5Vq3JO_cjXi52Vx3A/exec',
     };
   </script>
   <script type="module" src="frontend/js/main.js"></script>
