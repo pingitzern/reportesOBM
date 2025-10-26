@@ -630,12 +630,30 @@ const RemitoService = {
     RemitoRepository.guardar(remitoRowData);
 
     // 6. Notificar por correo electrónico con un resumen y el remito en PDF.
+    const emailStatus = {
+      sent: false,
+      skipped: false,
+    };
+
     try {
       const resumen = this.buildRemitoResumenTexto_(remito);
-      this.enviarRemitoPorCorreo_(remito, resumen);
+      const sendResult = this.enviarRemitoPorCorreo_(remito, resumen);
+      if (sendResult && typeof sendResult === 'object') {
+        emailStatus.sent = Boolean(sendResult.sent);
+        emailStatus.skipped = Boolean(sendResult.skipped);
+        if (sendResult.message) {
+          emailStatus.message = String(sendResult.message);
+        }
+      } else if (sendResult === true) {
+        emailStatus.sent = true;
+      }
     } catch (emailError) {
+      const message = (emailError && emailError.message) ? emailError.message : String(emailError);
+      emailStatus.error = message;
       Logger.log('No se pudo enviar el correo del remito %s: %s', remito.NumeroRemito, emailError);
     }
+
+    remito.emailStatus = emailStatus;
 
     // 7. Devolver el objeto remito completo (con su número asignado) al frontend
     return remito;
@@ -750,7 +768,11 @@ const RemitoService = {
   enviarRemitoPorCorreo_(remito, resumen) {
     const destinatario = REMITO_NOTIFICATIONS_EMAIL;
     if (!destinatario) {
-      return;
+      return {
+        sent: false,
+        skipped: true,
+        message: 'El destinatario para las notificaciones de remitos no está configurado.',
+      };
     }
 
     const subject = this.buildRemitoEmailSubject_(remito);
@@ -766,6 +788,11 @@ const RemitoService = {
     }
 
     MailApp.sendEmail(destinatario, subject, body, opciones);
+
+    return {
+      sent: true,
+      skipped: false,
+    };
   },
 
   /**
