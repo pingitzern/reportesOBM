@@ -12,6 +12,8 @@ const COMPONENT_STAGE_TITLES = {
 
 const REPLACEMENT_KEYWORDS = ['cambi', 'reempl', 'instal', 'nuevo'];
 
+const REMITO_NOTIFICATIONS_EMAIL = 'pingitzernicolas@gmail.com';
+
 const RemitoService = {
   fotosFolderCache: null,
 
@@ -627,8 +629,143 @@ const RemitoService = {
     // 5. GUARDAR EL REMITO REALMENTE EN LA HOJA DE CÁLCULO
     RemitoRepository.guardar(remitoRowData);
 
-    // 6. Devolver el objeto remito completo (con su número asignado) al frontend
+    // 6. Notificar por correo electrónico con un resumen y el remito en PDF.
+    try {
+      const resumen = this.buildRemitoResumenTexto_(remito);
+      this.enviarRemitoPorCorreo_(remito, resumen);
+    } catch (emailError) {
+      Logger.log('No se pudo enviar el correo del remito %s: %s', remito.NumeroRemito, emailError);
+    }
+
+    // 7. Devolver el objeto remito completo (con su número asignado) al frontend
     return remito;
+  },
+
+  buildRemitoResumenTexto_(remito) {
+    const lineas = [];
+    lineas.push(`Número de Remito: ${remito.NumeroRemito || 'Sin número'}`);
+    if (remito.NombreCliente) {
+      lineas.push(`Cliente: ${remito.NombreCliente}`);
+    }
+    if (remito.Direccion) {
+      lineas.push(`Dirección: ${remito.Direccion}`);
+    }
+    if (remito.NumeroReporte) {
+      lineas.push(`Reporte asociado: ${remito.NumeroReporte}`);
+    }
+    if (remito.ModeloEquipo || remito.NumeroSerie) {
+      const partesEquipo = [];
+      if (remito.ModeloEquipo) {
+        partesEquipo.push(`Modelo ${remito.ModeloEquipo}`);
+      }
+      if (remito.NumeroSerie) {
+        partesEquipo.push(`N° Serie ${remito.NumeroSerie}`);
+      }
+      lineas.push(`Equipo: ${partesEquipo.join(' - ')}`);
+    }
+    if (remito.Repuestos) {
+      lineas.push(`Repuestos utilizados: ${remito.Repuestos}`);
+    }
+    if (remito.Observaciones) {
+      lineas.push(`Observaciones: ${remito.Observaciones}`);
+    }
+
+    return lineas.join('\n');
+  },
+
+  buildRemitoEmailSubject_(remito) {
+    const cliente = remito.NombreCliente || 'Sin cliente';
+    const numero = remito.NumeroRemito || 'Sin número';
+    return `Remito de servicio "${cliente}", numero de remito "${numero}"`;
+  },
+
+  buildRemitoEmailBody_(remito, resumen) {
+    const fecha = remito.FechaCreacion
+      ? Utilities.formatDate(new Date(remito.FechaCreacion), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm')
+      : '';
+    const lineas = [];
+    lineas.push('Se generó un nuevo remito de servicio con el siguiente detalle:');
+    if (fecha) {
+      lineas.push(`Fecha de creación: ${fecha}`);
+    }
+    if (remito.MailTecnico) {
+      lineas.push(`Generado por: ${remito.MailTecnico}`);
+    }
+    if (resumen) {
+      lineas.push('', resumen);
+    }
+    return lineas.join('\n');
+  },
+
+  buildRemitoPdfAdjunto_(remito, resumen) {
+    try {
+      const doc = DocumentApp.create(`Remito-${remito.NumeroRemito || Utilities.getUuid()}`);
+      const body = doc.getBody();
+      body.appendParagraph('Remito de Servicio').setHeading(DocumentApp.ParagraphHeading.HEADING1);
+      body.appendParagraph(`Número: ${remito.NumeroRemito || 'Sin número'}`);
+      if (remito.FechaCreacion) {
+        const fecha = Utilities.formatDate(new Date(remito.FechaCreacion), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
+        body.appendParagraph(`Fecha: ${fecha}`);
+      }
+      body.appendParagraph(`Cliente: ${remito.NombreCliente || 'Sin cliente'}`);
+      if (remito.Direccion) {
+        body.appendParagraph(`Dirección: ${remito.Direccion}`);
+      }
+      if (remito.NumeroReporte) {
+        body.appendParagraph(`Reporte asociado: ${remito.NumeroReporte}`);
+      }
+      if (remito.ModeloEquipo || remito.NumeroSerie) {
+        const partes = [];
+        if (remito.ModeloEquipo) {
+          partes.push(`Modelo ${remito.ModeloEquipo}`);
+        }
+        if (remito.NumeroSerie) {
+          partes.push(`N° Serie ${remito.NumeroSerie}`);
+        }
+        body.appendParagraph(`Equipo: ${partes.join(' - ')}`);
+      }
+      if (remito.Repuestos) {
+        body.appendParagraph(`Repuestos utilizados: ${remito.Repuestos}`);
+      }
+      if (remito.Observaciones) {
+        body.appendParagraph(`Observaciones: ${remito.Observaciones}`);
+      }
+      if (resumen) {
+        body.appendParagraph('').appendText(resumen);
+      }
+      doc.saveAndClose();
+
+      const file = DriveApp.getFileById(doc.getId());
+      const pdfBlob = file.getAs('application/pdf');
+      pdfBlob.setName(`Remito-${remito.NumeroRemito || 'sin-numero'}.pdf`);
+      file.setTrashed(true);
+
+      return pdfBlob;
+    } catch (error) {
+      Logger.log('No se pudo generar el PDF del remito %s: %s', remito.NumeroRemito, error);
+      return null;
+    }
+  },
+
+  enviarRemitoPorCorreo_(remito, resumen) {
+    const destinatario = REMITO_NOTIFICATIONS_EMAIL;
+    if (!destinatario) {
+      return;
+    }
+
+    const subject = this.buildRemitoEmailSubject_(remito);
+    const body = this.buildRemitoEmailBody_(remito, resumen);
+    const pdf = this.buildRemitoPdfAdjunto_(remito, resumen);
+
+    const opciones = {
+      name: 'Remitos OBM',
+    };
+
+    if (pdf) {
+      opciones.attachments = [pdf];
+    }
+
+    MailApp.sendEmail(destinatario, subject, body, opciones);
   },
 
   /**
