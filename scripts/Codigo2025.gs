@@ -86,6 +86,102 @@ const ResponseFactory = {
 
 
 /* =======================
+   Información de despliegue
+======================= */
+
+function extractDeploymentIdFromUrl(url) {
+  if (typeof url !== 'string' || !url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/\/s\/([a-zA-Z0-9_-]+)\/(?:exec|dev)/);
+  return match && match[1] ? match[1] : null;
+}
+
+function getScriptVersionInfo() {
+  let webAppUrl = '';
+  let deploymentId = null;
+
+  try {
+    const service = ScriptApp.getService();
+    if (service) {
+      webAppUrl = service.getUrl() || '';
+      deploymentId = extractDeploymentIdFromUrl(webAppUrl);
+    }
+  } catch (serviceError) {
+    Logger.log('No se pudo obtener la URL del web app: %s', serviceError);
+  }
+
+  let versionNumber = null;
+  let description = '';
+
+  try {
+    const deploymentInfoList = ScriptApp.getDeploymentInfo();
+    if (Array.isArray(deploymentInfoList) && deploymentInfoList.length) {
+      let targetDeployment = null;
+      if (deploymentId) {
+        targetDeployment = deploymentInfoList.find((info) => {
+          return typeof info.getDeploymentId === 'function'
+            && info.getDeploymentId() === deploymentId;
+        }) || null;
+      }
+
+      if (!targetDeployment) {
+        targetDeployment = deploymentInfoList.reduce((current, info) => {
+          if (!info || typeof info.getVersionNumber !== 'function') return current;
+          const candidateVersion = info.getVersionNumber();
+          if (typeof candidateVersion !== 'number' || isNaN(candidateVersion)) {
+            return current;
+          }
+          if (!current || typeof current.getVersionNumber !== 'function') {
+            return info;
+          }
+          const currentVersion = current.getVersionNumber();
+          if (typeof currentVersion !== 'number' || isNaN(currentVersion)) {
+            return info;
+          }
+          return candidateVersion > currentVersion ? info : current;
+        }, null);
+      }
+
+      if (targetDeployment) {
+        if (typeof targetDeployment.getVersionNumber === 'function') {
+          const number = targetDeployment.getVersionNumber();
+          if (typeof number === 'number' && !isNaN(number)) {
+            versionNumber = number;
+          }
+        }
+        if (typeof targetDeployment.getDescription === 'function') {
+          const desc = targetDeployment.getDescription();
+          if (typeof desc === 'string') {
+            description = desc.trim();
+          }
+        }
+      }
+    }
+  } catch (deploymentError) {
+    Logger.log('No se pudo obtener la información de despliegue: %s', deploymentError);
+  }
+
+  const labelParts = [];
+  if (versionNumber !== null) {
+    labelParts.push(`#${versionNumber}`);
+  }
+  if (description) {
+    labelParts.push(description);
+  }
+
+  return {
+    deploymentId: deploymentId || null,
+    versionNumber,
+    description,
+    webAppUrl: webAppUrl || '',
+    label: labelParts.join(' \u2013 '),
+    generatedAt: new Date().toISOString()
+  };
+}
+
+
+/* =======================
    Utilidades
 ======================= */
 
@@ -523,6 +619,12 @@ function doPost(e) {
         return ResponseFactory.success({ usuarios: lista });
       }
 
+      case 'version_info': {
+        const versionInfo = getScriptVersionInfo();
+        Logger.log('[VERSION] %s', JSON.stringify(versionInfo));
+        return ResponseFactory.success(versionInfo);
+      }
+
       /* --------- ACCIONES PROTEGIDAS --------- */
       case 'guardar': {
         const sess = SessionService.validateSession(data.token);
@@ -600,6 +702,11 @@ function doGet(e) {
     if (action === 'clientes') {
       SessionService.validateSession(params.token);
       return ResponseFactory.success(ClientesService.listar());
+    }
+    if (action === 'version_info') {
+      const versionInfo = getScriptVersionInfo();
+      Logger.log('[VERSION][GET] %s', JSON.stringify(versionInfo));
+      return ResponseFactory.success(versionInfo);
     }
     // healthcheck
     return ResponseFactory.success({ message: 'API viva' });
