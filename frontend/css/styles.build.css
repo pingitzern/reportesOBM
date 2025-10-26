@@ -1593,6 +1593,10 @@ input,
   order: 3;
 }
 
+.order-4 {
+  order: 4;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -2583,12 +2587,20 @@ input,
     order: 3;
   }
 
+  .md\:order-4 {
+    order: 4;
+  }
+
   .md\:col-span-1 {
     grid-column: span 1 / span 1;
   }
 
   .md\:h-16 {
     height: 4rem;
+  }
+
+  .md\:w-auto {
+    width: auto;
   }
 
   .md\:flex-1 {
@@ -2605,6 +2617,10 @@ input,
 
   .md\:flex-row {
     flex-direction: row;
+  }
+
+  .md\:items-end {
+    align-items: flex-end;
   }
 
   .md\:items-center {
@@ -2629,6 +2645,10 @@ input,
 
   .md\:p-8 {
     padding: 2rem;
+  }
+
+  .md\:text-right {
+    text-align: right;
   }
 
   .md\:text-3xl {
