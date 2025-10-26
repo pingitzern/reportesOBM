@@ -390,17 +390,44 @@ function getRemitoLogoUrl() {
         return '';
     }
 
+    const candidates = [];
+    const pushCandidate = value => {
+        const normalized = normalizeString(value);
+        if (normalized && !candidates.includes(normalized)) {
+            candidates.push(normalized);
+        }
+    };
+
     try {
-        const base = window.location?.origin || '';
-        if (base) {
-            const url = new URL('/OHM-agua.png', base);
-            return url.href;
+        const baseElementHref = window.document?.querySelector?.('base[href]')?.href;
+        if (baseElementHref) {
+            pushCandidate(new URL('OHM-agua.png', baseElementHref).href);
         }
     } catch (error) {
-        console.warn('No se pudo determinar la URL del logo del remito.', error);
+        console.warn('No se pudo determinar la URL del logo del remito desde la etiqueta <base>.', error);
     }
 
-    return '/OHM-agua.png';
+    try {
+        const locationHref = window.location?.href;
+        if (locationHref) {
+            pushCandidate(new URL('OHM-agua.png', locationHref).href);
+        }
+    } catch (error) {
+        console.warn('No se pudo determinar la URL del logo del remito desde la ubicación actual.', error);
+    }
+
+    try {
+        const locationOrigin = window.location?.origin;
+        if (locationOrigin) {
+            pushCandidate(new URL('OHM-agua.png', locationOrigin).href);
+        }
+    } catch (error) {
+        console.warn('No se pudo determinar la URL del logo del remito desde el origen actual.', error);
+    }
+
+    pushCandidate('/OHM-agua.png');
+
+    return candidates.find(Boolean) || '';
 }
 
 function buildPrintableRepuestosList(repuestos, report) {
