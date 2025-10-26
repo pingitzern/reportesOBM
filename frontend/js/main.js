@@ -110,19 +110,36 @@ function showAppVersion() {
     setTextOrHide(versionElement, '');
 }
 
-function formatScriptVersion(info) {
-    if (!info || typeof info !== 'object') {
+function formatScriptVersion(rawInfo) {
+    if (!rawInfo) {
         return '';
     }
 
+    if (typeof rawInfo === 'string') {
+        const trimmed = rawInfo.trim();
+        return trimmed ? `Scripts ${trimmed}` : '';
+    }
+
+    if (typeof rawInfo !== 'object') {
+        return '';
+    }
+
+    const info = rawInfo;
     const parts = [];
+
     if (info.versionNumber !== undefined && info.versionNumber !== null) {
         parts.push(`#${info.versionNumber}`);
     }
+
     if (typeof info.description === 'string' && info.description.trim()) {
         parts.push(info.description.trim());
     }
-    if ((!parts.length) && typeof info.deploymentId === 'string' && info.deploymentId.trim()) {
+
+    if (!parts.length && typeof info.label === 'string' && info.label.trim()) {
+        parts.push(info.label.trim());
+    }
+
+    if (!parts.length && typeof info.deploymentId === 'string' && info.deploymentId.trim()) {
         parts.push(`ID ${info.deploymentId.trim()}`);
     }
 
