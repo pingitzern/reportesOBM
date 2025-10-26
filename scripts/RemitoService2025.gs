@@ -143,7 +143,7 @@ const REMITO_LOGO_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABTYA
   'JXsRz2XWaroRdhUf5QcqEvP1hygEmwDQLcMGVG32Qwg7+UGYos4WBjEXpQDg6mJOv964wudSkSnsi/i0ATexoTEEmwDQPU2oPtvI' +
   'HjDLWsSeZOPErAACoJhYN2/7C57HxFw0qAnnedAYgk0A6J6mLISyc4VqB5bPbn4gokPVmgCtEnOhxEWmo8cMNX1uwSWCTQDopiZU' +
   'oQ2yKcYwyaNI/cgmacJ+AsBiYlVtri6wiFDMaejAJYJNAOimplRt3l9wKhfLY7Xm4PswewDQLjGrFuep2lwkAC0iZrUqtIZgEwC6' +
-  'qynVaLumpDNGnVPQQ4P2DwAW91l+oCLz3JydJ/wsg2pNGEOwCQDd1ZSqzX4I4fP8IEttJ1J1yySqNQHa7VmklcHnWRRonvCzqJgr' +
+  'qynVaLumpDNGnVPQQ4P2DwAW91l+oCLz3JydJ/wsg2pNGEOwCQDd1ZSqzX4I4fP8IEttJ1J1yySqNQHa7VmklcHnWRRonvCzqJgr';
 
 const COMPONENT_STAGE_TITLES = {
   etapa1: '1ª Sedimentos (PP)',
