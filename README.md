@@ -36,8 +36,8 @@ Los módulos se cargan desde `frontend/index.html` mediante `<script type="modul
 - `Codigo2025.gs`: implementa el router principal del backend en Google Apps Script. Define el contrato de datos con la hoja de cálculo, operaciones CRUD, los agregados que alimentan el dashboard y delega la autenticación y manejo de remitos a los servicios específicos.
 - `AuthService.gs`: encapsula la autenticación contra la pestaña `login` del spreadsheet.
 - `SessionService.gs`: gestiona los tokens temporales para el frontend (creación, validación, limpieza periódica) almacenados en la pestaña `sessions`.
-- `RemitoRepository2025.gs`: funciones utilitarias para manipular la hoja donde se guardan los remitos y para generar numeración correlativa. La hoja `remitos` añade la columna `PdfURL` para almacenar el enlace directo al PDF generado automáticamente.
-- `RemitoService2025.gs`: compone y persiste los remitos a partir de reportes existentes, maneja la subida de fotografías al Drive configurado y genera un PDF por cada remito. Asegurate de establecer los identificadores `REMITO_FOTOS_FOLDER_ID` y `REMITO_PDF_FOLDER_ID` con las carpetas de Google Drive donde se almacenarán las imágenes y los documentos respectivamente.
+- `RemitoRepository2025.gs`: funciones utilitarias para manipular la hoja donde se guardan los remitos, para generar numeración correlativa y para alinear las columnas destinadas a fotos.
+- `RemitoService2025.gs`: compone y persiste los remitos a partir de reportes existentes y maneja la subida de fotografías al Drive configurado. El PDF final se genera desde el frontend y se descarga localmente mediante la vista de impresión del navegador.
 
 ## Configuración de Google Sheets y Apps Script
 

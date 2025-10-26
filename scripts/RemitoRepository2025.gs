@@ -6,8 +6,7 @@ const REMITOS_HEADERS = [
   'NombreCliente', 'Direccion', 'CUIT', 'Telefono', 'MailCliente',
   'ModeloEquipo', 'NumeroSerie', 'IDInterna',
   'Repuestos', 'Observaciones', 'IdUnico',
-  'Foto1Id', 'Foto2Id', 'Foto3Id', 'Foto4Id',
-  'PdfURL'
+  'Foto1Id', 'Foto2Id', 'Foto3Id', 'Foto4Id'
 ];
 
 const RemitoRepository = {
@@ -157,10 +156,10 @@ const RemitoRepository = {
 };
 
 /**
- * Script de migración para asegurar que las columnas Foto*Id y PdfURL
+ * Script de migración para asegurar que las columnas Foto*Id
  * queden ordenadas según REMITOS_HEADERS.
  */
-function migrarRemitosFotosYPdf2025() {
+function migrarRemitosFotos2025() {
   const ss = SheetRepository.getSpreadsheet();
   const sheet = ss.getSheetByName(REMITOS_SHEET_NAME);
 
