@@ -18,6 +18,8 @@ const REMITO_PDF_LOGO_URL = 'https://raw.githubusercontent.com/pingitzer/reporte
 
 const RemitoService = {
   fotosFolderCache: null,
+  photoDataCache: Object.create(null),
+  logoDataCache: Object.create(null),
 
   getFotosFolder_() {
     if (!REMITO_FOTOS_FOLDER_ID) {
@@ -77,6 +79,86 @@ const RemitoService = {
     }
 
     return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(trimmedId)}`;
+  },
+
+  getPhotoDataUrlFromFileId_(fileId) {
+    const trimmedId = this.normalizeString_(fileId);
+    if (!trimmedId) {
+      return '';
+    }
+
+    const cached = this.photoDataCache[trimmedId];
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    try {
+      const file = DriveApp.getFileById(trimmedId);
+      const blob = file.getBlob();
+      const contentType = blob.getContentType() || 'image/jpeg';
+      const base64 = Utilities.base64Encode(blob.getBytes());
+      const dataUrl = `data:${contentType};base64,${base64}`;
+      this.photoDataCache[trimmedId] = dataUrl;
+      return dataUrl;
+    } catch (error) {
+      Logger.log('No se pudo obtener la foto %s para el PDF del remito: %s', trimmedId, error);
+      this.photoDataCache[trimmedId] = '';
+      return '';
+    }
+  },
+
+  resolveLogoForPdf_(source) {
+    const candidates = [];
+    const pushCandidate = (value) => {
+      const normalized = this.normalizeString_(value);
+      if (normalized && !candidates.includes(normalized)) {
+        candidates.push(normalized);
+      }
+    };
+
+    pushCandidate(source);
+    pushCandidate(REMITO_PDF_LOGO_URL);
+
+    for (let index = 0; index < candidates.length; index += 1) {
+      const candidate = candidates[index];
+      if (!candidate) {
+        continue;
+      }
+
+      if (candidate.startsWith('data:')) {
+        this.logoDataCache[candidate] = candidate;
+        return candidate;
+      }
+
+      if (this.logoDataCache[candidate] !== undefined) {
+        if (this.logoDataCache[candidate]) {
+          return this.logoDataCache[candidate];
+        }
+        continue;
+      }
+
+      try {
+        const response = UrlFetchApp.fetch(candidate, {
+          muteHttpExceptions: true,
+          followRedirects: true,
+        });
+        const status = response.getResponseCode();
+        if (status >= 200 && status < 300) {
+          const blob = response.getBlob();
+          const contentType = blob.getContentType() || 'image/png';
+          const base64 = Utilities.base64Encode(blob.getBytes());
+          const dataUrl = `data:${contentType};base64,${base64}`;
+          this.logoDataCache[candidate] = dataUrl;
+          return dataUrl;
+        }
+      } catch (error) {
+        Logger.log('No se pudo obtener el logo del remito desde %s: %s', candidate, error);
+      }
+
+      this.logoDataCache[candidate] = '';
+    }
+
+    return '';
   },
 
   extractDriveFileIdFromValue_(value) {
@@ -795,6 +877,8 @@ const RemitoService = {
 
     const observaciones = this.normalizeString_(remito.Observaciones || remito.observaciones || resumen);
     const fotos = this.buildPrintablePhotos_(remito);
+    const logo = this.resolveLogoForPdf_(remito?.LogoUrl || remito?.logoUrl);
+    const logoSource = logo || this.resolveLogoForPdf_(REMITO_PDF_LOGO_URL);
 
     return {
       numero,
@@ -804,6 +888,7 @@ const RemitoService = {
       repuestos,
       observaciones,
       fotos,
+      logo: logoSource,
     };
   },
 
@@ -817,9 +902,14 @@ const RemitoService = {
         return;
       }
 
+      const resolvedSrc = this.normalizePhotoSourceForPdf_(normalizedSrc);
+      if (!resolvedSrc) {
+        return;
+      }
+
       seen.add(normalizedSrc);
       fotos.push({
-        src: normalizedSrc,
+        src: resolvedSrc,
         label: this.normalizeString_(label),
       });
     };
@@ -836,6 +926,27 @@ const RemitoService = {
     }
 
     return fotos;
+  },
+
+  normalizePhotoSourceForPdf_(source) {
+    if (!source) {
+      return '';
+    }
+
+    if (source.startsWith('data:')) {
+      return source;
+    }
+
+    const fileId = this.extractDriveFileIdFromValue_(source);
+    if (fileId) {
+      const dataUrl = this.getPhotoDataUrlFromFileId_(fileId);
+      if (dataUrl) {
+        return dataUrl;
+      }
+      return this.getDirectDriveImageUrl_(fileId);
+    }
+
+    return source;
   },
 
   buildRemitoPdfInfoRows_(entries = []) {
@@ -910,7 +1021,7 @@ const RemitoService = {
 
     const numero = this.escapeHtml_(data.numero) || '—';
     const fecha = this.escapeHtml_(data.fecha) || '—';
-    const logoUrl = this.escapeHtml_(data.logoUrl || REMITO_PDF_LOGO_URL || '');
+    const logoUrl = this.escapeHtml_(data.logo || '');
     const observaciones = data.observaciones
       ? this.escapeHtml_(data.observaciones).replace(/\r?\n/g, '<br>')
       : '<span class="placeholder">Sin observaciones registradas.</span>';
