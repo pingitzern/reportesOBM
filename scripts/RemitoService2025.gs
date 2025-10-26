@@ -14,10 +14,15 @@ const REPLACEMENT_KEYWORDS = ['cambi', 'reempl', 'instal', 'nuevo'];
 
 const REMITO_NOTIFICATIONS_EMAIL = 'pingitzernicolas@gmail.com';
 
+// Carpeta de Drive donde se guardarán automáticamente los PDF de remitos.
+// Configurar con el ID correspondiente o dejar vacío para deshabilitar el guardado automático.
+const REMITO_PDF_FOLDER_ID = '';
+
 const REMITO_PDF_LOGO_URL = 'https://raw.githubusercontent.com/pingitzer/reportesOBM/main/frontend/public/OHM-agua.png';
 
 const RemitoService = {
   fotosFolderCache: null,
+  pdfFolderCache: null,
   photoDataCache: Object.create(null),
   logoDataCache: Object.create(null),
 
@@ -1388,6 +1393,45 @@ const RemitoService = {
     }
   },
 
+  getPdfFolder_() {
+    if (!REMITO_PDF_FOLDER_ID) {
+      return null;
+    }
+
+    if (this.pdfFolderCache) {
+      return this.pdfFolderCache;
+    }
+
+    try {
+      this.pdfFolderCache = DriveApp.getFolderById(REMITO_PDF_FOLDER_ID);
+    } catch (error) {
+      Logger.log('No se pudo acceder a la carpeta configurada para los PDF de remitos: %s', error);
+      this.pdfFolderCache = null;
+    }
+
+    return this.pdfFolderCache;
+  },
+
+  saveRemitoPdfToDrive_(pdfBlob, remito) {
+    if (!pdfBlob) {
+      return;
+    }
+
+    const folder = this.getPdfFolder_();
+    if (!folder) {
+      return;
+    }
+
+    try {
+      const blob = pdfBlob.copyBlob();
+      const filename = blob.getName() || `Remito-${remito?.NumeroRemito || 'sin-numero'}.pdf`;
+      blob.setName(filename);
+      folder.createFile(blob);
+    } catch (error) {
+      Logger.log('No se pudo guardar el PDF del remito %s en Drive: %s', remito?.NumeroRemito, error);
+    }
+  },
+
   enviarRemitoPorCorreo_(remito, resumen) {
     const destinatario = REMITO_NOTIFICATIONS_EMAIL;
     if (!destinatario) {
@@ -1408,6 +1452,7 @@ const RemitoService = {
 
     if (pdf) {
       opciones.attachments = [pdf];
+      this.saveRemitoPdfToDrive_(pdf, remito);
     }
 
     MailApp.sendEmail(destinatario, subject, body, opciones);
