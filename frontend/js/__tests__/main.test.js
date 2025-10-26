@@ -271,7 +271,13 @@ describe('flujo de generación y finalización de remito', () => {
         window.alert = jest.fn();
         global.fetch = jest.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ result: 'success', data: { NumeroRemito: 'REM-0099' } }),
+            json: async () => ({
+                result: 'success',
+                data: {
+                    NumeroRemito: 'REM-0099',
+                    emailStatus: { sent: true },
+                },
+            }),
         });
 
         jest.clearAllMocks();
@@ -442,6 +448,9 @@ describe('flujo de generación y finalización de remito', () => {
         });
 
         expect(document.getElementById('remito-numero').value).toBe('REM-0099');
-        expect(window.alert).toHaveBeenCalledWith('✅ Remito generado correctamente. Se abrirá la vista de impresión para descargar o imprimir el PDF.');
+        expect(window.alert).toHaveBeenCalledTimes(1);
+        const alertMessage = window.alert.mock.calls[0][0];
+        expect(alertMessage).toContain('✅ Remito generado correctamente. Se abrirá la vista de impresión para descargar o imprimir el PDF.');
+        expect(alertMessage).toContain('📧 Se envió el remito por correo electrónico correctamente.');
     });
 });

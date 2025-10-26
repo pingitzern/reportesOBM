@@ -1275,6 +1275,30 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         };
     }
 
+    function buildEmailStatusAlertMessage(status) {
+        if (!status || typeof status !== 'object') {
+            return '';
+        }
+
+        if (status.sent) {
+            return '📧 Se envió el remito por correo electrónico correctamente.';
+        }
+
+        const errorMessage = typeof status.error === 'string' ? status.error.trim() : '';
+        if (errorMessage) {
+            return `⚠️ El remito se generó, pero no se pudo enviar el correo electrónico: ${errorMessage}`;
+        }
+
+        if (status.skipped) {
+            const infoMessage = typeof status.message === 'string' ? status.message.trim() : '';
+            return infoMessage
+                ? `ℹ️ ${infoMessage}`
+                : 'ℹ️ El envío de correo electrónico está deshabilitado.';
+        }
+
+        return '';
+    }
+
     function renderPhotoSlots() {
         const container = getPhotoContainer();
         if (!container) {
@@ -1699,7 +1723,9 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 throw new Error(message);
             }
 
-            const numeroRemito = normalizeString(payload?.data?.NumeroRemito);
+            const remitoData = payload?.data || {};
+            const emailStatus = remitoData?.emailStatus;
+            const numeroRemito = normalizeString(remitoData?.NumeroRemito);
             if (numeroRemito) {
                 lastSavedReport.NumeroRemito = numeroRemito;
                 setReadonlyInputValue('remito-numero', numeroRemito);
@@ -1716,10 +1742,20 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 photoSlots: printablePhotoSlots,
             });
 
+            const alertMessages = [];
             if (didOpenPrintPreview) {
-                window.alert?.('✅ Remito generado correctamente. Se abrirá la vista de impresión para descargar o imprimir el PDF.');
+                alertMessages.push('✅ Remito generado correctamente. Se abrirá la vista de impresión para descargar o imprimir el PDF.');
             } else {
-                window.alert?.('✅ Remito generado correctamente. No pudimos abrir la vista de impresión automáticamente. Revisá el bloqueador de ventanas emergentes y utilizá el botón "Imprimir remito" para reintentarlo.');
+                alertMessages.push('✅ Remito generado correctamente. No pudimos abrir la vista de impresión automáticamente. Revisá el bloqueador de ventanas emergentes y utilizá el botón "Imprimir remito" para reintentarlo.');
+            }
+
+            const emailMessage = buildEmailStatusAlertMessage(emailStatus);
+            if (emailMessage) {
+                alertMessages.push(emailMessage);
+            }
+
+            if (alertMessages.length > 0) {
+                window.alert?.(alertMessages.join('\n\n'));
             }
         } catch (error) {
             console.error('Error al generar el remito:', error);
