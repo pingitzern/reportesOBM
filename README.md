@@ -104,7 +104,7 @@ La aplicación necesita conocer la URL publicada en el paso anterior. Puedes con
   ```html
   <script>
     window.__APP_CONFIG__ = {
-      API_URL: 'https://script.google.com/macros/s/.../exec',
+      API_URL: 'https://script.google.com/macros/s/REEMPLAZAR_CON_DEPLOYMENT_ID/exec',
     };
   </script>
   <script type="module" src="frontend/js/main.js"></script>
