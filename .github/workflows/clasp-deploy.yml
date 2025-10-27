@@ -1,0 +1,64 @@
+name: Deploy Apps Script
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+
+jobs:
+  deploy:
+    name: Push to Google Apps Script
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install clasp
+        run: npm install -g @google/clasp
+
+      - name: Restore clasp auth
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          if [ -z "$CLASPRC_JSON" ]; then
+            echo "CLASPRC_JSON secret is not set. Aborting." >&2
+            exit 1
+          fi
+          echo "$CLASPRC_JSON" > $HOME/.clasprc.json
+          chmod 600 $HOME/.clasprc.json
+
+      - name: Ensure .clasp.json exists
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+        run: |
+          if [ -f .clasp.json ]; then
+            echo ".clasp.json already exists in repo - using it."
+            cat .clasp.json
+          else
+            if [ -z "$APPS_SCRIPT_ID" ]; then
+              echo "No .clasp.json in repo and APPS_SCRIPT_ID secret not set. Aborting." >&2
+              exit 1
+            fi
+            echo "{\"scriptId\": \"${APPS_SCRIPT_ID}\", \"rootDir\": \"scripts\"}" > .clasp.json
+          fi
+
+      - name: Push files to Apps Script
+        run: |
+          # show version and list files for debugging
+          clasp -v || true
+          ls -la
+          # Force push to ensure all script files are updated
+          clasp push --force
+
+      - name: Create a new deployment (only on main)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # create a deployment so the webapp/endpoint uses the latest code
+          # we attempt a deploy; if it fails, the job will show the clasp error
+          clasp deploy --description "Auto deploy from GitHub Actions (commit: $GITHUB_SHA)" || true
