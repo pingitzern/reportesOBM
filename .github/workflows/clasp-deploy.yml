@@ -61,4 +61,7 @@ jobs:
         run: |
           # create a deployment so the webapp/endpoint uses the latest code
           # we attempt a deploy; if it fails, the job will show the clasp error
+          # create an explicit version first (helps tracing and rollback)
+          clasp version --description "Auto version from CI (commit: $GITHUB_SHA)" || true
+          # then create/update the deployment to point to the new version
           clasp deploy --description "Auto deploy from GitHub Actions (commit: $GITHUB_SHA)" || true

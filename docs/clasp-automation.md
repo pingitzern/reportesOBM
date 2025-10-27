@@ -36,6 +36,24 @@ Recomendaciones locales (opcional)
 
 - Para prevenir olvidos, puedes añadir un hook pre-push que ejecute `npx @google/clasp push` o usar `husky` para automatizar hooks de git.
 
+Husky pre-push hook (ya añadido)
+- En este repositorio se añadió un hook de Husky en `.husky/pre-push` que ejecuta `npx @google/clasp push --force` antes de cada `git push`.
+- El objetivo es asegurar que los cambios locales en `scripts/` se sincronicen con Apps Script antes de subir commits. Si `clasp push` falla, el `git push` será abortado.
+
+Desactivar o instalar el hook localmente
+- Para instalar hooks (si el repo se clonó recientemente) ejecuta:
+
+   ```powershell
+   npm install
+   npm run prepare
+   ```
+
+- Para desactivar los hooks localmente:
+
+   ```powershell
+   npx husky uninstall
+   # o eliminar el archivo .husky/pre-push
+   ```
+
 Próximos pasos que puedo implementar por ti
-- Añadir un `pre-push` hook con `husky` para ejecutar `clasp push` localmente antes de `git push`.
 - Añadir validaciones (por ejemplo, comprobar que `appsscript.json` tenga versión/manifest correcta) y tests mínimos.

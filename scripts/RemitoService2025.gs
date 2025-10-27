@@ -16,7 +16,8 @@ const REMITO_NOTIFICATIONS_EMAIL = 'pingitzernicolas@gmail.com';
 
 // Carpeta de Drive donde se guardarán automáticamente los PDF de remitos.
 // Configurar con el ID correspondiente o dejar vacío para deshabilitar el guardado automático.
-const REMITO_PDF_FOLDER_ID = '1uBFPFT-rcfkbeaSFPCMNtmJAcMedEuwa';
+// Actualizado para apuntar a la carpeta proporcionada por el usuario.
+const REMITO_PDF_FOLDER_ID = '1BKBPmndOGet7yVZ4UtFCkhrt402eXH4X';
 
 const REMITO_PDF_LOGO_URL = 'https://raw.githubusercontent.com/pingitzer/reportesOBM/main/frontend/public/OHM-agua.png';
 
@@ -1426,7 +1427,15 @@ const RemitoService = {
       const blob = pdfBlob.copyBlob();
       const filename = blob.getName() || `Remito-${remito?.NumeroRemito || 'sin-numero'}.pdf`;
       blob.setName(filename);
-      folder.createFile(blob);
+      const file = folder.createFile(blob);
+      try {
+        // Hacerlo accesible por enlace (si se desea). Ajustar según política de seguridad.
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (shareErr) {
+        Logger.log('No se pudo cambiar el sharing del PDF %s: %s', file.getId(), shareErr);
+      }
+      Logger.log('PDF del remito %s guardado en Drive con id %s', remito?.NumeroRemito, file.getId());
+      return file.getId();
     } catch (error) {
       Logger.log('No se pudo guardar el PDF del remito %s en Drive: %s', remito?.NumeroRemito, error);
     }
