@@ -6,8 +6,8 @@ import {
     initializeForm,
     resetForm,
     setReportNumber,
-} from './forms.js';
-import { renderComponentStages } from './templates.js';
+} from '../../forms.js';
+import { renderComponentStages } from '../../templates.js';
 
 function getElement(id) {
     return document.getElementById(id);
