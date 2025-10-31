@@ -1,4 +1,5 @@
-import { LMIN_TO_GPD, LMIN_TO_LPH } from '../../config.js';
+import * as config from '../../config.js';
+const { LMIN_TO_GPD = (60 * 24) / 3.78541, LMIN_TO_LPH = 60 } = config;
 import { COMPONENT_STAGES } from './templates.js';
 
 function getElement(id) {
