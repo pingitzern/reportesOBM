@@ -1,112 +1,51 @@
-const VIEW_BUTTON_MAP = new Map([
-    ['tab-nuevo', 'tab-nuevo-btn'],
-    ['tab-buscar', 'tab-buscar-btn'],
-    ['tab-dashboard', 'tab-dashboard-btn'],
-    ['remitos-gestion-view', 'nav-remitos-btn'],
-]);
+const MAIN_VIEW_IDS = [
+    'tab-nuevo',
+    'tab-buscar',
+    'tab-dashboard',
+    'remito-view',
+    'remitos-gestion-view',
+];
 
-function normalizeId(value) {
-    if (typeof value !== 'string') {
-        return '';
-    }
-    return value.trim();
-}
-
-function sanitizeViewId(view) {
-    if (!view) {
-        return '';
-    }
-
-    if (typeof view === 'string') {
-        return normalizeId(view);
-    }
-
-    if (view instanceof HTMLElement) {
-        return view.id ? normalizeId(view.id) : normalizeId(view.dataset?.view);
-    }
-
-    return '';
-}
-
-function toggleViewVisibility(viewElement, shouldShow) {
-    if (!viewElement) {
+function hideElement(element) {
+    if (!element) {
         return;
     }
-
-    if (shouldShow) {
-        viewElement.classList.remove('hidden');
-    } else {
-        viewElement.classList.add('hidden');
-    }
+    element.classList.add('hidden');
 }
 
-function updateButtonState(viewId) {
-    const normalizedViewId = normalizeId(viewId);
-
-    VIEW_BUTTON_MAP.forEach((buttonId, mappedViewId) => {
-        const button = document.getElementById(buttonId);
-        if (!button) {
-            return;
-        }
-
-        if (mappedViewId === normalizedViewId) {
-            button.classList.add('active');
-            button.setAttribute('aria-current', 'page');
-        } else {
-            button.classList.remove('active');
-            button.removeAttribute('aria-current');
-        }
-    });
-}
-
-export function registerView(viewId, buttonId) {
-    const normalizedViewId = normalizeId(viewId);
-
-    if (!normalizedViewId) {
+function showElement(element) {
+    if (!element) {
         return;
     }
-
-    if (typeof buttonId === 'string' && buttonId.trim()) {
-        VIEW_BUTTON_MAP.set(normalizedViewId, buttonId.trim());
-    } else {
-        VIEW_BUTTON_MAP.delete(normalizedViewId);
-    }
+    element.classList.remove('hidden');
 }
 
 export function showView(viewId) {
-    const normalizedViewId = normalizeId(viewId);
-    if (!normalizedViewId) {
-        return false;
+    if (typeof viewId !== 'string' || !viewId) {
+        return;
     }
 
-    const managedViews = Array.from(document.querySelectorAll('[data-view]'));
     let viewFound = false;
 
-    managedViews.forEach((viewElement) => {
-        const currentViewId = sanitizeViewId(viewElement);
-        const shouldShow = currentViewId === normalizedViewId;
-        if (shouldShow) {
-            viewFound = true;
+    MAIN_VIEW_IDS.forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) {
+            return;
         }
-        toggleViewVisibility(viewElement, shouldShow);
+
+        if (id === viewId) {
+            showElement(element);
+            viewFound = true;
+            return;
+        }
+
+        hideElement(element);
     });
 
     if (!viewFound) {
-        const fallback = document.getElementById(normalizedViewId);
-        if (fallback) {
-            toggleViewVisibility(fallback, true);
-            viewFound = true;
+        const targetElement = document.getElementById(viewId);
+        if (targetElement) {
+            showElement(targetElement);
         }
     }
-
-    if (viewFound) {
-        updateButtonState(normalizedViewId);
-    }
-
-    return viewFound;
 }
-
-export function getRegisteredViews() {
-    return Array.from(VIEW_BUTTON_MAP.keys());
-}
-

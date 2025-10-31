@@ -1,6 +1,8 @@
 import { API_URL } from './config.js';
-import { getCurrentToken, handleSessionExpiration } from './auth.js';
-import { state } from './state.js';
+import { getCurrentToken, handleSessionExpiration } from './modules/login/auth.js';
+import { state } from './modules/mantenimiento/state.js';
+
+const PUBLIC_ACTIONS = new Set(['login', 'version_info']);
 
 async function postJSON(payload) {
     if (!API_URL) {
@@ -8,11 +10,19 @@ async function postJSON(payload) {
     }
 
     const requestPayload = { ...(payload || {}) };
-    const action = typeof requestPayload.action === 'string'
+    const rawAction = typeof requestPayload.action === 'string'
         ? requestPayload.action
         : undefined;
 
-    if (action !== 'login') {
+    const action = typeof rawAction === 'string'
+        ? rawAction.trim()
+        : '';
+
+    if (action) {
+        requestPayload.action = action;
+    }
+
+    if (!PUBLIC_ACTIONS.has(action)) {
         const token = getCurrentToken();
         if (!token) {
             throw new Error('No hay una sesión activa. Por favor, ingresá de nuevo.');
@@ -130,3 +140,38 @@ export async function obtenerRemitos({ page = 1, pageSize = 20 } = {}) {
         pageSize,
     });
 }
+
+export async function crearRemito(datos) {
+    return postJSON({
+        action: 'crear_remito',
+        ...(datos ?? {}),
+    });
+}
+
+export async function actualizarRemito(datos) {
+    return postJSON({
+        action: 'actualizar_remito',
+        ...(datos ?? {}),
+    });
+}
+
+export async function eliminarRemito(remitoId) {
+    if (remitoId && typeof remitoId === 'object') {
+        return postJSON({
+            action: 'eliminar_remito',
+            ...remitoId,
+        });
+    }
+
+    return postJSON({
+        action: 'eliminar_remito',
+        remitoId,
+    });
+}
+
+export async function obtenerVersionServidor() {
+    return postJSON({
+        action: 'version_info',
+    });
+}
+

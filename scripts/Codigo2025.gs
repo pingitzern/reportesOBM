@@ -18,8 +18,7 @@ const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
 const DEFAULT_CONFIGURATION = Object.freeze({
   SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis', // ID del Spreadsheet principal
   SHEET_NAME: 'Hoja 1',                                    // pestaña de mantenimientos
-  CLIENTES_SHEET_NAME: 'clientes',                          // pestaña de clientes
-  REMITOS_SHEET_NAME: 'remitos'                             // pestaña de remitos
+  CLIENTES_SHEET_NAME: 'clientes'                           // pestaña de clientes
 });
 
 function getPropertyOrDefault(propertyName, fallback) {
@@ -27,10 +26,20 @@ function getPropertyOrDefault(propertyName, fallback) {
   return (typeof value === 'string' && value.trim()) ? value.trim() : fallback;
 }
 
+function initProperties(overrides) {
+  const defaults = {
+    SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
+    SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
+    CLIENTES_SHEET_NAME: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME
+  };
+
+  const properties = Object.assign({}, defaults, overrides || {});
+  SCRIPT_PROPERTIES.setProperties(properties, true);
+}
+
 const SHEET_ID = getPropertyOrDefault('SHEET_ID', DEFAULT_CONFIGURATION.SHEET_ID);
 const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
 const CLIENTES_SHEET_NAME = getPropertyOrDefault('CLIENTES_SHEET_NAME', DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME);
-const REMITOS_SHEET_NAME = getPropertyOrDefault('REMITOS_SHEET_NAME', DEFAULT_CONFIGURATION.REMITOS_SHEET_NAME);
 
 const SheetRepository = {
   getSpreadsheet() {
@@ -74,6 +83,102 @@ const ResponseFactory = {
       .setMimeType(ContentService.MimeType.JSON);
   }
 };
+
+
+/* =======================
+   Información de despliegue
+======================= */
+
+function extractDeploymentIdFromUrl(url) {
+  if (typeof url !== 'string' || !url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/\/s\/([a-zA-Z0-9_-]+)\/(?:exec|dev)/);
+  return match && match[1] ? match[1] : null;
+}
+
+function getScriptVersionInfo() {
+  let webAppUrl = '';
+  let deploymentId = null;
+
+  try {
+    const service = ScriptApp.getService();
+    if (service) {
+      webAppUrl = service.getUrl() || '';
+      deploymentId = extractDeploymentIdFromUrl(webAppUrl);
+    }
+  } catch (serviceError) {
+    Logger.log('No se pudo obtener la URL del web app: %s', serviceError);
+  }
+
+  let versionNumber = null;
+  let description = '';
+
+  try {
+    const deploymentInfoList = ScriptApp.getDeploymentInfo();
+    if (Array.isArray(deploymentInfoList) && deploymentInfoList.length) {
+      let targetDeployment = null;
+      if (deploymentId) {
+        targetDeployment = deploymentInfoList.find((info) => {
+          return typeof info.getDeploymentId === 'function'
+            && info.getDeploymentId() === deploymentId;
+        }) || null;
+      }
+
+      if (!targetDeployment) {
+        targetDeployment = deploymentInfoList.reduce((current, info) => {
+          if (!info || typeof info.getVersionNumber !== 'function') return current;
+          const candidateVersion = info.getVersionNumber();
+          if (typeof candidateVersion !== 'number' || isNaN(candidateVersion)) {
+            return current;
+          }
+          if (!current || typeof current.getVersionNumber !== 'function') {
+            return info;
+          }
+          const currentVersion = current.getVersionNumber();
+          if (typeof currentVersion !== 'number' || isNaN(currentVersion)) {
+            return info;
+          }
+          return candidateVersion > currentVersion ? info : current;
+        }, null);
+      }
+
+      if (targetDeployment) {
+        if (typeof targetDeployment.getVersionNumber === 'function') {
+          const number = targetDeployment.getVersionNumber();
+          if (typeof number === 'number' && !isNaN(number)) {
+            versionNumber = number;
+          }
+        }
+        if (typeof targetDeployment.getDescription === 'function') {
+          const desc = targetDeployment.getDescription();
+          if (typeof desc === 'string') {
+            description = desc.trim();
+          }
+        }
+      }
+    }
+  } catch (deploymentError) {
+    Logger.log('No se pudo obtener la información de despliegue: %s', deploymentError);
+  }
+
+  const labelParts = [];
+  if (versionNumber !== null) {
+    labelParts.push(`#${versionNumber}`);
+  }
+  if (description) {
+    labelParts.push(description);
+  }
+
+  return {
+    deploymentId: deploymentId || null,
+    versionNumber,
+    description,
+    webAppUrl: webAppUrl || '',
+    label: labelParts.join(' \u2013 '),
+    generatedAt: new Date().toISOString()
+  };
+}
 
 
 /* =======================
@@ -203,119 +308,6 @@ const ClientesService = {
 
     return clientes;
   }
-};
-
-
-/* =======================
-   RemitoService
-======================= */
-
-function normalizeRemitoHeader(header) {
-  const sanitized = sanitizeCellValue(header);
-  if (!sanitized) return null;
-
-  let ascii = sanitized;
-  if (typeof ascii.normalize === 'function') {
-    ascii = ascii.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  }
-
-  const snake = ascii
-    .replace(/[^a-zA-Z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .toLowerCase();
-
-  const camel = snake.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-
-  return {
-    original: sanitized,
-    snake,
-    camel,
-  };
-}
-
-const RemitoRepository = {
-  getSheet() {
-    if (!REMITOS_SHEET_NAME) {
-      throw new Error('Configura REMITOS_SHEET_NAME para acceder a los remitos.');
-    }
-
-    return SheetRepository.getSheetByName(REMITOS_SHEET_NAME);
-  },
-
-  findAll() {
-    const sheet = this.getSheet();
-    const values = sheet.getDataRange().getValues();
-    if (!values.length) return [];
-
-    const headers = values[0].map((value) => sanitizeCellValue(value));
-    const normalizedHeaders = headers.map((header) => normalizeRemitoHeader(header));
-
-    const remitos = [];
-
-    for (let rowIndex = 1; rowIndex < values.length; rowIndex++) {
-      const row = values[rowIndex];
-      const remito = {};
-      let hasContent = false;
-
-      normalizedHeaders.forEach((headerInfo, columnIndex) => {
-        if (!headerInfo) return;
-
-        const value = sanitizeCellValue(row[columnIndex]);
-        if (value !== '') hasContent = true;
-
-        if (headerInfo.original && remito[headerInfo.original] === undefined) {
-          remito[headerInfo.original] = value;
-        }
-
-        if (headerInfo.snake && remito[headerInfo.snake] === undefined) {
-          remito[headerInfo.snake] = value;
-        }
-
-        if (headerInfo.camel && remito[headerInfo.camel] === undefined) {
-          remito[headerInfo.camel] = value;
-        }
-      });
-
-      if (hasContent) remitos.push(remito);
-    }
-
-    return remitos;
-  },
-};
-
-function toPositiveInteger(value, fallback) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return fallback;
-  const integer = Math.floor(numeric);
-  return integer > 0 ? integer : fallback;
-}
-
-const RemitoService = {
-  obtenerRemitos(page = 1, pageSize = 20) {
-    const registros = RemitoRepository.findAll();
-    const normalizedPageSize = toPositiveInteger(pageSize, 20);
-
-    if (!registros.length) {
-      return {
-        remitos: [],
-        totalPages: 0,
-        currentPage: 0,
-      };
-    }
-
-    const totalPages = Math.ceil(registros.length / normalizedPageSize);
-    let currentPage = toPositiveInteger(page, 1);
-    if (currentPage > totalPages) currentPage = totalPages;
-
-    const startIndex = (currentPage - 1) * normalizedPageSize;
-    const endIndex = startIndex + normalizedPageSize;
-
-    return {
-      remitos: registros.slice(startIndex, endIndex),
-      totalPages,
-      currentPage,
-    };
-  },
 };
 
 
@@ -592,14 +584,6 @@ function doPost(e) {
     const { action } = data;
 
     switch (action) {
-      case 'version': {
-        return ResponseFactory.success({
-          code: 'SistemaMantenimientosRO',
-          auth: true,
-          session: true
-        });
-      }
-
       /* --------- AUTENTICACIÓN / SESIONES --------- */
       case 'login': {
         const usuario = AuthService.authenticate(data.mail, data.password);
@@ -635,6 +619,12 @@ function doPost(e) {
         return ResponseFactory.success({ usuarios: lista });
       }
 
+      case 'version_info': {
+        const versionInfo = getScriptVersionInfo();
+        Logger.log('[VERSION] %s', JSON.stringify(versionInfo));
+        return ResponseFactory.success(versionInfo);
+      }
+
       /* --------- ACCIONES PROTEGIDAS --------- */
       case 'guardar': {
         const sess = SessionService.validateSession(data.token);
@@ -665,15 +655,29 @@ function doPost(e) {
         const result = ClientesService.listar();
         return ResponseFactory.success(result);
       }
-      case 'obtener_remitos': {
-        SessionService.validateSession(data.token);
-        const result = RemitoService.obtenerRemitos(data.page, data.pageSize);
-        return ResponseFactory.success(result);
-      }
 
       case 'dashboard': {
         const sess = SessionService.validateSession(data.token);
         const result = DashboardService.obtenerDatos();
+        return ResponseFactory.success(result);
+      }
+      case 'crear_remito': {
+        const sess = SessionService.validateSession(data.token);
+        // data.reporteData debe contener el objeto completo del reporte guardado
+        // data.observaciones es el texto que el técnico añade en la vista del remito
+        const result = RemitoService.crearRemito(
+          data.reporteData,
+          data.observaciones,
+          sess.mail,
+          data.fotos
+        );
+        return ResponseFactory.success(result);
+      }
+      case 'obtener_remitos': {
+        const sess = SessionService.validateSession(data.token); // Validar sesión
+        const page = data.page || 1; // Obtener página de la solicitud, por defecto 1
+        const pageSize = data.pageSize || 20; // Obtener tamaño de página, por defecto 20
+        const result = RemitoService.obtenerRemitos(page, pageSize);
         return ResponseFactory.success(result);
       }
 
@@ -698,6 +702,11 @@ function doGet(e) {
     if (action === 'clientes') {
       SessionService.validateSession(params.token);
       return ResponseFactory.success(ClientesService.listar());
+    }
+    if (action === 'version_info') {
+      const versionInfo = getScriptVersionInfo();
+      Logger.log('[VERSION][GET] %s', JSON.stringify(versionInfo));
+      return ResponseFactory.success(versionInfo);
     }
     // healthcheck
     return ResponseFactory.success({ message: 'API viva' });

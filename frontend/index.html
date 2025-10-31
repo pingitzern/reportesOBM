@@ -9,14 +9,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 </head>
 <body class="bg-gray-100">
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+    <div id="main-view" class="container mx-auto p-4 md:p-8 max-w-7xl">
         <header class="relative flex flex-wrap items-center justify-between gap-4 mb-8 no-print">
             <div class="order-1 flex-shrink-0">
                 <img src="/OHM-agua.png" alt="Logo OHM Agua" class="h-14 w-auto md:h-16">
             </div>
             <div class="order-3 w-full text-center md:order-2 md:flex-1">
-                <h1 class="text-3xl font-bold text-gray-800">Sistema de Gestión de Mantenimientos RO</h1>
-                <p class="text-gray-600 mt-2">ID del Protocolo: PMA-RO-RES-12</p>
+                <h1 class="text-2xl font-bold text-gray-800 md:text-3xl lg:text-4xl">Sistema de Gestión de Mantenimientos RO</h1>
+                <p class="mt-2 text-sm text-gray-600 md:text-base">ID del Protocolo: PMA-RO-RES-12</p>
             </div>
             <div class="order-2 md:order-3 relative ml-auto flex items-center gap-3">
                 <div id="auth-user-panel" class="hidden whitespace-nowrap text-sm font-medium text-gray-700">
@@ -33,11 +33,25 @@
                     <nav class="user-menu__content" aria-label="Opciones de usuario">
                         <a href="#" class="user-menu__item" role="menuitem">Ayuda</a>
                         <a href="#" class="user-menu__item" role="menuitem">Configuración</a>
+                        <div class="user-menu__item user-menu__toggle" role="none">
+                            <div class="user-menu__toggle-info">
+                                <span class="user-menu__toggle-label">Modo oscuro</span>
+                                <span class="user-menu__toggle-state" id="theme-toggle-state" data-theme-state>Desactivado</span>
+                            </div>
+                            <label for="theme-toggle" class="toggle-switch" aria-label="Cambiar modo oscuro">
+                                <input type="checkbox" id="theme-toggle" class="toggle-switch-input" role="switch" aria-checked="false" aria-describedby="theme-toggle-state">
+                                <span class="toggle-switch-slider" aria-hidden="true"></span>
+                            </label>
+                        </div>
                         <button id="logout-button" type="button" class="user-menu__item user-menu__logout" role="menuitem" disabled>
                             Cerrar Sesión
                         </button>
                     </nav>
                 </div>
+            </div>
+            <div class="order-4 w-full text-xs text-gray-500 md:order-4 md:w-auto md:text-right flex flex-col items-center gap-1 md:items-end">
+                <p id="app-version" class="hidden"></p>
+                <p id="script-version" class="hidden"></p>
             </div>
         </header>
 
@@ -51,16 +65,16 @@
         </div>
 
         <!-- Navegación por pestañas - SIN onclick -->
-        <div class="flex space-x-1 mb-6 no-print">
+        <div class="flex flex-wrap justify-center gap-2 mb-6 no-print md:justify-start">
             <button class="tab-button active" id="tab-nuevo-btn">Nuevo Mantenimiento</button>
             <button class="tab-button" id="tab-buscar-btn">Buscar/Editar</button>
             <button class="tab-button" id="tab-dashboard-btn">Dashboard</button>
             <button class="tab-button" id="nav-remitos-btn">Remitos</button>
         </div>
 
+        <div class="space-y-8" id="main-content">
         <!-- Pestaña: Nuevo Mantenimiento -->
-        <div id="tab-nuevo" class="tab-content" data-view="tab-nuevo">
-            <div id="maintenance-view">
+        <section id="tab-nuevo" class="tab-content">
             <form id="maintenance-form">
                 <!-- Sección A: Datos del Servicio y del Equipo -->
 
@@ -87,15 +101,15 @@
                                     </div>
                                     <div class="input-group flex flex-col gap-1">
                                         <label for="cliente_telefono" class="font-semibold text-gray-700">Teléfono:</label>
-                                        <input type="text" id="cliente_telefono" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                        <input type="text" id="cliente_telefono" name="cliente_telefono" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                                     </div>
                                     <div class="input-group flex flex-col gap-1">
                                         <label for="cliente_email" class="font-semibold text-gray-700">Email:</label>
-                                        <input type="text" id="cliente_email" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                        <input type="text" id="cliente_email" name="cliente_email" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                                     </div>
                                     <div class="input-group flex flex-col gap-1">
                                         <label for="cliente_cuit" class="font-semibold text-gray-700">CUIT:</label>
-                                        <input type="text" id="cliente_cuit" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
+                                        <input type="text" id="cliente_cuit" name="cliente_cuit" value="" data-auto-resize class="w-full border border-gray-300 rounded px-3 py-2">
                                     </div>
                                 </div>
                             </div>
@@ -275,7 +289,7 @@
                                     <input type="text" class="w-full stage-details">
                                 </div>
                                 <div class="sm:col-span-2">
-                                    <div class="stage-actions flex items-center gap-3"></div>
+                                    <div class="stage-actions flex flex-wrap items-center gap-2"></div>
                                 </div>
                             </div>
                         </template>
@@ -338,40 +352,17 @@
                 </div>
 
                 <!-- Botones de Acción -->
-                <div class="flex flex-wrap justify-end gap-3 mt-8 no-print">
-                    <button type="button" id="resetButton" class="action-button reset-btn">Limpiar Formulario</button>
-                    <button type="button" id="generarRemitoButton" class="action-button print-btn">Generar Remito</button>
-                    <button type="button" id="guardarButton" class="action-button print-btn">Guardar y Generar Reporte</button>
+                <div class="flex flex-col gap-3 mt-8 no-print sm:flex-row sm:justify-end sm:gap-4">
+                    <button type="button" id="autoFillButton" class="action-button reset-btn w-full sm:w-auto">Auto Rellenar</button>
+                    <button type="button" id="resetButton" class="action-button reset-btn w-full sm:w-auto">Limpiar Formulario</button>
+                    <button type="button" id="guardarButton" class="action-button print-btn w-full sm:w-auto">Guardar y Generar Reporte</button>
+                    <button type="button" id="generar-remito-btn" class="action-button print-btn w-full sm:w-auto" disabled>Generar Remito</button>
                 </div>
             </form>
-            </div>
-
-            <div id="remito-view" class="hidden space-y-6">
-                <div class="form-card">
-                    <div class="form-section">
-                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                            <div>
-                                <h2 class="text-2xl font-bold text-gray-800">Remito de Entrega</h2>
-                                <p class="text-gray-600 mt-1">Documento generado a partir del mantenimiento registrado.</p>
-                                <p class="text-gray-600 mt-2">
-                                    Reporte <span id="remito-report-number" class="font-semibold"></span>
-                                    &bull; Fecha del servicio: <span id="remito-report-date" class="font-semibold"></span>
-                                </p>
-                            </div>
-                            <div class="flex flex-wrap gap-3 no-print">
-                                <button type="button" id="volverFormularioButton" class="action-button reset-btn">Volver al Formulario</button>
-                                <button type="button" id="imprimirRemitoButton" class="action-button print-btn">Imprimir Remito</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="remito-sections" class="space-y-6"></div>
-            </div>
-        </div>
+        </section><!-- /tab-nuevo -->
 
         <!-- Pestaña: Buscar/Editar -->
-        <div id="tab-buscar" class="tab-content hidden" data-view="tab-buscar">
+        <section id="tab-buscar" class="tab-content hidden">
             <div class="form-section">
                 <h2>Buscar Mantenimientos</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -431,10 +422,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Pestaña: Dashboard -->
-        <div id="tab-dashboard" class="tab-content hidden" data-view="tab-dashboard">
+        <section id="tab-dashboard" class="tab-content hidden">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div class="dashboard-card">
                     <h3 class="text-lg font-semibold mb-2">Total Mantenimientos</h3>
@@ -483,25 +474,146 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div id="remitos-gestion-view" class="hidden" data-view="remitos-gestion-view">
-            <div class="form-card">
-                <div class="form-section">
-                    <h2 class="text-2xl font-bold text-gray-800">Gestión de Remitos</h2>
-                    <p class="text-gray-600 mt-2">Consulta, navega y administrá los remitos generados desde el sistema.</p>
+        <section id="remito-view" class="tab-content hidden">
+            <div class="max-w-5xl mx-auto">
+                <div class="bg-white shadow-lg rounded-3xl p-8 mb-8 border border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800">Generación de Remito</h2>
+                    <p class="mt-2 text-sm text-gray-500">Verificá la información antes de finalizar y guardar el remito.</p>
                 </div>
-            </div>
 
-            <div class="form-card">
-                <div class="form-section space-y-4">
-                    <div id="remitos-listado" class="overflow-x-auto text-sm text-gray-700">
-                        <p class="text-gray-500">Seleccioná "Remitos" para cargar el listado.</p>
+                <form id="remito-form" class="space-y-6">
+                    <section class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                            <label for="remito-numero" class="block text-sm font-semibold text-gray-600">Número de Remito</label>
+                            <input id="remito-numero" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                            <label for="remito-fecha" class="block text-sm font-semibold text-gray-600">Fecha</label>
+                            <input id="remito-fecha" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                        </div>
+                    </section>
+
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Datos del Cliente</h3>
+                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="remito-cliente-nombre" class="block text-sm font-semibold text-gray-600">Razón Social</label>
+                                <input id="remito-cliente-nombre" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-cliente-direccion" class="block text-sm font-semibold text-gray-600">Dirección</label>
+                                <input id="remito-cliente-direccion" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-cliente-telefono" class="block text-sm font-semibold text-gray-600">Teléfono</label>
+                                <input id="remito-cliente-telefono" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-cliente-email" class="block text-sm font-semibold text-gray-600">Email</label>
+                                <input id="remito-cliente-email" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-cliente-cuit" class="block text-sm font-semibold text-gray-600">CUIT</label>
+                                <input id="remito-cliente-cuit" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Datos del Equipo</h3>
+                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <label for="remito-equipo-descripcion" class="block text-sm font-semibold text-gray-600">Equipo / Descripción</label>
+                                <input id="remito-equipo-descripcion" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-modelo" class="block text-sm font-semibold text-gray-600">Modelo</label>
+                                <input id="remito-equipo-modelo" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-serie" class="block text-sm font-semibold text-gray-600">Número de Serie</label>
+                                <input id="remito-equipo-serie" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-interno" class="block text-sm font-semibold text-gray-600">ID Interna / Activo</label>
+                                <input id="remito-equipo-interno" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-ubicacion" class="block text-sm font-semibold text-gray-600">Ubicación</label>
+                                <input id="remito-equipo-ubicacion" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                            <div>
+                                <label for="remito-equipo-tecnico" class="block text-sm font-semibold text-gray-600">Técnico Responsable</label>
+                                <input id="remito-equipo-tecnico" type="text" readonly class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Listado de Repuestos</h3>
+                                <p class="text-sm text-gray-500">Detalle de los repuestos utilizados durante el servicio.</p>
+                            </div>
+                            <button
+                                type="button"
+                                id="remito-agregar-repuesto"
+                                class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg font-semibold text-sm bg-blue-600 text-white shadow-sm transition-colors duration-150 ease-out hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+                            >
+                                Agregar repuesto
+                            </button>
+                        </div>
+                        <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200 remito-repuestos-table">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Código</th>
+                                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Descripción</th>
+                                        <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Cantidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="remito-repuestos-body" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex flex-col gap-1">
+                            <h3 class="text-lg font-semibold text-gray-800">Fotos del servicio</h3>
+                            <p class="text-sm text-gray-500">Podés subir hasta cuatro imágenes. Cada archivo puede pesar hasta 5 MB.</p>
+                        </div>
+                        <div id="remito-fotos-container" class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2"></div>
+                    </section>
+
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <label for="remito-observaciones" class="block text-lg font-semibold text-gray-800">Observaciones</label>
+                        <textarea id="remito-observaciones" class="mt-4 w-full border border-gray-300 rounded-lg p-4 text-gray-700 min-h-[160px]" placeholder="Agregá observaciones o comentarios relevantes"></textarea>
+                    </section>
+
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <p class="text-sm text-gray-500">Al finalizar, el número de remito quedará registrado en esta pantalla.</p>
+                        <div class="flex flex-col items-stretch gap-3 md:flex-row md:items-center md:justify-end md:gap-3">
+                            <button type="button" id="finalizar-remito-btn" class="action-button md:order-2">Finalizar y Guardar Remito</button>
+                            <button type="button" id="imprimir-remito-btn" class="action-button print-btn hidden md:order-1">Imprimir remito</button>
+                        </div>
                     </div>
-                    <div id="remitos-pagination" class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"></div>
-                </div>
+                </form>
             </div>
-        </div>
+        </section>
+
+        <section id="remitos-gestion-view" class="tab-content hidden">
+            <div class="max-w-6xl mx-auto">
+                <div class="bg-white shadow-lg rounded-3xl p-8 mb-6 border border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800">Gestión de Remitos</h2>
+                    <p class="mt-2 text-sm text-gray-500">Consultá, filtrá y accedé al detalle de los remitos generados.</p>
+                </div>
+
+                <div id="remitos-gestion-container" class="space-y-6"></div>
+            </div>
+        </section>
         </div>
     </div>
 
@@ -531,7 +643,7 @@
 
     <script>
         window.__APP_CONFIG__ = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbxKwEuv3OlUB0tvYeZpy3_msHiSyDl9rjeTf9xCWOSMtBB05WO9jcAqTdjWtAHz8b3Y7g/exec'
+            API_URL: 'https://script.google.com/macros/s/AKfycbzRS1Oztl3shgHXn1dJw8v41xoCAHMtrD0V_26QOTzIcvg09ZcnHUHPvOYJF54QjOAWVg/exec'
         };
     </script>
     <script type="module" src="./js/main.js"></script>
