@@ -28,6 +28,7 @@ describe('handleGuardarClick', () => {
 
         jest.unstable_mockModule('../forms.js', () => ({
             configureClientSelect: jest.fn(),
+            autoFillForm: jest.fn(),
             generateReportNumber: generateReportNumberMock,
             getFormData: getFormDataMock,
             initializeForm: jest.fn(),
