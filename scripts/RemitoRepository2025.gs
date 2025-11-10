@@ -1,3 +1,15 @@
+function migrarRemitosFotos2025() {
+  const ns = this.OBM = this.OBM || {};
+  if (typeof ns.migrarRemitosFotos2025 !== 'function') {
+    throw new Error('OBM.migrarRemitosFotos2025 is not defined');
+  }
+  return ns.migrarRemitosFotos2025();
+}
+
+(function(global) {
+  (function(ns) {
+    'use strict';
+
 // Contenido para RemitoRepository.gs
 
 const REMITOS_SHEET_NAME = 'remitos';
@@ -15,7 +27,7 @@ const RemitoRepository = {
    * Obtiene la hoja de Remitos. Si no existe, la crea con los encabezados.
    */
   getSheet_() {
-    const ss = SheetRepository.getSpreadsheet();
+    const ss = ns.SheetRepository.getSpreadsheet();
     let sheet = ss.getSheetByName(REMITOS_SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(REMITOS_SHEET_NAME);
@@ -160,7 +172,7 @@ const RemitoRepository = {
  * queden ordenadas según REMITOS_HEADERS.
  */
 function migrarRemitosFotos2025() {
-  const ss = SheetRepository.getSpreadsheet();
+  const ss = ns.SheetRepository.getSpreadsheet();
   const sheet = ss.getSheetByName(REMITOS_SHEET_NAME);
 
   if (!sheet) {
@@ -229,3 +241,11 @@ function migrarRemitosFotos2025() {
 
   Logger.log('Migración de columnas de remitos completada. Filas actualizadas: %s', newData.length - 1);
 }
+
+
+    ns.REMITOS_SHEET_NAME = REMITOS_SHEET_NAME;
+    ns.REMITOS_HEADERS = REMITOS_HEADERS;
+    ns.RemitoRepository = RemitoRepository;
+    ns.migrarRemitosFotos2025 = migrarRemitosFotos2025;
+  })(global.OBM = global.OBM || {});
+})(typeof window !== 'undefined' ? window : this);
