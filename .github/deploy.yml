@@ -1,0 +1,27 @@
+name: Deploy to Google Apps Script
+
+on:
+  push:
+    branches:
+      - feat/remitos-alternativo  # O la rama que uses, ej: master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Usamos una versión LTS de Node
+
+      - name: Install clasp
+        run: npm install -g @google/clasp
+
+      - name: Create clasprc.json
+        run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
+
+      - name: Push to Apps Script
+        run: clasp push --force
