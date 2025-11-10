@@ -3,7 +3,7 @@ name: Deploy to Google Apps Script
 on:
   push:
     branches:
-      - feat/remitos-alternativo  # O la rama que uses, ej: master
+      - feat/remitos-alternativo # Solo desplegar desde esta rama de feature
 
 jobs:
   deploy:
@@ -15,17 +15,23 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # Usamos una versión LTS de Node
+          node-version: '18'
 
-      - name: Install clasp
-        run: npm install -g @google/clasp
+      # ----- CAMBIO 1: Forzamos la versión 3.1.1 -----
+      - name: Install clasp (v3.1.1)
+        run: npm install -g @google/clasp@3.1.1
 
-      - name: Create clasprc.json
+      # ----- CAMBIO 2: Agregamos pasos de depuración -----
+      - name: Create clasprc.json and Debug
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: |
           echo "$CLASPRC_JSON" > ~/.clasprc.json
-          cat ~/.clasprc.json
+          echo "--- Verifying .clasprc.json ---"
+          ls -la ~/.clasprc.json
+          echo "--- File Start (first 20 chars) ---"
+          head -c 20 ~/.clasprc.json
+          echo "------------------------------------"
 
       - name: Push to Apps Script
         run: clasp push --force
