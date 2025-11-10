@@ -157,3 +157,9 @@ Para entornos de desarrollo compartidos mantenemos una cuenta administrativa de 
 7. **Revisión y despliegue:** atiende comentarios de revisión, actualiza el Apps Script y la configuración de `API_URL` en los entornos necesarios una vez fusionado el cambio.
 
 Mantén la coherencia entre el frontend y la hoja de cálculo: los campos que se envían desde `frontend/js/forms.js` deben coincidir con los encabezados definidos en `scripts/Codigo2025.gs` para evitar errores en producción.
+
+## CI: Trigger deploy test
+
+Este cambio se usa únicamente para disparar el workflow de despliegue en la rama
+`feat/remitos-alternativo` y comprobar que `clasp push --force` se ejecuta correctamente.
+Fecha de trigger: 2025-11-10
