@@ -769,6 +769,11 @@ const RemitoService = {
         if (sendResult.message) {
           emailStatus.message = String(sendResult.message);
         }
+        // Exponer el id del PDF guardado en Drive (si el workflow lo devolvió)
+        if (sendResult.pdfDriveId) {
+          emailStatus.pdfDriveId = String(sendResult.pdfDriveId);
+          remito.pdfDriveId = String(sendResult.pdfDriveId);
+        }
       } else if (sendResult === true) {
         emailStatus.sent = true;
       }
@@ -1463,9 +1468,14 @@ const RemitoService = {
       name: 'Remitos OBM',
     };
 
+    let savedPdfId = null;
     if (pdf) {
       opciones.attachments = [pdf];
-      this.saveRemitoPdfToDrive_(pdf, remito);
+      try {
+        savedPdfId = this.saveRemitoPdfToDrive_(pdf, remito) || null;
+      } catch (saveErr) {
+        Logger.log('Error guardando PDF en Drive antes de enviar email: %s', saveErr);
+      }
     }
 
     MailApp.sendEmail(destinatario, subject, body, opciones);
@@ -1473,6 +1483,7 @@ const RemitoService = {
     return {
       sent: true,
       skipped: false,
+      pdfDriveId: savedPdfId,
     };
   },
 
