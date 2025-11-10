@@ -1,3 +1,15 @@
+function dailySessionsCleanup() {
+  const ns = this.OBM = this.OBM || {};
+  if (typeof ns.dailySessionsCleanup !== 'function') {
+    throw new Error('OBM.dailySessionsCleanup is not defined');
+  }
+  return ns.dailySessionsCleanup();
+}
+
+(function(global) {
+  (function(ns) {
+    'use strict';
+
 const SessionService = {
   // guardamos sesiones en la MISMA planilla, pestaña 'sessions'
   SHEET_NAME: 'sessions',
@@ -7,7 +19,7 @@ const SessionService = {
   CLEAN_KEEP_DAYS: 7,      // borrar sesiones expiradas hace > 7 días
 
   getSheet_() {
-    const ss = SheetRepository.getSpreadsheet();
+    const ss = ns.SheetRepository.getSpreadsheet();
     let sheet = ss.getSheetByName(this.SHEET_NAME);
     if (!sheet) {
       sheet = ss.insertSheet(this.SHEET_NAME);
@@ -148,3 +160,9 @@ function dailySessionsCleanup() {
   const removed = SessionService.cleanExpiredSessions();
   console.log('Sesiones limpiadas:', removed);
 }
+
+
+    ns.SessionService = SessionService;
+    ns.dailySessionsCleanup = dailySessionsCleanup;
+  })(global.OBM = global.OBM || {});
+})(typeof window !== 'undefined' ? window : this);

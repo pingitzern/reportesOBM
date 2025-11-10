@@ -1,3 +1,7 @@
+(function(global) {
+  (function(ns) {
+    'use strict';
+
 // Contenido para RemitoService.gs
 const REMITO_FOTOS_FOLDER_ID = '1SH7Zz7g_2sbYsFHMfVQj3Admdy8L3FVz';
 const MAX_REMITO_FOTOS = 4;
@@ -681,7 +685,7 @@ const RemitoService = {
    */
   crearRemito(reporteData, observaciones, usuarioMail, fotos) {
     // 1. Generar datos únicos para el remito
-    const siguienteNumero = RemitoRepository.getNextRemitoNumber();
+    const siguienteNumero = ns.RemitoRepository.getNextRemitoNumber();
     const fechaCreacion = new Date();
     const idUnico = Utilities.getUuid(); // Un ID único para el registro del remito
 
@@ -748,7 +752,7 @@ const RemitoService = {
     ];
 
     // 5. GUARDAR EL REMITO REALMENTE EN LA HOJA DE CÁLCULO
-    RemitoRepository.guardar(remitoRowData);
+    ns.RemitoRepository.guardar(remitoRowData);
 
     // 6. Notificar por correo electrónico con un resumen y el remito en PDF.
     const emailStatus = {
@@ -1479,9 +1483,9 @@ const RemitoService = {
    * @returns {object} Un objeto con los remitos, total de páginas y página actual.
    */
   obtenerRemitos(page = 1, pageSize = 20) {
-    const sheet = RemitoRepository.getSheet_();
+    const sheet = ns.RemitoRepository.getSheet_();
     const lastRow = sheet.getLastRow();
-    const headers = RemitoRepository.getHeaders();
+    const headers = ns.RemitoRepository.getHeaders();
 
     // Si solo hay encabezados o no hay datos, devolver un objeto vacío
     if (lastRow < 2) { 
@@ -1555,3 +1559,15 @@ const RemitoService = {
     };
   }
 };
+
+
+    ns.REMITO_FOTOS_FOLDER_ID = REMITO_FOTOS_FOLDER_ID;
+    ns.MAX_REMITO_FOTOS = MAX_REMITO_FOTOS;
+    ns.COMPONENT_STAGE_TITLES = COMPONENT_STAGE_TITLES;
+    ns.REPLACEMENT_KEYWORDS = REPLACEMENT_KEYWORDS;
+    ns.REMITO_NOTIFICATIONS_EMAIL = REMITO_NOTIFICATIONS_EMAIL;
+    ns.REMITO_PDF_FOLDER_ID = REMITO_PDF_FOLDER_ID;
+    ns.REMITO_PDF_LOGO_URL = REMITO_PDF_LOGO_URL;
+    ns.RemitoService = RemitoService;
+  })(global.OBM = global.OBM || {});
+})(typeof window !== 'undefined' ? window : this);
