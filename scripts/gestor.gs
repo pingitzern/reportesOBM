@@ -4,17 +4,21 @@ const _json = (payload) =>
   ContentService.createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
 
-const SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
+if (typeof SCRIPT_PROPERTIES === 'undefined') {
+  var SCRIPT_PROPERTIES = PropertiesService.getScriptProperties();
+}
 const AUTHORIZED_USERS_PROPERTY = 'AUTHORIZED_USERS';
 const CLIENTES_SHEET_NAME_PROPERTY = 'CLIENTES_SHEET_NAME';
 const REMITOS_SHEET_NAME_PROPERTY = 'REMITOS_SHEET_NAME';
 
-const DEFAULT_CONFIGURATION = Object.freeze({
-  SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
-  SHEET_NAME: 'Hoja 1',
-  CLIENTES_SHEET_NAME: 'clientes',
-  REMITOS_SHEET_NAME: 'remitos'
-});
+if (typeof DEFAULT_CONFIGURATION === 'undefined') {
+  var DEFAULT_CONFIGURATION = Object.freeze({
+    SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
+    SHEET_NAME: 'Hoja 1',
+    CLIENTES_SHEET_NAME: 'clientes',
+    REMITOS_SHEET_NAME: 'remitos'
+  });
+}
 
 const DEFAULT_AUTHORIZED_USERS = Object.freeze([
   { usuario: 'pingitzernicolas@gmail.com', token: '12345ABCD' }
@@ -62,9 +66,12 @@ const REMITOS_SHEET_NAME = getPropertyOrDefault(
   DEFAULT_CONFIGURATION.REMITOS_SHEET_NAME
 );
 
-const CLIENTES_HEADERS = Object.freeze(['Nombre', 'Direccion', 'Telefono', 'Mail', 'CUIT']);
+if (typeof CLIENTES_HEADERS === 'undefined') {
+  var CLIENTES_HEADERS = Object.freeze(['Nombre', 'Direccion', 'Telefono', 'Mail', 'CUIT']);
+}
 
-const CAMPOS_ACTUALIZABLES = [
+if (typeof CAMPOS_ACTUALIZABLES === 'undefined') {
+  var CAMPOS_ACTUALIZABLES = [
   'Cliente', 'Fecha_Servicio', 'Direccion', 'Tecnico_Asignado', 'Modelo_Equipo',
   'ID_Interna_Activo', 'Numero_Serie', 'Proximo_Mantenimiento', 'Fugas_Visibles_Found',
   'Fugas_Visibles_Left', 'Conductividad_Red_Found', 'Conductividad_Red_Left',
@@ -78,7 +85,8 @@ const CAMPOS_ACTUALIZABLES = [
   'Etapa3_Detalles', 'Etapa3_Accion', 'Etapa4_Detalles', 'Etapa4_Accion',
   'Etapa5_Detalles', 'Etapa5_Accion', 'Etapa6_Detalles', 'Etapa6_Accion',
   'Sanitizacion_Sistema', 'Resumen_Recomendaciones'
-];
+  ];
+}
 
 const AuthService = {
   getAuthorizedUsers() {
@@ -191,18 +199,20 @@ const SheetRepository = {
   }
 };
 
-const ResponseFactory = {
-  success(data) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ result: 'success', data }))
-      .setMimeType(ContentService.MimeType.JSON);
-  },
-  error(error) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ result: 'error', error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-};
+if (typeof ResponseFactory === 'undefined') {
+  var ResponseFactory = {
+    success(data) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ result: 'success', data }))
+        .setMimeType(ContentService.MimeType.JSON);
+    },
+    error(error) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ result: 'error', error: error.toString() }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  };
+}
 
 const CLIENTES_FIELD_MAP = Object.freeze({
   Nombre: 'nombre',
