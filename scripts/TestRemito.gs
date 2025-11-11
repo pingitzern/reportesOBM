@@ -26,7 +26,17 @@ function testCrearRemito() {
       const usuarioMail = Session.getActiveUser().getEmail ? Session.getActiveUser().getEmail() : 'test@example.com';
 
       try {
-        const remito = ns.RemitoService.crearRemito(reporteData, observaciones, usuarioMail, []);
+        // Añadimos una foto de prueba (1x1 PNG) para validar la subida a Drive
+        const sampleBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn0B9WlH6YIAAAAASUVORK5CYII=';
+        const fotos = [
+          {
+            base64Data: 'data:image/png;base64,' + sampleBase64,
+            fileName: 'foto-prueba.png',
+            mimeType: 'image/png'
+          }
+        ];
+
+        const remito = ns.RemitoService.crearRemito(reporteData, observaciones, usuarioMail, fotos);
         Logger.log('Remito creado OK: %s', JSON.stringify(remito));
         return remito;
       } catch (e) {
