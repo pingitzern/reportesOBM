@@ -160,6 +160,8 @@ Mantén la coherencia entre el frontend y la hoja de cálculo: los campos que se
 
 ## CI: Trigger deploy test
 
-Este cambio se usa únicamente para disparar el workflow de despliegue en la rama
-`feat/remitos-alternativo` y comprobar que `clasp push --force` se ejecuta correctamente.
+Este bloque documenta el disparador manual que se utilizó para verificar el workflow
+de despliegue cuando solo corría en una rama de pruebas. Desde ahora el workflow de
+Apps Script se ejecuta automáticamente en `main`, por lo que no es necesario repetir
+el trigger ad-hoc.
 Fecha de trigger: 2025-11-10
