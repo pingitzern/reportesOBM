@@ -1,0 +1,10 @@
+#!/bin/sh
+# Husky pre-push hook — push Apps Script before allowing git push
+echo "Running clasp push to sync local Apps Script files..."
+if npx --no-install @google/clasp push --force; then
+  echo "clasp push succeeded. Proceeding with git push."
+  exit 0
+else
+  echo "clasp push failed. Aborting git push. Check your authentication and .clasp.json." >&2
+  exit 1
+fi

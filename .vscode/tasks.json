@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "clasp:push",
+			"problemMatcher": [],
+			"label": "npm: clasp:push",
+			"detail": "npx @google/clasp push --force"
+		}
+	]
+}

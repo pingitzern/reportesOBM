@@ -36,8 +36,8 @@ Los módulos se cargan desde `frontend/index.html` mediante `<script type="modul
 - `Codigo2025.gs`: implementa el router principal del backend en Google Apps Script. Define el contrato de datos con la hoja de cálculo, operaciones CRUD, los agregados que alimentan el dashboard y delega la autenticación y manejo de remitos a los servicios específicos.
 - `AuthService.gs`: encapsula la autenticación contra la pestaña `login` del spreadsheet.
 - `SessionService.gs`: gestiona los tokens temporales para el frontend (creación, validación, limpieza periódica) almacenados en la pestaña `sessions`.
-- `RemitoRepository2025.gs`: funciones utilitarias para manipular la hoja donde se guardan los remitos y para generar numeración correlativa. La hoja `remitos` añade la columna `PdfURL` para almacenar el enlace directo al PDF generado automáticamente.
-- `RemitoService2025.gs`: compone y persiste los remitos a partir de reportes existentes, maneja la subida de fotografías al Drive configurado y genera un PDF por cada remito. Asegurate de establecer los identificadores `REMITO_FOTOS_FOLDER_ID` y `REMITO_PDF_FOLDER_ID` con las carpetas de Google Drive donde se almacenarán las imágenes y los documentos respectivamente.
+- `RemitoRepository2025.gs`: funciones utilitarias para manipular la hoja donde se guardan los remitos, para generar numeración correlativa y para alinear las columnas destinadas a fotos.
+- `RemitoService2025.gs`: compone y persiste los remitos a partir de reportes existentes y maneja la subida de fotografías al Drive configurado. El PDF final se genera desde el frontend y se descarga localmente mediante la vista de impresión del navegador.
 
 ## Configuración de Google Sheets y Apps Script
 
@@ -104,7 +104,7 @@ La aplicación necesita conocer la URL publicada en el paso anterior. Puedes con
   ```html
   <script>
     window.__APP_CONFIG__ = {
-      API_URL: 'https://script.google.com/macros/s/.../exec',
+      API_URL: 'https://script.google.com/macros/s/AKfycbzRS1Oztl3shgHXn1dJw8v41xoCAHMtrD0V_26QOTzIcvg09ZcnHUHPvOYJF54QjOAWVg/exec',
     };
   </script>
   <script type="module" src="frontend/js/main.js"></script>
@@ -157,3 +157,11 @@ Para entornos de desarrollo compartidos mantenemos una cuenta administrativa de 
 7. **Revisión y despliegue:** atiende comentarios de revisión, actualiza el Apps Script y la configuración de `API_URL` en los entornos necesarios una vez fusionado el cambio.
 
 Mantén la coherencia entre el frontend y la hoja de cálculo: los campos que se envían desde `frontend/js/forms.js` deben coincidir con los encabezados definidos en `scripts/Codigo2025.gs` para evitar errores en producción.
+
+## CI: Trigger deploy test
+
+Este bloque documenta el disparador manual que se utilizó para verificar el workflow
+de despliegue cuando solo corría en una rama de pruebas. Desde ahora el workflow de
+Apps Script se ejecuta automáticamente en `main`, por lo que no es necesario repetir
+el trigger ad-hoc.
+Fecha de trigger: 2025-11-10

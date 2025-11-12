@@ -49,6 +49,10 @@
                     </nav>
                 </div>
             </div>
+            <div class="order-4 w-full text-xs text-gray-500 md:order-4 md:w-auto md:text-right flex flex-col items-center gap-1 md:items-end">
+                <p id="app-version" class="hidden"></p>
+                <p id="script-version" class="hidden"></p>
+            </div>
         </header>
 
 
@@ -591,7 +595,10 @@
 
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <p class="text-sm text-gray-500">Al finalizar, el número de remito quedará registrado en esta pantalla.</p>
-                        <button type="button" id="finalizar-remito-btn" class="action-button">Finalizar y Guardar Remito</button>
+                        <div class="flex flex-col items-stretch gap-3 md:flex-row md:items-center md:justify-end md:gap-3">
+                            <button type="button" id="finalizar-remito-btn" class="action-button md:order-2">Finalizar y Guardar Remito</button>
+                            <button type="button" id="imprimir-remito-btn" class="action-button print-btn hidden md:order-1">Imprimir remito</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -636,7 +643,7 @@
 
     <script>
         window.__APP_CONFIG__ = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbxKwEuv3OlUB0tvYeZpy3_msHiSyDl9rjeTf9xCWOSMtBB05WO9jcAqTdjWtAHz8b3Y7g/exec'
+            API_URL: 'https://script.google.com/macros/s/AKfycbxNjVlAhbYIxYz-wz5oQwYsUleKajXiBLWy7WOfN4dBVp9ksSUoUYnVzxtDbpHn2zqFOA/exec'
         };
     </script>
     <script type="module" src="./js/main.js"></script>

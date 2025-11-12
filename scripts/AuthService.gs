@@ -1,8 +1,12 @@
+(function(global) {
+  (function(ns) {
+    'use strict';
+
 const AuthService = {
   LOGIN_SHEET_NAME: 'login',
 
   getLoginSheet_() {
-    const ss = SheetRepository.getSpreadsheet();
+    const ss = ns.SheetRepository.getSpreadsheet();
     const sheet = ss.getSheetByName(this.LOGIN_SHEET_NAME);
     if (!sheet) throw new Error("No se encontró la hoja 'login'.");
     return sheet;
@@ -78,3 +82,8 @@ const AuthService = {
       }));
   }
 };
+
+
+    ns.AuthService = AuthService;
+  })(global.OBM = global.OBM || {});
+})(typeof window !== 'undefined' ? window : this);

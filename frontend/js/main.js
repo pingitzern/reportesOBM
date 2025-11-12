@@ -21,6 +21,7 @@ const {
     crearRemito,
     actualizarRemito,
     eliminarRemito,
+    obtenerVersionServidor,
 } = api;
 
 initializeTheme();
@@ -78,6 +79,20 @@ const appModules = {
     remitosGestion: remitosGestionModule,
 };
 
+function setTextOrHide(element, text) {
+    if (!element) {
+        return;
+    }
+
+    if (typeof text === 'string' && text.trim()) {
+        element.textContent = text.trim();
+        element.classList.remove('hidden');
+    } else {
+        element.textContent = '';
+        element.classList.add('hidden');
+    }
+}
+
 function showAppVersion() {
     const versionElement = document.getElementById('app-version');
     if (!versionElement) {
@@ -87,14 +102,84 @@ function showAppVersion() {
     if (typeof __APP_VERSION__ !== 'undefined') {
         const versionValue = `${__APP_VERSION__}`.trim();
         if (versionValue) {
-            versionElement.textContent = `Versión ${versionValue}`;
-            versionElement.classList.remove('hidden');
+            setTextOrHide(versionElement, `Frontend v${versionValue}`);
             return;
         }
     }
 
-    versionElement.textContent = '';
-    versionElement.classList.add('hidden');
+    setTextOrHide(versionElement, '');
+}
+
+function formatScriptVersion(rawInfo) {
+    if (!rawInfo) {
+        return '';
+    }
+
+    if (typeof rawInfo === 'string') {
+        const trimmed = rawInfo.trim();
+        return trimmed ? `Scripts ${trimmed}` : '';
+    }
+
+    if (typeof rawInfo !== 'object') {
+        return '';
+    }
+
+    const info = rawInfo;
+    const parts = [];
+
+    if (info.versionNumber !== undefined && info.versionNumber !== null) {
+        parts.push(`#${info.versionNumber}`);
+    }
+
+    if (typeof info.description === 'string' && info.description.trim()) {
+        parts.push(info.description.trim());
+    }
+
+    if (!parts.length && typeof info.label === 'string' && info.label.trim()) {
+        parts.push(info.label.trim());
+    }
+
+    if (!parts.length && typeof info.deploymentId === 'string' && info.deploymentId.trim()) {
+        parts.push(`ID ${info.deploymentId.trim()}`);
+    }
+
+    let label = parts.join(' – ');
+
+    if (typeof info.generatedAt === 'string') {
+        const generatedDate = new Date(info.generatedAt);
+        if (!Number.isNaN(generatedDate.getTime())) {
+            const locale = navigator?.language || 'es-AR';
+            const formattedDate = generatedDate.toLocaleString(locale, {
+                dateStyle: 'short',
+                timeStyle: 'short',
+            });
+            if (formattedDate) {
+                label = label ? `${label} · ${formattedDate}` : formattedDate;
+            }
+        }
+    }
+
+    return label ? `Scripts ${label}` : '';
+}
+
+async function showScriptVersion() {
+    const versionElement = document.getElementById('script-version');
+    if (!versionElement) {
+        return;
+    }
+
+    try {
+        const info = await obtenerVersionServidor();
+        const formatted = formatScriptVersion(info);
+        if (formatted) {
+            setTextOrHide(versionElement, formatted);
+        } else {
+            setTextOrHide(versionElement, 'Scripts versión no disponible');
+        }
+    } catch (error) {
+        console.error('No se pudo obtener la versión de los scripts:', error);
+        setTextOrHide(versionElement, 'Scripts versión no disponible');
+    }
 }
 
 function setActiveNavigation(tabName, customButtonId) {
@@ -163,6 +248,7 @@ function initializeNavigation() {
 
 async function initializeApp() {
     showAppVersion();
+    void showScriptVersion();
     initializeNavigation();
     appModules.remito.initialize();
     appModules.search.initialize();
