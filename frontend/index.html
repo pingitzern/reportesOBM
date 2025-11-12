@@ -370,7 +370,9 @@
                         <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-cliente-nombre">Cliente</label>
-                                <input id="softener-cliente-nombre" type="text" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Nombre o razón social" autocomplete="off">
+                                <select id="softener-cliente-nombre" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">Seleccionar un cliente</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-cliente-direccion">Dirección</label>
@@ -415,7 +417,12 @@
                         <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-equipo-tipo">Tipo de ablandador</label>
-                                <input id="softener-equipo-tipo" type="text" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Simple, doble, triplex...">
+                                <select id="softener-equipo-tipo" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">Seleccionar</option>
+                                    <option value="Gabinete">Gabinete</option>
+                                    <option value="Compacto">Compacto</option>
+                                    <option value="Doble Cuerpo">Doble Cuerpo</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-equipo-modelo">Modelo</label>
@@ -427,15 +434,14 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-equipo-ubicacion">Ubicación</label>
-                                <input id="softener-equipo-ubicacion" type="text" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Sala, planta, sector...">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-equipo-caudal">Caudal de servicio (m³/h)</label>
-                                <input id="softener-equipo-caudal" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Ej: 5.5">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-equipo-capacidad">Capacidad de servicio (m³)</label>
-                                <input id="softener-equipo-capacidad" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Ej: 20">
+                                <select id="softener-equipo-ubicacion" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">Seleccionar</option>
+                                    <option value="Lavadero">Lavadero</option>
+                                    <option value="Patio">Patio</option>
+                                    <option value="Terraza">Terraza</option>
+                                    <option value="Gabinete">Gabinete</option>
+                                    <option value="Sala de Máquinas">Sala de Máquinas</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-volumen-resina-as-found">Volumen de resina (As Found) [L]</label>
@@ -444,14 +450,6 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-volumen-resina-as-left">Volumen de resina (As Left) [L]</label>
                                 <input id="softener-volumen-resina-as-left" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Medición final">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-capacidad-intercambio-as-found">Capacidad de intercambio (As Found)</label>
-                                <input id="softener-capacidad-intercambio-as-found" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Medición inicial">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-capacidad-intercambio-as-left">Capacidad de intercambio (As Left)</label>
-                                <input id="softener-capacidad-intercambio-as-left" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Medición final">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-nivel-sal-as-found">Nivel de sal (As Found)</label>
@@ -503,14 +501,6 @@
                                 <input id="softener-dureza-salida-as-left" type="number" step="0.1" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura final">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-ph-as-found">pH (As Found)</label>
-                                <input id="softener-ph-as-found" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura inicial">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-ph-as-left">pH (As Left)</label>
-                                <input id="softener-ph-as-left" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura final">
-                            </div>
-                            <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-cloro-as-found">Cloro (As Found) [ppm]</label>
                                 <input id="softener-cloro-as-found" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura inicial">
                             </div>
@@ -543,7 +533,7 @@
                                         <input id="softener-autonomia-calculada-as-left" type="number" step="0.01" min="0" readonly class="mt-1 w-full rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-emerald-500/70 dark:bg-emerald-500/10 dark:text-emerald-200">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-recomendada-as-left">Autonomía recomendada (As Left) [m³]</label>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-recomendada-as-left">Autonomía m³ (dato registrado en el cabezal)</label>
                                         <input id="softener-autonomia-recomendada-as-left" type="number" step="0.01" min="0" readonly class="mt-1 w-full rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-emerald-500/70 dark:bg-emerald-500/10 dark:text-emerald-200">
                                     </div>
                                 </div>
