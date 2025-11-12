@@ -24,7 +24,8 @@ function doGet(e) {
     const DEFAULT_CONFIGURATION = Object.freeze({
       SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
       SHEET_NAME: 'Hoja 1',
-      CLIENTES_SHEET_NAME: 'clientes'
+      CLIENTES_SHEET_NAME: 'clientes',
+      SOFTENER_SHEET_NAME: 'softener_mantenimiento'
     });
     ns.DEFAULT_CONFIGURATION = DEFAULT_CONFIGURATION;
 
@@ -38,7 +39,8 @@ function doGet(e) {
       const defaults = {
         SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
         SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
-        CLIENTES_SHEET_NAME: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME
+        CLIENTES_SHEET_NAME: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME,
+        SOFTENER_SHEET_NAME: DEFAULT_CONFIGURATION.SOFTENER_SHEET_NAME
       };
 
       const properties = Object.assign({}, defaults, overrides || {});
@@ -49,9 +51,11 @@ function doGet(e) {
     const SHEET_ID = getPropertyOrDefault('SHEET_ID', DEFAULT_CONFIGURATION.SHEET_ID);
     const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
     const CLIENTES_SHEET_NAME = getPropertyOrDefault('CLIENTES_SHEET_NAME', DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME);
+    const SOFTENER_SHEET_NAME = getPropertyOrDefault('SOFTENER_SHEET_NAME', DEFAULT_CONFIGURATION.SOFTENER_SHEET_NAME);
     ns.SHEET_ID = SHEET_ID;
     ns.SHEET_NAME = SHEET_NAME;
     ns.CLIENTES_SHEET_NAME = CLIENTES_SHEET_NAME;
+    ns.SOFTENER_SHEET_NAME = SOFTENER_SHEET_NAME;
 
     const SheetRepository = {
       getSpreadsheet() {
@@ -77,6 +81,62 @@ function doGet(e) {
       }
     };
     ns.SheetRepository = SheetRepository;
+
+    const SoftenerSheetRepository = {
+      getSheet() {
+        if (!SOFTENER_SHEET_NAME) {
+          throw new Error('Configura la propiedad SOFTENER_SHEET_NAME.');
+        }
+
+        const spreadsheet = SheetRepository.getSpreadsheet();
+        const sheet = spreadsheet.getSheetByName(SOFTENER_SHEET_NAME);
+        if (!sheet) {
+          throw new Error(`No se encontró la hoja ${SOFTENER_SHEET_NAME}.`);
+        }
+
+        return sheet;
+      },
+
+      ensureHeaders_(sheet) {
+        const headers = Array.isArray(ns.SOFTENER_HEADERS) ? ns.SOFTENER_HEADERS : [];
+        if (!headers.length) {
+          return;
+        }
+
+        const lastRow = sheet.getLastRow();
+        const lastColumn = sheet.getLastColumn();
+        const hasHeaderValues = lastRow >= 1 && lastColumn >= 1
+          ? sheet.getRange(1, 1, 1, lastColumn).getValues()[0].some(value => String(value || '').trim())
+          : false;
+
+        if (!hasHeaderValues) {
+          if (sheet.getMaxColumns() < headers.length) {
+            const missing = headers.length - sheet.getMaxColumns();
+            if (missing > 0) {
+              const insertPosition = Math.max(1, sheet.getMaxColumns());
+              sheet.insertColumnsAfter(insertPosition, missing);
+            }
+          }
+          sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        }
+
+        if (sheet.getFrozenRows() < 1) {
+          sheet.setFrozenRows(1);
+        }
+      },
+
+      getSheetForWrite() {
+        const sheet = this.getSheet();
+        this.ensureHeaders_(sheet);
+        return sheet;
+      },
+
+      getSheetData() {
+        const sheet = this.getSheet();
+        return { sheet, data: sheet.getDataRange().getValues() };
+      }
+    };
+    ns.SoftenerSheetRepository = SoftenerSheetRepository;
 
     const ResponseFactory = {
       success(data) {
@@ -676,6 +736,13 @@ function doGet(e) {
             const page = data.page || 1;
             const pageSize = data.pageSize || 20;
             const result = ns.RemitoService.obtenerRemitos(page, pageSize);
+            return ResponseFactory.success(result);
+          }
+
+          case 'guardar_ablandador': {
+            const sess = ns.SessionService.validateSession(data.token);
+            const payload = data.payload && typeof data.payload === 'object' ? data.payload : data;
+            const result = ns.SoftenerMaintenanceService.guardar(payload, sess.mail);
             return ResponseFactory.success(result);
           }
 
