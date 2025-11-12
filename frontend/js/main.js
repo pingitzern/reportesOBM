@@ -9,7 +9,7 @@ import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js'
 import { createSearchModule } from './modules/busqueda/busqueda.js';
 import { createRemitoModule } from './modules/remito/remito.js';
 import { createRemitosGestionModule } from './modules/remitos-gestion/remitos-gestion.js';
-import { createSoftenerModule } from './modules/mantenimiento-ablandador/softener.js';
+import { createSoftenerModule } from './modules/mantenimiento-ablandador/ablandador.js';
 
 const {
     guardarMantenimiento,
