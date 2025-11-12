@@ -361,6 +361,16 @@
             </form>
         </section><!-- /tab-nuevo -->
 
+        <section id="tab-ablandador" class="tab-content hidden">
+            <div class="form-card">
+                <div class="form-section">
+                    <h2 class="text-2xl font-semibold text-gray-800">Mantenimiento de Ablandador</h2>
+                    <p class="mt-2 text-sm text-gray-600">El formulario estará disponible próximamente.</p>
+                    <div id="softener-form-container" class="mt-6"></div>
+                </div>
+            </div>
+        </section>
+
         <!-- Pestaña: Buscar/Editar -->
         <section id="tab-buscar" class="tab-content hidden">
             <div class="form-section">
@@ -614,6 +624,39 @@
                 <div id="remitos-gestion-container" class="space-y-6"></div>
             </div>
         </section>
+        </div>
+    </div>
+
+    <div id="maintenance-type-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div id="maintenance-type-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Seleccioná el tipo de mantenimiento</h2>
+                <p class="mt-1 text-sm text-gray-500">Elegí qué formulario querés completar.</p>
+            </div>
+            <div class="px-6 py-6 space-y-4">
+                <button
+                    id="maintenance-type-osmosis"
+                    type="button"
+                    class="w-full rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-left text-blue-900 hover:bg-blue-100 transition-colors"
+                >
+                    Ósmosis Inversa
+                    <span class="block text-sm text-blue-700">Formulario de mantenimiento de ósmosis</span>
+                </button>
+                <button
+                    id="maintenance-type-softener"
+                    type="button"
+                    class="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-emerald-900 hover:bg-emerald-100 transition-colors"
+                >
+                    Ablandador
+                    <span class="block text-sm text-emerald-700">Formulario de mantenimiento de ablandador</span>
+                </button>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+                <button id="maintenance-type-cancel" type="button" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800">
+                    Cancelar
+                </button>
+            </div>
         </div>
     </div>
 
