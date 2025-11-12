@@ -595,7 +595,6 @@ function updateAutonomia() {
     const durezaEntrada = getNumberValue(DUREZA_AGUA_CRUDA_ID);
     const aplicarFactor = getCheckboxValue(FACTOR_PROTECCION_ID);
 
-    let autonomiaCalculada = null;
     let autonomiaRecomendada = null;
 
     if (volumenResina !== null && durezaEntrada !== null && durezaEntrada > 0) {
@@ -603,13 +602,11 @@ function updateAutonomia() {
         if (durezaNormalizada > 0) {
             const resultado = (volumenResina * 6) / durezaNormalizada;
             if (Number.isFinite(resultado)) {
-                autonomiaCalculada = resultado;
                 autonomiaRecomendada = aplicarFactor ? resultado * 0.8 : resultado;
             }
         }
     }
 
-    setNumericFieldValue(AUTONOMIA_CALCULADA_ID, autonomiaCalculada);
     setNumericFieldValue(AUTONOMIA_RECOMENDADA_ID, autonomiaRecomendada);
 }
 
