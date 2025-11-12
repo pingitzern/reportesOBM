@@ -38,12 +38,17 @@ describe('handleGuardarClick', () => {
 
         jest.unstable_mockModule('../api.js', () => ({
             guardarMantenimiento: guardarMantenimientoMock,
+            guardarMantenimientoAblandador: jest.fn(),
             buscarMantenimientos: jest.fn(),
             actualizarMantenimiento: jest.fn(),
             eliminarMantenimiento: jest.fn(),
             obtenerDashboard: jest.fn(),
             obtenerClientes: jest.fn().mockResolvedValue([]),
             obtenerRemitos: jest.fn(),
+            crearRemito: jest.fn(),
+            actualizarRemito: jest.fn(),
+            eliminarRemito: jest.fn(),
+            obtenerVersionServidor: jest.fn(),
         }));
 
         jest.unstable_mockModule('../auth.js', () => ({

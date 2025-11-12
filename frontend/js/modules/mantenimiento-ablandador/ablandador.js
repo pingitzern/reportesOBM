@@ -1,4 +1,7 @@
-import { guardarMantenimientoAblandador as guardarMantenimientoAblandadorApi } from '../../api.js';
+import {
+    guardarMantenimientoAblandador as guardarMantenimientoAblandadorApi,
+    obtenerClientes as obtenerClientesApi,
+} from '../../api.js';
 
 const SOFTENER_VIEW_ID = 'tab-ablandador';
 const FORM_ID = 'softener-maintenance-form';
@@ -7,6 +10,51 @@ const RESET_BUTTON_ID = 'softener-reset-button';
 const AUTONOMIA_CALCULADA_ID = 'softener-autonomia-calculada-as-left';
 const AUTONOMIA_RECOMENDADA_ID = 'softener-autonomia-recomendada-as-left';
 const FACTOR_PROTECCION_ID = 'softener-factor-proteccion';
+const CLIENT_SELECT_ID = 'softener-cliente-nombre';
+const CLIENT_OPTION_ATTRIBUTE = 'data-softener-client-option';
+const CLIENT_KEY_ATTRIBUTE = 'data-softener-client-key';
+const CLIENT_DETAIL_FIELD_IDS = Object.freeze([
+    'softener-cliente-direccion',
+    'softener-cliente-telefono',
+    'softener-cliente-email',
+    'softener-cliente-cuit',
+]);
+const CLIENT_DETAIL_EMPTY_CLASS = 'client-detail-empty';
+const CLIENT_DETAIL_LOCKED_CLASS = 'client-detail-locked';
+
+const CLIENT_NAME_FIELDS = Object.freeze([
+    'nombre',
+    'Nombre',
+    'cliente',
+    'Cliente',
+    'razon_social',
+    'RazonSocial',
+]);
+
+const CLIENT_ID_FIELDS = Object.freeze([
+    'id',
+    'ID',
+    'id_cliente',
+    'IdCliente',
+    'codigo',
+    'Codigo',
+    'cuit',
+    'CUIT',
+]);
+
+const CLIENT_FIELD_ALIASES = Object.freeze({
+    direccion: ['direccion', 'Direccion', 'domicilio', 'Domicilio'],
+    telefono: ['telefono', 'Telefono', 'tel', 'Tel'],
+    email: ['email', 'Email', 'mail', 'Mail', 'correo', 'Correo'],
+    cuit: ['cuit', 'CUIT'],
+});
+
+const clienteDataMap = new Map();
+const clientDetailInputsWithListener = new WeakSet();
+let clienteSelectChangeHandler = null;
+let clientesLoaded = false;
+let clientesLoadingPromise = null;
+let clientAutocompleteInitialized = false;
 
 function getElement(id) {
     return typeof document !== 'undefined' ? document.getElementById(id) : null;
@@ -69,6 +117,303 @@ function setNumericFieldValue(id, value) {
     }
     const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
     element.value = Number.isFinite(rounded) ? rounded.toString() : '';
+}
+
+function normalizeString(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    return String(value).trim();
+}
+
+function getFirstAvailableField(source, fieldNames) {
+    if (!source || typeof source !== 'object') {
+        return '';
+    }
+
+    for (const field of fieldNames) {
+        if (Object.prototype.hasOwnProperty.call(source, field)) {
+            const normalized = normalizeString(source[field]);
+            if (normalized) {
+                return normalized;
+            }
+        }
+    }
+
+    return '';
+}
+
+function extractClientName(cliente) {
+    return getFirstAvailableField(cliente, CLIENT_NAME_FIELDS);
+}
+
+function extractClientId(cliente) {
+    return getFirstAvailableField(cliente, CLIENT_ID_FIELDS);
+}
+
+function createClientDetails(cliente) {
+    return {
+        direccion: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.direccion),
+        telefono: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.telefono),
+        email: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.email),
+        cuit: getFirstAvailableField(cliente, CLIENT_FIELD_ALIASES.cuit),
+    };
+}
+
+function refreshClientDetailFieldState(element, { lockWhenFilled = false } = {}) {
+    if (!(element instanceof HTMLInputElement)) {
+        return;
+    }
+
+    const hasValue = normalizeString(element.value) !== '';
+
+    if (lockWhenFilled && hasValue) {
+        element.readOnly = true;
+        element.disabled = false;
+    } else if (!hasValue) {
+        element.readOnly = false;
+        element.disabled = false;
+    }
+
+    if (hasValue) {
+        element.classList.remove(CLIENT_DETAIL_EMPTY_CLASS);
+        if (lockWhenFilled) {
+            element.classList.add(CLIENT_DETAIL_LOCKED_CLASS);
+        }
+    } else {
+        element.classList.add(CLIENT_DETAIL_EMPTY_CLASS);
+        element.classList.remove(CLIENT_DETAIL_LOCKED_CLASS);
+    }
+}
+
+function setClientDetailValue(fieldId, value, options = {}) {
+    const element = getElement(fieldId);
+    if (!element) {
+        return;
+    }
+
+    const normalizedValue = normalizeString(value);
+
+    if ('value' in element) {
+        element.value = normalizedValue;
+    }
+
+    if (element instanceof HTMLInputElement) {
+        refreshClientDetailFieldState(element, { lockWhenFilled: Boolean(options.lockWhenFilled) });
+    }
+}
+
+function applyClientDetails(details = {}) {
+    setClientDetailValue('softener-cliente-direccion', details.direccion, { lockWhenFilled: true });
+    setClientDetailValue('softener-cliente-telefono', details.telefono, { lockWhenFilled: true });
+    setClientDetailValue('softener-cliente-email', details.email, { lockWhenFilled: true });
+    setClientDetailValue('softener-cliente-cuit', details.cuit, { lockWhenFilled: true });
+}
+
+function clearClientDetails() {
+    CLIENT_DETAIL_FIELD_IDS.forEach(fieldId => {
+        setClientDetailValue(fieldId, '', { lockWhenFilled: false });
+    });
+}
+
+function configureClientDetailFieldInteractions() {
+    CLIENT_DETAIL_FIELD_IDS.forEach(fieldId => {
+        const element = getElement(fieldId);
+        if (!(element instanceof HTMLInputElement)) {
+            return;
+        }
+
+        refreshClientDetailFieldState(element);
+
+        if (!clientDetailInputsWithListener.has(element)) {
+            element.addEventListener('input', () => {
+                refreshClientDetailFieldState(element);
+            });
+            clientDetailInputsWithListener.add(element);
+        }
+    });
+}
+
+function updateClientDetailsFromSelect(selectElement) {
+    if (!(selectElement instanceof HTMLSelectElement)) {
+        clearClientDetails();
+        return;
+    }
+
+    let selectedDetails = null;
+
+    const selectedOption = selectElement.selectedOptions && selectElement.selectedOptions[0];
+    if (selectedOption) {
+        const optionKey = selectedOption.getAttribute(CLIENT_KEY_ATTRIBUTE);
+        if (optionKey) {
+            selectedDetails = clienteDataMap.get(optionKey) || null;
+        }
+    }
+
+    if (!selectedDetails && typeof selectElement.selectedIndex === 'number' && selectElement.selectedIndex >= 0) {
+        const optionByIndex = selectElement.options[selectElement.selectedIndex];
+        if (optionByIndex) {
+            const keyByIndex = optionByIndex.getAttribute(CLIENT_KEY_ATTRIBUTE);
+            if (keyByIndex) {
+                selectedDetails = clienteDataMap.get(keyByIndex) || null;
+            }
+        }
+    }
+
+    if (!selectedDetails) {
+        selectedDetails = clienteDataMap.get(selectElement.value) || null;
+    }
+
+    if (selectedDetails) {
+        applyClientDetails(selectedDetails);
+    } else {
+        clearClientDetails();
+    }
+}
+
+function resetClientSelection() {
+    const select = getElement(CLIENT_SELECT_ID);
+    if (!(select instanceof HTMLSelectElement)) {
+        clearClientDetails();
+        return;
+    }
+
+    const placeholderOption = select.querySelector('option[value=""]');
+    if (placeholderOption) {
+        placeholderOption.selected = true;
+        select.value = placeholderOption.value;
+    } else if (select.options.length > 0) {
+        select.selectedIndex = 0;
+    } else {
+        select.value = '';
+    }
+
+    clearClientDetails();
+}
+
+function populateClientSelect(clientes = []) {
+    const select = getElement(CLIENT_SELECT_ID);
+    if (!(select instanceof HTMLSelectElement)) {
+        return;
+    }
+
+    const clientesArray = Array.isArray(clientes) ? clientes : [];
+    const previousValue = select.value;
+    const previousOption = select.selectedOptions && select.selectedOptions[0];
+    const previousKey = previousOption ? previousOption.getAttribute(CLIENT_KEY_ATTRIBUTE) : null;
+    const placeholderOption = select.querySelector('option[value=""]');
+
+    select.querySelectorAll(`option[${CLIENT_OPTION_ATTRIBUTE}="true"]`).forEach(option => option.remove());
+    clienteDataMap.clear();
+
+    const fragment = document.createDocumentFragment();
+
+    clientesArray.forEach((cliente, index) => {
+        if (!cliente || typeof cliente !== 'object') {
+            return;
+        }
+
+        const optionValue = extractClientId(cliente) || extractClientName(cliente);
+        if (!optionValue) {
+            return;
+        }
+
+        const optionLabel = extractClientName(cliente) || optionValue;
+        const option = document.createElement('option');
+        option.value = optionValue;
+        option.textContent = optionLabel;
+        const key = `softener-cliente-${index}`;
+        option.setAttribute(CLIENT_OPTION_ATTRIBUTE, 'true');
+        option.setAttribute(CLIENT_KEY_ATTRIBUTE, key);
+        fragment.appendChild(option);
+
+        clienteDataMap.set(key, createClientDetails(cliente));
+    });
+
+    select.appendChild(fragment);
+
+    if (clienteSelectChangeHandler) {
+        select.removeEventListener('change', clienteSelectChangeHandler);
+    }
+
+    clienteSelectChangeHandler = () => {
+        updateClientDetailsFromSelect(select);
+    };
+
+    select.addEventListener('change', clienteSelectChangeHandler);
+
+    let selectionRestored = false;
+
+    if (previousKey) {
+        const matchingOption = select.querySelector(`option[${CLIENT_KEY_ATTRIBUTE}="${previousKey}"]`);
+        if (matchingOption) {
+            matchingOption.selected = true;
+            select.value = matchingOption.value;
+            selectionRestored = true;
+        }
+    }
+
+    if (!selectionRestored && previousValue) {
+        select.value = previousValue;
+        selectionRestored = select.value === previousValue && select.selectedIndex !== -1;
+    }
+
+    if (selectionRestored) {
+        updateClientDetailsFromSelect(select);
+    } else {
+        if (placeholderOption) {
+            placeholderOption.selected = true;
+            select.value = placeholderOption.value;
+        } else if (select.options.length > 0) {
+            select.selectedIndex = 0;
+        } else {
+            select.value = '';
+        }
+        clearClientDetails();
+    }
+}
+
+async function loadClientes(obtenerClientesFn) {
+    if (clientesLoaded) {
+        return;
+    }
+
+    if (clientesLoadingPromise) {
+        await clientesLoadingPromise;
+        return;
+    }
+
+    if (typeof obtenerClientesFn !== 'function') {
+        return;
+    }
+
+    clientesLoadingPromise = (async () => {
+        try {
+            const clientes = await obtenerClientesFn({ forceRefresh: false });
+            populateClientSelect(clientes);
+            clientesLoaded = true;
+        } catch (error) {
+            console.error('Error al cargar clientes para ablandador:', error);
+            alert('No se pudieron cargar los datos de clientes. Completá los campos manualmente.');
+            populateClientSelect([]);
+        } finally {
+            clientesLoadingPromise = null;
+        }
+    })();
+
+    await clientesLoadingPromise;
+}
+
+function initializeClientAutocomplete(obtenerClientesFn) {
+    if (!clientAutocompleteInitialized) {
+        configureClientDetailFieldInteractions();
+        resetClientSelection();
+        clientAutocompleteInitialized = true;
+    }
+
+    if (typeof obtenerClientesFn === 'function') {
+        loadClientes(obtenerClientesFn);
+    }
 }
 
 function setDefaultServiceDate() {
@@ -134,7 +479,6 @@ function collectFormData() {
     ]);
 
     const volumenResinaAsLeft = getNumberValue('softener-volumen-resina-as-left');
-    const capacidadIntercambioAsLeft = getNumberValue('softener-capacidad-intercambio-as-left');
     const durezaEntradaAsLeft = getNumberValue('softener-dureza-entrada-as-left');
     const autonomiaCalculada = getNumberValue(AUTONOMIA_CALCULADA_ID);
     const autonomiaRecomendada = getNumberValue(AUTONOMIA_RECOMENDADA_ID);
@@ -144,12 +488,8 @@ function collectFormData() {
         ['modelo', getInputValue('softener-equipo-modelo')],
         ['numero_serie', getInputValue('softener-equipo-numero-serie')],
         ['ubicacion', getInputValue('softener-equipo-ubicacion')],
-        ['caudal', getNumberValue('softener-equipo-caudal')],
-        ['capacidad', getNumberValue('softener-equipo-capacidad')],
         ['volumen_resina_as_found', getNumberValue('softener-volumen-resina-as-found')],
         ['volumen_resina_as_left', volumenResinaAsLeft],
-        ['capacidad_intercambio_as_found', getNumberValue('softener-capacidad-intercambio-as-found')],
-        ['capacidad_intercambio_as_left', capacidadIntercambioAsLeft],
         ['nivel_sal_as_found', getInputValue('softener-nivel-sal-as-found')],
         ['nivel_sal_as_left', getInputValue('softener-nivel-sal-as-left')],
         ['notas_equipo', getInputValue('softener-equipo-notas')],
@@ -160,15 +500,12 @@ function collectFormData() {
         ['dureza_entrada_as_left', durezaEntradaAsLeft],
         ['dureza_salida_as_found', getNumberValue('softener-dureza-salida-as-found')],
         ['dureza_salida_as_left', getNumberValue('softener-dureza-salida-as-left')],
-        ['ph_as_found', getNumberValue('softener-ph-as-found')],
-        ['ph_as_left', getNumberValue('softener-ph-as-left')],
         ['cloro_as_found', getNumberValue('softener-cloro-as-found')],
         ['cloro_as_left', getNumberValue('softener-cloro-as-left')],
         ['test_cloro_as_found', getInputValue('softener-test-cloro-as-found')],
         ['test_cloro_as_left', getInputValue('softener-test-cloro-as-left')],
         ['dureza_entrada', durezaEntradaAsLeft],
         ['dureza_salida', getNumberValue('softener-dureza-salida-as-left')],
-        ['ph', getNumberValue('softener-ph-as-left')],
         ['cloro', getNumberValue('softener-cloro-as-left')],
         ['autonomia_calculada_as_left', autonomiaCalculada],
         ['autonomia_recomendada_as_left', autonomiaRecomendada],
@@ -229,25 +566,17 @@ function collectFormData() {
 
 function updateAutonomia() {
     const volumenResina = getNumberValue('softener-volumen-resina-as-left');
-    const capacidadIntercambio = getNumberValue('softener-capacidad-intercambio-as-left');
     const durezaEntrada = getNumberValue('softener-dureza-entrada-as-left');
     const aplicarFactor = getCheckboxValue(FACTOR_PROTECCION_ID);
 
     let autonomiaCalculada = null;
     let autonomiaRecomendada = null;
 
-    if (
-        volumenResina !== null
-        && capacidadIntercambio !== null
-        && durezaEntrada !== null
-        && durezaEntrada > 0
-    ) {
-        const divisor = durezaEntrada / 10;
-        if (divisor > 0) {
-            autonomiaCalculada = (volumenResina * capacidadIntercambio) / divisor;
-            if (Number.isFinite(autonomiaCalculada)) {
-                autonomiaRecomendada = aplicarFactor ? autonomiaCalculada * 0.8 : autonomiaCalculada;
-            }
+    if (volumenResina !== null && durezaEntrada !== null && durezaEntrada > 0) {
+        const resultado = (volumenResina * 5) / durezaEntrada;
+        if (Number.isFinite(resultado)) {
+            autonomiaCalculada = resultado;
+            autonomiaRecomendada = aplicarFactor ? resultado * 0.8 : resultado;
         }
     }
 
@@ -256,16 +585,22 @@ function updateAutonomia() {
 }
 
 export function createSoftenerModule(deps = {}) {
-    const { showView, guardarMantenimientoAblandador: guardarAblandadorCustom } = deps;
+    const {
+        showView,
+        guardarMantenimientoAblandador: guardarAblandadorCustom,
+        obtenerClientes: obtenerClientesCustom,
+    } = deps;
     let initialized = false;
     const guardarMantenimientoFn = typeof guardarAblandadorCustom === 'function'
         ? guardarAblandadorCustom
         : guardarMantenimientoAblandadorApi;
+    const obtenerClientesFn = typeof obtenerClientesCustom === 'function'
+        ? obtenerClientesCustom
+        : obtenerClientesApi;
 
     function attachAutonomiaListeners() {
         const triggerIds = [
             'softener-volumen-resina-as-left',
-            'softener-capacidad-intercambio-as-left',
             'softener-dureza-entrada-as-left',
         ];
         triggerIds.forEach(id => {
@@ -289,6 +624,7 @@ export function createSoftenerModule(deps = {}) {
 
         form.addEventListener('reset', () => {
             schedulePostReset(() => {
+                resetClientSelection();
                 setDefaultServiceDate();
                 updateAutonomia();
             });
@@ -306,6 +642,7 @@ export function createSoftenerModule(deps = {}) {
         if (resetButton instanceof HTMLButtonElement) {
             resetButton.addEventListener('click', () => {
                 setTimeout(() => {
+                    resetClientSelection();
                     setDefaultServiceDate();
                     updateAutonomia();
                 }, 0);
@@ -356,6 +693,7 @@ export function createSoftenerModule(deps = {}) {
         }
         setDefaultServiceDate();
         updateAutonomia();
+        initializeClientAutocomplete(obtenerClientesFn);
         attachAutonomiaListeners();
         attachFormHandlers();
         initialized = true;

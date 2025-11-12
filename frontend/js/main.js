@@ -13,6 +13,7 @@ import { createSoftenerModule } from './modules/mantenimiento-ablandador/ablanda
 
 const {
     guardarMantenimiento,
+    guardarMantenimientoAblandador,
     buscarMantenimientos,
     actualizarMantenimiento,
     eliminarMantenimiento,
@@ -74,6 +75,8 @@ const remitosGestionModule = createRemitosGestionModule({
 
 const softenerModule = createSoftenerModule({
     showView,
+    guardarMantenimientoAblandador,
+    obtenerClientes,
 });
 
 const appModules = {
