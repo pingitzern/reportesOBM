@@ -456,88 +456,36 @@
 
                 <div class="form-card">
                     <div class="form-section" id="softener-section-c">
-                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">C. Parámetros de Agua y Cálculo de Autonomía</h2>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Ingresá las mediciones de calidad del agua y el sistema calculará la autonomía automáticamente.</p>
+                        <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">C. Autonomía y Cálculos</h2>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Ingresá la dureza del agua cruda y el sistema calculará automáticamente la autonomía recomendada.</p>
                         <div class="mt-6 space-y-6">
                             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Lecturas As Found</h3>
-                                    <div class="mt-3 space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-dureza-entrada-as-found">Dureza entrada (As Found) [ppm]</label>
-                                            <input id="softener-dureza-entrada-as-found" type="number" step="0.1" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura inicial">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-dureza-salida-as-found">Dureza salida (As Found) [ppm]</label>
-                                            <input id="softener-dureza-salida-as-found" type="number" step="0.1" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura inicial">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-cloro-as-found">Cloro (As Found) [ppm]</label>
-                                            <input id="softener-cloro-as-found" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura inicial">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-test-cloro-as-found">Test de cloro (As Found)</label>
-                                            <select id="softener-test-cloro-as-found" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                                <option value="">Seleccionar</option>
-                                                <option value="Aprobado">Aprobado</option>
-                                                <option value="Observado">Observado</option>
-                                                <option value="No Realizado">No realizado</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-cabezal-as-found">Autonomía m³ (dato registrado en el cabezal)</label>
-                                            <input id="softener-autonomia-cabezal-as-found" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Valor leído en el cabezal">
-                                        </div>
-                                    </div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-dureza-agua-cruda">Dureza del agua cruda (ppm)</label>
+                                    <input id="softener-dureza-agua-cruda" type="number" step="0.1" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Ej: 360">
                                 </div>
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Lecturas As Left</h3>
-                                    <div class="mt-3 space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-dureza-entrada-as-left">Dureza entrada (As Left) [ppm]</label>
-                                            <input id="softener-dureza-entrada-as-left" type="number" step="0.1" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura final">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-dureza-salida-as-left">Dureza salida (As Left) [ppm]</label>
-                                            <input id="softener-dureza-salida-as-left" type="number" step="0.1" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura final">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-cloro-as-left">Cloro (As Left) [ppm]</label>
-                                            <input id="softener-cloro-as-left" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Lectura final">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-test-cloro-as-left">Test de cloro (As Left)</label>
-                                            <select id="softener-test-cloro-as-left" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                                <option value="">Seleccionar</option>
-                                                <option value="Aprobado">Aprobado</option>
-                                                <option value="Observado">Observado</option>
-                                                <option value="No Realizado">No realizado</option>
-                                            </select>
-                                        </div>
-                                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-calculada-as-left">Autonomía calculada (As Left) [m³]</label>
-                                                <input id="softener-autonomia-calculada-as-left" type="number" step="0.01" min="0" readonly class="mt-1 w-full rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-emerald-500/70 dark:bg-emerald-500/10 dark:text-emerald-200">
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-recomendada-as-left">Autonomía Recomendada (m³)</label>
-                                                <input id="softener-autonomia-recomendada-as-left" type="number" step="0.01" min="0" readonly class="mt-1 w-full rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-emerald-500/70 dark:bg-emerald-500/10 dark:text-emerald-200">
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-500/40 dark:bg-emerald-500/10">
-                                            <input id="softener-factor-proteccion" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-gray-600">
-                                            <label for="softener-factor-proteccion" class="text-sm font-medium text-emerald-900 dark:text-emerald-200">Aplicar factor de protección (As Left) - reduce la autonomía recomendada al 80%.</label>
-                                        </div>
-                                        <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
-                                            <input id="softener-autonomia-ajustada-as-left" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-gray-500">
-                                            <label for="softener-autonomia-ajustada-as-left" class="text-sm font-medium text-gray-700 dark:text-gray-200">¿Se ajustó al valor calculado?</label>
-                                        </div>
-                                    </div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-seteo-actual">Seteo actual de autonomía (m³)</label>
+                                    <input id="softener-autonomia-seteo-actual" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Valor leído en el cabezal">
                                 </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-parametros-observaciones">Observaciones de parámetros</label>
-                                <textarea id="softener-parametros-observaciones" rows="3" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Detallá resultados atípicos, alarmas o acciones correctivas."></textarea>
+                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-calculada">Autonomía Calculada (m³)</label>
+                                    <input id="softener-autonomia-calculada" type="number" step="0.01" min="0" readonly class="mt-1 w-full rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-emerald-500/70 dark:bg-emerald-500/10 dark:text-emerald-200">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-recomendada">Autonomía Recomendada (m³)</label>
+                                    <input id="softener-autonomia-recomendada" type="number" step="0.01" min="0" readonly class="mt-1 w-full rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-emerald-500/70 dark:bg-emerald-500/10 dark:text-emerald-200">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-500/40 dark:bg-emerald-500/10">
+                                <input id="softener-factor-proteccion" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-gray-600">
+                                <label for="softener-factor-proteccion" class="text-sm font-medium text-emerald-900 dark:text-emerald-200">¿Desea aplicar el 20% de protección?</label>
+                            </div>
+                            <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
+                                <input id="softener-autonomia-ajustada" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-gray-500">
+                                <label for="softener-autonomia-ajustada" class="text-sm font-medium text-gray-700 dark:text-gray-200">¿Se ajustó al valor calculado?</label>
                             </div>
                         </div>
                     </div>
