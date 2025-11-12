@@ -511,15 +511,6 @@ function collectFormData() {
         ['notas_equipo', getInputValue('softener-equipo-notas')],
     ]);
 
-    const seccionBParametrosOperacion = buildSection([
-        ['presion_entrada_as_found', presionEntradaAsFound],
-        ['presion_entrada_as_left', presionEntradaAsLeft],
-        ['test_cloro_entrada_as_found', testCloroAsFound],
-        ['test_cloro_entrada_as_left', testCloroAsLeft],
-        ['dureza_salida_as_found', durezaSalidaAsFound],
-        ['dureza_salida_as_left', durezaSalidaAsLeft],
-    ]);
-
     const seccionC = buildSection([
         ['dureza_agua_cruda', durezaAguaCruda],
         ['seteo_actual_autonomia', seteoActualAutonomia],
@@ -554,6 +545,10 @@ function collectFormData() {
         ['presion_salida_as_left', getNumberValue('softener-presion-salida-as-left')],
         ['conductividad_as_found', getNumberValue('softener-conductividad-as-found')],
         ['conductividad_as_left', getNumberValue('softener-conductividad-as-left')],
+        ['test_cloro_entrada_as_found', testCloroAsFound],
+        ['test_cloro_entrada_as_left', testCloroAsLeft],
+        ['dureza_salida_as_found', durezaSalidaAsFound],
+        ['dureza_salida_as_left', durezaSalidaAsLeft],
         ['nivel_sal_as_found', getInputValue('softener-nivel-sal-as-found')],
         ['nivel_sal_as_left', getInputValue('softener-nivel-sal-as-left')],
         ['temperatura_ambiente', getInputValue('softener-temperatura-ambiente')],
@@ -579,10 +574,6 @@ function collectFormData() {
         seccion_F_condiciones: seccionF,
         seccion_G_cierre: seccionG,
     };
-
-    if (Object.keys(seccionBParametrosOperacion).length > 0) {
-        payload.seccion_B_parametros_operacion = seccionBParametrosOperacion;
-    }
 
     return payload;
 }
