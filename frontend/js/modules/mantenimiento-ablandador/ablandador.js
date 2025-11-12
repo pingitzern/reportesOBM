@@ -9,6 +9,8 @@ const SAVE_BUTTON_ID = 'softener-save-button';
 const RESET_BUTTON_ID = 'softener-reset-button';
 const AUTONOMIA_CALCULADA_ID = 'softener-autonomia-calculada-as-left';
 const AUTONOMIA_RECOMENDADA_ID = 'softener-autonomia-recomendada-as-left';
+const AUTONOMIA_CABEZAL_AS_FOUND_ID = 'softener-autonomia-cabezal-as-found';
+const AUTONOMIA_AJUSTADA_ID = 'softener-autonomia-ajustada-as-left';
 const VOLUMEN_RESINA_ID = 'softener-volumen-resina';
 const FACTOR_PROTECCION_ID = 'softener-factor-proteccion';
 const CLIENT_SELECT_ID = 'softener-cliente-nombre';
@@ -490,6 +492,8 @@ function collectFormData() {
     const durezaEntradaAsLeft = getNumberValue('softener-dureza-entrada-as-left');
     const autonomiaCalculada = getNumberValue(AUTONOMIA_CALCULADA_ID);
     const autonomiaRecomendada = getNumberValue(AUTONOMIA_RECOMENDADA_ID);
+    const autonomiaCabezalAsFound = getNumberValue(AUTONOMIA_CABEZAL_AS_FOUND_ID);
+    const autonomiaAjustada = getCheckboxValue(AUTONOMIA_AJUSTADA_ID);
 
     const seccionB = buildSection([
         ['tipo', getInputValue('softener-equipo-tipo')],
@@ -509,12 +513,14 @@ function collectFormData() {
         ['cloro_as_left', getNumberValue('softener-cloro-as-left')],
         ['test_cloro_as_found', getInputValue('softener-test-cloro-as-found')],
         ['test_cloro_as_left', getInputValue('softener-test-cloro-as-left')],
+        ['autonomia_cabezal_as_found', autonomiaCabezalAsFound],
         ['dureza_entrada', durezaEntradaAsLeft],
         ['dureza_salida', getNumberValue('softener-dureza-salida-as-left')],
         ['cloro', getNumberValue('softener-cloro-as-left')],
         ['autonomia_calculada_as_left', autonomiaCalculada],
         ['autonomia_recomendada_as_left', autonomiaRecomendada],
         ['aplicar_factor_proteccion_as_left', getCheckboxValue(FACTOR_PROTECCION_ID)],
+        ['autonomia_ajustada_valor_calculado', autonomiaAjustada],
         ['observaciones', getInputValue('softener-parametros-observaciones')],
     ]);
 

@@ -484,6 +484,10 @@
                                                 <option value="No Realizado">No realizado</option>
                                             </select>
                                         </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-cabezal-as-found">Autonomía m³ (dato registrado en el cabezal)</label>
+                                            <input id="softener-autonomia-cabezal-as-found" type="number" step="0.01" min="0" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" placeholder="Valor leído en el cabezal">
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
@@ -516,13 +520,17 @@
                                                 <input id="softener-autonomia-calculada-as-left" type="number" step="0.01" min="0" readonly class="mt-1 w-full rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-emerald-500/70 dark:bg-emerald-500/10 dark:text-emerald-200">
                                             </div>
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-recomendada-as-left">Autonomía m³ (dato registrado en el cabezal)</label>
+                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-autonomia-recomendada-as-left">Autonomía Recomendada (m³)</label>
                                                 <input id="softener-autonomia-recomendada-as-left" type="number" step="0.01" min="0" readonly class="mt-1 w-full rounded-md border border-emerald-300 bg-emerald-50 p-2 text-emerald-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-emerald-500/70 dark:bg-emerald-500/10 dark:text-emerald-200">
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-500/40 dark:bg-emerald-500/10">
                                             <input id="softener-factor-proteccion" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-gray-600">
                                             <label for="softener-factor-proteccion" class="text-sm font-medium text-emerald-900 dark:text-emerald-200">Aplicar factor de protección (As Left) - reduce la autonomía recomendada al 80%.</label>
+                                        </div>
+                                        <div class="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
+                                            <input id="softener-autonomia-ajustada-as-left" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:border-gray-500">
+                                            <label for="softener-autonomia-ajustada-as-left" class="text-sm font-medium text-gray-700 dark:text-gray-200">¿Se ajustó al valor calculado?</label>
                                         </div>
                                     </div>
                                 </div>
