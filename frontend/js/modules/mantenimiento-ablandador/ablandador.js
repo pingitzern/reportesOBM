@@ -473,7 +473,7 @@ function buildSection(entries) {
 function collectFormData() {
     const metadata = {
         formulario: 'mantenimiento_ablandador',
-        version: '3.0',
+        version: '3.1',
         generado_en: new Date().toISOString(),
     };
 
@@ -497,6 +497,13 @@ function collectFormData() {
     const aplicarProteccion = getCheckboxValue(FACTOR_PROTECCION_ID);
     const autonomiaAjustada = getCheckboxValue(AUTONOMIA_AJUSTADA_ID);
 
+    const presionEntradaAsFound = getNumberValue('softener-param-presion-entrada-found');
+    const presionEntradaAsLeft = getNumberValue('softener-param-presion-entrada-left');
+    const testCloroAsFound = getNumberValue('softener-param-test-cloro-found');
+    const testCloroAsLeft = getNumberValue('softener-param-test-cloro-left');
+    const durezaSalidaAsFound = getNumberValue('softener-param-dureza-salida-found');
+    const durezaSalidaAsLeft = getNumberValue('softener-param-dureza-salida-left');
+
     const seccionB = buildSection([
         ['tipo', getInputValue('softener-equipo-tipo')],
         ['modelo', getInputValue('softener-equipo-modelo')],
@@ -504,6 +511,15 @@ function collectFormData() {
         ['ubicacion', getInputValue('softener-equipo-ubicacion')],
         ['volumen_resina', volumenResina],
         ['notas_equipo', getInputValue('softener-equipo-notas')],
+    ]);
+
+    const seccionBParametrosOperacion = buildSection([
+        ['presion_entrada_as_found', presionEntradaAsFound],
+        ['presion_entrada_as_left', presionEntradaAsLeft],
+        ['test_cloro_entrada_as_found', testCloroAsFound],
+        ['test_cloro_entrada_as_left', testCloroAsLeft],
+        ['dureza_salida_as_found', durezaSalidaAsFound],
+        ['dureza_salida_as_left', durezaSalidaAsLeft],
     ]);
 
     const seccionC = buildSection([
@@ -556,7 +572,7 @@ function collectFormData() {
         ['observaciones_finales', getInputValue('softener-observaciones-finales')],
     ]);
 
-    return {
+    const payload = {
         metadata,
         seccion_A_cliente: seccionA,
         seccion_B_equipo: seccionB,
@@ -566,6 +582,12 @@ function collectFormData() {
         seccion_F_condiciones: seccionF,
         seccion_G_cierre: seccionG,
     };
+
+    if (Object.keys(seccionBParametrosOperacion).length > 0) {
+        payload.seccion_B_parametros_operacion = seccionBParametrosOperacion;
+    }
+
+    return payload;
 }
 
 function updateAutonomia() {
