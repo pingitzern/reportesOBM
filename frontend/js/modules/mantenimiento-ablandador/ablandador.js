@@ -9,6 +9,7 @@ const SAVE_BUTTON_ID = 'softener-save-button';
 const RESET_BUTTON_ID = 'softener-reset-button';
 const AUTONOMIA_CALCULADA_ID = 'softener-autonomia-calculada-as-left';
 const AUTONOMIA_RECOMENDADA_ID = 'softener-autonomia-recomendada-as-left';
+const VOLUMEN_RESINA_ID = 'softener-volumen-resina';
 const FACTOR_PROTECCION_ID = 'softener-factor-proteccion';
 const CLIENT_SELECT_ID = 'softener-cliente-nombre';
 const CLIENT_OPTION_ATTRIBUTE = 'data-softener-client-option';
@@ -427,6 +428,13 @@ function setDefaultServiceDate() {
     }
 }
 
+function setDefaultResinVolume() {
+    const volumenInput = getElement(VOLUMEN_RESINA_ID);
+    if (volumenInput instanceof HTMLInputElement && !volumenInput.value) {
+        volumenInput.value = '25';
+    }
+}
+
 function normalizeDateValue(value) {
     if (!value) {
         return '';
@@ -478,7 +486,7 @@ function collectFormData() {
         ['tecnico', getInputValue('softener-tecnico')],
     ]);
 
-    const volumenResinaAsLeft = getNumberValue('softener-volumen-resina-as-left');
+    const volumenResina = getNumberValue(VOLUMEN_RESINA_ID);
     const durezaEntradaAsLeft = getNumberValue('softener-dureza-entrada-as-left');
     const autonomiaCalculada = getNumberValue(AUTONOMIA_CALCULADA_ID);
     const autonomiaRecomendada = getNumberValue(AUTONOMIA_RECOMENDADA_ID);
@@ -488,10 +496,7 @@ function collectFormData() {
         ['modelo', getInputValue('softener-equipo-modelo')],
         ['numero_serie', getInputValue('softener-equipo-numero-serie')],
         ['ubicacion', getInputValue('softener-equipo-ubicacion')],
-        ['volumen_resina_as_found', getNumberValue('softener-volumen-resina-as-found')],
-        ['volumen_resina_as_left', volumenResinaAsLeft],
-        ['nivel_sal_as_found', getInputValue('softener-nivel-sal-as-found')],
-        ['nivel_sal_as_left', getInputValue('softener-nivel-sal-as-left')],
+        ['volumen_resina', volumenResina],
         ['notas_equipo', getInputValue('softener-equipo-notas')],
     ]);
 
@@ -539,6 +544,8 @@ function collectFormData() {
         ['presion_salida_as_left', getNumberValue('softener-presion-salida-as-left')],
         ['conductividad_as_found', getNumberValue('softener-conductividad-as-found')],
         ['conductividad_as_left', getNumberValue('softener-conductividad-as-left')],
+        ['nivel_sal_as_found', getInputValue('softener-nivel-sal-as-found')],
+        ['nivel_sal_as_left', getInputValue('softener-nivel-sal-as-left')],
         ['temperatura_ambiente', getInputValue('softener-temperatura-ambiente')],
         ['estado_gabinete', getInputValue('softener-estado-gabinete')],
         ['observaciones', getInputValue('softener-condiciones-observaciones')],
@@ -565,7 +572,7 @@ function collectFormData() {
 }
 
 function updateAutonomia() {
-    const volumenResina = getNumberValue('softener-volumen-resina-as-left');
+    const volumenResina = getNumberValue(VOLUMEN_RESINA_ID);
     const durezaEntrada = getNumberValue('softener-dureza-entrada-as-left');
     const aplicarFactor = getCheckboxValue(FACTOR_PROTECCION_ID);
 
@@ -573,10 +580,13 @@ function updateAutonomia() {
     let autonomiaRecomendada = null;
 
     if (volumenResina !== null && durezaEntrada !== null && durezaEntrada > 0) {
-        const resultado = (volumenResina * 5) / durezaEntrada;
-        if (Number.isFinite(resultado)) {
-            autonomiaCalculada = resultado;
-            autonomiaRecomendada = aplicarFactor ? resultado * 0.8 : resultado;
+        const durezaNormalizada = durezaEntrada / 10;
+        if (durezaNormalizada > 0) {
+            const resultado = (volumenResina * 6) / durezaNormalizada;
+            if (Number.isFinite(resultado)) {
+                autonomiaCalculada = resultado;
+                autonomiaRecomendada = aplicarFactor ? resultado * 0.8 : resultado;
+            }
         }
     }
 
@@ -600,7 +610,7 @@ export function createSoftenerModule(deps = {}) {
 
     function attachAutonomiaListeners() {
         const triggerIds = [
-            'softener-volumen-resina-as-left',
+            VOLUMEN_RESINA_ID,
             'softener-dureza-entrada-as-left',
         ];
         triggerIds.forEach(id => {
@@ -626,6 +636,7 @@ export function createSoftenerModule(deps = {}) {
             schedulePostReset(() => {
                 resetClientSelection();
                 setDefaultServiceDate();
+                setDefaultResinVolume();
                 updateAutonomia();
             });
         });
@@ -644,6 +655,7 @@ export function createSoftenerModule(deps = {}) {
                 setTimeout(() => {
                     resetClientSelection();
                     setDefaultServiceDate();
+                    setDefaultResinVolume();
                     updateAutonomia();
                 }, 0);
             });
@@ -672,6 +684,7 @@ export function createSoftenerModule(deps = {}) {
             alert('✅ Mantenimiento de ablandador guardado correctamente.');
             form.reset();
             setDefaultServiceDate();
+            setDefaultResinVolume();
             updateAutonomia();
         } catch (error) {
             console.error('Error al guardar mantenimiento de ablandador:', error);
@@ -692,6 +705,7 @@ export function createSoftenerModule(deps = {}) {
             return;
         }
         setDefaultServiceDate();
+        setDefaultResinVolume();
         updateAutonomia();
         initializeClientAutocomplete(obtenerClientesFn);
         attachAutonomiaListeners();
