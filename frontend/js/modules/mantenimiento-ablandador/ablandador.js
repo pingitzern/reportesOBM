@@ -7,12 +7,13 @@ const SOFTENER_VIEW_ID = 'tab-ablandador';
 const FORM_ID = 'softener-maintenance-form';
 const SAVE_BUTTON_ID = 'softener-save-button';
 const RESET_BUTTON_ID = 'softener-reset-button';
-const AUTONOMIA_CALCULADA_ID = 'softener-autonomia-calculada-as-left';
-const AUTONOMIA_RECOMENDADA_ID = 'softener-autonomia-recomendada-as-left';
-const AUTONOMIA_CABEZAL_AS_FOUND_ID = 'softener-autonomia-cabezal-as-found';
-const AUTONOMIA_AJUSTADA_ID = 'softener-autonomia-ajustada-as-left';
+const AUTONOMIA_CALCULADA_ID = 'softener-autonomia-calculada';
+const AUTONOMIA_RECOMENDADA_ID = 'softener-autonomia-recomendada';
+const AUTONOMIA_SETEO_ACTUAL_ID = 'softener-autonomia-seteo-actual';
+const AUTONOMIA_AJUSTADA_ID = 'softener-autonomia-ajustada';
 const VOLUMEN_RESINA_ID = 'softener-volumen-resina';
 const FACTOR_PROTECCION_ID = 'softener-factor-proteccion';
+const DUREZA_AGUA_CRUDA_ID = 'softener-dureza-agua-cruda';
 const CLIENT_SELECT_ID = 'softener-cliente-nombre';
 const CLIENT_OPTION_ATTRIBUTE = 'data-softener-client-option';
 const CLIENT_KEY_ATTRIBUTE = 'data-softener-client-key';
@@ -472,7 +473,7 @@ function buildSection(entries) {
 function collectFormData() {
     const metadata = {
         formulario: 'mantenimiento_ablandador',
-        version: '2.0',
+        version: '3.0',
         generado_en: new Date().toISOString(),
     };
 
@@ -489,10 +490,11 @@ function collectFormData() {
     ]);
 
     const volumenResina = getNumberValue(VOLUMEN_RESINA_ID);
-    const durezaEntradaAsLeft = getNumberValue('softener-dureza-entrada-as-left');
+    const durezaAguaCruda = getNumberValue(DUREZA_AGUA_CRUDA_ID);
     const autonomiaCalculada = getNumberValue(AUTONOMIA_CALCULADA_ID);
     const autonomiaRecomendada = getNumberValue(AUTONOMIA_RECOMENDADA_ID);
-    const autonomiaCabezalAsFound = getNumberValue(AUTONOMIA_CABEZAL_AS_FOUND_ID);
+    const seteoActualAutonomia = getNumberValue(AUTONOMIA_SETEO_ACTUAL_ID);
+    const aplicarProteccion = getCheckboxValue(FACTOR_PROTECCION_ID);
     const autonomiaAjustada = getCheckboxValue(AUTONOMIA_AJUSTADA_ID);
 
     const seccionB = buildSection([
@@ -505,23 +507,12 @@ function collectFormData() {
     ]);
 
     const seccionC = buildSection([
-        ['dureza_entrada_as_found', getNumberValue('softener-dureza-entrada-as-found')],
-        ['dureza_entrada_as_left', durezaEntradaAsLeft],
-        ['dureza_salida_as_found', getNumberValue('softener-dureza-salida-as-found')],
-        ['dureza_salida_as_left', getNumberValue('softener-dureza-salida-as-left')],
-        ['cloro_as_found', getNumberValue('softener-cloro-as-found')],
-        ['cloro_as_left', getNumberValue('softener-cloro-as-left')],
-        ['test_cloro_as_found', getInputValue('softener-test-cloro-as-found')],
-        ['test_cloro_as_left', getInputValue('softener-test-cloro-as-left')],
-        ['autonomia_cabezal_as_found', autonomiaCabezalAsFound],
-        ['dureza_entrada', durezaEntradaAsLeft],
-        ['dureza_salida', getNumberValue('softener-dureza-salida-as-left')],
-        ['cloro', getNumberValue('softener-cloro-as-left')],
-        ['autonomia_calculada_as_left', autonomiaCalculada],
-        ['autonomia_recomendada_as_left', autonomiaRecomendada],
-        ['aplicar_factor_proteccion_as_left', getCheckboxValue(FACTOR_PROTECCION_ID)],
+        ['dureza_agua_cruda', durezaAguaCruda],
+        ['seteo_actual_autonomia', seteoActualAutonomia],
+        ['autonomia_calculada', autonomiaCalculada],
+        ['aplicar_proteccion_20', aplicarProteccion],
+        ['autonomia_recomendada', autonomiaRecomendada],
         ['autonomia_ajustada_valor_calculado', autonomiaAjustada],
-        ['observaciones', getInputValue('softener-parametros-observaciones')],
     ]);
 
     const seccionD = buildSection([
@@ -579,7 +570,7 @@ function collectFormData() {
 
 function updateAutonomia() {
     const volumenResina = getNumberValue(VOLUMEN_RESINA_ID);
-    const durezaEntrada = getNumberValue('softener-dureza-entrada-as-left');
+    const durezaEntrada = getNumberValue(DUREZA_AGUA_CRUDA_ID);
     const aplicarFactor = getCheckboxValue(FACTOR_PROTECCION_ID);
 
     let autonomiaCalculada = null;
@@ -617,7 +608,7 @@ export function createSoftenerModule(deps = {}) {
     function attachAutonomiaListeners() {
         const triggerIds = [
             VOLUMEN_RESINA_ID,
-            'softener-dureza-entrada-as-left',
+            DUREZA_AGUA_CRUDA_ID,
         ];
         triggerIds.forEach(id => {
             const element = getElement(id);
