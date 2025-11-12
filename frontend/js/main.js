@@ -9,6 +9,7 @@ import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js'
 import { createSearchModule } from './modules/busqueda/busqueda.js';
 import { createRemitoModule } from './modules/remito/remito.js';
 import { createRemitosGestionModule } from './modules/remitos-gestion/remitos-gestion.js';
+import { createSoftenerModule } from './modules/mantenimiento-ablandador/softener.js';
 
 const {
     guardarMantenimiento,
@@ -71,12 +72,17 @@ const remitosGestionModule = createRemitosGestionModule({
     obtenerClientes,
 });
 
+const softenerModule = createSoftenerModule({
+    showView,
+});
+
 const appModules = {
     maintenance: maintenanceModule,
     remito: remitoModule,
     search: searchModule,
     dashboard: dashboardModule,
     remitosGestion: remitosGestionModule,
+    softener: softenerModule,
 };
 
 function setTextOrHide(element, text) {
@@ -204,6 +210,40 @@ function showMaintenanceTab() {
     setActiveNavigation('nuevo');
 }
 
+function showSoftenerTab() {
+    appModules.softener.show();
+    setActiveNavigation('nuevo');
+}
+
+function getMaintenanceModalElements() {
+    return {
+        modal: document.getElementById('maintenance-type-modal'),
+        backdrop: document.getElementById('maintenance-type-backdrop'),
+    };
+}
+
+function openMaintenanceTypeModal() {
+    const { modal, backdrop } = getMaintenanceModalElements();
+    if (backdrop) {
+        backdrop.classList.remove('hidden');
+    }
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+}
+
+function closeMaintenanceTypeModal() {
+    const { modal, backdrop } = getMaintenanceModalElements();
+    if (backdrop) {
+        backdrop.classList.add('hidden');
+    }
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+}
+
 function showSearchTab() {
     appModules.search.show();
     setActiveNavigation('buscar');
@@ -218,7 +258,7 @@ function initializeNavigation() {
     const tabNuevoBtn = document.getElementById('tab-nuevo-btn');
     if (tabNuevoBtn) {
         tabNuevoBtn.addEventListener('click', () => {
-            showMaintenanceTab();
+            openMaintenanceTypeModal();
         });
     }
 
@@ -244,6 +284,44 @@ function initializeNavigation() {
             void remitosGestionModule.renderListado({ page: 1 });
         });
     }
+
+    const modalOsmosisBtn = document.getElementById('maintenance-type-osmosis');
+    if (modalOsmosisBtn) {
+        modalOsmosisBtn.addEventListener('click', () => {
+            showMaintenanceTab();
+            closeMaintenanceTypeModal();
+        });
+    }
+
+    const modalSoftenerBtn = document.getElementById('maintenance-type-softener');
+    if (modalSoftenerBtn) {
+        modalSoftenerBtn.addEventListener('click', () => {
+            showSoftenerTab();
+            closeMaintenanceTypeModal();
+        });
+    }
+
+    const modalCancelBtn = document.getElementById('maintenance-type-cancel');
+    if (modalCancelBtn) {
+        modalCancelBtn.addEventListener('click', () => {
+            closeMaintenanceTypeModal();
+        });
+    }
+
+    const { modal, backdrop } = getMaintenanceModalElements();
+    if (backdrop) {
+        backdrop.addEventListener('click', () => {
+            closeMaintenanceTypeModal();
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', event => {
+            if (event.target === modal) {
+                closeMaintenanceTypeModal();
+            }
+        });
+    }
 }
 
 async function initializeApp() {
@@ -253,6 +331,7 @@ async function initializeApp() {
     appModules.remito.initialize();
     appModules.search.initialize();
     appModules.remitosGestion.initialize();
+    appModules.softener.initialize();
 
     try {
         await initializeAuth();
