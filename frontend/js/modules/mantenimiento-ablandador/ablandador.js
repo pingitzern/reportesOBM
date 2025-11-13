@@ -495,10 +495,12 @@ function collectFormData() {
     const aplicarProteccion = getCheckboxValue(FACTOR_PROTECCION_ID);
     const autonomiaAjustada = getCheckboxValue(AUTONOMIA_AJUSTADA_ID);
 
-    const prefiltro = getInputValue('softener-prefiltro');
-    const nivelSal = getInputValue('softener-nivel-sal');
-    const testCloroEntrada = getNumberValue('softener-test-cloro');
-    const durezaSalida = getNumberValue('softener-dureza-salida');
+    const presionEntradaAsFound = getNumberValue('softener-param-presion-entrada-found');
+    const presionEntradaAsLeft = getNumberValue('softener-param-presion-entrada-left');
+    const testCloroAsFound = getNumberValue('softener-param-test-cloro-found');
+    const testCloroAsLeft = getNumberValue('softener-param-test-cloro-left');
+    const durezaSalidaAsFound = getNumberValue('softener-param-dureza-salida-found');
+    const durezaSalidaAsLeft = getNumberValue('softener-param-dureza-salida-left');
 
     const seccionB = buildSection([
         ['tipo', getInputValue('softener-equipo-tipo')],
@@ -507,6 +509,15 @@ function collectFormData() {
         ['ubicacion', getInputValue('softener-equipo-ubicacion')],
         ['volumen_resina', volumenResina],
         ['notas_equipo', getInputValue('softener-equipo-notas')],
+    ]);
+
+    const seccionBParametrosOperacion = buildSection([
+        ['presion_entrada_as_found', presionEntradaAsFound],
+        ['presion_entrada_as_left', presionEntradaAsLeft],
+        ['test_cloro_entrada_as_found', testCloroAsFound],
+        ['test_cloro_entrada_as_left', testCloroAsLeft],
+        ['dureza_salida_as_found', durezaSalidaAsFound],
+        ['dureza_salida_as_left', durezaSalidaAsLeft],
     ]);
 
     const seccionC = buildSection([
@@ -537,10 +548,15 @@ function collectFormData() {
     ]);
 
     const seccionF = buildSection([
-        ['prefiltro', prefiltro],
-        ['nivel_sal', nivelSal],
-        ['test_cloro_entrada', testCloroEntrada],
-        ['dureza_salida', durezaSalida],
+        ['presion_entrada_as_found', getNumberValue('softener-presion-entrada-as-found')],
+        ['presion_entrada_as_left', getNumberValue('softener-presion-entrada-as-left')],
+        ['presion_salida_as_found', getNumberValue('softener-presion-salida-as-found')],
+        ['presion_salida_as_left', getNumberValue('softener-presion-salida-as-left')],
+        ['nivel_sal_as_found', getInputValue('softener-nivel-sal-as-found')],
+        ['nivel_sal_as_left', getInputValue('softener-nivel-sal-as-left')],
+        ['temperatura_ambiente', getInputValue('softener-temperatura-ambiente')],
+        ['estado_gabinete', getInputValue('softener-estado-gabinete')],
+        ['observaciones', getInputValue('softener-condiciones-observaciones')],
     ]);
 
     const seccionG = buildSection([
@@ -561,6 +577,10 @@ function collectFormData() {
         seccion_F_condiciones: seccionF,
         seccion_G_cierre: seccionG,
     };
+
+    if (Object.keys(seccionBParametrosOperacion).length > 0) {
+        payload.seccion_B_parametros_operacion = seccionBParametrosOperacion;
+    }
 
     return payload;
 }
