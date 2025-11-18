@@ -139,6 +139,26 @@ Para entornos de desarrollo compartidos mantenemos una cuenta administrativa de 
 4. Habilita HTTPS; Google Apps Script solo acepta solicitudes seguras.
 5. Mantén sincronizados los encabezados de la hoja con el script; si agregas columnas, actualiza `Codigo2025.gs` (y los servicios relacionados si corresponde) y redepliega la API.
 
+### Checklist antes de liberar `main`
+Para asegurarte de que la rama `main` está lista para publicarse ejecuta el siguiente flujo:
+
+1. `git checkout main && git pull` para validar que partes de la última versión aprobada.
+2. Instala dependencias frescas (`npm ci`) si todavía no lo hiciste en la sesión actual.
+3. Ejecuta `npm run release:verify` para correr `eslint`, la suite de Jest y un build de producción en un solo paso. El comando falla si cualquiera de las etapas detecta errores.
+4. Si todo pasa, crea el tag/commit necesario o continúa con el despliegue.
+
+Este mismo comando es el que se invoca automáticamente antes de `npm run deploy`, así que evita publicar una rama que no haya superado las validaciones anteriores.
+
+### Publicar con GitHub Pages (servicio gratuito)
+El repositorio incluye un workflow (`.github/workflows/pages.yml`) que genera la aplicación con Vite y publica la carpeta `dist/` en GitHub Pages cada vez que haces push a `main`.
+
+1. En GitHub, ve a **Settings > Pages** y elige **Source: GitHub Actions** (solo necesitas hacerlo una vez).
+2. Realiza un `git push origin main`. La acción "Deploy to GitHub Pages" construirá el sitio y lo subirá automáticamente al entorno de Pages.
+3. Cuando el job termine, la URL pública quedará disponible como `https://<tu-usuario>.github.io/reportesOBM/` y también se mostrará en la pestaña **Deployments** del repositorio.
+4. Si necesitas forzar un despliegue manual (por ejemplo desde una máquina local con credenciales), ejecuta `npm run deploy`. El script ejecuta la checklist anterior, genera `dist/` y publica el resultado en la rama `gh-pages` mediante el paquete `gh-pages`.
+
+Al tratarse de un hosting estático recuerda inyectar `window.__APP_CONFIG__` en `frontend/index.html` (o usar la variante `API_URL` por entorno) para que el frontend apunte a tu Apps Script productivo.
+
 ## Requisitos y flujo de trabajo para colaboradores
 
 ### Requisitos básicos
