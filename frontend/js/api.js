@@ -1,4 +1,4 @@
-import { API_URL } from './config.js';
+import { API_URL, DISABLE_AUTH } from './config.js';
 import { getCurrentToken, handleSessionExpiration } from './modules/login/auth.js';
 import { state } from './modules/mantenimiento/state.js';
 
@@ -22,12 +22,14 @@ async function postJSON(payload) {
         requestPayload.action = action;
     }
 
-    if (!PUBLIC_ACTIONS.has(action)) {
+    if (!PUBLIC_ACTIONS.has(action) && !DISABLE_AUTH) {
         const token = getCurrentToken();
         if (!token) {
             throw new Error('No hay una sesión activa. Por favor, ingresá de nuevo.');
         }
         requestPayload.token = token;
+    } else if (!PUBLIC_ACTIONS.has(action) && DISABLE_AUTH) {
+        requestPayload.token = requestPayload.token ?? 'demo-token';
     }
 
     let response;

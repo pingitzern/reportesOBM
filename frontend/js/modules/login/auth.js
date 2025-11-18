@@ -1,4 +1,4 @@
-import { API_URL } from '../../config.js';
+import { API_URL, DISABLE_AUTH } from '../../config.js';
 import {
     THEME_DARK,
     THEME_LIGHT,
@@ -8,6 +8,13 @@ import {
 } from '../theme/theme.js';
 
 const STORAGE_KEY = 'reportesOBM.user';
+const DEMO_SESSION_DURATION_DAYS = 7;
+const DEMO_USER = {
+    nombre: 'Modo demostración',
+    cargo: 'Invitado',
+    rol: 'demo',
+};
+const DEMO_TOKEN = 'demo-token';
 
 let cachedSession = null;
 let listenersBound = false;
@@ -24,6 +31,15 @@ function getStorage() {
         return globalThis.localStorage;
     }
     return null;
+}
+
+function createDemoSession() {
+    const expiresAt = new Date(Date.now() + DEMO_SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000);
+    return {
+        user: { ...DEMO_USER },
+        token: DEMO_TOKEN,
+        expiresAt,
+    };
 }
 
 function normalizeUser(user) {
@@ -701,6 +717,18 @@ async function handleLogout(event) {
         event.preventDefault();
     }
 
+    if (DISABLE_AUTH) {
+        const session = loadStoredAuth() || buildSession(createDemoSession());
+        if (session) {
+            persistAuth(session);
+            updateUserPanel(session.user);
+        }
+        setMainViewVisible(true);
+        hideLoginModal();
+        closeUserMenu();
+        return;
+    }
+
 
     const session = loadStoredAuth();
     const token = typeof session?.token === 'string' ? session.token.trim() : '';
@@ -791,6 +819,30 @@ export function getCurrentToken() {
 export async function initializeAuth() {
     bindEventListeners();
 
+    if (DISABLE_AUTH) {
+        let session = loadStoredAuth();
+        if (!session) {
+            const normalized = buildSession(createDemoSession());
+            if (normalized) {
+                persistAuth(normalized);
+                session = normalized;
+            }
+        }
+
+        if (!session) {
+            session = {
+                user: { ...DEMO_USER },
+                token: null,
+                expiresAt: null,
+            };
+        }
+
+        updateUserPanel(session.user);
+        setMainViewVisible(true);
+        hideLoginModal();
+        return session;
+    }
+
     const storedSession = loadStoredAuth();
     if (storedSession) {
         updateUserPanel(storedSession.user);
@@ -811,11 +863,29 @@ export function logout() {
 }
 
 export async function handleSessionExpiration() {
+    if (DISABLE_AUTH) {
+        return;
+    }
     await handleLogout();
     displayError('Tu sesión ha expirado. Por favor, ingresá de nuevo.');
 }
 
 export async function requireAuthentication() {
+    if (DISABLE_AUTH) {
+        let session = loadStoredAuth();
+        if (!session) {
+            const normalized = buildSession(createDemoSession());
+            if (normalized) {
+                persistAuth(normalized);
+                session = normalized;
+            }
+        }
+
+        setMainViewVisible(true);
+        hideLoginModal();
+        return session || { user: { ...DEMO_USER } };
+    }
+
     const session = loadStoredAuth();
     if (session) {
         return session;
