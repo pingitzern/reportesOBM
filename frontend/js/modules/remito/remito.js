@@ -1236,7 +1236,20 @@ function transformAblandadorToRemitoFormat(ablandadorData) {
         });
     }
     
-    return transformed;
+    // Conservar las secciones originales para que el flujo del remito pueda
+    // reutilizar la misma lógica que con ósmosis (por ejemplo, para completar
+    // el formulario en pantalla). Sin estas secciones, `populateRemitoForm`
+    // no encuentra los datos y deja los campos vacíos.
+    return {
+        ...transformed,
+        seccion_A_cliente: ablandadorData.seccion_A_cliente || null,
+        seccion_B_equipo: ablandadorData.seccion_B_equipo || null,
+        seccion_C_parametros: ablandadorData.seccion_C_parametros || null,
+        seccion_D_checklist: ablandadorData.seccion_D_checklist || null,
+        seccion_E_resumen: ablandadorData.seccion_E_resumen || null,
+        seccion_F_condiciones: ablandadorData.seccion_F_condiciones || null,
+        seccion_G_cierre: ablandadorData.seccion_G_cierre || null,
+    };
 }
 
 function createReportSnapshot(rawData) {
