@@ -12,13 +12,15 @@
     "preview": "vite preview",
     "lint": "eslint \"frontend/js/**/*.js\"",
     "format": "prettier --write \"frontend/js/**/*.{js,json,css,html}\"",
-  "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
-  "clasp:push": "npx @google/clasp push --force",
-  "clasp:deploy": "npx @google/clasp deploy --description \"Auto deploy\"",
-  "clasp:check": "npx @google/clasp --version",
-  "clasp:test": "npx @google/clasp run testCrearRemito --json",
-  "prepare": "husky install",
-    "deploy": "npm run build && gh-pages -d dist"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "release:verify": "npm run lint && npm test && npm run build",
+    "predeploy": "npm run release:verify",
+    "clasp:push": "npx @google/clasp push --force",
+    "clasp:deploy": "npx @google/clasp deploy --description \"Auto deploy\"",
+    "clasp:check": "npx @google/clasp --version",
+    "clasp:test": "npx @google/clasp run testCrearRemito --json",
+    "prepare": "husky install",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
     "@jest/environment-jsdom": "npm:jest-environment-jsdom@^30.1.2",
