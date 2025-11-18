@@ -77,6 +77,12 @@ const softenerModule = createSoftenerModule({
     showView,
     guardarMantenimientoAblandador,
     obtenerClientes,
+    remitoModule,
+    onMaintenanceSaved: (reportData) => {
+        if (remitoModule && typeof remitoModule.handleMaintenanceSaved === 'function') {
+            remitoModule.handleMaintenanceSaved(reportData);
+        }
+    },
 });
 
 const appModules = {

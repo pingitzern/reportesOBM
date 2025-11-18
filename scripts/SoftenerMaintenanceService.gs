@@ -8,8 +8,13 @@
     const SOFTENER_SHEET_NAME = resolvedSheetName;
 
     const SOFTENER_COLUMNS = Object.freeze([
+      // Metadata
       { header: 'Fecha_Registro', path: 'metadata.timestamp', formatter: 'dateTime' },
       { header: 'Registrado_Por', path: 'metadata.usuario' },
+      { header: 'Numero_Reporte', path: 'metadata.numero_reporte' },
+      { header: 'ID_Unico', path: 'metadata.id_unico' },
+      
+      // Sección A - Cliente y Servicio
       { header: 'Cliente_Nombre', path: 'seccion_A_cliente.nombre' },
       { header: 'Cliente_Direccion', path: 'seccion_A_cliente.direccion' },
       { header: 'Cliente_Localidad', path: 'seccion_A_cliente.localidad' },
@@ -19,31 +24,93 @@
       { header: 'Cliente_CUIT', path: 'seccion_A_cliente.cuit' },
       { header: 'Servicio_Fecha', path: 'seccion_A_cliente.fecha_servicio', formatter: 'date' },
       { header: 'Servicio_Tecnico', path: 'seccion_A_cliente.tecnico' },
+      
+      // Sección B - Equipo
       { header: 'Equipo_Tipo', path: 'seccion_B_equipo.tipo' },
       { header: 'Equipo_Modelo', path: 'seccion_B_equipo.modelo' },
       { header: 'Equipo_NumeroSerie', path: 'seccion_B_equipo.numero_serie' },
       { header: 'Equipo_Ubicacion', path: 'seccion_B_equipo.ubicacion' },
       { header: 'Equipo_VolumenResina', path: 'seccion_B_equipo.volumen_resina', formatter: 'number' },
+      { header: 'Equipo_TipoRegeneracion', path: 'seccion_B_equipo.tipo_regeneracion' },
+      { header: 'Equipo_Prefiltro', path: 'seccion_B_equipo.prefiltro' },
+      { header: 'Equipo_ProteccionEntrada', path: 'seccion_B_equipo.proteccion_entrada' },
+      { header: 'Equipo_Manometros', path: 'seccion_B_equipo.manometros' },
       { header: 'Equipo_Notas', path: 'seccion_B_equipo.notas_equipo' },
+      
+      // Sección C - Parámetros de Autonomía
       { header: 'Parametros_DurezaAguaCruda', path: 'seccion_C_parametros.dureza_agua_cruda', formatter: 'number' },
+      { header: 'Parametros_AutonomiaRestante', path: 'seccion_C_parametros.autonomia_restante', formatter: 'number' },
       { header: 'Parametros_SeteoAutonomia', path: 'seccion_C_parametros.seteo_actual_autonomia', formatter: 'number' },
-      { header: 'Parametros_AutonomiaCalculada', path: 'seccion_C_parametros.autonomia_calculada', formatter: 'number' },
       { header: 'Parametros_AplicarProteccion20', path: 'seccion_C_parametros.aplicar_proteccion_20', formatter: 'boolean' },
       { header: 'Parametros_AutonomiaRecomendada', path: 'seccion_C_parametros.autonomia_recomendada', formatter: 'number' },
       { header: 'Parametros_AjustadaValorCalculado', path: 'seccion_C_parametros.autonomia_ajustada_valor_calculado', formatter: 'boolean' },
-      { header: 'Checklist_RegeneracionAutomatica', path: 'seccion_D_checklist.regeneracion_automatica', formatter: 'boolean' },
+      
+      // Sección C - Cabezal (Configuración)
+      { header: 'Cabezal_HoraCabezal_AsFound', path: 'seccion_C_cabezal.hora_cabezal_as_found' },
+      { header: 'Cabezal_HoraCabezal_AsLeft', path: 'seccion_C_cabezal.hora_cabezal_as_left' },
+      { header: 'Cabezal_HoraRegeneracion_AsFound', path: 'seccion_C_cabezal.hora_regeneracion_as_found' },
+      { header: 'Cabezal_HoraRegeneracion_AsLeft', path: 'seccion_C_cabezal.hora_regeneracion_as_left' },
+      { header: 'Cabezal_P1_Retrolavado_Found', path: 'seccion_C_cabezal.p1_retrolavado_min_found', formatter: 'number' },
+      { header: 'Cabezal_P1_Retrolavado_Left', path: 'seccion_C_cabezal.p1_retrolavado_min_left', formatter: 'number' },
+      { header: 'Cabezal_P2_Salmuera_Found', path: 'seccion_C_cabezal.p2_salmuera_min_found', formatter: 'number' },
+      { header: 'Cabezal_P2_Salmuera_Left', path: 'seccion_C_cabezal.p2_salmuera_min_left', formatter: 'number' },
+      { header: 'Cabezal_P3_Enjuague_Found', path: 'seccion_C_cabezal.p3_enjuague_min_found', formatter: 'number' },
+      { header: 'Cabezal_P3_Enjuague_Left', path: 'seccion_C_cabezal.p3_enjuague_min_left', formatter: 'number' },
+      { header: 'Cabezal_P4_LlenadoSalero_Found', path: 'seccion_C_cabezal.p4_llenado_salero_min_found', formatter: 'number' },
+      { header: 'Cabezal_P4_LlenadoSalero_Left', path: 'seccion_C_cabezal.p4_llenado_salero_min_left', formatter: 'number' },
+      { header: 'Cabezal_FrecuenciaDias_Found', path: 'seccion_C_cabezal.frecuencia_dias_found', formatter: 'number' },
+      { header: 'Cabezal_FrecuenciaDias_Left', path: 'seccion_C_cabezal.frecuencia_dias_left', formatter: 'number' },
+      
+      // Sección D - Checklist
+      { header: 'Checklist_InspeccionFugas', path: 'seccion_D_checklist.inspeccion_fugas', formatter: 'boolean' },
+      { header: 'Checklist_CambioFiltroRealizado', path: 'seccion_D_checklist.cambio_filtro_realizado', formatter: 'boolean' },
+      { header: 'Checklist_FiltroTipoInstalado', path: 'seccion_D_checklist.filtro_tipo_instalado' },
+      { header: 'Checklist_FiltroLoteSerie', path: 'seccion_D_checklist.filtro_lote_serie' },
       { header: 'Checklist_LimpiezaTanqueSal', path: 'seccion_D_checklist.limpieza_tanque_sal', formatter: 'boolean' },
-      { header: 'Checklist_ValvulasOperativas', path: 'seccion_D_checklist.valvulas_operativas', formatter: 'boolean' },
-      { header: 'Checklist_Fugas', path: 'seccion_D_checklist.fugas', formatter: 'boolean' },
-      { header: 'Checklist_CambioResina', path: 'seccion_D_checklist.cambio_resina', formatter: 'boolean' },
-      { header: 'Checklist_FactorProteccionConfirmado', path: 'seccion_D_checklist.factor_proteccion_confirmado', formatter: 'boolean' },
+      { header: 'Checklist_VerificacionNivelAgua', path: 'seccion_D_checklist.verificacion_nivel_agua', formatter: 'boolean' },
+      { header: 'Checklist_CargaSal', path: 'seccion_D_checklist.carga_sal', formatter: 'boolean' },
+      { header: 'Checklist_VerificacionHora', path: 'seccion_D_checklist.verificacion_hora', formatter: 'boolean' },
+      { header: 'Checklist_VerificacionParametrosCiclo', path: 'seccion_D_checklist.verificacion_parametros_ciclo', formatter: 'boolean' },
+      { header: 'Checklist_AjusteAutonomia', path: 'seccion_D_checklist.ajuste_autonomia', formatter: 'boolean' },
+      { header: 'Checklist_RegeneracionManual', path: 'seccion_D_checklist.regeneracion_manual', formatter: 'boolean' },
       { header: 'Checklist_Otros', path: 'seccion_D_checklist.otros' },
       { header: 'Checklist_Observaciones', path: 'seccion_D_checklist.observaciones' },
+      
+      // Sección E - Resumen
       { header: 'Resumen_TrabajoRealizado', path: 'seccion_E_resumen.trabajo_realizado' },
       { header: 'Resumen_Recomendaciones', path: 'seccion_E_resumen.recomendaciones' },
       { header: 'Resumen_ProximoServicio', path: 'seccion_E_resumen.proximo_servicio', formatter: 'date' },
-      { header: 'Datos_Adicionales', path: '__PAYLOAD__', formatter: 'json' },
-      { header: 'ID_Unico', path: 'metadata.id_unico' }
+      { header: 'Resumen_Materiales', path: 'seccion_E_resumen.materiales' },
+      { header: 'Resumen_ComentariosCliente', path: 'seccion_E_resumen.comentarios_cliente' },
+      
+      // Sección F - Condiciones de Operación
+      { header: 'Condiciones_PresionEntrada_Found', path: 'seccion_F_condiciones.presion_entrada_as_found', formatter: 'number' },
+      { header: 'Condiciones_PresionEntrada_Left', path: 'seccion_F_condiciones.presion_entrada_as_left', formatter: 'number' },
+      { header: 'Condiciones_PresionSalida_Found', path: 'seccion_F_condiciones.presion_salida_as_found', formatter: 'number' },
+      { header: 'Condiciones_PresionSalida_Left', path: 'seccion_F_condiciones.presion_salida_as_left', formatter: 'number' },
+      { header: 'Condiciones_NivelSal_Found', path: 'seccion_F_condiciones.nivel_sal_as_found' },
+      { header: 'Condiciones_NivelSal_Left', path: 'seccion_F_condiciones.nivel_sal_as_left' },
+      { header: 'Condiciones_TemperaturaAmbiente', path: 'seccion_F_condiciones.temperatura_ambiente' },
+      { header: 'Condiciones_EstadoGabinete', path: 'seccion_F_condiciones.estado_gabinete' },
+      { header: 'Condiciones_Observaciones', path: 'seccion_F_condiciones.observaciones' },
+      
+      // Parámetros de Operación (desde Sección B)
+      { header: 'Parametros_PresionEntrada_Found', path: 'seccion_B_parametros_operacion.presion_entrada_as_found', formatter: 'number' },
+      { header: 'Parametros_PresionEntrada_Left', path: 'seccion_B_parametros_operacion.presion_entrada_as_left', formatter: 'number' },
+      { header: 'Parametros_TestCloro_Found', path: 'seccion_B_parametros_operacion.test_cloro_entrada_as_found', formatter: 'number' },
+      { header: 'Parametros_TestCloro_Left', path: 'seccion_B_parametros_operacion.test_cloro_entrada_as_left', formatter: 'number' },
+      { header: 'Parametros_DurezaSalida_Found', path: 'seccion_B_parametros_operacion.dureza_salida_as_found', formatter: 'number' },
+      { header: 'Parametros_DurezaSalida_Left', path: 'seccion_B_parametros_operacion.dureza_salida_as_left', formatter: 'number' },
+      
+      // Sección G - Cierre y Confirmación
+      { header: 'Cierre_ConformidadCliente', path: 'seccion_G_cierre.conformidad_cliente' },
+      { header: 'Cierre_RepresentanteCliente', path: 'seccion_G_cierre.representante_cliente' },
+      { header: 'Cierre_MedioConfirmacion', path: 'seccion_G_cierre.medio_confirmacion' },
+      { header: 'Cierre_RequiereSeguimiento', path: 'seccion_G_cierre.requiere_seguimiento', formatter: 'boolean' },
+      { header: 'Cierre_ObservacionesFinales', path: 'seccion_G_cierre.observaciones_finales' },
+      
+      // Payload completo como JSON (para consultas futuras)
+      { header: 'Datos_Adicionales', path: '__PAYLOAD__', formatter: 'json' }
     ]);
 
     const SOFTENER_HEADERS = Object.freeze(SOFTENER_COLUMNS.map(column => column.header));
@@ -344,5 +411,18 @@
     ns.SOFTENER_COLUMNS = SOFTENER_COLUMNS;
     ns.SOFTENER_HEADERS = SOFTENER_HEADERS;
     ns.SoftenerMaintenanceService = SoftenerMaintenanceService;
+    
+    // Función de diagnóstico - ver qué versión está corriendo
+    ns.getSoftenerConfigInfo = function() {
+      return {
+        version: 'v2.0-81columns',
+        timestamp: new Date().toISOString(),
+        totalColumns: SOFTENER_COLUMNS.length,
+        totalHeaders: SOFTENER_HEADERS.length,
+        sheetName: SOFTENER_SHEET_NAME,
+        firstHeaders: SOFTENER_HEADERS.slice(0, 10),
+        lastHeaders: SOFTENER_HEADERS.slice(-10)
+      };
+    };
   })(global.OBM = global.OBM || {});
 })(typeof window !== 'undefined' ? window : this);

@@ -746,6 +746,19 @@ function doGet(e) {
             return ResponseFactory.success(result);
           }
 
+          case 'diagnostico_ablandador': {
+            ns.SessionService.validateSession(data.token);
+            const info = ns.getSoftenerConfigInfo ? ns.getSoftenerConfigInfo() : { error: 'Función no disponible' };
+            return ResponseFactory.success(info);
+          }
+
+          case 'generar_pdf_ablandador': {
+            ns.SessionService.validateSession(data.token);
+            const payload = data.payload && typeof data.payload === 'object' ? data.payload : data;
+            const result = ns.SoftenerPdfService.generarPdf(payload);
+            return ResponseFactory.success(result);
+          }
+
           default:
             throw new Error('Acción no soportada');
         }

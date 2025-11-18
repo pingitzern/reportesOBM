@@ -39,6 +39,7 @@ describe('handleGuardarClick', () => {
         jest.unstable_mockModule('../api.js', () => ({
             guardarMantenimiento: guardarMantenimientoMock,
             guardarMantenimientoAblandador: jest.fn(),
+            generarPdfAblandador: jest.fn(),
             buscarMantenimientos: jest.fn(),
             actualizarMantenimiento: jest.fn(),
             eliminarMantenimiento: jest.fn(),
