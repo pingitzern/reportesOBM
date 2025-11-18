@@ -1178,7 +1178,8 @@ function addEmptyRepuestoRow({ focus = false } = {}) {
 function transformAblandadorToRemitoFormat(ablandadorData) {
     // Convertir estructura de ablandador a formato que el backend espera para remitos
     const transformed = {
-        metadata: ablandadorData.metadata || {},
+        // NO incluir metadata.formulario para que populateRemitoForm use la lógica de osmosis
+        // que lee de los campos planos (clienteNombre, equipo, etc) en lugar de las secciones anidadas
         numero_reporte: ablandadorData.metadata?.numero_reporte || '',
         NumeroRemito: '', // Se asignará al finalizar
         fecha_display: ablandadorData.seccion_A_cliente?.fecha_servicio || '',
