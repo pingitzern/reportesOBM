@@ -64,6 +64,23 @@
 }
 
 @layer components {
+    .softener-compact {
+        @apply text-sm;
+    }
+
+    .softener-compact label,
+    .softener-compact input,
+    .softener-compact select,
+    .softener-compact textarea {
+        @apply text-sm;
+    }
+
+    .softener-compact input,
+    .softener-compact select,
+    .softener-compact textarea {
+        @apply py-1.5;
+    }
+
     .user-menu-toggle {
         @apply inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent text-gray-600 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 shadow-sm;
         background-color: var(--app-color-surface-soft);

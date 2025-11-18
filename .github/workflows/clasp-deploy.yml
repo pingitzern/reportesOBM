@@ -1,14 +1,12 @@
-name: Deploy Apps Script
+name: Deploy to Google Apps Script
 
 on:
   push:
     branches:
       - main
-      - 'feat/**'
 
 jobs:
   deploy:
-    name: Push to Google Apps Script
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,51 +15,30 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      - name: Install clasp
-        run: npm install -g @google/clasp
+      - name: Install clasp (v3.1.1)
+        run: npm install -g @google/clasp@3.1.1
 
-      - name: Restore clasp auth
+      - name: Restore clasp credentials
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: |
           if [ -z "$CLASPRC_JSON" ]; then
-            echo "CLASPRC_JSON secret is not set. Aborting." >&2
+            echo "::error::Missing CLASPRC_JSON secret" >&2
             exit 1
           fi
-          echo "$CLASPRC_JSON" > $HOME/.clasprc.json
-          chmod 600 $HOME/.clasprc.json
+          echo "$CLASPRC_JSON" > ~/.clasprc.json
 
-      - name: Ensure .clasp.json exists
+      - name: Configure .clasp.json
         env:
           APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
         run: |
-          if [ -f .clasp.json ]; then
-            echo ".clasp.json already exists in repo - using it."
-            cat .clasp.json
-          else
-            if [ -z "$APPS_SCRIPT_ID" ]; then
-              echo "No .clasp.json in repo and APPS_SCRIPT_ID secret not set. Aborting." >&2
-              exit 1
-            fi
-            echo "{\"scriptId\": \"${APPS_SCRIPT_ID}\", \"rootDir\": \"scripts\"}" > .clasp.json
+          if [ -z "$APPS_SCRIPT_ID" ]; then
+            echo "::error::Missing APPS_SCRIPT_ID secret" >&2
+            exit 1
           fi
+          printf '{\n  "scriptId": "%s",\n  "rootDir": "scripts"\n}\n' "$APPS_SCRIPT_ID" > .clasp.json
 
-      - name: Push files to Apps Script
-        run: |
-          # show version and list files for debugging
-          clasp -v || true
-          ls -la
-          # Force push to ensure all script files are updated
-          clasp push --force
-
-      - name: Create a new deployment (only on main)
-        if: github.ref == 'refs/heads/main'
-        run: |
-          # create a deployment so the webapp/endpoint uses the latest code
-          # we attempt a deploy; if it fails, the job will show the clasp error
-          # create an explicit version first (helps tracing and rollback)
-          clasp version --description "Auto version from CI (commit: $GITHUB_SHA)" || true
-          # then create/update the deployment to point to the new version
-          clasp deploy --description "Auto deploy from GitHub Actions (commit: $GITHUB_SHA)" || true
+      - name: Push to Apps Script
+        run: clasp push --force

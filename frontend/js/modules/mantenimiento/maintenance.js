@@ -6,8 +6,8 @@ import {
     initializeForm,
     resetForm,
     setReportNumber,
-} from './forms.js';
-import { renderComponentStages } from './templates.js';
+} from '../../forms.js';
+import { renderComponentStages } from '../../templates.js';
 
 function getElement(id) {
     return document.getElementById(id);
@@ -115,6 +115,30 @@ export function createMaintenanceModule(api, callbacks = {}) {
             notifyReportSaved(datos);
 
             alert('✅ Mantenimiento guardado correctamente en el sistema');
+
+            // Después de guardar, intentar imprimir el remito automáticamente
+            // y luego resetear el formulario. Esto reproduce el comportamiento
+            // esperado por los tests (se usan timers falsos en las pruebas).
+            try {
+                setTimeout(() => {
+                    try {
+                        if (typeof window !== 'undefined' && typeof window.print === 'function') {
+                            window.print();
+                        }
+                    } catch (err) {
+                        // Ignorar errores de impresión en entornos de test o sin navegador
+                    }
+
+                    // Resetear el formulario después del intento de impresión
+                    try {
+                        resetForm();
+                    } catch (err) {
+                        // ignore
+                    }
+                }, 150);
+            } catch (err) {
+                // ignore
+            }
         } catch (error) {
             console.error('Error al guardar mantenimiento:', error);
             const message = error?.message || 'Error desconocido al guardar los datos.';

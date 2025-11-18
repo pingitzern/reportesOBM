@@ -3,7 +3,7 @@
 Este documento explica cómo configurar la sincronización automática entre este repositorio y un proyecto de Google Apps Script en la nube.
 
 Resumen de la solución
-- Añadimos un workflow de GitHub Actions (`.github/workflows/clasp-deploy.yml`) que, en cada `push`, ejecuta `clasp push` para subir los archivos de la carpeta `scripts/` al proyecto de Apps Script.
+- Añadimos un workflow de GitHub Actions (`.github/workflows/clasp-deploy.yml`) que, en cada `push` a `main`, ejecuta `clasp push` para subir los archivos de la carpeta `scripts/` al proyecto de Apps Script.
 - El workflow necesita dos secretos en el repositorio de GitHub: `CLASPRC_JSON` y `APPS_SCRIPT_ID`.
 
 Pasos para obtener los secretos

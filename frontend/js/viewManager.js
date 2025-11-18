@@ -1,5 +1,6 @@
 const MAIN_VIEW_IDS = [
     'tab-nuevo',
+    'tab-ablandador',
     'tab-buscar',
     'tab-dashboard',
     'remito-view',

@@ -28,6 +28,7 @@ describe('handleGuardarClick', () => {
 
         jest.unstable_mockModule('../forms.js', () => ({
             configureClientSelect: jest.fn(),
+            autoFillForm: jest.fn(),
             generateReportNumber: generateReportNumberMock,
             getFormData: getFormDataMock,
             initializeForm: jest.fn(),
@@ -37,12 +38,18 @@ describe('handleGuardarClick', () => {
 
         jest.unstable_mockModule('../api.js', () => ({
             guardarMantenimiento: guardarMantenimientoMock,
+            guardarMantenimientoAblandador: jest.fn(),
+            generarPdfAblandador: jest.fn(),
             buscarMantenimientos: jest.fn(),
             actualizarMantenimiento: jest.fn(),
             eliminarMantenimiento: jest.fn(),
             obtenerDashboard: jest.fn(),
             obtenerClientes: jest.fn().mockResolvedValue([]),
             obtenerRemitos: jest.fn(),
+            crearRemito: jest.fn(),
+            actualizarRemito: jest.fn(),
+            eliminarRemito: jest.fn(),
+            obtenerVersionServidor: jest.fn(),
         }));
 
         jest.unstable_mockModule('../auth.js', () => ({

@@ -1175,7 +1175,90 @@ function addEmptyRepuestoRow({ focus = false } = {}) {
     }
 }
 
+function transformAblandadorToRemitoFormat(ablandadorData) {
+    // Convertir estructura de ablandador a formato que el backend espera para remitos
+    const transformed = {
+        metadata: ablandadorData.metadata || {},
+        numero_reporte: ablandadorData.metadata?.numero_reporte || '',
+        NumeroRemito: '', // Se asignará al finalizar
+        fecha_display: ablandadorData.seccion_A_cliente?.fecha_servicio || '',
+        fecha: ablandadorData.seccion_A_cliente?.fecha_servicio || '',
+        
+        // Cliente
+        clienteNombre: ablandadorData.seccion_A_cliente?.nombre || '',
+        cliente_nombre: ablandadorData.seccion_A_cliente?.nombre || '',
+        direccion: ablandadorData.seccion_A_cliente?.direccion || '',
+        cliente_direccion: ablandadorData.seccion_A_cliente?.direccion || '',
+        cliente_telefono: ablandadorData.seccion_A_cliente?.telefono || '',
+        telefono: ablandadorData.seccion_A_cliente?.telefono || '',
+        cliente_email: ablandadorData.seccion_A_cliente?.email || '',
+        email: ablandadorData.seccion_A_cliente?.email || '',
+        cliente_cuit: ablandadorData.seccion_A_cliente?.cuit || '',
+        cuit: ablandadorData.seccion_A_cliente?.cuit || '',
+        
+        // Equipo
+        equipo: ablandadorData.seccion_B_equipo?.tipo || 'Ablandador',
+        modelo: ablandadorData.seccion_B_equipo?.modelo || '',
+        modelo_equipo: ablandadorData.seccion_B_equipo?.modelo || '',
+        n_serie: ablandadorData.seccion_B_equipo?.numero_serie || '',
+        numero_serie: ablandadorData.seccion_B_equipo?.numero_serie || '',
+        id_interna: 'N/A', // No aplica para ablandadores
+        codigo_interno: 'N/A',
+        ubicacion: ablandadorData.seccion_B_equipo?.ubicacion || '',
+        tecnico: ablandadorData.seccion_A_cliente?.tecnico || '',
+        tecnico_asignado: ablandadorData.seccion_A_cliente?.tecnico || '',
+        
+        // Observaciones
+        observaciones: ablandadorData.seccion_E_resumen?.trabajo_realizado || '',
+        resumen: ablandadorData.seccion_E_resumen?.trabajo_realizado || '',
+        
+        // Componentes/Repuestos - se construirán según cambio de filtro
+        componentes: [],
+        repuestos: []
+    };
+    
+    // Construir repuestos según si se cambió el filtro
+    if (ablandadorData.seccion_D_checklist?.cambio_filtro_realizado) {
+        const tipoFiltro = ablandadorData.seccion_D_checklist?.filtro_tipo_instalado || 'Prefiltro';
+        const loteFiltro = ablandadorData.seccion_D_checklist?.filtro_lote_serie || '';
+        const repuesto = {
+            codigo: '',
+            descripcion: loteFiltro ? `${tipoFiltro} - Lote: ${loteFiltro}` : tipoFiltro,
+            cantidad: 1
+        };
+        transformed.repuestos.push(repuesto);
+    } else {
+        // Sin cambios
+        transformed.repuestos.push({
+            codigo: '',
+            descripcion: 'N/A - Consumibles',
+            cantidad: 0
+        });
+    }
+    
+    // Conservar las secciones originales para que el flujo del remito pueda
+    // reutilizar la misma lógica que con ósmosis (por ejemplo, para completar
+    // el formulario en pantalla). Sin estas secciones, `populateRemitoForm`
+    // no encuentra los datos y deja los campos vacíos.
+    return {
+        ...transformed,
+        seccion_A_cliente: ablandadorData.seccion_A_cliente || null,
+        seccion_B_equipo: ablandadorData.seccion_B_equipo || null,
+        seccion_C_parametros: ablandadorData.seccion_C_parametros || null,
+        seccion_D_checklist: ablandadorData.seccion_D_checklist || null,
+        seccion_E_resumen: ablandadorData.seccion_E_resumen || null,
+        seccion_F_condiciones: ablandadorData.seccion_F_condiciones || null,
+        seccion_G_cierre: ablandadorData.seccion_G_cierre || null,
+    };
+}
+
 function createReportSnapshot(rawData) {
+    // Si es un reporte de ablandador, transformarlo primero
+    if (rawData?.metadata?.formulario === 'mantenimiento_ablandador') {
+        return transformAblandadorToRemitoFormat(rawData);
+    }
+    
+    // Para ósmosis, usar lógica original
     const snapshot = cloneReportData(rawData);
 
     if (!snapshot.clienteNombre) {
@@ -1203,39 +1286,104 @@ function populateRemitoForm(report) {
         return;
     }
 
-    const numeroRemito = resolveReportValue(report, ['NumeroRemito', 'numero_remito', 'remitoNumero', 'numero_reporte']);
-    const fechaRemito = formatDateValue(resolveReportValue(report, ['fecha_display', 'fecha']));
+    // Detectar si es un reporte de ablandador
+    const isAblandador = report.metadata?.formulario === 'mantenimiento_ablandador';
+
+    let numeroRemito, fechaRemito, clienteNombre, direccion, telefono, email, cuit;
+    let descripcionEquipo, modelo, numeroSerie, idInterna, ubicacion, tecnico;
+
+    if (isAblandador) {
+        // Mapear desde estructura de ablandador
+        numeroRemito = report.metadata?.numero_reporte || '';
+        fechaRemito = formatDateValue(report.seccion_A_cliente?.fecha_servicio);
+        clienteNombre = report.seccion_A_cliente?.nombre || '';
+        direccion = report.seccion_A_cliente?.direccion || '';
+        telefono = report.seccion_A_cliente?.telefono || '';
+        email = report.seccion_A_cliente?.email || '';
+        cuit = report.seccion_A_cliente?.cuit || '';
+        
+        // Equipo
+        const tipoEquipo = report.seccion_B_equipo?.tipo || 'Ablandador';
+        modelo = report.seccion_B_equipo?.modelo || '';
+        descripcionEquipo = modelo ? `${tipoEquipo} - ${modelo}` : tipoEquipo;
+        numeroSerie = report.seccion_B_equipo?.numero_serie || '';
+        idInterna = 'N/A'; // No aplica para ablandadores
+        ubicacion = report.seccion_B_equipo?.ubicacion || '';
+        tecnico = report.seccion_A_cliente?.tecnico || '';
+    } else {
+        // Mapear desde estructura de ósmosis inversa (original)
+        numeroRemito = resolveReportValue(report, ['NumeroRemito', 'numero_remito', 'remitoNumero', 'numero_reporte']);
+        fechaRemito = formatDateValue(resolveReportValue(report, ['fecha_display', 'fecha']));
+        clienteNombre = resolveReportValue(report, ['clienteNombre', 'cliente_nombre', 'cliente']);
+        direccion = resolveReportValue(report, ['direccion', 'cliente_direccion', 'ubicacion']);
+        telefono = resolveReportValue(report, ['cliente_telefono', 'telefono_cliente', 'telefono']);
+        email = resolveReportValue(report, ['cliente_email', 'email']);
+        cuit = resolveReportValue(report, ['cliente_cuit', 'cuit']);
+        descripcionEquipo = resolveReportValue(report, ['equipo', 'modelo', 'descripcion_equipo']);
+        modelo = resolveReportValue(report, ['modelo', 'modelo_equipo']);
+        numeroSerie = resolveReportValue(report, ['n_serie', 'numero_serie']);
+        idInterna = resolveReportValue(report, ['id_interna', 'codigo_interno']);
+        ubicacion = resolveReportValue(report, ['ubicacion', 'direccion', 'cliente_direccion']);
+        tecnico = resolveReportValue(report, ['tecnico', 'tecnico_asignado']);
+    }
 
     setReadonlyInputValue('remito-numero', numeroRemito);
     setReadonlyInputValue('remito-fecha', fechaRemito);
-    setReadonlyInputValue('remito-cliente-nombre', resolveReportValue(report, ['clienteNombre', 'cliente_nombre', 'cliente']));
-    setReadonlyInputValue('remito-cliente-direccion', resolveReportValue(report, ['direccion', 'cliente_direccion', 'ubicacion']));
-    setReadonlyInputValue('remito-cliente-telefono', resolveReportValue(report, ['cliente_telefono', 'telefono_cliente', 'telefono']));
-    setReadonlyInputValue('remito-cliente-email', resolveReportValue(report, ['cliente_email', 'email']));
-    setReadonlyInputValue('remito-cliente-cuit', resolveReportValue(report, ['cliente_cuit', 'cuit']));
-
-    const descripcionEquipo = resolveReportValue(report, ['equipo', 'modelo', 'descripcion_equipo']);
+    setReadonlyInputValue('remito-cliente-nombre', clienteNombre);
+    setReadonlyInputValue('remito-cliente-direccion', direccion);
+    setReadonlyInputValue('remito-cliente-telefono', telefono);
+    setReadonlyInputValue('remito-cliente-email', email);
+    setReadonlyInputValue('remito-cliente-cuit', cuit);
     setReadonlyInputValue('remito-equipo-descripcion', descripcionEquipo);
-    setReadonlyInputValue('remito-equipo-modelo', resolveReportValue(report, ['modelo', 'modelo_equipo']));
-    setReadonlyInputValue('remito-equipo-serie', resolveReportValue(report, ['n_serie', 'numero_serie']));
-    setReadonlyInputValue('remito-equipo-interno', resolveReportValue(report, ['id_interna', 'codigo_interno']));
-    setReadonlyInputValue('remito-equipo-ubicacion', resolveReportValue(report, ['ubicacion', 'direccion', 'cliente_direccion']));
-    setReadonlyInputValue('remito-equipo-tecnico', resolveReportValue(report, ['tecnico', 'tecnico_asignado']));
+    setReadonlyInputValue('remito-equipo-modelo', modelo);
+    setReadonlyInputValue('remito-equipo-serie', numeroSerie);
+    setReadonlyInputValue('remito-equipo-interno', idInterna);
+    setReadonlyInputValue('remito-equipo-ubicacion', ubicacion);
+    setReadonlyInputValue('remito-equipo-tecnico', tecnico);
 
     const observaciones = getElement('remito-observaciones');
     if (observaciones instanceof HTMLTextAreaElement) {
-        const texto = normalizeString(report.observaciones || report.resumen || '');
+        let texto = '';
+        if (isAblandador) {
+            texto = normalizeString(report.seccion_E_resumen?.trabajo_realizado || '');
+        } else {
+            texto = normalizeString(report.observaciones || report.resumen || '');
+        }
         observaciones.value = texto;
         observaciones.removeAttribute('readonly');
     }
 
-    const componentesDerivados = Array.isArray(report.componentes) && report.componentes.length > 0
-        ? report.componentes
-        : buildComponentesFromReport(report);
+    // Construir repuestos según el tipo de reporte
+    let repuestos = [];
+    
+    if (isAblandador) {
+        // Para ablandadores: solo prefiltro si se cambió
+        if (report.seccion_D_checklist?.cambio_filtro_realizado) {
+            const tipoFiltro = report.seccion_D_checklist?.filtro_tipo_instalado || 'Prefiltro';
+            const loteFiltro = report.seccion_D_checklist?.filtro_lote_serie || '';
+            repuestos.push({
+                title: 'Prefiltro',
+                detalles: loteFiltro ? `${tipoFiltro} - Lote: ${loteFiltro}` : tipoFiltro,
+                accion: 'Cambio'
+            });
+        } else {
+            // Si no se cambió filtro, agregar N/A
+            repuestos.push({
+                title: 'Consumibles',
+                detalles: 'N/A',
+                accion: 'Sin cambios'
+            });
+        }
+    } else {
+        // Para ósmosis: usar la lógica original
+        const componentesDerivados = Array.isArray(report.componentes) && report.componentes.length > 0
+            ? report.componentes
+            : buildComponentesFromReport(report);
 
-    const repuestos = Array.isArray(report.repuestos) && report.repuestos.length > 0
-        ? report.repuestos
-        : componentesDerivados;
+        repuestos = Array.isArray(report.repuestos) && report.repuestos.length > 0
+            ? report.repuestos
+            : componentesDerivados;
+    }
 
     renderRepuestosList(repuestos);
 }

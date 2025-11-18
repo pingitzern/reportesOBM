@@ -87,6 +87,20 @@ export async function guardarMantenimiento(datos) {
     });
 }
 
+export async function guardarMantenimientoAblandador(datos) {
+    return postJSON({
+        action: 'guardar_ablandador',
+        ...(datos ?? {}),
+    });
+}
+
+export async function generarPdfAblandador(datos) {
+    return postJSON({
+        action: 'generar_pdf_ablandador',
+        ...(datos ?? {}),
+    });
+}
+
 export async function buscarMantenimientos(filtros) {
     return postJSON({
         action: 'buscar',
