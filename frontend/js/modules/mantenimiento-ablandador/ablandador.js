@@ -484,17 +484,31 @@ async function loadClientes(obtenerClientesFn) {
     }
 
     clientesLoadingPromise = (async () => {
-        try {
-            const clientes = await obtenerClientesFn({ forceRefresh: false });
-            populateClientSelect(clientes);
-            clientesLoaded = true;
-        } catch (error) {
-            console.error('Error al cargar clientes para ablandador:', error);
-            alert('No se pudieron cargar los datos de clientes. Completá los campos manualmente.');
-            populateClientSelect([]);
-        } finally {
-            clientesLoadingPromise = null;
+        let retries = 3;
+        let delay = 500;
+        
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                const clientes = await obtenerClientesFn({ forceRefresh: false });
+                populateClientSelect(clientes);
+                clientesLoaded = true;
+                return; // Éxito, salir
+            } catch (error) {
+                console.warn(`Intento ${attempt}/${retries} de cargar clientes falló:`, error);
+                
+                if (attempt < retries) {
+                    // Esperar antes del próximo intento
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Incrementar delay exponencialmente
+                } else {
+                    // Último intento falló, mostrar error
+                    console.error('Error al cargar clientes para ablandador después de varios intentos:', error);
+                    populateClientSelect([]);
+                    // No mostrar alert para mejor UX - los campos siguen siendo editables
+                }
+            }
         }
+        clientesLoadingPromise = null;
     })();
 
     await clientesLoadingPromise;

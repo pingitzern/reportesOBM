@@ -1,4 +1,5 @@
 import { COMPONENT_STAGES } from '../mantenimiento/templates.js';
+import { crearRemito } from '../../api.js';
 
 const MAX_REMITO_PHOTOS = 4;
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -1854,18 +1855,7 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         }
 
         try {
-            if (!apiUrl) {
-                throw new Error('La URL del servicio no está configurada.');
-            }
-
-            const token = typeof getToken === 'function' ? normalizeString(getToken()) : '';
-            if (!token) {
-                throw new Error('No hay una sesión activa. Ingresá nuevamente.');
-            }
-
             const requestBody = {
-                action: 'crear_remito',
-                token,
                 reporteData: lastSavedReport,
                 observaciones: observacionesTexto,
             };
@@ -1874,28 +1864,10 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 requestBody.fotos = fotosPayload;
             }
 
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain; charset=utf-8',
-                },
-                body: JSON.stringify(requestBody),
-            });
+            const payload = await crearRemito(requestBody);
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            let payload;
-            try {
-                payload = await response.json();
-            } catch (error) {
-                throw new Error('No se pudo interpretar la respuesta del servidor.');
-            }
-
-            if (payload?.result !== 'success') {
-                const message = normalizeString(payload?.error || payload?.message) || 'No fue posible generar el remito.';
-                throw new Error(message);
+            if (!payload || typeof payload !== 'object') {
+                throw new Error('Respuesta inválida del servidor.');
             }
 
             const remitoData = payload?.data || {};

@@ -123,12 +123,61 @@ export async function eliminarMantenimiento(id) {
 }
 
 export async function obtenerDashboard() {
+    // En modo desarrollo, retornar datos mock
+    if (DEV_MODE) {
+        return {
+            totalMantenimientos: 0,
+            esteMes: 0,
+            proximos: 0,
+            tecnicosActivos: 0,
+            mantenimientosPorMes: [],
+            distribucionTecnico: [],
+            proximosMantenimientos: []
+        };
+    }
+    
     return postJSON({
         action: 'dashboard',
     });
 }
 
+// ⚠️ SOLO PARA DESARROLLO - Datos mock
+const DEV_MODE = false; // Cambiar a false en producción
+const MOCK_CLIENTES = [
+    {
+        key: 'cliente1',
+        razon_social: 'Complejo Deportivo Municipal',
+        direccion: 'Parque Industrial Sector B',
+        telefono: '011-4567-8900',
+        email: 'contacto@cliente.com.ar',
+        cuit: '30-12345678-9'
+    },
+    {
+        key: 'cliente2',
+        razon_social: 'Hospital General',
+        direccion: 'Av. Principal 1234',
+        telefono: '011-5555-1234',
+        email: 'info@hospital.com.ar',
+        cuit: '30-98765432-1'
+    },
+    {
+        key: 'cliente3',
+        razon_social: 'Fábrica Textil SA',
+        direccion: 'Zona Industrial 789',
+        telefono: '011-6666-7890',
+        email: 'admin@fabrica.com',
+        cuit: '30-55555555-5'
+    }
+];
+
 export async function obtenerClientes({ forceRefresh = false } = {}) {
+    // En modo desarrollo, retornar datos mock
+    if (DEV_MODE) {
+        state.clientes = MOCK_CLIENTES;
+        state.clientesLoaded = true;
+        return state.clientes;
+    }
+    
     if (!forceRefresh && state.clientesLoaded) {
         return state.clientes;
     }
