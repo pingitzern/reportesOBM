@@ -782,7 +782,16 @@ export function getCurrentUserRole() {
     return session?.user?.rol || '';
 }
 
+// ⚠️ SOLO PARA DESARROLLO - Token mock cuando el login está desactivado
+const DEV_MODE = false; // Cambiar a false en producción
+const DEV_TOKEN = 'dev-token-' + Date.now();
+
 export function getCurrentToken() {
+    // Si estamos en modo desarrollo, retornar token mock
+    if (DEV_MODE) {
+        return DEV_TOKEN;
+    }
+    
     const session = loadStoredAuth();
     const token = typeof session?.token === 'string' ? session.token.trim() : '';
     return token || null;

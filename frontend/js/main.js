@@ -30,8 +30,6 @@ initializeTheme();
 
 const remitoModule = createRemitoModule({
     showView,
-    apiUrl: API_URL,
-    getToken: getCurrentToken,
 });
 
 const maintenanceModule = createMaintenanceModule(
@@ -337,14 +335,19 @@ async function initializeApp() {
     showAppVersion();
     void showScriptVersion();
     initializeNavigation();
+    // Inicializar módulos que no requieren autenticación
     appModules.remito.initialize();
     appModules.search.initialize();
     appModules.remitosGestion.initialize();
-    appModules.softener.initialize();
 
     try {
+        // Primero autenticar
         await initializeAuth();
+        
+        // Después inicializar módulos que requieren datos del backend
         await appModules.maintenance.initialize();
+        appModules.softener.initialize();
+        
         await showDashboardTab();
     } catch (error) {
         console.error('Error inicializando la aplicación:', error);

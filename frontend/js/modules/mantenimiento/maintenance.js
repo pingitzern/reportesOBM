@@ -65,12 +65,26 @@ export function createMaintenanceModule(api, callbacks = {}) {
 
     async function cargarClientes() {
         let clientes = [];
-        try {
-            clientes = await obtenerClientes();
-        } catch (error) {
-            console.error('Error cargando clientes:', error);
-            const detalle = error?.message ? ` Detalle: ${error.message}` : '';
-            alert(`No se pudieron cargar los datos de clientes. Podrás completar los campos manualmente.${detalle}`);
+        let retries = 3;
+        let delay = 500;
+        
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                clientes = await obtenerClientes();
+                break; // Éxito, salir del loop
+            } catch (error) {
+                console.warn(`Intento ${attempt}/${retries} de cargar clientes falló:`, error);
+                
+                if (attempt < retries) {
+                    // Esperar antes del próximo intento
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Incrementar delay exponencialmente
+                } else {
+                    // Último intento falló
+                    console.error('Error cargando clientes después de varios intentos:', error);
+                    // No mostrar alert para mejor UX - los campos siguen siendo editables
+                }
+            }
         }
 
         configureClientSelect(clientes);
