@@ -1,8 +1,7 @@
 /* global __APP_VERSION__ */
 import { showView } from './viewManager.js';
 import * as api from './api.js';
-import { API_URL } from './config.js';
-import { initializeAuth, getCurrentToken } from './modules/login/auth.js';
+import { initializeAuth } from './modules/login/auth.js';
 import { initializeTheme } from './modules/theme/theme.js';
 import { createDashboardModule } from './modules/dashboard/dashboard.js';
 import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js';

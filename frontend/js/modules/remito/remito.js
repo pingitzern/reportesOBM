@@ -1405,7 +1405,7 @@ function enableButton(buttonId) {
     }
 }
 
-export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
+export function createRemitoModule({ showView } = {}) {
     let lastSavedReport = null;
     let eventsInitialized = false;
     let photoSlots = createEmptyPhotoSlots();
