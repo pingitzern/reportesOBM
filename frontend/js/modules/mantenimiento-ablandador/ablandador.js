@@ -1411,6 +1411,14 @@ function collectFormData() {
 
     const payload = {
         metadata,
+        // Campos en nivel superior para compatibilidad con remito
+        cliente: seccionA.nombre,
+        direccion: seccionA.direccion,
+        cliente_telefono: seccionA.telefono,
+        cliente_email: seccionA.email,
+        cliente_cuit: seccionA.cuit,
+        numero_reporte: reportNumber,
+        // Secciones estructuradas
         seccion_A_cliente: seccionA,
         seccion_B_equipo: seccionB,
         seccion_C_parametros: seccionC,
@@ -1537,6 +1545,7 @@ export function createSoftenerModule(deps = {}) {
         if (saveButton instanceof HTMLButtonElement) {
             saveButton.disabled = false;
             saveButton.textContent = 'Guardar Mantenimiento';
+            saveButton.style.cursor = '';
         }
         if (pdfButton instanceof HTMLButtonElement) {
             pdfButton.disabled = true;
@@ -1566,6 +1575,8 @@ export function createSoftenerModule(deps = {}) {
         }
         if (saveButton instanceof HTMLButtonElement) {
             saveButton.disabled = true;
+            saveButton.textContent = 'Guardar Mantenimiento';
+            saveButton.style.cursor = 'not-allowed';
         }
         if (pdfButton instanceof HTMLButtonElement) {
             pdfButton.disabled = false;
@@ -1757,6 +1768,7 @@ export function createSoftenerModule(deps = {}) {
         saveButton.disabled = true;
         saveButton.textContent = 'Guardando...';
 
+        let saved = false;
         try {
             updateAutonomia();
             const payload = collectFormData();
@@ -1778,6 +1790,12 @@ export function createSoftenerModule(deps = {}) {
                 onMaintenanceSaved(payload);
             }
             
+            // Marcar como guardado exitosamente
+            saved = true;
+            
+            // Restaurar texto del botón antes de cambiar al estado guardado
+            saveButton.textContent = originalText;
+            
             // Cambiar al estado "guardado"
             setButtonsToSavedState();
             
@@ -1786,7 +1804,7 @@ export function createSoftenerModule(deps = {}) {
             console.error('Error al guardar mantenimiento de ablandador:', error);
             const message = error?.message || 'No se pudieron guardar los datos del mantenimiento.';
             alert(`❌ Error al guardar los datos: ${message}`);
-        } finally {
+            // Restaurar el botón solo si hubo error
             saveButton.disabled = false;
             saveButton.textContent = originalText;
         }

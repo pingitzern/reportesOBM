@@ -334,7 +334,94 @@
 
     .action-button.print-btn:disabled:hover,
     .action-button.print-btn:disabled:focus-visible {
-        @apply bg-gray-400 text-gray-100 cursor-not-allowed ring-0 shadow-none;
+        @apply bg-gray-400 text-gray-100 cursor-not-allowed ring-0 shadow-none transform-none;
+    }
+
+    .action-button.secondary-btn {
+        @apply bg-purple-600 text-white;
+    }
+
+    .action-button.secondary-btn:hover {
+        @apply bg-purple-700 text-white;
+    }
+
+    .action-button.secondary-btn:focus-visible {
+        @apply ring-purple-500;
+    }
+
+    .action-button.secondary-btn:disabled {
+        @apply bg-gray-400 text-gray-100 cursor-not-allowed opacity-80 shadow-none;
+    }
+
+    .action-button.secondary-btn:disabled:hover,
+    .action-button.secondary-btn:disabled:focus-visible {
+        @apply bg-gray-400 text-gray-100 cursor-not-allowed ring-0 shadow-none transform-none;
+    }
+
+    .action-button.reset-btn:disabled {
+        @apply bg-gray-300 text-gray-500 cursor-not-allowed opacity-70 shadow-none;
+    }
+
+    .action-button.reset-btn:disabled:hover,
+    .action-button.reset-btn:disabled:focus-visible {
+        @apply bg-gray-300 text-gray-500 cursor-not-allowed ring-0 shadow-none transform-none;
+    }
+
+    /* Modo Oscuro - Botones */
+    .dark-theme .action-button {
+        @apply bg-slate-700 text-slate-100 border-slate-600;
+    }
+
+    .dark-theme .action-button:hover {
+        @apply bg-slate-600;
+    }
+
+    .dark-theme .action-button.reset-btn {
+        @apply bg-slate-600 text-slate-200 border-slate-500;
+    }
+
+    .dark-theme .action-button.reset-btn:hover {
+        @apply bg-slate-500 text-slate-100;
+    }
+
+    .dark-theme .action-button.reset-btn:disabled {
+        @apply bg-slate-700 text-slate-500 border-slate-600 cursor-not-allowed opacity-60;
+    }
+
+    .dark-theme .action-button.reset-btn:disabled:hover {
+        @apply bg-slate-700 text-slate-500 transform-none;
+    }
+
+    .dark-theme .action-button.print-btn {
+        @apply bg-blue-600 text-white border-blue-500;
+    }
+
+    .dark-theme .action-button.print-btn:hover {
+        @apply bg-blue-500 text-white;
+    }
+
+    .dark-theme .action-button.print-btn:disabled {
+        @apply bg-slate-700 text-slate-500 border-slate-600 cursor-not-allowed opacity-60;
+    }
+
+    .dark-theme .action-button.print-btn:disabled:hover {
+        @apply bg-slate-700 text-slate-500 transform-none;
+    }
+
+    .dark-theme .action-button.secondary-btn {
+        @apply bg-purple-600 text-white border-purple-500;
+    }
+
+    .dark-theme .action-button.secondary-btn:hover {
+        @apply bg-purple-500 text-white;
+    }
+
+    .dark-theme .action-button.secondary-btn:disabled {
+        @apply bg-slate-700 text-slate-500 border-slate-600 cursor-not-allowed opacity-60;
+    }
+
+    .dark-theme .action-button.secondary-btn:disabled:hover {
+        @apply bg-slate-700 text-slate-500 transform-none;
     }
 
     .client-detail-empty {

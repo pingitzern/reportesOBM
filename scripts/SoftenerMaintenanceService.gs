@@ -8,13 +8,13 @@
     const SOFTENER_SHEET_NAME = resolvedSheetName;
 
     const SOFTENER_COLUMNS = Object.freeze([
-      // Metadata
+      // Metadata básica (primero)
       { header: 'Fecha_Registro', path: 'metadata.timestamp', formatter: 'dateTime' },
       { header: 'Registrado_Por', path: 'metadata.usuario' },
       { header: 'Numero_Reporte', path: 'metadata.numero_reporte' },
       { header: 'ID_Unico', path: 'metadata.id_unico' },
       
-      // Sección A - Cliente y Servicio
+      // Sección A - Cliente y Servicio (datos principales primero)
       { header: 'Cliente_Nombre', path: 'seccion_A_cliente.nombre' },
       { header: 'Cliente_Direccion', path: 'seccion_A_cliente.direccion' },
       { header: 'Cliente_Localidad', path: 'seccion_A_cliente.localidad' },
@@ -108,6 +108,14 @@
       { header: 'Cierre_MedioConfirmacion', path: 'seccion_G_cierre.medio_confirmacion' },
       { header: 'Cierre_RequiereSeguimiento', path: 'seccion_G_cierre.requiere_seguimiento', formatter: 'boolean' },
       { header: 'Cierre_ObservacionesFinales', path: 'seccion_G_cierre.observaciones_finales' },
+      
+      // Campos de nivel superior para compatibilidad con remitos (al final)
+      { header: 'Cliente', path: 'cliente' },
+      { header: 'Direccion', path: 'direccion' },
+      { header: 'Cliente_Telefono_Remito', path: 'cliente_telefono' },
+      { header: 'Cliente_Email_Remito', path: 'cliente_email' },
+      { header: 'Cliente_CUIT_Remito', path: 'cliente_cuit' },
+      { header: 'Numero_Reporte_Remito', path: 'numero_reporte' },
       
       // Payload completo como JSON (para consultas futuras)
       { header: 'Datos_Adicionales', path: '__PAYLOAD__', formatter: 'json' }

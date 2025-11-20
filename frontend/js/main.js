@@ -27,8 +27,14 @@ const {
 
 initializeTheme();
 
+function navigateToDashboard() {
+    showView('tab-dashboard');
+    setActiveNavigation('dashboard');
+}
+
 const remitoModule = createRemitoModule({
     showView,
+    navigateToDashboard,
 });
 
 const maintenanceModule = createMaintenanceModule(
