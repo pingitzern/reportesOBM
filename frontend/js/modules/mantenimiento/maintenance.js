@@ -18,6 +18,7 @@ export function createMaintenanceModule(api, callbacks = {}) {
     const { onReportSaved, onReportReset } = callbacks;
 
     let eventsInitialized = false;
+    let isReportSaved = false;
 
     function notifyReportReset() {
         if (typeof onReportReset === 'function') {
@@ -29,6 +30,54 @@ export function createMaintenanceModule(api, callbacks = {}) {
         if (typeof onReportSaved === 'function') {
             onReportSaved(datos);
         }
+    }
+
+    function setButtonsToInitialState() {
+        const guardarBtn = getElement('guardarButton');
+        const resetBtn = getElement('resetButton');
+        const autoFillBtn = getElement('autoFillButton');
+
+        if (guardarBtn) {
+            guardarBtn.disabled = false;
+            guardarBtn.style.cursor = 'pointer';
+            guardarBtn.textContent = 'Guardar';
+        }
+
+        if (resetBtn) {
+            resetBtn.disabled = false;
+            resetBtn.style.cursor = 'pointer';
+        }
+
+        if (autoFillBtn) {
+            autoFillBtn.disabled = false;
+            autoFillBtn.style.cursor = 'pointer';
+        }
+
+        isReportSaved = false;
+    }
+
+    function setButtonsToSavedState() {
+        const guardarBtn = getElement('guardarButton');
+        const resetBtn = getElement('resetButton');
+        const autoFillBtn = getElement('autoFillButton');
+
+        if (guardarBtn) {
+            guardarBtn.disabled = true;
+            guardarBtn.style.cursor = 'not-allowed';
+            guardarBtn.textContent = 'Guardado ✓';
+        }
+
+        if (resetBtn) {
+            resetBtn.disabled = true;
+            resetBtn.style.cursor = 'not-allowed';
+        }
+
+        if (autoFillBtn) {
+            autoFillBtn.disabled = true;
+            autoFillBtn.style.cursor = 'not-allowed';
+        }
+
+        isReportSaved = true;
     }
 
     function attachEvents() {
@@ -94,12 +143,14 @@ export function createMaintenanceModule(api, callbacks = {}) {
         renderComponentStages();
         await cargarClientes();
         initializeForm();
+        setButtonsToInitialState();
         notifyReportReset();
         attachEvents();
     }
 
     function handleResetClick() {
         resetForm();
+        setButtonsToInitialState();
         notifyReportReset();
     }
 
@@ -111,6 +162,16 @@ export function createMaintenanceModule(api, callbacks = {}) {
         const guardarBtn = getElement('guardarButton');
         if (!guardarBtn) {
             return;
+        }
+
+        // Si ya está guardado, mostrar confirmación
+        if (isReportSaved) {
+            const confirmSave = confirm(
+                '⚠️ Este reporte ya fue guardado.\n\n¿Deseas guardar una copia duplicada?'
+            );
+            if (!confirmSave) {
+                return;
+            }
         }
 
         const originalText = guardarBtn.textContent;
@@ -126,6 +187,7 @@ export function createMaintenanceModule(api, callbacks = {}) {
 
             await guardarMantenimiento(datos);
             setReportNumber(reportNumber);
+            setButtonsToSavedState();
             notifyReportSaved(datos);
 
             alert('✅ Mantenimiento guardado correctamente en el sistema');
@@ -157,7 +219,8 @@ export function createMaintenanceModule(api, callbacks = {}) {
             console.error('Error al guardar mantenimiento:', error);
             const message = error?.message || 'Error desconocido al guardar los datos.';
             alert(`❌ Error al guardar los datos: ${message}`);
-        } finally {
+            
+            // Solo restaurar botones en caso de error
             guardarBtn.textContent = originalText;
             guardarBtn.disabled = false;
         }

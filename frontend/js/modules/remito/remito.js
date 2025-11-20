@@ -1186,6 +1186,7 @@ function transformAblandadorToRemitoFormat(ablandadorData) {
         fecha: ablandadorData.seccion_A_cliente?.fecha_servicio || '',
         
         // Cliente
+        cliente: ablandadorData.seccion_A_cliente?.nombre || '',
         clienteNombre: ablandadorData.seccion_A_cliente?.nombre || '',
         cliente_nombre: ablandadorData.seccion_A_cliente?.nombre || '',
         direccion: ablandadorData.seccion_A_cliente?.direccion || '',
@@ -1405,7 +1406,7 @@ function enableButton(buttonId) {
     }
 }
 
-export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
+export function createRemitoModule({ showView, navigateToDashboard } = {}) {
     let lastSavedReport = null;
     let eventsInitialized = false;
     let photoSlots = createEmptyPhotoSlots();
@@ -1903,6 +1904,13 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
 
             if (alertMessages.length > 0) {
                 window.alert?.(alertMessages.join('\n\n'));
+            }
+
+            // Volver al dashboard después de finalizar y guardar exitosamente
+            if (typeof navigateToDashboard === 'function') {
+                navigateToDashboard();
+            } else if (typeof showView === 'function') {
+                showView('tab-dashboard');
             }
         } catch (error) {
             console.error('Error al generar el remito:', error);

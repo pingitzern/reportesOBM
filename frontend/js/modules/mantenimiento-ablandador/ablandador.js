@@ -1411,6 +1411,14 @@ function collectFormData() {
 
     const payload = {
         metadata,
+        // Campos en nivel superior para compatibilidad con remito
+        cliente: seccionA.nombre,
+        direccion: seccionA.direccion,
+        cliente_telefono: seccionA.telefono,
+        cliente_email: seccionA.email,
+        cliente_cuit: seccionA.cuit,
+        numero_reporte: reportNumber,
+        // Secciones estructuradas
         seccion_A_cliente: seccionA,
         seccion_B_equipo: seccionB,
         seccion_C_parametros: seccionC,
@@ -1510,12 +1518,77 @@ export function createSoftenerModule(deps = {}) {
     } = deps;
     let initialized = false;
     let lastSavedPayload = null;
+    let isReportSaved = false; // Nuevo: controlar si el reporte está guardado
     const guardarMantenimientoFn = typeof guardarAblandadorCustom === 'function'
         ? guardarAblandadorCustom
         : guardarMantenimientoAblandadorApi;
     const obtenerClientesFn = typeof obtenerClientesCustom === 'function'
         ? obtenerClientesCustom
         : obtenerClientesApi;
+
+    // ===== CONTROL DE FLUJO DE BOTONES =====
+    function setButtonsToInitialState() {
+        // Estado inicial: formulario nuevo
+        const autofillButton = getElement(AUTOFILL_BUTTON_ID);
+        const resetButton = getElement(RESET_BUTTON_ID);
+        const saveButton = getElement(SAVE_BUTTON_ID);
+        const pdfButton = getElement(PDF_BUTTON_ID);
+        const remitoButton = getElement(REMITO_BUTTON_ID);
+
+        if (autofillButton instanceof HTMLButtonElement) {
+            autofillButton.disabled = false;
+        }
+        if (resetButton instanceof HTMLButtonElement) {
+            resetButton.disabled = false;
+            resetButton.textContent = 'Limpiar Formulario';
+        }
+        if (saveButton instanceof HTMLButtonElement) {
+            saveButton.disabled = false;
+            saveButton.textContent = 'Guardar Mantenimiento';
+            saveButton.style.cursor = '';
+        }
+        if (pdfButton instanceof HTMLButtonElement) {
+            pdfButton.disabled = true;
+        }
+        if (remitoButton instanceof HTMLButtonElement) {
+            remitoButton.disabled = true;
+        }
+
+        isReportSaved = false;
+        lastSavedPayload = null;
+    }
+
+    function setButtonsToSavedState() {
+        // Estado guardado: reporte ya guardado
+        const autofillButton = getElement(AUTOFILL_BUTTON_ID);
+        const resetButton = getElement(RESET_BUTTON_ID);
+        const saveButton = getElement(SAVE_BUTTON_ID);
+        const pdfButton = getElement(PDF_BUTTON_ID);
+        const remitoButton = getElement(REMITO_BUTTON_ID);
+
+        if (autofillButton instanceof HTMLButtonElement) {
+            autofillButton.disabled = true;
+        }
+        if (resetButton instanceof HTMLButtonElement) {
+            resetButton.disabled = false;
+            resetButton.textContent = 'Nuevo Reporte';
+        }
+        if (saveButton instanceof HTMLButtonElement) {
+            saveButton.disabled = true;
+            saveButton.textContent = 'Guardar Mantenimiento';
+            saveButton.style.cursor = 'not-allowed';
+        }
+        if (pdfButton instanceof HTMLButtonElement) {
+            pdfButton.disabled = false;
+        }
+        if (remitoButton instanceof HTMLButtonElement) {
+            remitoButton.disabled = false;
+        }
+
+        isReportSaved = true;
+    }
+    // ===== FIN CONTROL DE FLUJO =====
+
 
     function attachAutonomiaListeners() {
         const triggerIds = [
@@ -1562,14 +1635,9 @@ export function createSoftenerModule(deps = {}) {
 
         const resetButton = getElement(RESET_BUTTON_ID);
         if (resetButton instanceof HTMLButtonElement) {
-            resetButton.addEventListener('click', () => {
-                setTimeout(() => {
-                    resetClientSelection();
-                    setDefaultServiceDate();
-                    setDefaultResinVolume();
-                        resetCabezalSection();
-                    updateAutonomia();
-                }, 0);
+            resetButton.addEventListener('click', event => {
+                event.preventDefault();
+                handleResetOrNewReport();
             });
         }
 
@@ -1596,6 +1664,37 @@ export function createSoftenerModule(deps = {}) {
                 handleRemitoClick();
             });
         }
+    }
+
+    function handleResetOrNewReport() {
+        const form = getElement(FORM_ID);
+        if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+
+        if (isReportSaved) {
+            // Si el reporte está guardado, preguntar si quiere crear uno nuevo
+            const confirmNew = confirm('¿Querés crear un nuevo reporte?\n\nSe limpiará el formulario actual.');
+            if (!confirmNew) {
+                return;
+            }
+        }
+
+        // Limpiar formulario
+        form.reset();
+        
+        setTimeout(() => {
+            resetClientSelection();
+            setDefaultServiceDate();
+            setDefaultResinVolume();
+            resetCabezalSection();
+            updateAutonomia();
+            updatePrefiltroCambioVisibility();
+            setReportNumber('ABL-PENDIENTE');
+            
+            // Volver al estado inicial
+            setButtonsToInitialState();
+        }, 0);
     }
 
     function handleRemitoClick() {
@@ -1669,6 +1768,7 @@ export function createSoftenerModule(deps = {}) {
         saveButton.disabled = true;
         saveButton.textContent = 'Guardando...';
 
+        let saved = false;
         try {
             updateAutonomia();
             const payload = collectFormData();
@@ -1685,28 +1785,26 @@ export function createSoftenerModule(deps = {}) {
             // Guardar el payload para poder generar el PDF
             lastSavedPayload = payload;
             
-            // Habilitar los botones PDF y Remito
-            const pdfButton = getElement(PDF_BUTTON_ID);
-            if (pdfButton instanceof HTMLButtonElement) {
-                pdfButton.disabled = false;
-            }
-            
-            const remitoButton = getElement(REMITO_BUTTON_ID);
-            if (remitoButton instanceof HTMLButtonElement) {
-                remitoButton.disabled = false;
-            }
-            
             // Notificar al módulo de remito que hay un nuevo reporte guardado
             if (typeof onMaintenanceSaved === 'function') {
                 onMaintenanceSaved(payload);
             }
             
-            alert(`✅ Mantenimiento de ablandador guardado correctamente.\n\nReporte N°: ${reportNumber}\n\nAhora podés generar el PDF o el Remito.\nSi querés crear un nuevo reporte, refrescá la página.`);
+            // Marcar como guardado exitosamente
+            saved = true;
+            
+            // Restaurar texto del botón antes de cambiar al estado guardado
+            saveButton.textContent = originalText;
+            
+            // Cambiar al estado "guardado"
+            setButtonsToSavedState();
+            
+            alert(`✅ Mantenimiento de ablandador guardado correctamente.\n\nReporte N°: ${reportNumber}\n\nAhora podés generar el PDF o el Remito.\nPara crear un nuevo reporte, hacé clic en "Nuevo Reporte".`);
         } catch (error) {
             console.error('Error al guardar mantenimiento de ablandador:', error);
             const message = error?.message || 'No se pudieron guardar los datos del mantenimiento.';
             alert(`❌ Error al guardar los datos: ${message}`);
-        } finally {
+            // Restaurar el botón solo si hubo error
             saveButton.disabled = false;
             saveButton.textContent = originalText;
         }
@@ -1736,6 +1834,10 @@ export function createSoftenerModule(deps = {}) {
         attachDeltaPListeners();
         resetCabezalSection();
         attachFormHandlers();
+        
+        // Establecer estado inicial de botones
+        setButtonsToInitialState();
+        
         initialized = true;
     }
 
