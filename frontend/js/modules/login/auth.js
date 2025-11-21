@@ -1,4 +1,4 @@
-import { API_URL } from '../../config.js';
+import { API_URL, DEV_MOCKS_ENABLED } from '../../config.js';
 import {
     THEME_DARK,
     THEME_LIGHT,
@@ -783,7 +783,12 @@ export function getCurrentUserRole() {
 }
 
 // ⚠️ SOLO PARA DESARROLLO - Token mock cuando el login está desactivado
-const DEV_MODE = false; // Cambiar a false en producción
+const DEV_MODE = DEV_MOCKS_ENABLED;
+const DEV_USER = {
+    nombre: 'Modo desarrollo',
+    cargo: 'UI Preview',
+    rol: 'Administrador',
+};
 const DEV_TOKEN = 'dev-token-' + Date.now();
 
 export function getCurrentToken() {
@@ -799,6 +804,21 @@ export function getCurrentToken() {
 
 export async function initializeAuth() {
     bindEventListeners();
+
+    // En modo desarrollo, omitir el inicio de sesión y mostrar la app inmediatamente
+    if (DEV_MODE) {
+        const devSession = buildSession({
+            user: DEV_USER,
+            token: DEV_TOKEN,
+            expiresAt: null,
+        });
+        if (devSession) {
+            persistAuth(devSession);
+            setMainViewVisible(true);
+            hideLoginModal();
+            return devSession;
+        }
+    }
 
     const storedSession = loadStoredAuth();
     if (storedSession) {
@@ -825,6 +845,10 @@ export async function handleSessionExpiration() {
 }
 
 export async function requireAuthentication() {
+    if (DEV_MODE) {
+        return loadStoredAuth() || buildSession({ user: DEV_USER, token: DEV_TOKEN, expiresAt: null });
+    }
+
     const session = loadStoredAuth();
     if (session) {
         return session;
