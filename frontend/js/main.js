@@ -112,7 +112,7 @@ function setTextOrHide(element, text) {
 }
 
 function showAppVersion() {
-    const versionElement = document.getElementById('app-version');
+    const versionElement = document.getElementById('app-version-menu');
     if (!versionElement) {
         return;
     }
@@ -181,7 +181,7 @@ function formatScriptVersion(rawInfo) {
 }
 
 async function showScriptVersion() {
-    const versionElement = document.getElementById('script-version');
+    const versionElement = document.getElementById('script-version-menu');
     if (!versionElement) {
         return;
     }
@@ -197,6 +197,18 @@ async function showScriptVersion() {
     } catch (error) {
         console.error('No se pudo obtener la versión de los scripts:', error);
         setTextOrHide(versionElement, 'Scripts versión no disponible');
+    }
+}
+
+function initializeHelpToggle() {
+    const helpButton = document.getElementById('help-menu-item');
+    const helpInfo = document.getElementById('help-info');
+    
+    if (helpButton && helpInfo) {
+        helpButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            helpInfo.classList.toggle('hidden');
+        });
     }
 }
 
@@ -340,6 +352,7 @@ async function initializeApp() {
     showAppVersion();
     void showScriptVersion();
     initializeNavigation();
+    initializeHelpToggle();
     // Inicializar módulos que no requieren autenticación
     appModules.remito.initialize();
     appModules.search.initialize();

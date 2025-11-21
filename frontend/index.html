@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Mantenimientos RO</title>
+    <title>OBM - Gestión de Mantenimientos</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/styles.build.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 </head>
 <body class="bg-gray-100">
     <div id="main-view" class="container mx-auto p-4 md:p-8 max-w-7xl">
-        <header class="relative flex flex-wrap items-center justify-between gap-4 mb-8 no-print">
-            <div class="order-1 flex-shrink-0">
-                <img src="/OHM-agua.png" alt="Logo OHM Agua" class="h-14 w-auto md:h-16">
+        <header class="relative flex items-center justify-between gap-4 mb-8 no-print">
+            <div class="flex items-center gap-4">
+                <img src="/OHM-agua.png" alt="Logo OHM Agua" class="h-12 w-auto md:h-14">
+                <h1 class="text-xl font-bold text-gray-800 md:text-2xl">OBM - Gestión de Mantenimientos</h1>
             </div>
-            <div class="order-3 w-full text-center md:order-2 md:flex-1">
-                <h1 class="text-2xl font-bold text-gray-800 md:text-3xl lg:text-4xl">Sistema de Gestión de Mantenimientos RO</h1>
-                <p class="mt-2 text-sm text-gray-600 md:text-base">ID del Protocolo: PMA-RO-RES-12</p>
-            </div>
-            <div class="order-2 md:order-3 relative ml-auto flex items-center gap-3">
+            <div class="relative flex items-center gap-3">
                 <div id="auth-user-panel" class="hidden whitespace-nowrap text-sm font-medium text-gray-700">
                     <span id="current-user"></span>
                 </div>
@@ -31,7 +28,12 @@
                 </button>
                 <div id="user-menu" class="user-menu hidden" role="menu" aria-labelledby="user-menu-toggle" aria-hidden="true">
                     <nav class="user-menu__content" aria-label="Opciones de usuario">
-                        <a href="#" class="user-menu__item" role="menuitem">Ayuda</a>
+                        <button id="help-menu-item" type="button" class="user-menu__item" role="menuitem">Ayuda</button>
+                        <div id="help-info" class="hidden px-4 py-3 text-xs text-gray-600 bg-gray-50 border-t border-gray-200">
+                            <p><strong>ID del Protocolo:</strong> PMA-RO-RES-12</p>
+                            <p id="app-version-menu" class="mt-1"></p>
+                            <p id="script-version-menu" class="mt-1"></p>
+                        </div>
                         <a href="#" class="user-menu__item" role="menuitem">Configuración</a>
                         <div class="user-menu__item user-menu__toggle" role="none">
                             <div class="user-menu__toggle-info">
@@ -49,14 +51,10 @@
                     </nav>
                 </div>
             </div>
-            <div class="order-4 w-full text-xs text-gray-500 md:order-4 md:w-auto md:text-right flex flex-col items-center gap-1 md:items-end">
-                <p id="app-version" class="hidden"></p>
-                <p id="script-version" class="hidden"></p>
-            </div>
         </header>
 
 
-        <div class="print-header">
+        <div class="print-header hidden">
             <div class="print-header-text">
                 <h1>Informe de Mantenimiento Anual</h1>
                 <p><strong>N° de Reporte:</strong> <span id="report-number-display"></span></p>

@@ -1810,22 +1810,6 @@ input,
   z-index: 50;
 }
 
-.order-1 {
-  order: 1;
-}
-
-.order-2 {
-  order: 2;
-}
-
-.order-3 {
-  order: 3;
-}
-
-.order-4 {
-  order: 4;
-}
-
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -1875,10 +1859,6 @@ input,
 
 .ml-8 {
   margin-left: 2rem;
-}
-
-.ml-auto {
-  margin-left: auto;
 }
 
 .mr-2 {
@@ -1937,8 +1917,8 @@ input,
   display: none;
 }
 
-.h-14 {
-  height: 3.5rem;
+.h-12 {
+  height: 3rem;
 }
 
 .h-5 {
@@ -2857,6 +2837,28 @@ input,
   background-color: var(--app-color-overlay) !important;
 }
 
+/* Print styles */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #000;
+  }
+
+  .print-logo {
+    max-width: 150px;
+    height: auto;
+  }
+}
+
 .hover\:bg-blue-100:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(219 234 254 / var(--tw-bg-opacity, 1));
@@ -3090,14 +3092,6 @@ input,
     order: 2;
   }
 
-  .md\:order-3 {
-    order: 3;
-  }
-
-  .md\:order-4 {
-    order: 4;
-  }
-
   .md\:col-span-1 {
     grid-column: span 1 / span 1;
   }
@@ -3106,16 +3100,8 @@ input,
     grid-column: span 2 / span 2;
   }
 
-  .md\:h-16 {
-    height: 4rem;
-  }
-
-  .md\:w-auto {
-    width: auto;
-  }
-
-  .md\:flex-1 {
-    flex: 1 1 0%;
+  .md\:h-14 {
+    height: 3.5rem;
   }
 
   .md\:grid-cols-2 {
@@ -3128,10 +3114,6 @@ input,
 
   .md\:flex-row {
     flex-direction: row;
-  }
-
-  .md\:items-end {
-    align-items: flex-end;
   }
 
   .md\:items-center {
@@ -3158,18 +3140,9 @@ input,
     padding: 2rem;
   }
 
-  .md\:text-right {
-    text-align: right;
-  }
-
-  .md\:text-3xl {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
-  }
-
-  .md\:text-base {
-    font-size: 1rem;
-    line-height: 1.5rem;
+  .md\:text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
   }
 }
 
@@ -3180,11 +3153,6 @@ input,
 
   .lg\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .lg\:text-4xl {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
   }
 }
 
