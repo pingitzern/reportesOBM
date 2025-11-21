@@ -573,6 +573,7 @@ video {
   --app-color-menu-hover: rgba(59, 130, 246, 0.12);
   --app-color-accent-primary: #3b82f6;
   --app-color-accent-secondary: #8b5cf6;
+  --app-color-disabled: #9ca3af;
 }
 
 .dark-theme {
@@ -1079,7 +1080,7 @@ input,
   --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  transform: translateY(-4px) scale(1.02);
+  transform: translateY(-3px) scale(1.02);
 }
 
 .tab-button:focus-visible {
@@ -1109,7 +1110,7 @@ input,
   --tw-border-opacity: 1;
   border-color: rgb(29 78 216 / var(--tw-border-opacity, 1));
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-4px) scale(1.02);
+  transform: translateY(-3px) scale(1.02);
 }
 
 .action-button {
@@ -1210,15 +1211,13 @@ input,
   cursor: not-allowed;
   --tw-border-opacity: 1;
   border-color: rgb(156 163 175 / var(--tw-border-opacity, 1));
-  --tw-bg-opacity: 1;
-  background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1));
   --tw-text-opacity: 1;
   color: rgb(243 244 246 / var(--tw-text-opacity, 1));
   opacity: 0.7;
   --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-  background: #9ca3af;
+  background: var(--app-color-disabled);
 }
 
 .action-button.print-btn:disabled:hover,
@@ -1255,15 +1254,13 @@ input,
   cursor: not-allowed;
   --tw-border-opacity: 1;
   border-color: rgb(156 163 175 / var(--tw-border-opacity, 1));
-  --tw-bg-opacity: 1;
-  background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1));
   --tw-text-opacity: 1;
   color: rgb(243 244 246 / var(--tw-text-opacity, 1));
   opacity: 0.7;
   --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-  background: #9ca3af;
+  background: var(--app-color-disabled);
 }
 
 .action-button.secondary-btn:disabled:hover,
@@ -2956,9 +2953,6 @@ h1, h2, h3 {
 }
 
 h2 {
-  --tw-text-opacity: 1;
-  color: rgb(31 41 55 / var(--tw-text-opacity, 1));
-  color: var(--app-color-text-strong);
   background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
