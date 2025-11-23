@@ -44,6 +44,12 @@
                             <p id="app-version-menu" class="mt-1"></p>
                             <p id="script-version-menu" class="mt-1"></p>
                         </div>
+                        <button id="feedback-menu-item" type="button" class="user-menu__item" role="menuitem" data-feedback-trigger>
+                            <span>Enviar feedback</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m-2 8c-4.418 0-8-3.134-8-7s3.582-7 8-7h6c4.418 0 8 3.134 8 7s-3.582 7-8 7H9l-4 3v-3z" />
+                            </svg>
+                        </button>
                         <a href="#" class="user-menu__item" role="menuitem">
                             <span>Configuración</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1361,6 +1367,65 @@
                 <div id="remitos-gestion-container" class="space-y-6"></div>
             </div>
         </section>
+        </div>
+    </div>
+
+    <button type="button" class="feedback-fab no-print" data-feedback-trigger aria-label="Enviar feedback">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m-2 8c-4.418 0-8-3.134-8-7s3.582-7 8-7h6c4.418 0 8 3.134 8 7s-3.582 7-8 7H9l-4 3v-3z" />
+        </svg>
+        <span>¿Tenés sugerencias?</span>
+    </button>
+
+    <div id="feedback-modal-backdrop" class="hidden fixed inset-0 feedback-modal__backdrop" aria-hidden="true"></div>
+    <div id="feedback-modal" class="feedback-modal hidden fixed inset-0 z-[9999] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="feedback-modal-title">
+        <div id="feedback-modal-panel" class="feedback-modal-panel bg-white">
+            <div class="feedback-modal__header">
+                <p class="feedback-modal__eyebrow">Retroalimentación activa</p>
+                <h2 id="feedback-modal-title" class="feedback-modal__title">Compartí tu feedback</h2>
+                <p class="feedback-modal__subtitle">Tus comentarios nos ayudan a priorizar mejoras.</p>
+            </div>
+            <form id="feedback-form" class="feedback-form" novalidate>
+                <div class="feedback-form__row">
+                    <label for="feedback-category">Tipo de feedback</label>
+                    <select id="feedback-category" name="feedback-category">
+                        <option value="ui">Experiencia visual</option>
+                        <option value="rendimiento">Rendimiento / velocidad</option>
+                        <option value="bug">Encontré un error</option>
+                        <option value="idea">Idea o nueva función</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="feedback-form__row">
+                    <label for="feedback-impact">Impacto percibido</label>
+                    <select id="feedback-impact" name="feedback-impact">
+                        <option value="bajo">Bajo</option>
+                        <option value="medio" selected>Medio</option>
+                        <option value="alto">Alto</option>
+                    </select>
+                </div>
+                <div class="feedback-form__row feedback-form__row--textarea">
+                    <div class="feedback-form__row-header">
+                        <label for="feedback-message">¿Qué deberíamos saber?</label>
+                        <span id="feedback-char-count" aria-live="polite">0/12</span>
+                    </div>
+                    <textarea id="feedback-message" name="feedback-message" rows="5" placeholder="Contanos qué funciona bien, qué no y qué esperas del portal" required></textarea>
+                </div>
+                <div class="feedback-form__row">
+                    <label for="feedback-contact">Medio de contacto (opcional)</label>
+                    <input type="text" id="feedback-contact" name="feedback-contact" placeholder="Ej: tu correo o celular">
+                </div>
+                <label class="feedback-form__checkbox">
+                    <input type="checkbox" id="feedback-allow-contact" name="feedback-allow-contact">
+                    <span>Autorizo que me contacten para ampliar la información.</span>
+                </label>
+                <p id="feedback-error" class="feedback-alert feedback-alert--error hidden" role="alert"></p>
+                <p id="feedback-success" class="feedback-alert feedback-alert--success hidden" role="status"></p>
+                <div class="feedback-form__actions">
+                    <button type="button" id="feedback-cancel-button" class="feedback-button feedback-button--ghost">Cancelar</button>
+                    <button type="submit" id="feedback-submit-button" class="feedback-button feedback-button--primary">Enviar feedback</button>
+                </div>
+            </form>
         </div>
     </div>
 

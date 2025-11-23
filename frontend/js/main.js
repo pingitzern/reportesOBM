@@ -9,6 +9,7 @@ import { createSearchModule } from './modules/busqueda/busqueda.js';
 import { createRemitoModule } from './modules/remito/remito.js';
 import { createRemitosGestionModule } from './modules/remitos-gestion/remitos-gestion.js';
 import { createSoftenerModule } from './modules/mantenimiento-ablandador/ablandador.js';
+import { createFeedbackModule } from './modules/feedback/feedback.js';
 
 const {
     guardarMantenimiento,
@@ -23,6 +24,7 @@ const {
     actualizarRemito,
     eliminarRemito,
     obtenerVersionServidor,
+    enviarFeedbackTicket,
 } = api;
 
 initializeTheme();
@@ -88,6 +90,10 @@ const softenerModule = createSoftenerModule({
     },
 });
 
+const feedbackModule = createFeedbackModule({
+    enviarFeedbackTicket,
+});
+
 const appModules = {
     maintenance: maintenanceModule,
     remito: remitoModule,
@@ -95,6 +101,7 @@ const appModules = {
     dashboard: dashboardModule,
     remitosGestion: remitosGestionModule,
     softener: softenerModule,
+    feedback: feedbackModule,
 };
 
 const SECTION_LABELS = Object.freeze({
@@ -385,6 +392,7 @@ async function initializeApp() {
     void showScriptVersion();
     initializeNavigation();
     initializeHelpToggle();
+    appModules.feedback.initialize();
     // Inicializar módulos que no requieren autenticación
     appModules.remito.initialize();
     appModules.search.initialize();

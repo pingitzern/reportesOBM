@@ -25,7 +25,8 @@ function doGet(e) {
       SHEET_ID: '14_6UyAhZQqHz6EGMRhr7YyqQ-KHMBsjeU4M5a_SRhis',
       SHEET_NAME: 'Hoja 1',
       CLIENTES_SHEET_NAME: 'clientes',
-      SOFTENER_SHEET_NAME: 'softener_mantenimiento'
+      SOFTENER_SHEET_NAME: 'softener_mantenimiento',
+      FEEDBACK_SHEET_NAME: 'feedback'
     });
     ns.DEFAULT_CONFIGURATION = DEFAULT_CONFIGURATION;
 
@@ -40,7 +41,8 @@ function doGet(e) {
         SHEET_ID: DEFAULT_CONFIGURATION.SHEET_ID,
         SHEET_NAME: DEFAULT_CONFIGURATION.SHEET_NAME,
         CLIENTES_SHEET_NAME: DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME,
-        SOFTENER_SHEET_NAME: DEFAULT_CONFIGURATION.SOFTENER_SHEET_NAME
+        SOFTENER_SHEET_NAME: DEFAULT_CONFIGURATION.SOFTENER_SHEET_NAME,
+        FEEDBACK_SHEET_NAME: DEFAULT_CONFIGURATION.FEEDBACK_SHEET_NAME
       };
 
       const properties = Object.assign({}, defaults, overrides || {});
@@ -52,10 +54,12 @@ function doGet(e) {
     const SHEET_NAME = getPropertyOrDefault('SHEET_NAME', DEFAULT_CONFIGURATION.SHEET_NAME);
     const CLIENTES_SHEET_NAME = getPropertyOrDefault('CLIENTES_SHEET_NAME', DEFAULT_CONFIGURATION.CLIENTES_SHEET_NAME);
     const SOFTENER_SHEET_NAME = getPropertyOrDefault('SOFTENER_SHEET_NAME', DEFAULT_CONFIGURATION.SOFTENER_SHEET_NAME);
+    const FEEDBACK_SHEET_NAME = getPropertyOrDefault('FEEDBACK_SHEET_NAME', DEFAULT_CONFIGURATION.FEEDBACK_SHEET_NAME);
     ns.SHEET_ID = SHEET_ID;
     ns.SHEET_NAME = SHEET_NAME;
     ns.CLIENTES_SHEET_NAME = CLIENTES_SHEET_NAME;
     ns.SOFTENER_SHEET_NAME = SOFTENER_SHEET_NAME;
+    ns.FEEDBACK_SHEET_NAME = FEEDBACK_SHEET_NAME;
 
     const SheetRepository = {
       getSpreadsheet() {
@@ -756,6 +760,13 @@ function doGet(e) {
             ns.SessionService.validateSession(data.token);
             const payload = data.payload && typeof data.payload === 'object' ? data.payload : data;
             const result = ns.SoftenerPdfService.generarPdf(payload);
+            return ResponseFactory.success(result);
+          }
+
+          case 'crear_ticket_feedback': {
+            const sess = ns.SessionService.validateSession(data.token);
+            const payload = data.payload && typeof data.payload === 'object' ? data.payload : data;
+            const result = ns.FeedbackService.crearTicket(payload, sess.mail);
             return ResponseFactory.success(result);
           }
 

@@ -18,6 +18,7 @@ const DEV_PUBLIC_ACTIONS = new Set([
     'crear_remito',
     'actualizar_remito',
     'eliminar_remito',
+    'crear_ticket_feedback',
 ]);
 
 async function postJSON(payload) {
@@ -255,6 +256,13 @@ export async function eliminarRemito(remitoId) {
 export async function obtenerVersionServidor() {
     return postJSON({
         action: 'version_info',
+    });
+}
+
+export async function enviarFeedbackTicket(datos) {
+    return postJSON({
+        action: 'crear_ticket_feedback',
+        ...(datos ?? {}),
     });
 }
 
