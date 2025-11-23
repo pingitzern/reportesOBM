@@ -585,7 +585,10 @@ function setStatusColor(selectElement) {
 
 function applyStatusColorsToSelects() {
     const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
-    statusSelects.forEach(setStatusColor);
+    statusSelects.forEach(select => {
+        select.classList.add('status-select');
+        setStatusColor(select);
+    });
 }
 
 function configureStatusSelects() {
@@ -593,6 +596,7 @@ function configureStatusSelects() {
     const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
 
     statusSelects.forEach(select => {
+        select.classList.add('status-select');
         setStatusColor(select);
         select.addEventListener('change', () => setStatusColor(select));
     });

@@ -1,8 +1,24 @@
 import { API_URL } from './config.js';
-import { getCurrentToken, handleSessionExpiration } from './modules/login/auth.js';
+import { getCurrentToken, handleSessionExpiration, isDevMode } from './modules/login/auth.js';
 import { state } from './modules/mantenimiento/state.js';
 
+// Acciones públicas que no requieren autenticación
 const PUBLIC_ACTIONS = new Set(['login', 'version_info']);
+
+// Acciones que se hacen públicas en modo desarrollo
+const DEV_PUBLIC_ACTIONS = new Set([
+    'obtener_clientes',
+    'obtener_dashboard',
+    'obtener_remitos',
+    'buscar',
+    'guardar',
+    'guardar_ablandador',
+    'actualizar',
+    'eliminar',
+    'crear_remito',
+    'actualizar_remito',
+    'eliminar_remito',
+]);
 
 async function postJSON(payload) {
     if (!API_URL) {
@@ -22,7 +38,11 @@ async function postJSON(payload) {
         requestPayload.action = action;
     }
 
-    if (!PUBLIC_ACTIONS.has(action)) {
+    // Verificar si la acción es pública o si estamos en modo desarrollo
+    const isPublicAction = PUBLIC_ACTIONS.has(action) || 
+                          (isDevMode() && DEV_PUBLIC_ACTIONS.has(action));
+
+    if (!isPublicAction) {
         const token = getCurrentToken();
         if (!token) {
             throw new Error('No hay una sesión activa. Por favor, ingresá de nuevo.');

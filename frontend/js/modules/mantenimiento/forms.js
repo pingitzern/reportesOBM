@@ -198,6 +198,188 @@ function configureClientDetailFieldInteractions() {
 	});
 }
 
+const VALIDATION_FIELD_SELECTOR =
+	"input:not([type='hidden']):not([type='radio']):not([type='checkbox']), select, textarea";
+const validationFieldsWithListener = new WeakSet();
+
+function isValidatableField(element) {
+	return (
+		element instanceof HTMLInputElement ||
+		element instanceof HTMLTextAreaElement ||
+		element instanceof HTMLSelectElement
+	);
+}
+
+function getValidatableFields() {
+	const form = getElement('maintenance-form');
+	if (!(form instanceof HTMLFormElement)) {
+		return [];
+	}
+
+	return Array.from(form.querySelectorAll(VALIDATION_FIELD_SELECTOR)).filter(isValidatableField);
+}
+
+function shouldValidateField(field) {
+	const value = normalizeStringValue(field.value);
+	const hasValue = value !== '';
+	const touched = field.dataset.validationTouched === 'true';
+	const mode = field.dataset.validationMode || '';
+
+	if (mode === 'immediate') {
+		return true;
+	}
+
+	return touched || hasValue;
+}
+
+function determineValidationState(field) {
+	if (!isValidatableField(field) || field.disabled) {
+		return 'neutral';
+	}
+
+	const value = normalizeStringValue(field.value);
+	const hasValue = value !== '';
+	const shouldEvaluate = shouldValidateField(field);
+
+	if (!shouldEvaluate) {
+		return 'neutral';
+	}
+
+	const isRequired = field.required || field.dataset.validationMode === 'required';
+	if (!isRequired && !hasValue) {
+		return 'neutral';
+	}
+
+	return field.checkValidity() ? 'valid' : 'error';
+}
+
+function applyValidationClasses(field, state) {
+	if (!isValidatableField(field)) {
+		return;
+	}
+
+	field.classList.remove('input-status', 'input-status--valid', 'input-status--error');
+	field.removeAttribute('aria-invalid');
+
+	if (state === 'neutral') {
+		return;
+	}
+
+	field.classList.add('input-status');
+	if (state === 'valid') {
+		field.classList.add('input-status--valid');
+		field.setAttribute('aria-invalid', 'false');
+		return;
+	}
+
+	field.classList.add('input-status--error');
+	field.setAttribute('aria-invalid', 'true');
+}
+
+function updateFieldValidation(field, { forceTouched = false } = {}) {
+	if (!isValidatableField(field)) {
+		return;
+	}
+
+	if (forceTouched) {
+		field.dataset.validationTouched = 'true';
+	}
+
+	const state = determineValidationState(field);
+	applyValidationClasses(field, state);
+}
+
+function handleValidationEvent(event) {
+	const field = event.target;
+	if (!isValidatableField(field)) {
+		return;
+	}
+
+	field.dataset.validationTouched = 'true';
+	updateFieldValidation(field);
+}
+
+function configureFieldValidation() {
+	const fields = getValidatableFields();
+	fields.forEach(field => {
+		if (!validationFieldsWithListener.has(field)) {
+			['input', 'change', 'blur'].forEach(eventType => {
+				field.addEventListener(eventType, handleValidationEvent);
+			});
+			validationFieldsWithListener.add(field);
+		}
+		updateFieldValidation(field);
+	});
+}
+
+function resetValidationStates() {
+	getValidatableFields().forEach(field => {
+		delete field.dataset.validationTouched;
+		applyValidationClasses(field, 'neutral');
+	});
+}
+
+const PERFORMANCE_GROUPS = Object.freeze({
+	found: {
+		fields: ['cond_red_found', 'cond_perm_found', 'caudal_perm_found', 'caudal_rech_found', 'rechazo_found'],
+	},
+	left: {
+		fields: ['cond_red_left', 'cond_perm_left', 'caudal_perm_left', 'caudal_rech_left', 'rechazo_left'],
+	},
+});
+
+const REJECTION_SUCCESS_THRESHOLD = 90;
+
+function evaluateRejectionState(value) {
+	if (typeof value !== 'number' || Number.isNaN(value)) {
+		return 'neutral';
+	}
+
+	return value >= REJECTION_SUCCESS_THRESHOLD ? 'valid' : 'error';
+}
+
+function setMetricState(element, state) {
+	if (!(element instanceof HTMLElement)) {
+		return;
+	}
+
+	element.classList.remove('metric-status', 'metric-status--valid', 'metric-status--error');
+	if (state === 'neutral') {
+		return;
+	}
+
+	element.classList.add('metric-status');
+	if (state === 'valid') {
+		element.classList.add('metric-status--valid');
+		return;
+	}
+
+	element.classList.add('metric-status--error');
+}
+
+function applyPerformanceFeedback(rejectionValues = {}) {
+	Object.entries(PERFORMANCE_GROUPS).forEach(([key, group]) => {
+		const state = evaluateRejectionState(rejectionValues[key]);
+		group.fields.forEach(fieldId => {
+			const field = getElement(fieldId);
+			if (field) {
+				setMetricState(field, state);
+			}
+		});
+	});
+}
+
+function resetMetricStates() {
+	Object.values(PERFORMANCE_GROUPS).forEach(group => {
+		group.fields.forEach(fieldId => {
+			const field = getElement(fieldId);
+			if (field) {
+				field.classList.remove('metric-status', 'metric-status--valid', 'metric-status--error');
+			}
+		});
+	});
+}
+
 function setClientDetailValue(fieldId, value, options = {}) {
 	const element = getElement(fieldId);
 	if (!element) {
@@ -216,6 +398,8 @@ function setClientDetailValue(fieldId, value, options = {}) {
 			lockWhenFilled: Boolean(options.lockWhenFilled),
 		});
 	}
+
+	updateFieldValidation(element);
 }
 
 function applyClientDetails(details = {}) {
@@ -532,6 +716,12 @@ function calculateAll() {
 	if (relacionLeftHiddenInput) {
 		relacionLeftHiddenInput.value = relacionLeftValue;
 	}
+
+	const rejectionValues = {
+		found: rechazoFound ? parseFloat(rechazoFound) : Number.NaN,
+		left: rechazoLeft ? parseFloat(rechazoLeft) : Number.NaN,
+	};
+	applyPerformanceFeedback(rejectionValues);
 }
 
 function updateConversions(inputEl, outputEl) {
@@ -585,7 +775,10 @@ function setStatusColor(selectElement) {
 
 function applyStatusColorsToSelects() {
 	const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
-	statusSelects.forEach(setStatusColor);
+	statusSelects.forEach(select => {
+		select.classList.add('status-select');
+		setStatusColor(select);
+	});
 }
 
 function configureStatusSelects() {
@@ -593,6 +786,7 @@ function configureStatusSelects() {
 	const statusSelects = document.querySelectorAll(STATUS_SELECT_SELECTOR);
 
 	statusSelects.forEach(select => {
+		select.classList.add('status-select');
 		setStatusColor(select);
 		select.addEventListener('change', () => setStatusColor(select));
 	});
@@ -605,7 +799,7 @@ const SANITIZACION_STATUS_MAP = {
 };
 
 function configureSanitizacionRadios() {
-	const container = document.querySelector('.sanitizacion-options');
+	const container = document.querySelector('.sanitizacion-card-group');
 	if (!container) {
 		return;
 	}
@@ -622,12 +816,12 @@ function configureSanitizacionRadios() {
 		container.dataset.status = SANITIZACION_STATUS_MAP[statusKey] || 'neutral';
 	};
 
-	if (!container.dataset.sanitizacionConfigured) {
-		radios.forEach(radio => {
+	radios.forEach(radio => {
+		if (!radio.dataset.sanitizacionConfigured) {
 			radio.addEventListener('change', updateStatus);
-		});
-		container.dataset.sanitizacionConfigured = 'true';
-	}
+			radio.dataset.sanitizacionConfigured = 'true';
+		}
+	});
 
 	updateStatus();
 }
@@ -655,6 +849,8 @@ function clearDerivedFields() {
 			element.value = '';
 		}
 	});
+
+	resetMetricStates();
 }
 
 function clearConversionOutputs() {
@@ -889,6 +1085,7 @@ export function initializeForm() {
 	configureClientDetailFieldInteractions();
 
 	configureSanitizacionRadios();
+	configureFieldValidation();
 
 	calculateAll();
 }
@@ -902,6 +1099,7 @@ export function resetForm() {
 	setDefaultDate();
 	clearDerivedFields();
 	clearConversionOutputs();
+	resetValidationStates();
 
 	applyStatusColorsToSelects();
 	resizeAutoResizeInputs();

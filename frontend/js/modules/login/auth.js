@@ -783,13 +783,20 @@ export function getCurrentUserRole() {
 }
 
 // ⚠️ SOLO PARA DESARROLLO - Token mock cuando el login está desactivado
-const DEV_MODE = true; // Cambiar a false en producción
+// IMPORTANTE: Para que funcione correctamente con el backend, debes:
+// 1. Establecer DEV_MODE = false (RECOMENDADO)
+// 2. O modificar el backend para aceptar peticiones sin token
+const DEV_MODE = false; // ⚠️ Cambiar a true SOLO si el backend está configurado para modo desarrollo
 const DEV_USER = {
     nombre: 'Modo desarrollo',
     cargo: 'UI Preview',
     rol: 'Administrador',
 };
 const DEV_TOKEN = 'dev-token-' + Date.now();
+
+export function isDevMode() {
+    return DEV_MODE;
+}
 
 export function getCurrentToken() {
     // Si estamos en modo desarrollo, retornar token mock

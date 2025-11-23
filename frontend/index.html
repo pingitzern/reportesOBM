@@ -4,19 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OBM - Gestión de Mantenimientos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/styles.build.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 </head>
 <body class="bg-gray-100">
     <div id="main-view" class="container mx-auto p-4 md:p-8 max-w-7xl">
-        <header class="relative flex items-center justify-between gap-4 mb-8 no-print">
-            <div class="flex items-center gap-4">
-                <img src="/OHM-agua.png" alt="Logo OHM Agua" class="h-12 w-auto md:h-14">
-                <h1 class="text-xl font-bold text-gray-800 md:text-2xl">OBM - Gestión de Mantenimientos</h1>
+        <header class="app-header-bar no-print">
+            <div class="app-header__left">
+                <img src="/OHM-agua.png" alt="Logo OHM Agua" class="app-header__logo-image" aria-hidden="true">
+                <span class="app-header__divider" aria-hidden="true"></span>
+                <span class="app-header__portal" aria-label="Portal OHM">PORTAL OHM</span>
             </div>
-            <div class="relative flex items-center gap-3">
-                <div id="auth-user-panel" class="hidden whitespace-nowrap text-sm font-medium text-gray-700">
+            <div class="app-header__section">
+                <p class="app-header__section-prefix">Estás en</p>
+                <p id="current-section-title" class="app-header__section-title">Dashboard</p>
+            </div>
+            <div class="app-header__user-area">
+                <div id="auth-user-panel" class="hidden whitespace-nowrap text-sm font-medium" data-user-info>
                     <span id="current-user"></span>
                 </div>
                 <button id="user-menu-toggle" type="button" class="user-menu-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="user-menu">
@@ -28,13 +33,24 @@
                 </button>
                 <div id="user-menu" class="user-menu hidden" role="menu" aria-labelledby="user-menu-toggle" aria-hidden="true">
                     <nav class="user-menu__content" aria-label="Opciones de usuario">
-                        <button id="help-menu-item" type="button" class="user-menu__item" role="menuitem">Ayuda</button>
+                        <button id="help-menu-item" type="button" class="user-menu__item" role="menuitem">
+                            <span>Ayuda</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
                         <div id="help-info" class="hidden px-4 py-3 text-xs text-gray-600 bg-gray-50 border-t border-gray-200">
                             <p><strong>ID del Protocolo:</strong> PMA-RO-RES-12</p>
                             <p id="app-version-menu" class="mt-1"></p>
                             <p id="script-version-menu" class="mt-1"></p>
                         </div>
-                        <a href="#" class="user-menu__item" role="menuitem">Configuración</a>
+                        <a href="#" class="user-menu__item" role="menuitem">
+                            <span>Configuración</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </a>
                         <div class="user-menu__item user-menu__toggle" role="none">
                             <div class="user-menu__toggle-info">
                                 <span class="user-menu__toggle-label">Modo oscuro</span>
@@ -46,7 +62,10 @@
                             </label>
                         </div>
                         <button id="logout-button" type="button" class="user-menu__item user-menu__logout" role="menuitem" disabled>
-                            Cerrar Sesión
+                            <span>Cerrar Sesión</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
                         </button>
                     </nav>
                 </div>
@@ -63,11 +82,31 @@
         </div>
 
         <!-- Navegación por pestañas - SIN onclick -->
-        <div class="flex flex-wrap justify-center gap-2 mb-6 no-print md:justify-start">
-            <button class="tab-button active" id="tab-nuevo-btn">Nuevo Mantenimiento</button>
-            <button class="tab-button" id="tab-buscar-btn">Buscar/Editar</button>
-            <button class="tab-button" id="tab-dashboard-btn">Dashboard</button>
-            <button class="tab-button" id="nav-remitos-btn">Remitos</button>
+        <div class="flex flex-wrap justify-center gap-3 mb-8 no-print md:justify-start animate-slide-in">
+            <button class="tab-button active" id="tab-nuevo-btn">
+                <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Nuevo Mantenimiento
+            </button>
+            <button class="tab-button" id="tab-buscar-btn">
+                <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Buscar/Editar
+            </button>
+            <button class="tab-button" id="tab-dashboard-btn">
+                <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Dashboard
+            </button>
+            <button class="tab-button" id="nav-remitos-btn">
+                <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Remitos
+            </button>
         </div>
 
         <div class="space-y-8" id="main-content">
@@ -81,9 +120,14 @@
                         <h2>A. Datos del Servicio y del Equipo</h2>
                         <p class="guide-text">Complete la información para identificar el servicio y el equipo.</p>
                         <div class="space-y-6">
-                            <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+                            <div class="rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-soft p-6 transition-all duration-300 hover:shadow-lg hover:border-blue-200">
                                 <div class="flex flex-col gap-2 mb-4 md:flex-row md:items-center md:justify-between">
-                                    <h3 class="text-xl font-semibold text-gray-800">Datos del Cliente</h3>
+                                    <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Datos del Cliente
+                                    </h3>
                                     <p class="text-sm text-gray-500">Selecciona un cliente para completar los datos automáticamente.</p>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -111,8 +155,13 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-                                <h3 class="text-xl font-semibold text-gray-800 mb-4">Datos del Servicio y del Equipo</h3>
+                            <div class="rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-soft p-6 transition-all duration-300 hover:shadow-lg hover:border-blue-200">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                    </svg>
+                                    Datos del Servicio y del Equipo
+                                </h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                     <div class="input-group flex flex-col gap-1">
                                         <label for="fecha_display" class="font-semibold text-gray-700">Fecha del Servicio:</label>
@@ -293,49 +342,34 @@
                         </template>
                         <!-- Sanitización -->
                         <hr class="my-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
-                            <div class="sm:col-span-3 font-semibold text-gray-700">Sanitización del Sistema</div>
-                            <div class="sm:col-span-2">
-                                <div class="sanitizacion-toggle" role="radiogroup" aria-label="Sanitización del Sistema">
-                                    <label class="sanitizacion-toggle-option" data-option="N/A">
-                                        <input type="radio" name="sanitizacion" value="N/A" checked>
-                                        <span>No Aplica</span>
-                                    </label>
-                                    <label class="sanitizacion-toggle-option" data-option="Realizada">
-                                        <input type="radio" name="sanitizacion" value="Realizada">
-                                        <span>Realizada</span>
-                                    </label>
-                                    <label class="sanitizacion-toggle-option" data-option="No Realizada">
-                                        <input type="radio" name="sanitizacion" value="No Realizada">
-                                        <span>No Realizada</span>
-                                    </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-4 items-center py-2">
+                            <div class="sm:col-span-2 font-semibold text-gray-700">Sanitización del Sistema</div>
+                            <div class="sm:col-span-4">
+                                <div class="sanitizacion-card-group" role="radiogroup" aria-label="Sanitización del Sistema" data-status="neutral">
+                                    <div class="sanitizacion-card-wrapper">
+                                        <input type="radio" class="sanitizacion-card__input" id="sanitizacion-realizada" name="sanitizacion" value="Realizada">
+                                        <label for="sanitizacion-realizada" class="sanitizacion-card sanitizacion-card--done">
+                                            <span class="sanitizacion-card__title">Realizada</span>
+                                            <span class="sanitizacion-card__hint">Circuito sanitizado completo</span>
+                                        </label>
+                                    </div>
+                                    <div class="sanitizacion-card-wrapper">
+                                        <input type="radio" class="sanitizacion-card__input" id="sanitizacion-no-realizada" name="sanitizacion" value="No Realizada">
+                                        <label for="sanitizacion-no-realizada" class="sanitizacion-card sanitizacion-card--pending">
+                                            <span class="sanitizacion-card__title">No Realizada</span>
+                                            <span class="sanitizacion-card__hint">Planificar sanitización</span>
+                                        </label>
+                                    </div>
+                                    <div class="sanitizacion-card-wrapper">
+                                        <input type="radio" class="sanitizacion-card__input" id="sanitizacion-na" name="sanitizacion" value="N/A" checked>
+                                        <label for="sanitizacion-na" class="sanitizacion-card sanitizacion-card--na">
+                                            <span class="sanitizacion-card__title">No Aplica</span>
+                                            <span class="sanitizacion-card__hint">Equipo exento</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div class="sm:col-span-2 stage-actions stage-actions--toggle"></div>
                         </div>
-                    <!-- Sanitización -->
-                    <hr class="my-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-x-4 gap-y-2 items-center py-2">
-                        <div class="sm:col-span-3 font-semibold text-gray-700">Sanitización del Sistema</div>
-                        <div class="sm:col-span-2">
-                            <div class="sanitizacion-options" data-status="neutral">
-                                <label class="sanitizacion-option" for="sanitizacion-realizada">
-                                    <input type="radio" id="sanitizacion-realizada" name="sanitizacion" value="Realizada">
-                                    <span>Realizada</span>
-                                </label>
-                                <label class="sanitizacion-option" for="sanitizacion-no-realizada">
-                                    <input type="radio" id="sanitizacion-no-realizada" name="sanitizacion" value="No Realizada">
-                                    <span>No Realizada</span>
-                                </label>
-                                <label class="sanitizacion-option" for="sanitizacion-na">
-                                    <input type="radio" id="sanitizacion-na" name="sanitizacion" value="N/A" checked>
-                                    <span>No Aplica</span>
-                                </label>
-                            </div>
-
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Sección D: Resumen -->
@@ -350,11 +384,31 @@
                 </div>
 
                 <!-- Botones de Acción -->
-                <div class="flex flex-col gap-3 mt-8 no-print sm:flex-row sm:justify-end sm:gap-4">
-                    <button type="button" id="autoFillButton" class="action-button reset-btn w-full sm:w-auto hidden">Auto Rellenar</button>
-                    <button type="button" id="resetButton" class="action-button reset-btn w-full sm:w-auto">Limpiar Formulario</button>
-                    <button type="button" id="guardarButton" class="action-button print-btn w-full sm:w-auto">Guardar y Generar Reporte</button>
-                    <button type="button" id="generar-remito-btn" class="action-button print-btn w-full sm:w-auto" disabled>Generar Remito</button>
+                <div class="flex flex-col gap-3 mt-8 no-print sm:flex-row sm:justify-end sm:gap-4 animate-fade-in">
+                    <button type="button" id="autoFillButton" class="action-button reset-btn w-full sm:w-auto hidden">
+                        <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Auto Rellenar
+                    </button>
+                    <button type="button" id="resetButton" class="action-button reset-btn w-full sm:w-auto">
+                        <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Limpiar Formulario
+                    </button>
+                    <button type="button" id="guardarButton" class="action-button print-btn w-full sm:w-auto">
+                        <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        Guardar y Generar Reporte
+                    </button>
+                    <button type="button" id="generar-remito-btn" class="action-button secondary-btn w-full sm:w-auto" disabled>
+                        <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Generar Remito
+                    </button>
                 </div>
             </form>
         </section><!-- /tab-nuevo -->
@@ -1310,33 +1364,36 @@
         </div>
     </div>
 
-    <div id="maintenance-type-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div id="maintenance-type-backdrop" class="hidden fixed inset-0 maintenance-modal__backdrop"></div>
     <div id="maintenance-type-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-800">Seleccioná el tipo de mantenimiento</h2>
-                <p class="mt-1 text-sm text-gray-500">Elegí qué formulario querés completar.</p>
+        <div class="maintenance-modal-panel">
+            <div class="maintenance-modal__header">
+                <div>
+                    <p class="maintenance-modal__eyebrow">Nueva hoja de servicio</p>
+                    <h2 class="maintenance-modal__title">Seleccioná el tipo de mantenimiento</h2>
+                    <p class="maintenance-modal__subtitle">Elegí qué formulario querés completar.</p>
+                </div>
             </div>
-            <div class="px-6 py-6 space-y-4">
+            <div class="maintenance-modal__body">
                 <button
                     id="maintenance-type-osmosis"
                     type="button"
-                    class="w-full rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-left text-blue-900 hover:bg-blue-100 transition-colors"
+                    class="maintenance-modal__option maintenance-modal__option--osmosis"
                 >
-                    Ósmosis Inversa
-                    <span class="block text-sm text-blue-700">Formulario de mantenimiento de ósmosis</span>
+                    <span class="maintenance-modal__option-title">Ósmosis Inversa</span>
+                    <span class="maintenance-modal__option-description">Formulario de mantenimiento de ósmosis</span>
                 </button>
                 <button
                     id="maintenance-type-softener"
                     type="button"
-                    class="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-left text-emerald-900 hover:bg-emerald-100 transition-colors"
+                    class="maintenance-modal__option maintenance-modal__option--softener"
                 >
-                    Ablandador
-                    <span class="block text-sm text-emerald-700">Formulario de mantenimiento de ablandador</span>
+                    <span class="maintenance-modal__option-title">Ablandador</span>
+                    <span class="maintenance-modal__option-description">Formulario de mantenimiento de ablandador</span>
                 </button>
             </div>
-            <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
-                <button id="maintenance-type-cancel" type="button" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-800">
+            <div class="maintenance-modal__actions">
+                <button id="maintenance-type-cancel" type="button" class="maintenance-modal__cancel">
                     Cancelar
                 </button>
             </div>
@@ -1361,6 +1418,9 @@
                 </div>
                 <p id="login-error" class="login-error hidden" role="alert"></p>
                 <button type="submit" class="login-submit-button">
+                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
                     Iniciar sesión
                 </button>
             </form>
@@ -1372,6 +1432,7 @@
             API_URL: 'https://script.google.com/macros/s/AKfycbxNjVlAhbYIxYz-wz5oQwYsUleKajXiBLWy7WOfN4dBVp9ksSUoUYnVzxtDbpHn2zqFOA/exec'
         };
     </script>
+    <script type="module" src="./js/animations.js"></script>
     <script type="module" src="./js/main.js"></script>
 </body>
 </html>

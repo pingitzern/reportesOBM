@@ -27,6 +27,7 @@ export function showView(viewId) {
     }
 
     let viewFound = false;
+    let shownViewId = null;
 
     MAIN_VIEW_IDS.forEach(id => {
         const element = document.getElementById(id);
@@ -37,6 +38,7 @@ export function showView(viewId) {
         if (id === viewId) {
             showElement(element);
             viewFound = true;
+            shownViewId = id;
             return;
         }
 
@@ -47,6 +49,13 @@ export function showView(viewId) {
         const targetElement = document.getElementById(viewId);
         if (targetElement) {
             showElement(targetElement);
+            shownViewId = viewId;
         }
+    }
+
+    if (shownViewId) {
+        document.dispatchEvent(new CustomEvent('view:changed', {
+            detail: { viewId: shownViewId },
+        }));
     }
 }

@@ -97,6 +97,38 @@ const appModules = {
     softener: softenerModule,
 };
 
+const SECTION_LABELS = Object.freeze({
+    'tab-dashboard': 'Dashboard',
+    'tab-nuevo': 'Mantenimiento Ósmosis',
+    'tab-ablandador': 'Mantenimiento Ablandador',
+    'tab-buscar': 'Buscar y Editar',
+    'remito-view': 'Generación de Remito',
+    'remitos-gestion-view': 'Gestión de Remitos',
+});
+
+function resolveSectionTitle(viewId) {
+    if (typeof viewId === 'string' && SECTION_LABELS[viewId]) {
+        return SECTION_LABELS[viewId];
+    }
+    return 'Portal de Gestión';
+}
+
+function updateSectionTitle(viewId) {
+    const target = document.getElementById('current-section-title');
+    if (!target) {
+        return;
+    }
+    target.textContent = resolveSectionTitle(viewId);
+}
+
+document.addEventListener('view:changed', event => {
+    const viewId = event?.detail?.viewId;
+    if (!viewId) {
+        return;
+    }
+    updateSectionTitle(viewId);
+});
+
 function setTextOrHide(element, text) {
     if (!element) {
         return;
