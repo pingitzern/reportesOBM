@@ -1,4 +1,4 @@
-import { API_URL } from '../../config.js';
+import { supabase } from '../../supabaseClient.js';
 import {
     THEME_DARK,
     THEME_LIGHT,
@@ -605,62 +605,80 @@ function resolvePendingAuth(session) {
     pendingAuth = null;
 }
 
-async function requestAuthentication({ mail, password }) {
-    if (!API_URL) {
-        throw new Error('API_URL no está configurada.');
+function buildSessionFromSupabase(data) {
+    if (!data || !data.session) {
+        return null;
     }
 
-    const payload = {
-        action: 'login',
-        mail: typeof mail === 'string' ? mail.trim() : '',
-        password: typeof password === 'string' ? password.trim() : '',
+    const supabaseUser = data.session.user || data.user;
+    if (!supabaseUser) {
+        return null;
+    }
+
+    const profile = extractUserProfileFromSupabase(supabaseUser);
+    const expiresAt = typeof data.session.expires_at === 'number'
+        ? new Date(data.session.expires_at * 1000)
+        : null;
+
+    return buildSession({
+        user: profile,
+        token: data.session.access_token,
+        expiresAt,
+    });
+}
+
+function extractUserProfileFromSupabase(user) {
+    const metadata = (user && user.user_metadata) || {};
+    const appMetadata = (user && user.app_metadata) || {};
+
+    const nombre = [metadata.nombre, metadata.full_name, metadata.fullName, metadata.name, user?.email]
+        .find(value => typeof value === 'string' && value.trim());
+
+    const cargo = [metadata.cargo, metadata.position]
+        .find(value => typeof value === 'string' && value.trim());
+
+    const rol = [metadata.rol, metadata.role, appMetadata.role, appMetadata.rol]
+        .find(value => typeof value === 'string' && value.trim()) || 'tecnico';
+
+    return {
+        nombre: (nombre || 'Usuario').trim(),
+        cargo: (cargo || '').trim(),
+        rol: rol.trim(),
     };
+}
 
-    let response;
-    try {
-        response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain; charset=utf-8',
-            },
-            body: JSON.stringify(payload),
-        });
-    } catch (error) {
-        if (error?.name === 'AbortError') {
-            throw new Error('La solicitud de autenticación excedió el tiempo de espera.');
-        }
-        if (error instanceof TypeError) {
-            throw new Error('No se pudo conectar con el servidor de autenticación.');
-        }
-        throw new Error(error?.message || 'Error inesperado al iniciar sesión.');
+async function syncSupabaseSession() {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+        console.warn('[auth] No se pudo verificar la sesión de Supabase', error);
+        clearStoredAuth();
+        return null;
     }
 
-    if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-            throw new Error('Mail o contraseña incorrectos');
-        }
-        throw new Error(`HTTP ${response.status}`);
+    const session = buildSessionFromSupabase(data);
+    if (session) {
+        persistAuth(session);
+        return session;
     }
 
-    let result;
-    try {
-        result = await response.json();
-    } catch (error) {
-        throw new Error('No se pudo interpretar la respuesta de autenticación.');
-    }
+    clearStoredAuth();
+    return null;
+}
 
-    if (result.result !== 'success') {
-        throw new Error('Mail o contraseña incorrectos');
-    }
-
-    const session = buildSession({
-        user: result.data?.usuario ?? result.data?.user ?? result.data,
-        token: result.data?.token,
-        expiresAt: result.data?.expiresAt,
+async function requestAuthentication({ mail, password }) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: typeof mail === 'string' ? mail.trim() : '',
+        password: typeof password === 'string' ? password.trim() : '',
     });
 
+    if (error) {
+        console.warn('[auth] Supabase login failed', error);
+        throw new Error('Credenciales inválidas. Verificá tu mail y contraseña.');
+    }
+
+    const session = buildSessionFromSupabase(data);
     if (!session) {
-        throw new Error('Mail o contraseña incorrectos');
+        throw new Error('No se pudo iniciar sesión.');
     }
 
     return session;
@@ -701,36 +719,17 @@ async function handleLogout(event) {
         event.preventDefault();
     }
 
-
-    const session = loadStoredAuth();
-    const token = typeof session?.token === 'string' ? session.token.trim() : '';
-
     try {
-        if (API_URL && token) {
-            await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain; charset=utf-8',
-                },
-                body: JSON.stringify({
-                    action: 'logout',
-                    token,
-                }),
-            });
-        }
+        await supabase.auth.signOut();
     } catch (error) {
-        // Ignorar errores de red para no bloquear el cierre de sesión local.
+        console.warn('[auth] Error al cerrar sesión en Supabase', error);
     } finally {
+        closeUserMenu();
         clearStoredAuth();
         setMainViewVisible(false);
         showLoginModal();
         createPendingAuthPromise();
     }
-
-    closeUserMenu();
-    clearStoredAuth();
-    showLoginModal();
-    createPendingAuthPromise();
 
 }
 
@@ -786,7 +785,7 @@ export function getCurrentUserRole() {
 // IMPORTANTE: Para que funcione correctamente con el backend, debes:
 // 1. Establecer DEV_MODE = false (RECOMENDADO)
 // 2. O modificar el backend para aceptar peticiones sin token
-const DEV_MODE = false; // ⚠️ Cambiar a true SOLO si el backend está configurado para modo desarrollo
+const DEV_MODE = false; // Activar solo si se necesita modo desarrollo sin autenticación real
 const DEV_USER = {
     nombre: 'Modo desarrollo',
     cargo: 'UI Preview',
@@ -827,13 +826,15 @@ export async function initializeAuth() {
         }
     }
 
-    const storedSession = loadStoredAuth();
-    if (storedSession) {
-        updateUserPanel(storedSession.user);
+    const activeSession = await syncSupabaseSession();
+    if (activeSession) {
+        updateUserPanel(activeSession.user);
         setMainViewVisible(true);
         hideLoginModal();
-        return storedSession;
+        return activeSession;
     }
+
+    clearStoredAuth();
     setMainViewVisible(false);
 
     updateUserPanel(null);
@@ -856,7 +857,7 @@ export async function requireAuthentication() {
         return loadStoredAuth() || buildSession({ user: DEV_USER, token: DEV_TOKEN, expiresAt: null });
     }
 
-    const session = loadStoredAuth();
+    const session = await syncSupabaseSession();
     if (session) {
         return session;
     }

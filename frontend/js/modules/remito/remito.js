@@ -1,5 +1,7 @@
 import { COMPONENT_STAGES } from '../mantenimiento/templates.js';
-import { crearRemito } from '../../api.js';
+import { crearRemito, guardarPdfRemito } from '../../api.js';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const MAX_REMITO_PHOTOS = 4;
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -969,6 +971,165 @@ function createRemitoPrintHtml(data) {
 </html>`;
 }
 
+/**
+ * Genera un PDF blob a partir del HTML del remito usando html2canvas + jsPDF
+ * Este PDF es para subir a Storage, NO para imprimir directamente.
+ * @param {string} html - HTML del remito
+ * @returns {Promise<Blob>} Blob del PDF generado
+ */
+async function generatePdfBlob(html) {
+    // Crear un iframe oculto para renderizar el HTML
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '-9999px';
+    iframe.style.width = '794px'; // A4 width at 96 DPI
+    iframe.style.height = '1123px'; // A4 height at 96 DPI
+    iframe.style.border = 'none';
+    iframe.style.visibility = 'hidden';
+    // Sandbox para evitar ejecución de scripts
+    iframe.sandbox = 'allow-same-origin';
+    document.body.appendChild(iframe);
+
+    // Limpiar el HTML: remover todos los scripts y eventos de print
+    let cleanHtml = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '') // Remover scripts
+        .replace(/onload\s*=\s*["'][^"']*["']/gi, '') // Remover onload
+        .replace(/window\.print\s*\(\s*\)/gi, '') // Remover llamadas a print
+        .replace(/window\.addEventListener\s*\(\s*['"]afterprint['"]/gi, '// disabled: addEventListener("afterprint"')
+        .replace(/window\.addEventListener\s*\(\s*['"]load['"]/gi, '// disabled: addEventListener("load"');
+
+    // Escribir el HTML en el iframe
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    
+    // Bloquear window.print en el iframe antes de escribir
+    try {
+        iframe.contentWindow.print = () => {};
+        iframe.contentWindow.alert = () => {};
+        iframe.contentWindow.confirm = () => true;
+    } catch (e) {
+        // Sandbox puede bloquear esto, está ok
+    }
+    
+    iframeDoc.open();
+    iframeDoc.write(cleanHtml);
+    iframeDoc.close();
+
+    // Esperar a que las imágenes se carguen
+    await new Promise(resolve => {
+        const images = iframeDoc.querySelectorAll('img');
+        if (images.length === 0) {
+            setTimeout(resolve, 100);
+            return;
+        }
+
+        let loadedCount = 0;
+        const checkComplete = () => {
+            loadedCount++;
+            if (loadedCount >= images.length) {
+                setTimeout(resolve, 100);
+            }
+        };
+
+        images.forEach(img => {
+            if (img.complete) {
+                checkComplete();
+            } else {
+                img.onload = checkComplete;
+                img.onerror = checkComplete;
+            }
+        });
+
+        // Timeout de seguridad
+        setTimeout(resolve, 5000);
+    });
+
+    // Usar html2canvas para capturar el contenido
+    const documentElement = iframeDoc.querySelector('.document');
+    if (!documentElement) {
+        document.body.removeChild(iframe);
+        throw new Error('No se encontró el elemento .document en el HTML');
+    }
+
+    const canvas = await html2canvas(documentElement, {
+        scale: 2, // Mayor resolución
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+    });
+
+    // Crear PDF con jsPDF
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+
+    // Calcular el ratio para que quepa en la página
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 0;
+
+    // Si el contenido es más alto que una página, dividir en múltiples páginas
+    const scaledHeight = imgHeight * ratio;
+    if (scaledHeight > pdfHeight) {
+        // Múltiples páginas
+        let remainingHeight = imgHeight;
+        let position = 0;
+        const pageImgHeight = pdfHeight / ratio;
+
+        while (remainingHeight > 0) {
+            // Crear canvas parcial para esta página
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = Math.min(pageImgHeight, remainingHeight);
+            
+            const ctx = pageCanvas.getContext('2d');
+            ctx.drawImage(
+                canvas,
+                0, position,
+                canvas.width, pageCanvas.height,
+                0, 0,
+                pageCanvas.width, pageCanvas.height
+            );
+
+            const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+            
+            if (position > 0) {
+                pdf.addPage();
+            }
+            
+            pdf.addImage(
+                pageImgData,
+                'JPEG',
+                imgX,
+                0,
+                imgWidth * ratio,
+                pageCanvas.height * ratio
+            );
+
+            position += pageImgHeight;
+            remainingHeight -= pageImgHeight;
+        }
+    } else {
+        // Una sola página
+        pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    }
+
+    // Limpiar
+    document.body.removeChild(iframe);
+
+    // Retornar el blob
+    return pdf.output('blob');
+}
+
 function openRemitoPrintPreview(report, options = {}) {
     if (typeof window === 'undefined') {
         return false;
@@ -1865,6 +2026,7 @@ export function createRemitoModule({ showView, navigateToDashboard } = {}) {
                 requestBody.fotos = fotosPayload;
             }
 
+            // Crear el remito primero para obtener el número
             const payload = await crearRemito(requestBody);
 
             if (!payload || typeof payload !== 'object') {
@@ -1874,6 +2036,8 @@ export function createRemitoModule({ showView, navigateToDashboard } = {}) {
             const remitoData = payload?.data || {};
             const emailStatus = remitoData?.emailStatus;
             const numeroRemito = normalizeString(remitoData?.NumeroRemito);
+            const remitoId = remitoData?.id;
+            
             if (numeroRemito) {
                 lastSavedReport.NumeroRemito = numeroRemito;
                 setReadonlyInputValue('remito-numero', numeroRemito);
@@ -1884,6 +2048,39 @@ export function createRemitoModule({ showView, navigateToDashboard } = {}) {
 
             const printableReport = lastPrintableSnapshot?.report || lastSavedReport;
             const printablePhotoSlots = lastPrintableSnapshot?.photoSlots || clonePhotoSlots(photoSlots);
+            
+            // Generar el HTML del PDF con todos los datos (incluyendo fotos)
+            const printableData = buildPrintableRemitoData(printableReport, {
+                observaciones: printableReport?.observaciones,
+                repuestos: printableReport?.repuestos,
+                photoSlots: printablePhotoSlots,
+            });
+            
+            if (printableData && remitoId) {
+                // Actualizar el número de remito en los datos
+                printableData.numero = numeroRemito || printableData.numero;
+                
+                // Generar el HTML
+                const pdfHtml = createRemitoPrintHtml(printableData);
+                
+                // Generar PDF blob y guardarlo en Storage (en background)
+                if (pdfHtml) {
+                    generatePdfBlob(pdfHtml)
+                        .then(pdfBlob => {
+                            // Guardar el PDF en Storage
+                            return guardarPdfRemito(remitoId, pdfBlob, numeroRemito);
+                        })
+                        .then(pdfPath => {
+                            if (pdfPath) {
+                                console.log('PDF guardado exitosamente:', pdfPath);
+                            }
+                        })
+                        .catch(err => {
+                            console.warn('No se pudo guardar el PDF del remito:', err);
+                        });
+                }
+            }
+            
             const didOpenPrintPreview = openRemitoPrintPreview(printableReport, {
                 observaciones: printableReport?.observaciones,
                 repuestos: printableReport?.repuestos,

@@ -1492,9 +1492,13 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        const env = import.meta?.env || {};
         window.__APP_CONFIG__ = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbxNjVlAhbYIxYz-wz5oQwYsUleKajXiBLWy7WOfN4dBVp9ksSUoUYnVzxtDbpHn2zqFOA/exec'
+            ...(window.__APP_CONFIG__ || {}),
+            API_URL: window.__APP_CONFIG__?.API_URL || env.VITE_API_URL,
+            VITE_SUPABASE_URL: env.VITE_SUPABASE_URL,
+            VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY,
         };
     </script>
     <script type="module" src="./js/animations.js"></script>

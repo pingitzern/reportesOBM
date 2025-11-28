@@ -9,6 +9,7 @@ export default defineConfig({
     root: 'frontend',
     base: './',
     publicDir: 'public',
+    envDir: '.',
     build: {
         outDir: '../dist',
         emptyOutDir: true,

@@ -25,6 +25,7 @@ const {
     eliminarRemito,
     obtenerVersionServidor,
     enviarFeedbackTicket,
+    obtenerUrlPdfRemito,
 } = api;
 
 initializeTheme();
@@ -76,6 +77,7 @@ const remitosGestionModule = createRemitosGestionModule({
     actualizarRemito,
     eliminarRemito,
     obtenerClientes,
+    obtenerUrlPdfRemito,
 });
 
 const softenerModule = createSoftenerModule({
@@ -389,7 +391,7 @@ function initializeNavigation() {
 
 async function initializeApp() {
     showAppVersion();
-    void showScriptVersion();
+    // showScriptVersion(); // Disabled while legacy API is offline
     initializeNavigation();
     initializeHelpToggle();
     appModules.feedback.initialize();
@@ -406,7 +408,7 @@ async function initializeApp() {
         await appModules.maintenance.initialize();
         appModules.softener.initialize();
         
-        await showDashboardTab();
+        // await showDashboardTab(); // Skip dashboard load until Supabase replaces Apps Script
     } catch (error) {
         console.error('Error inicializando la aplicación:', error);
         alert('No se pudo inicializar la aplicación. Revisa la consola para más detalles.');

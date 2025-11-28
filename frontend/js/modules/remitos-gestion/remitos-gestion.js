@@ -475,6 +475,17 @@ function normalizeRemitoForDisplay(remito) {
         email: sanitizeString(emailValue),
         cuit: sanitizeString(cuitValue),
         reporteId: sanitizeString(reporteIdValue),
+        // Path del PDF guardado en Storage
+        pdf_path: sanitizeString(remito.pdf_path) || '',
+        // Datos del equipo
+        equipo_descripcion: sanitizeString(remito.equipo_descripcion) || '',
+        equipo_modelo: sanitizeString(remito.equipo_modelo) || '',
+        equipo_serie: sanitizeString(remito.equipo_serie) || '',
+        equipo_interno: sanitizeString(remito.equipo_interno) || '',
+        equipo_ubicacion: sanitizeString(remito.equipo_ubicacion) || '',
+        // Repuestos
+        repuestos: remito.repuestos || [],
+        // Fotos
         Foto1Id: fotoDriveIds[0] || '',
         Foto2Id: fotoDriveIds[1] || '',
         Foto3Id: fotoDriveIds[2] || '',
@@ -1066,6 +1077,9 @@ const defaultDependencies = {
     obtenerClientes: async () => {
         throw new Error('La función obtenerClientes no fue provista.');
     },
+    obtenerUrlPdfRemito: async () => {
+        return null; // Fallback: no hay URL, se regenerará el PDF
+    },
 };
 
 let dependencies = { ...defaultDependencies };
@@ -1326,6 +1340,9 @@ function renderManagementView() {
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${numeroReporte}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center justify-end gap-3">
+                                <button type="button" class="text-sm font-semibold text-emerald-600 hover:text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2" data-remito-pdf="${index}" title="Descargar PDF">
+                                    📄 PDF
+                                </button>
                                 <button type="button" class="text-sm font-semibold text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remito-detalle="${index}">
                                     Ver detalle
                                 </button>
@@ -1542,6 +1559,46 @@ async function handleDeleteRemito(index) {
         setFeedback('error', error?.message || 'No se pudo eliminar el remito.');
         renderManagementView();
     }
+}
+
+/**
+ * Descarga el PDF guardado del remito.
+ * Si no hay PDF guardado (remitos antiguos), muestra un mensaje informativo.
+ */
+async function handleDescargarPdfRemito(index) {
+    if (!Array.isArray(state.remitos) || index < 0 || index >= state.remitos.length) {
+        return;
+    }
+
+    const remito = state.remitos[index];
+    if (!remito) {
+        return;
+    }
+
+    // Solo intentar descargar si hay PDF guardado (Snapshot Inmutable)
+    if (remito.pdf_path) {
+        try {
+            const obtenerUrlPdfRemito = dependencies.obtenerUrlPdfRemito;
+            if (typeof obtenerUrlPdfRemito === 'function') {
+                const url = await obtenerUrlPdfRemito(remito.pdf_path);
+                if (url) {
+                    // Abrir el PDF guardado directamente
+                    window.open(url, '_blank');
+                    return;
+                }
+            }
+        } catch (error) {
+            console.warn('Error obteniendo URL del PDF guardado:', error);
+            setFeedback('error', 'No se pudo obtener el PDF. Intentá nuevamente.');
+            renderManagementView();
+            return;
+        }
+    }
+
+    // Si no hay PDF guardado, mostrar mensaje informativo
+    // Los remitos nuevos siempre tendrán PDF guardado
+    setFeedback('warning', `El remito ${remito.numeroRemito || ''} no tiene PDF guardado. Solo los remitos generados a partir de ahora tendrán PDF disponible.`);
+    renderManagementView();
 }
 
 async function handlePhotoFileSelection(index, file) {
@@ -1865,6 +1922,16 @@ function handleContainerClick(event) {
         const index = Number.parseInt(deleteButton.dataset.remitoDelete, 10);
         if (Number.isFinite(index)) {
             void handleDeleteRemito(index);
+        }
+        return;
+    }
+
+    const pdfButton = event.target.closest('[data-remito-pdf]');
+    if (pdfButton) {
+        event.preventDefault();
+        const index = Number.parseInt(pdfButton.dataset.remitoPdf, 10);
+        if (Number.isFinite(index)) {
+            handleDescargarPdfRemito(index);
         }
     }
 }

@@ -1,0 +1,3 @@
+Timestamp,Usuario/Mail,Categoría,Impacto,Mensaje,Contacto Info,Permitir Contacto,Origen URL,User Agent,Estado
+23/11/2025 1:08:26,pingitzernicolas@gmail.com,rendimiento,bajo,anda muy lento,mail,Sí,http://localhost:5173/,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",Nuevo
+23/11/2025 1:56:45,pingitzernicolas@gmail.com,rendimiento,alto,"hjgfdghjuytrtryuiytrryjkhgnm,",,No,http://localhost:5173/,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",Nuevo

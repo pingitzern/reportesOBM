@@ -103,6 +103,7 @@ let clienteSelectChangeHandler = null;
 let clientesLoaded = false;
 let clientesLoadingPromise = null;
 let clientAutocompleteInitialized = false;
+let lastSavedMaintenanceId = null;
 
 function getElement(id) {
     return typeof document !== 'undefined' ? document.getElementById(id) : null;
@@ -213,6 +214,23 @@ function setReportNumber(reportNumber) {
     if (display) {
         display.textContent = reportNumber || 'ABL-PENDIENTE';
     }
+}
+
+function getClientSelection() {
+    const select = getElement(CLIENT_SELECT_ID);
+    if (!(select instanceof HTMLSelectElement)) {
+        return { id: '', name: '' };
+    }
+
+    const id = (select.value || '').trim();
+    const name = (select.selectedOptions && select.selectedOptions[0]
+        ? (select.selectedOptions[0].textContent || '').trim()
+        : '').trim();
+
+    return {
+        id,
+        name: name || id,
+    };
 }
 
 function normalizeString(value) {
@@ -1294,7 +1312,8 @@ function autoFillSoftenerForm() {
 
 function collectFormData() {
     const reportNumber = generateSoftenerReportNumber();
-    
+    const { id: clientId, name: clientName } = getClientSelection();
+
     const metadata = {
         formulario: 'mantenimiento_ablandador',
         version: '3.1',
@@ -1303,7 +1322,7 @@ function collectFormData() {
     };
 
     const seccionA = buildSection([
-        ['nombre', getInputValue('softener-cliente-nombre')],
+        ['nombre', clientName],
         ['direccion', getInputValue('softener-cliente-direccion')],
         ['localidad', getInputValue('softener-cliente-localidad')],
         ['contacto', getInputValue('softener-cliente-contacto')],
@@ -1412,14 +1431,14 @@ function collectFormData() {
     const payload = {
         metadata,
         // Campos en nivel superior para compatibilidad con remito
-        cliente: seccionA.nombre,
+        cliente: clientName,
         direccion: seccionA.direccion,
         cliente_telefono: seccionA.telefono,
         cliente_email: seccionA.email,
         cliente_cuit: seccionA.cuit,
         numero_reporte: reportNumber,
         // Secciones estructuradas
-        seccion_A_cliente: seccionA,
+        seccion_A_cliente: { ...seccionA, id: clientId },
         seccion_B_equipo: seccionB,
         seccion_C_parametros: seccionC,
         seccion_D_checklist: seccionD,
@@ -1452,6 +1471,11 @@ function collectFormData() {
 
     if (Object.keys(seccionCabezal).length > 0) {
         payload.seccion_C_cabezal = seccionCabezal;
+    }
+
+    if (clientId) {
+        payload.client_id = clientId;
+        payload.clienteId = clientId;
     }
 
     return payload;
@@ -1556,6 +1580,7 @@ export function createSoftenerModule(deps = {}) {
 
         isReportSaved = false;
         lastSavedPayload = null;
+        lastSavedMaintenanceId = null;
     }
 
     function setButtonsToSavedState() {
@@ -1712,8 +1737,8 @@ export function createSoftenerModule(deps = {}) {
     }
 
     async function handlePdfClick(pdfButton) {
-        if (!lastSavedPayload) {
-            alert('⚠️ Primero debes guardar el mantenimiento antes de generar el PDF.');
+        if (!lastSavedMaintenanceId) {
+            alert('⚠️ Primero debés guardar el mantenimiento para poder generar el PDF.');
             return;
         }
 
@@ -1722,30 +1747,21 @@ export function createSoftenerModule(deps = {}) {
         pdfButton.textContent = 'Generando PDF...';
 
         try {
-            const result = await generarPdfAblandadorApi({ payload: lastSavedPayload });
-            
-            console.log('Respuesta PDF:', result);
-            
-            // Verificar si la respuesta es válida
-            const data = result?.data || result;
-            
-            if (data?.success || data?.pdfGenerated) {
-                const numeroReporte = data.numeroReporte || 'SIN-ID';
-                const driveInfo = data.drive;
-                
-                // Verificar si se guardó en Drive
-                if (driveInfo?.url && driveInfo?.fileId) {
-                    const message = `✅ PDF generado y guardado en Drive exitosamente!\n\nReporte N°: ${numeroReporte}\nArchivo: ${driveInfo.fileName || 'PDF'}\n\n¿Deseas abrir el PDF?`;
-                    if (confirm(message)) {
-                        window.open(driveInfo.url, '_blank');
-                    }
-                } else if (driveInfo?.saved === false) {
-                    alert(`✅ PDF generado correctamente.\n\nReporte N°: ${numeroReporte}\n\n⚠️ No se pudo guardar en Drive: ${driveInfo.message || 'Error desconocido'}`);
-                } else {
-                    alert(`✅ PDF generado correctamente.\n\nReporte N°: ${numeroReporte}`);
+            const data = await generarPdfAblandadorApi({
+                maintenanceId: lastSavedMaintenanceId,
+            });
+
+            const pdfUrl = data?.url || data?.signedUrl;
+            const storagePath = data?.path;
+            const messageBase = `✅ PDF generado correctamente.\n\nReporte N°: ${lastSavedPayload?.metadata?.numero_reporte || 'SIN-ID'}`;
+
+            if (pdfUrl) {
+                const shouldOpen = confirm(`${messageBase}\n\n¿Querés descargarlo ahora?`);
+                if (shouldOpen) {
+                    window.open(pdfUrl, '_blank', 'noopener');
                 }
             } else {
-                throw new Error(data?.message || 'Respuesta inesperada del servidor');
+                alert(storagePath ? `${messageBase}\n\nRuta: ${storagePath}` : messageBase);
             }
         } catch (error) {
             console.error('Error al generar PDF de ablandador:', error);
@@ -1776,7 +1792,12 @@ export function createSoftenerModule(deps = {}) {
                 throw new Error('Servicio de mantenimiento de ablandador no disponible.');
             }
 
-            await guardarMantenimientoFn({ payload });
+            const result = await guardarMantenimientoFn({ payload });
+            const maintenanceId = result?.maintenanceId || result?.id || result?.data?.id || null;
+            if (maintenanceId) {
+                payload.maintenanceId = maintenanceId;
+                lastSavedMaintenanceId = maintenanceId;
+            }
             
             // Actualizar el número de reporte en pantalla
             const reportNumber = payload.metadata?.numero_reporte || 'ABL-PENDIENTE';
