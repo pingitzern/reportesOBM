@@ -58,7 +58,11 @@ const PROTECCION_ENTRADA_ID = 'softener-equipo-proteccion-entrada';
 const MANOMETRO_INFO_BTN_ID = 'softener-manometro-info-btn';
 const MANOMETRO_INFO_POPUP_ID = 'softener-manometro-info-popup';
 const MANOMETRO_SELECT_ID = 'softener-equipo-manometros';
-const CLIENT_SELECT_ID = 'softener-cliente-nombre';
+const CLIENT_SELECT_ID = 'softener-cliente-nombre'; // Hidden input now
+const CLIENT_SEARCH_ID = 'softener-cliente-search';
+const CLIENT_DROPDOWN_ID = 'softener-cliente-dropdown';
+const CLIENT_CLEAR_BTN_ID = 'softener-cliente-clear-btn';
+const CLIENT_CONTAINER_ID = 'softener-cliente-autocomplete-container';
 const CLIENT_OPTION_ATTRIBUTE = 'data-softener-client-option';
 const CLIENT_KEY_ATTRIBUTE = 'data-softener-client-key';
 const CLIENT_DETAIL_FIELD_IDS = Object.freeze([
@@ -104,6 +108,10 @@ let clientesLoaded = false;
 let clientesLoadingPromise = null;
 let clientAutocompleteInitialized = false;
 let lastSavedMaintenanceId = null;
+
+// Autocomplete state
+let clientesListCache = [];
+let selectedClientIndex = -1;
 
 function getElement(id) {
     return typeof document !== 'undefined' ? document.getElementById(id) : null;
@@ -386,104 +394,303 @@ function updateClientDetailsFromSelect(selectElement) {
 }
 
 function resetClientSelection() {
-    const select = getElement(CLIENT_SELECT_ID);
-    if (!(select instanceof HTMLSelectElement)) {
-        clearClientDetails();
-        return;
+    // Limpiar el input de búsqueda del autocomplete
+    const searchInput = getElement(CLIENT_SEARCH_ID);
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.classList.remove('has-selection');
     }
 
-    const placeholderOption = select.querySelector('option[value=""]');
-    if (placeholderOption) {
-        placeholderOption.selected = true;
-        select.value = placeholderOption.value;
-    } else if (select.options.length > 0) {
-        select.selectedIndex = 0;
-    } else {
-        select.value = '';
+    // Limpiar el input hidden con el ID del cliente
+    const hiddenInput = getElement(CLIENT_SELECT_ID);
+    if (hiddenInput) {
+        hiddenInput.value = '';
     }
+    
+    // Ocultar botón de limpiar
+    const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
+    if (clearBtn) {
+        clearBtn.classList.add('hidden');
+    }
+
+    // Ocultar el dropdown si está visible
+    hideDropdown();
 
     clearClientDetails();
 }
 
-function populateClientSelect(clientes = []) {
-    const select = getElement(CLIENT_SELECT_ID);
-    if (!(select instanceof HTMLSelectElement)) {
+// ===== Autocomplete Functions =====
+function normalizeForSearch(text) {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove accents
+        .trim();
+}
+
+function highlightMatch(text, query) {
+    if (!query || !text) return text;
+    const normalizedText = normalizeForSearch(text);
+    const normalizedQuery = normalizeForSearch(query);
+    const index = normalizedText.indexOf(normalizedQuery);
+    if (index === -1) return text;
+    
+    const before = text.slice(0, index);
+    const match = text.slice(index, index + query.length);
+    const after = text.slice(index + query.length);
+    return `${before}<mark>${match}</mark>${after}`;
+}
+
+function filterClientes(query) {
+    if (!query || query.length < 1) {
+        return clientesListCache.slice(0, 10);
+    }
+    
+    const normalizedQuery = normalizeForSearch(query);
+    
+    return clientesListCache
+        .filter(cliente => {
+            const name = normalizeForSearch(extractClientName(cliente));
+            const direccion = normalizeForSearch(cliente.direccion || '');
+            const cuit = normalizeForSearch(cliente.cuit || '');
+            
+            return name.includes(normalizedQuery) || 
+                   direccion.includes(normalizedQuery) || 
+                   cuit.includes(normalizedQuery);
+        })
+        .slice(0, 15);
+}
+
+function renderDropdown(clientes, query) {
+    const dropdown = getElement(CLIENT_DROPDOWN_ID);
+    if (!dropdown) return;
+    
+    if (clientes.length === 0) {
+        dropdown.innerHTML = `
+            <div class="cliente-dropdown-empty">
+                No se encontraron clientes con "${query}"
+            </div>
+        `;
+        dropdown.classList.remove('hidden');
         return;
     }
+    
+    dropdown.innerHTML = clientes.map((cliente, index) => {
+        const name = extractClientName(cliente);
+        const direccion = cliente.direccion || '';
+        const highlightedName = highlightMatch(name, query);
+        const highlightedDireccion = highlightMatch(direccion, query);
+        const clientKey = `softener-cliente-${clientesListCache.indexOf(cliente)}`;
+        
+        return `
+            <div class="cliente-dropdown-item ${index === selectedClientIndex ? 'selected' : ''}" 
+                 data-cliente-key="${clientKey}"
+                 data-cliente-index="${index}"
+                 role="option"
+                 tabindex="-1">
+                <div class="cliente-dropdown-item-name">${highlightedName}</div>
+                ${direccion ? `<div class="cliente-dropdown-item-detail">${highlightedDireccion}</div>` : ''}
+            </div>
+        `;
+    }).join('');
+    
+    dropdown.classList.remove('hidden');
+}
 
-    const clientesArray = Array.isArray(clientes) ? clientes : [];
-    const previousValue = select.value;
-    const previousOption = select.selectedOptions && select.selectedOptions[0];
-    const previousKey = previousOption ? previousOption.getAttribute(CLIENT_KEY_ATTRIBUTE) : null;
-    const placeholderOption = select.querySelector('option[value=""]');
+function hideDropdown() {
+    const dropdown = getElement(CLIENT_DROPDOWN_ID);
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+    }
+    selectedClientIndex = -1;
+}
 
-    select.querySelectorAll(`option[${CLIENT_OPTION_ATTRIBUTE}="true"]`).forEach(option => option.remove());
-    clienteDataMap.clear();
+function selectClient(clientKey) {
+    const index = parseInt(clientKey.replace('softener-cliente-', ''), 10);
+    const cliente = clientesListCache[index];
+    if (!cliente) return;
+    
+    const searchInput = getElement(CLIENT_SEARCH_ID);
+    const hiddenInput = getElement(CLIENT_SELECT_ID);
+    const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
+    
+    const clientId = extractClientId(cliente) || extractClientName(cliente);
+    const clientName = extractClientName(cliente);
+    
+    if (hiddenInput) {
+        hiddenInput.value = clientId;
+    }
+    
+    if (searchInput) {
+        searchInput.value = clientName;
+        searchInput.classList.add('has-selection');
+    }
+    
+    if (clearBtn) {
+        clearBtn.classList.remove('hidden');
+    }
+    
+    // Store client details and apply them
+    clienteDataMap.set(clientKey, createClientDetails(cliente));
+    applyClientDetails(createClientDetails(cliente));
+    
+    hideDropdown();
+}
 
-    const fragment = document.createDocumentFragment();
+function clearClientSelection() {
+    const searchInput = getElement(CLIENT_SEARCH_ID);
+    const hiddenInput = getElement(CLIENT_SELECT_ID);
+    const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
+    
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.classList.remove('has-selection');
+        searchInput.focus();
+    }
+    
+    if (hiddenInput) {
+        hiddenInput.value = '';
+    }
+    
+    if (clearBtn) {
+        clearBtn.classList.add('hidden');
+    }
+    
+    clearClientDetails();
+    hideDropdown();
+}
 
-    clientesArray.forEach((cliente, index) => {
-        if (!cliente || typeof cliente !== 'object') {
-            return;
+function initializeClientAutocomplete() {
+    if (clientAutocompleteInitialized) return;
+    
+    const searchInput = getElement(CLIENT_SEARCH_ID);
+    const dropdown = getElement(CLIENT_DROPDOWN_ID);
+    const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
+    
+    if (!searchInput || !dropdown) return;
+    
+    // Input event - filter as user types
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value;
+        searchInput.classList.remove('has-selection');
+        
+        // Clear hidden input when user modifies search
+        const hiddenInput = getElement(CLIENT_SELECT_ID);
+        if (hiddenInput) {
+            hiddenInput.value = '';
         }
-
-        const optionValue = extractClientId(cliente) || extractClientName(cliente);
-        if (!optionValue) {
-            return;
+        
+        if (clearBtn) {
+            clearBtn.classList.toggle('hidden', !query);
         }
-
-        const optionLabel = extractClientName(cliente) || optionValue;
-        const option = document.createElement('option');
-        option.value = optionValue;
-        option.textContent = optionLabel;
-        const key = `softener-cliente-${index}`;
-        option.setAttribute(CLIENT_OPTION_ATTRIBUTE, 'true');
-        option.setAttribute(CLIENT_KEY_ATTRIBUTE, key);
-        fragment.appendChild(option);
-
-        clienteDataMap.set(key, createClientDetails(cliente));
+        
+        const filtered = filterClientes(query);
+        selectedClientIndex = -1;
+        renderDropdown(filtered, query);
     });
-
-    select.appendChild(fragment);
-
-    if (clienteSelectChangeHandler) {
-        select.removeEventListener('change', clienteSelectChangeHandler);
-    }
-
-    clienteSelectChangeHandler = () => {
-        updateClientDetailsFromSelect(select);
-    };
-
-    select.addEventListener('change', clienteSelectChangeHandler);
-
-    let selectionRestored = false;
-
-    if (previousKey) {
-        const matchingOption = select.querySelector(`option[${CLIENT_KEY_ATTRIBUTE}="${previousKey}"]`);
-        if (matchingOption) {
-            matchingOption.selected = true;
-            select.value = matchingOption.value;
-            selectionRestored = true;
+    
+    // Focus event - show dropdown
+    searchInput.addEventListener('focus', () => {
+        const query = searchInput.value;
+        if (!searchInput.classList.contains('has-selection')) {
+            const filtered = filterClientes(query);
+            renderDropdown(filtered, query);
         }
-    }
-
-    if (!selectionRestored && previousValue) {
-        select.value = previousValue;
-        selectionRestored = select.value === previousValue && select.selectedIndex !== -1;
-    }
-
-    if (selectionRestored) {
-        updateClientDetailsFromSelect(select);
-    } else {
-        if (placeholderOption) {
-            placeholderOption.selected = true;
-            select.value = placeholderOption.value;
-        } else if (select.options.length > 0) {
-            select.selectedIndex = 0;
-        } else {
-            select.value = '';
+    });
+    
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', (e) => {
+        const items = dropdown.querySelectorAll('.cliente-dropdown-item');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedClientIndex = Math.min(selectedClientIndex + 1, items.length - 1);
+            updateDropdownSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedClientIndex = Math.max(selectedClientIndex - 1, 0);
+            updateDropdownSelection(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedClientIndex >= 0 && items[selectedClientIndex]) {
+                const clientKey = items[selectedClientIndex].dataset.clienteKey;
+                selectClient(clientKey);
+            }
+        } else if (e.key === 'Escape') {
+            hideDropdown();
         }
-        clearClientDetails();
+    });
+    
+    // Click on dropdown item
+    dropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.cliente-dropdown-item');
+        if (item) {
+            const clientKey = item.dataset.clienteKey;
+            selectClient(clientKey);
+        }
+    });
+    
+    // Clear button
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearClientSelection();
+        });
+    }
+    
+    // Click outside to close
+    document.addEventListener('click', (e) => {
+        const container = getElement(CLIENT_CONTAINER_ID);
+        if (container && !container.contains(e.target)) {
+            hideDropdown();
+        }
+    });
+    
+    clientAutocompleteInitialized = true;
+}
+
+function updateDropdownSelection(items) {
+    items.forEach((item, index) => {
+        item.classList.toggle('selected', index === selectedClientIndex);
+        if (index === selectedClientIndex) {
+            item.scrollIntoView({ block: 'nearest' });
+        }
+    });
+}
+
+function populateClientSelect(clientes = []) {
+    // Store clients for autocomplete
+    clientesListCache = Array.isArray(clientes) ? clientes : [];
+    
+    // Clear and rebuild the data map
+    clienteDataMap.clear();
+    clientesListCache.forEach((cliente, index) => {
+        if (!cliente || typeof cliente !== 'object') return;
+        const clientKey = `softener-cliente-${index}`;
+        clienteDataMap.set(clientKey, createClientDetails(cliente));
+    });
+    
+    // Initialize autocomplete if not already done
+    initializeClientAutocomplete();
+    
+    // If there was a previous selection, try to restore it
+    const hiddenInput = getElement(CLIENT_SELECT_ID);
+    const searchInput = getElement(CLIENT_SEARCH_ID);
+    
+    if (hiddenInput && hiddenInput.value && searchInput) {
+        // Find the client by ID
+        const existingClient = clientesListCache.find(c => {
+            const id = extractClientId(c) || extractClientName(c);
+            return id === hiddenInput.value;
+        });
+        
+        if (existingClient) {
+            searchInput.value = extractClientName(existingClient);
+            searchInput.classList.add('has-selection');
+            const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
+            if (clearBtn) clearBtn.classList.remove('hidden');
+        }
     }
 }
 
@@ -1118,27 +1325,21 @@ function autoFillSoftenerForm() {
     const idx = Math.floor(Math.random() * clientes.length);
     
     // Sección A - Cliente y Servicio
-    // El campo cliente es un select, agregar la opción si no existe
-    const clienteSelect = getElement('softener-cliente-nombre');
-    if (clienteSelect instanceof HTMLSelectElement) {
-        const clienteValue = clientes[idx];
-        let optionExists = false;
-        
-        for (let i = 0; i < clienteSelect.options.length; i++) {
-            if (clienteSelect.options[i].value === clienteValue) {
-                optionExists = true;
-                break;
-            }
-        }
-        
-        if (!optionExists) {
-            const option = document.createElement('option');
-            option.value = clienteValue;
-            option.textContent = clienteValue;
-            clienteSelect.appendChild(option);
-        }
-        
-        setSelectValue('softener-cliente-nombre', clienteValue);
+    // El campo cliente ahora es un autocomplete
+    const clienteValue = clientes[idx];
+    const searchInput = getElement(CLIENT_SEARCH_ID);
+    const hiddenInput = getElement(CLIENT_SELECT_ID);
+    const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
+    
+    if (searchInput) {
+        searchInput.value = clienteValue;
+        searchInput.classList.add('has-selection');
+    }
+    if (hiddenInput) {
+        hiddenInput.value = clienteValue;
+    }
+    if (clearBtn) {
+        clearBtn.classList.remove('hidden');
     }
     
     setInputValue('softener-cliente-direccion', direcciones[idx]);
@@ -1691,18 +1892,10 @@ export function createSoftenerModule(deps = {}) {
         }
     }
 
-    function handleResetOrNewReport() {
+    function performFormReset() {
         const form = getElement(FORM_ID);
         if (!(form instanceof HTMLFormElement)) {
             return;
-        }
-
-        if (isReportSaved) {
-            // Si el reporte está guardado, preguntar si quiere crear uno nuevo
-            const confirmNew = confirm('¿Querés crear un nuevo reporte?\n\nSe limpiará el formulario actual.');
-            if (!confirmNew) {
-                return;
-            }
         }
 
         // Limpiar formulario
@@ -1720,6 +1913,28 @@ export function createSoftenerModule(deps = {}) {
             // Volver al estado inicial
             setButtonsToInitialState();
         }, 0);
+    }
+
+    function handleResetOrNewReport() {
+        const form = getElement(FORM_ID);
+        if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+
+        if (isReportSaved) {
+            // Si el reporte está guardado, preguntar si quiere crear uno nuevo
+            const confirmNew = confirm('¿Querés crear un nuevo reporte?\n\nSe limpiará el formulario actual.');
+            if (!confirmNew) {
+                return;
+            }
+        }
+
+        performFormReset();
+    }
+
+    // Reset silencioso para usar al cambiar de tab
+    function silentReset() {
+        performFormReset();
     }
 
     function handleRemitoClick() {
@@ -1876,6 +2091,8 @@ export function createSoftenerModule(deps = {}) {
     return {
         initialize,
         show,
+        reset: handleResetOrNewReport,
+        silentReset,
     };
 }
 

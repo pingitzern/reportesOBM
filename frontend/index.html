@@ -138,10 +138,27 @@
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                     <div class="input-group flex flex-col gap-1">
-                                        <label for="cliente" class="font-semibold text-gray-700">Cliente:</label>
-                                        <select id="cliente" name="cliente" class="w-full border border-gray-300 rounded px-3 py-2">
-                                            <option value="" disabled selected>Selecciona un cliente</option>
-                                        </select>
+                                        <label for="cliente-search" class="font-semibold text-gray-700">Cliente:</label>
+                                        <div class="relative" id="cliente-autocomplete-container">
+                                            <input type="text" 
+                                                   id="cliente-search" 
+                                                   name="cliente_search" 
+                                                   placeholder="Escribí para buscar cliente..." 
+                                                   autocomplete="off"
+                                                   class="w-full border border-gray-300 rounded px-3 py-2 pr-10 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+                                            <input type="hidden" id="cliente" name="cliente" value="">
+                                            <button type="button" 
+                                                    id="cliente-clear-btn" 
+                                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden"
+                                                    title="Limpiar selección">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            </button>
+                                            <div id="cliente-dropdown" 
+                                                 class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="input-group flex flex-col gap-1">
                                         <label for="direccion" class="font-semibold text-gray-700">Dirección:</label>
@@ -440,10 +457,27 @@
                         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Completá los datos del cliente y del servicio programado.</p>
                         <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-cliente-nombre">Cliente</label>
-                                <select id="softener-cliente-nombre" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                    <option value="">Seleccionar un cliente</option>
-                                </select>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-cliente-search">Cliente</label>
+                                <div class="relative mt-1" id="softener-cliente-autocomplete-container">
+                                    <input type="text" 
+                                           id="softener-cliente-search" 
+                                           name="softener_cliente_search" 
+                                           placeholder="Escribí para buscar cliente..." 
+                                           autocomplete="off"
+                                           class="w-full rounded-md border border-gray-300 bg-white p-2 pr-10 text-gray-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-emerald-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <input type="hidden" id="softener-cliente-nombre" name="softener_cliente_nombre" value="">
+                                    <button type="button" 
+                                            id="softener-cliente-clear-btn" 
+                                            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden"
+                                            title="Limpiar selección">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                    <div id="softener-cliente-dropdown" 
+                                         class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden dark:bg-gray-800 dark:border-gray-600">
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="softener-cliente-direccion">Dirección</label>

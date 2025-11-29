@@ -190,31 +190,8 @@ export function createMaintenanceModule(api, callbacks = {}) {
             setButtonsToSavedState();
             notifyReportSaved(datos);
 
-            alert('✅ Mantenimiento guardado correctamente en el sistema');
-
-            // Después de guardar, intentar imprimir el remito automáticamente
-            // y luego resetear el formulario. Esto reproduce el comportamiento
-            // esperado por los tests (se usan timers falsos en las pruebas).
-            try {
-                setTimeout(() => {
-                    try {
-                        if (typeof window !== 'undefined' && typeof window.print === 'function') {
-                            window.print();
-                        }
-                    } catch (err) {
-                        // Ignorar errores de impresión en entornos de test o sin navegador
-                    }
-
-                    // Resetear el formulario después del intento de impresión
-                    try {
-                        resetForm();
-                    } catch (err) {
-                        // ignore
-                    }
-                }, 150);
-            } catch (err) {
-                // ignore
-            }
+            // Mostrar mensaje de éxito - el usuario decide si generar remito o nuevo reporte
+            alert('✅ Mantenimiento guardado correctamente.\n\nAhora podés:\n• Generar Remito (botón en la sección de remito)\n• Generar PDF\n• Crear nuevo reporte (botón Limpiar)');
         } catch (error) {
             console.error('Error al guardar mantenimiento:', error);
             const message = error?.message || 'Error desconocido al guardar los datos.';

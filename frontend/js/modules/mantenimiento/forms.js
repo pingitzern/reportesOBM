@@ -467,23 +467,27 @@ function updateClientDetailsFromSelect(selectElement) {
 }
 
 function resetClientSelection() {
-	const select = getElement('cliente');
-	if (!select) {
-		clearClientDetails();
-		return;
+	// Limpiar el input de búsqueda del autocomplete
+	const searchInput = getElement('cliente-search');
+	if (searchInput) {
+		searchInput.value = '';
+		searchInput.classList.remove('has-selection');
 	}
 
-	if (select.options.length > 0) {
-		const placeholderOption = select.querySelector('option[value=""]');
-		if (placeholderOption) {
-			placeholderOption.selected = true;
-			select.value = placeholderOption.value;
-		} else {
-			select.selectedIndex = 0;
-		}
-	} else {
-		select.value = '';
+	// Limpiar el input hidden con el ID del cliente
+	const hiddenInput = getElement('cliente');
+	if (hiddenInput) {
+		hiddenInput.value = '';
 	}
+
+	// Ocultar el botón de clear
+	const clearBtn = getElement('cliente-clear-btn');
+	if (clearBtn) {
+		clearBtn.classList.add('hidden');
+	}
+
+	// Ocultar el dropdown si está visible
+	hideDropdown();
 
 	clearClientDetails();
 }
@@ -991,87 +995,282 @@ export function autoFillForm() {
 	configureSanitizacionRadios();
 }
 
-export function configureClientSelect(clientes = []) {
-	const select = getElement('cliente');
-	if (!select) {
+// ===== Cliente Autocomplete =====
+let clientesListCache = [];
+let autocompleteInitialized = false;
+let selectedClientIndex = -1;
+
+function normalizeForSearch(text) {
+	if (!text) return '';
+	return text
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '') // Remove accents
+		.trim();
+}
+
+function highlightMatch(text, query) {
+	if (!query || !text) return text;
+	const normalizedText = normalizeForSearch(text);
+	const normalizedQuery = normalizeForSearch(query);
+	const index = normalizedText.indexOf(normalizedQuery);
+	if (index === -1) return text;
+	
+	const before = text.slice(0, index);
+	const match = text.slice(index, index + query.length);
+	const after = text.slice(index + query.length);
+	return `${before}<mark>${match}</mark>${after}`;
+}
+
+function filterClientes(query) {
+	if (!query || query.length < 1) {
+		return clientesListCache.slice(0, 10); // Show first 10 when empty
+	}
+	
+	const normalizedQuery = normalizeForSearch(query);
+	
+	return clientesListCache
+		.filter(cliente => {
+			const name = normalizeForSearch(extractClientName(cliente));
+			const direccion = normalizeForSearch(cliente.direccion || '');
+			const cuit = normalizeForSearch(cliente.cuit || '');
+			
+			return name.includes(normalizedQuery) || 
+			       direccion.includes(normalizedQuery) || 
+			       cuit.includes(normalizedQuery);
+		})
+		.slice(0, 15); // Limit results
+}
+
+function renderDropdown(clientes, query) {
+	const dropdown = getElement('cliente-dropdown');
+	if (!dropdown) return;
+	
+	if (clientes.length === 0) {
+		dropdown.innerHTML = `
+			<div class="cliente-dropdown-empty">
+				No se encontraron clientes con "${query}"
+			</div>
+		`;
+		dropdown.classList.remove('hidden');
 		return;
 	}
+	
+	dropdown.innerHTML = clientes.map((cliente, index) => {
+		const name = extractClientName(cliente);
+		const direccion = cliente.direccion || '';
+		const highlightedName = highlightMatch(name, query);
+		const highlightedDireccion = highlightMatch(direccion, query);
+		const clientKey = `cliente-${clientesListCache.indexOf(cliente)}`;
+		
+		return `
+			<div class="cliente-dropdown-item ${index === selectedClientIndex ? 'selected' : ''}" 
+			     data-cliente-key="${clientKey}"
+			     data-cliente-index="${index}"
+			     role="option"
+			     tabindex="-1">
+				<div class="cliente-dropdown-item-name">${highlightedName}</div>
+				${direccion ? `<div class="cliente-dropdown-item-detail">${highlightedDireccion}</div>` : ''}
+			</div>
+		`;
+	}).join('');
+	
+	dropdown.classList.remove('hidden');
+}
 
-	const clientesArray = Array.isArray(clientes) ? clientes : [];
-	const previousValue = select.value;
-	const previousSelectedOption = select.selectedOptions && select.selectedOptions[0];
-	const previousDataKey = previousSelectedOption
-		? previousSelectedOption.getAttribute('data-cliente-key')
-		: null;
-	const placeholderOption = select.querySelector('option[value=""]');
+function hideDropdown() {
+	const dropdown = getElement('cliente-dropdown');
+	if (dropdown) {
+		dropdown.classList.add('hidden');
+	}
+	selectedClientIndex = -1;
+}
 
-	select.querySelectorAll(`option[${CLIENT_OPTION_ATTRIBUTE}="true"]`).forEach(option => option.remove());
+function selectClient(clientKey) {
+	const index = parseInt(clientKey.replace('cliente-', ''), 10);
+	const cliente = clientesListCache[index];
+	if (!cliente) return;
+	
+	const searchInput = getElement('cliente-search');
+	const hiddenInput = getElement('cliente');
+	const clearBtn = getElement('cliente-clear-btn');
+	
+	const clientId = extractClientId(cliente) || extractClientName(cliente);
+	const clientName = extractClientName(cliente);
+	
+	if (hiddenInput) {
+		hiddenInput.value = clientId;
+	}
+	
+	if (searchInput) {
+		searchInput.value = clientName;
+		searchInput.classList.add('has-selection');
+	}
+	
+	if (clearBtn) {
+		clearBtn.classList.remove('hidden');
+	}
+	
+	// Store client details and apply them
+	clienteDataMap.set(clientKey, createClientDetails(cliente));
+	applyClientDetails(createClientDetails(cliente));
+	
+	hideDropdown();
+}
+
+function clearClientSelection() {
+	const searchInput = getElement('cliente-search');
+	const hiddenInput = getElement('cliente');
+	const clearBtn = getElement('cliente-clear-btn');
+	
+	if (searchInput) {
+		searchInput.value = '';
+		searchInput.classList.remove('has-selection');
+		searchInput.focus();
+	}
+	
+	if (hiddenInput) {
+		hiddenInput.value = '';
+	}
+	
+	if (clearBtn) {
+		clearBtn.classList.add('hidden');
+	}
+	
+	clearClientDetails();
+	hideDropdown();
+}
+
+function initializeClientAutocomplete() {
+	if (autocompleteInitialized) return;
+	
+	const searchInput = getElement('cliente-search');
+	const dropdown = getElement('cliente-dropdown');
+	const clearBtn = getElement('cliente-clear-btn');
+	
+	if (!searchInput || !dropdown) return;
+	
+	// Input event - filter as user types
+	searchInput.addEventListener('input', (e) => {
+		const query = e.target.value;
+		searchInput.classList.remove('has-selection');
+		
+		// Clear hidden input when user modifies search
+		const hiddenInput = getElement('cliente');
+		if (hiddenInput) {
+			hiddenInput.value = '';
+		}
+		
+		if (clearBtn) {
+			clearBtn.classList.toggle('hidden', !query);
+		}
+		
+		const filtered = filterClientes(query);
+		selectedClientIndex = -1;
+		renderDropdown(filtered, query);
+	});
+	
+	// Focus event - show dropdown
+	searchInput.addEventListener('focus', () => {
+		const query = searchInput.value;
+		if (!searchInput.classList.contains('has-selection')) {
+			const filtered = filterClientes(query);
+			renderDropdown(filtered, query);
+		}
+	});
+	
+	// Keyboard navigation
+	searchInput.addEventListener('keydown', (e) => {
+		const items = dropdown.querySelectorAll('.cliente-dropdown-item');
+		
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			selectedClientIndex = Math.min(selectedClientIndex + 1, items.length - 1);
+			updateDropdownSelection(items);
+		} else if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			selectedClientIndex = Math.max(selectedClientIndex - 1, 0);
+			updateDropdownSelection(items);
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			if (selectedClientIndex >= 0 && items[selectedClientIndex]) {
+				const clientKey = items[selectedClientIndex].dataset.clienteKey;
+				selectClient(clientKey);
+			}
+		} else if (e.key === 'Escape') {
+			hideDropdown();
+		}
+	});
+	
+	// Click on dropdown item
+	dropdown.addEventListener('click', (e) => {
+		const item = e.target.closest('.cliente-dropdown-item');
+		if (item) {
+			const clientKey = item.dataset.clienteKey;
+			selectClient(clientKey);
+		}
+	});
+	
+	// Clear button
+	if (clearBtn) {
+		clearBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			clearClientSelection();
+		});
+	}
+	
+	// Click outside to close
+	document.addEventListener('click', (e) => {
+		const container = getElement('cliente-autocomplete-container');
+		if (container && !container.contains(e.target)) {
+			hideDropdown();
+		}
+	});
+	
+	autocompleteInitialized = true;
+}
+
+function updateDropdownSelection(items) {
+	items.forEach((item, index) => {
+		item.classList.toggle('selected', index === selectedClientIndex);
+		if (index === selectedClientIndex) {
+			item.scrollIntoView({ block: 'nearest' });
+		}
+	});
+}
+
+export function configureClientSelect(clientes = []) {
+	// Store clients for autocomplete
+	clientesListCache = Array.isArray(clientes) ? clientes : [];
+	
+	// Clear and rebuild the data map
 	clienteDataMap.clear();
-
-	const fragment = document.createDocumentFragment();
-
-	clientesArray.forEach((cliente, index) => {
-		if (!cliente || typeof cliente !== 'object') {
-			return;
-		}
-
-		const optionValue = extractClientId(cliente) || extractClientName(cliente);
-		if (!optionValue) {
-			return;
-		}
-
-		const optionLabel = extractClientName(cliente) || optionValue;
-		const option = document.createElement('option');
-		option.value = optionValue;
-		option.textContent = optionLabel;
+	clientesListCache.forEach((cliente, index) => {
+		if (!cliente || typeof cliente !== 'object') return;
 		const clientKey = `cliente-${index}`;
-		option.setAttribute('data-cliente-key', clientKey);
-		option.setAttribute(CLIENT_OPTION_ATTRIBUTE, 'true');
-		fragment.appendChild(option);
-
 		clienteDataMap.set(clientKey, createClientDetails(cliente));
 	});
-
-	select.appendChild(fragment);
-
-	if (clienteSelectChangeHandler) {
-		select.removeEventListener('change', clienteSelectChangeHandler);
-	}
-
-	clienteSelectChangeHandler = () => {
-		updateClientDetailsFromSelect(select);
-	};
-
-	select.addEventListener('change', clienteSelectChangeHandler);
-
-	let selectionRestored = false;
-
-	if (previousDataKey) {
-		const matchingOption = select.querySelector(`option[data-cliente-key="${previousDataKey}"]`);
-		if (matchingOption) {
-			matchingOption.selected = true;
-			select.value = matchingOption.value;
-			selectionRestored = true;
+	
+	// Initialize autocomplete if not already done
+	initializeClientAutocomplete();
+	
+	// If there was a previous selection, try to restore it
+	const hiddenInput = getElement('cliente');
+	const searchInput = getElement('cliente-search');
+	
+	if (hiddenInput && hiddenInput.value && searchInput) {
+		// Find the client by ID
+		const existingClient = clientesListCache.find(c => {
+			const id = extractClientId(c) || extractClientName(c);
+			return id === hiddenInput.value;
+		});
+		
+		if (existingClient) {
+			searchInput.value = extractClientName(existingClient);
+			searchInput.classList.add('has-selection');
+			const clearBtn = getElement('cliente-clear-btn');
+			if (clearBtn) clearBtn.classList.remove('hidden');
 		}
-	}
-
-	if (!selectionRestored && previousValue) {
-		select.value = previousValue;
-		selectionRestored = select.value === previousValue && select.selectedIndex !== -1;
-	}
-
-	if (selectionRestored) {
-		updateClientDetailsFromSelect(select);
-	} else {
-		if (placeholderOption) {
-			placeholderOption.selected = true;
-			select.value = placeholderOption.value;
-		} else if (select.options.length > 0) {
-			select.selectedIndex = 0;
-		} else {
-			select.value = '';
-		}
-		clearClientDetails();
 	}
 }
 

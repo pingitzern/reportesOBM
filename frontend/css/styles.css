@@ -137,6 +137,61 @@
 }
 
 @layer components {
+    /* ===== Cliente Autocomplete ===== */
+    .cliente-dropdown-item {
+        @apply px-4 py-3 cursor-pointer transition-colors duration-150;
+        @apply hover:bg-blue-50 focus:bg-blue-50 focus:outline-none;
+        @apply border-b border-gray-100 last:border-b-0;
+    }
+    
+    .cliente-dropdown-item.selected {
+        @apply bg-blue-100;
+    }
+    
+    .cliente-dropdown-item-name {
+        @apply font-medium text-gray-800;
+    }
+    
+    .cliente-dropdown-item-detail {
+        @apply text-xs text-gray-500 mt-0.5;
+    }
+    
+    .cliente-dropdown-item mark {
+        @apply bg-yellow-200 text-gray-800 px-0.5 rounded;
+    }
+    
+    .cliente-dropdown-empty {
+        @apply px-4 py-3 text-gray-500 text-center italic;
+    }
+    
+    #cliente-search.has-selection,
+    #softener-cliente-search.has-selection {
+        @apply bg-green-50 border-green-300;
+    }
+    
+    .dark-theme .cliente-dropdown-item {
+        @apply hover:bg-gray-700 focus:bg-gray-700;
+        @apply border-gray-700;
+    }
+    
+    .dark-theme .cliente-dropdown-item-name {
+        @apply text-gray-100;
+    }
+    
+    .dark-theme .cliente-dropdown-item-detail {
+        @apply text-gray-400;
+    }
+    
+    .dark-theme #cliente-dropdown,
+    .dark-theme #softener-cliente-dropdown {
+        @apply bg-gray-800 border-gray-700;
+    }
+
+    .dark-theme #cliente-search.has-selection,
+    .dark-theme #softener-cliente-search.has-selection {
+        @apply bg-green-900/30 border-green-600;
+    }
+
     .softener-compact {
         @apply text-sm;
     }

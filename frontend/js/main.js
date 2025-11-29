@@ -271,11 +271,19 @@ function setActiveNavigation(tabName, customButtonId) {
 }
 
 function showMaintenanceTab() {
+    // Limpiar formulario de ablandador al cambiar a ósmosis
+    if (appModules.softener && typeof appModules.softener.silentReset === 'function') {
+        appModules.softener.silentReset();
+    }
     showView('tab-nuevo');
     setActiveNavigation('nuevo');
 }
 
 function showSoftenerTab() {
+    // Limpiar formulario de ósmosis al cambiar a ablandador
+    if (appModules.maintenance && typeof appModules.maintenance.handleResetClick === 'function') {
+        appModules.maintenance.handleResetClick();
+    }
     appModules.softener.show();
     setActiveNavigation('nuevo');
 }
