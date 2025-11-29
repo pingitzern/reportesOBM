@@ -1,6 +1,5 @@
 import {
     guardarMantenimientoAblandador as guardarMantenimientoAblandadorApi,
-    generarPdfAblandador as generarPdfAblandadorApi,
     obtenerClientes as obtenerClientesApi,
 } from '../../api.js';
 
@@ -9,7 +8,6 @@ const FORM_ID = 'softener-maintenance-form';
 const SAVE_BUTTON_ID = 'softener-save-button';
 const RESET_BUTTON_ID = 'softener-reset-button';
 const AUTOFILL_BUTTON_ID = 'softener-autofill-button';
-const PDF_BUTTON_ID = 'softener-pdf-button';
 const REMITO_BUTTON_ID = 'softener-generar-remito-btn';
 const REPORT_NUMBER_DISPLAY_ID = 'softener-report-number-display';
 const AUTONOMIA_RECOMENDADA_ID = 'softener-autonomia-recomendada';
@@ -1789,7 +1787,6 @@ export function createSoftenerModule(deps = {}) {
         const autofillButton = getElement(AUTOFILL_BUTTON_ID);
         const resetButton = getElement(RESET_BUTTON_ID);
         const saveButton = getElement(SAVE_BUTTON_ID);
-        const pdfButton = getElement(PDF_BUTTON_ID);
         const remitoButton = getElement(REMITO_BUTTON_ID);
 
         if (autofillButton instanceof HTMLButtonElement) {
@@ -1803,9 +1800,6 @@ export function createSoftenerModule(deps = {}) {
             saveButton.disabled = false;
             saveButton.textContent = 'Guardar Mantenimiento';
             saveButton.style.cursor = '';
-        }
-        if (pdfButton instanceof HTMLButtonElement) {
-            pdfButton.disabled = true;
         }
         if (remitoButton instanceof HTMLButtonElement) {
             remitoButton.disabled = true;
@@ -1821,7 +1815,6 @@ export function createSoftenerModule(deps = {}) {
         const autofillButton = getElement(AUTOFILL_BUTTON_ID);
         const resetButton = getElement(RESET_BUTTON_ID);
         const saveButton = getElement(SAVE_BUTTON_ID);
-        const pdfButton = getElement(PDF_BUTTON_ID);
         const remitoButton = getElement(REMITO_BUTTON_ID);
 
         if (autofillButton instanceof HTMLButtonElement) {
@@ -1835,9 +1828,6 @@ export function createSoftenerModule(deps = {}) {
             saveButton.disabled = true;
             saveButton.textContent = 'Guardar Mantenimiento';
             saveButton.style.cursor = 'not-allowed';
-        }
-        if (pdfButton instanceof HTMLButtonElement) {
-            pdfButton.disabled = false;
         }
         if (remitoButton instanceof HTMLButtonElement) {
             remitoButton.disabled = false;
@@ -1904,14 +1894,6 @@ export function createSoftenerModule(deps = {}) {
             autofillButton.addEventListener('click', event => {
                 event.preventDefault();
                 autoFillSoftenerForm();
-            });
-        }
-
-        const pdfButton = getElement(PDF_BUTTON_ID);
-        if (pdfButton instanceof HTMLButtonElement) {
-            pdfButton.addEventListener('click', async event => {
-                event.preventDefault();
-                await handlePdfClick(pdfButton);
             });
         }
 
@@ -1983,43 +1965,6 @@ export function createSoftenerModule(deps = {}) {
             remitoModule.handleGenerarRemitoClick();
         } else {
             alert('⚠️ El módulo de remito no está disponible.');
-        }
-    }
-
-    async function handlePdfClick(pdfButton) {
-        if (!lastSavedMaintenanceId) {
-            alert('⚠️ Primero debés guardar el mantenimiento para poder generar el PDF.');
-            return;
-        }
-
-        const originalText = pdfButton.textContent;
-        pdfButton.disabled = true;
-        pdfButton.textContent = 'Generando PDF...';
-
-        try {
-            const data = await generarPdfAblandadorApi({
-                maintenanceId: lastSavedMaintenanceId,
-            });
-
-            const pdfUrl = data?.url || data?.signedUrl;
-            const storagePath = data?.path;
-            const messageBase = `✅ PDF generado correctamente.\n\nReporte N°: ${lastSavedPayload?.metadata?.numero_reporte || 'SIN-ID'}`;
-
-            if (pdfUrl) {
-                const shouldOpen = confirm(`${messageBase}\n\n¿Querés descargarlo ahora?`);
-                if (shouldOpen) {
-                    window.open(pdfUrl, '_blank', 'noopener');
-                }
-            } else {
-                alert(storagePath ? `${messageBase}\n\nRuta: ${storagePath}` : messageBase);
-            }
-        } catch (error) {
-            console.error('Error al generar PDF de ablandador:', error);
-            const message = error?.message || 'No se pudo generar el PDF.';
-            alert(`❌ Error: ${message}`);
-        } finally {
-            pdfButton.disabled = false;
-            pdfButton.textContent = originalText;
         }
     }
 
