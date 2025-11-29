@@ -2087,27 +2087,24 @@ export function createRemitoModule({ showView, navigateToDashboard, onRemitoComp
                         });
                 }
             }
-            
-            const didOpenPrintPreview = openRemitoPrintPreview(printableReport, {
-                observaciones: printableReport?.observaciones,
-                repuestos: printableReport?.repuestos,
-                photoSlots: printablePhotoSlots,
-            });
 
-            const alertMessages = [];
-            if (didOpenPrintPreview) {
-                alertMessages.push('✅ Remito generado correctamente. Se abrirá la vista de impresión para descargar o imprimir el PDF.');
-            } else {
-                alertMessages.push('✅ Remito generado correctamente. No pudimos abrir la vista de impresión automáticamente. Revisá el bloqueador de ventanas emergentes y utilizá el botón "Imprimir remito" para reintentarlo.');
-            }
-
+            // PRIMERO mostramos el mensaje de éxito
             const emailMessage = buildEmailStatusAlertMessage(emailStatus);
-            if (emailMessage) {
-                alertMessages.push(emailMessage);
-            }
+            const shouldDownload = window.confirm?.(
+                `✅ Remito ${numeroRemito || ''} generado correctamente.${emailMessage ? '\n\n' + emailMessage : ''}\n\n¿Querés descargar/imprimir el PDF ahora?`
+            );
 
-            if (alertMessages.length > 0) {
-                window.alert?.(alertMessages.join('\n\n'));
+            // DESPUÉS de cerrar el confirm, abrimos la vista de impresión si el usuario acepta
+            if (shouldDownload) {
+                const didOpenPrintPreview = openRemitoPrintPreview(printableReport, {
+                    observaciones: printableReport?.observaciones,
+                    repuestos: printableReport?.repuestos,
+                    photoSlots: printablePhotoSlots,
+                });
+
+                if (!didOpenPrintPreview) {
+                    window.alert?.('No pudimos abrir la vista de impresión. Revisá el bloqueador de ventanas emergentes y utilizá el botón "Imprimir remito" para reintentarlo.');
+                }
             }
 
             // Volver al dashboard después de finalizar y guardar exitosamente
