@@ -91,16 +91,17 @@ El usuario solicitó revisar y mejorar el flujo de los formularios de Ósmosis y
 
 ---
 
-### 🔄 8. Overlay de formulario bloqueado (EN PROGRESO)
+### ✅ 8. Overlay de formulario bloqueado
 **Archivos modificados:**
 - `frontend/js/modules/mantenimiento/maintenance.js` - Funciones `showFormLockedOverlay()` y `hideFormLockedOverlay()`
-- `frontend/css/styles.css` - Estilos para `.form-locked-overlay`
+- `frontend/css/styles.css` - Estilos para `.form-card-overlay` y `.form-locked-floating-message`
+- `frontend/index.html` - Botoneras con `relative z-20` para quedar sobre el overlay
 
-**Estado actual:**
-- El overlay se muestra correctamente después de guardar
-- **Problema pendiente:** El overlay está cubriendo también los botones de acción, cuando debería dejar los botones libres
-
-**Objetivo:** Que el overlay cubra solo las secciones A, B, C, D del formulario pero deje accesibles los botones (Limpiar, Guardar, Generar Remito)
+**Resultado:**
+- Después de guardar, cada `.form-card` se cubre con un overlay gris semitransparente
+- Se muestra un mensaje flotante verde indicando que el reporte fue guardado
+- Los botones de acción (Limpiar, Guardar, Generar Remito) quedan accesibles por encima del overlay
+- Al limpiar el formulario, el overlay se remueve automáticamente
 
 ---
 
@@ -121,9 +122,9 @@ El usuario solicitó revisar y mejorar el flujo de los formularios de Ósmosis y
 
 ## Pendientes
 
-1. **Overlay de formulario bloqueado** - Ajustar para que no cubra los botones de acción
+1. ~~**Overlay de formulario bloqueado**~~ ✅ Resuelto
 2. **Testing completo** del flujo end-to-end
-3. **Commit y push** de los cambios una vez resuelto el overlay
+3. ~~**Commit y push**~~ ✅ Realizado
 
 ---
 
@@ -131,6 +132,5 @@ El usuario solicitó revisar y mejorar el flujo de los formularios de Ósmosis y
 
 ```
 dadc03b - feat: mejoras UX en formularios osmosis/ablandador
+[nuevo]  - fix: overlay no cubre botones de acción + estilos mejorados
 ```
-
-(Pendiente commit con fixes adicionales)
