@@ -272,18 +272,15 @@ function setReportNumber(reportNumber) {
 }
 
 function getClientSelection() {
-    const select = getElement(CLIENT_SELECT_ID);
-    if (!(select instanceof HTMLSelectElement)) {
-        return { id: '', name: '' };
-    }
-
-    const id = (select.value || '').trim();
-    const name = (select.selectedOptions && select.selectedOptions[0]
-        ? (select.selectedOptions[0].textContent || '').trim()
-        : '').trim();
+    // Ahora usamos autocomplete: hidden input para ID, search input para nombre
+    const hiddenInput = getElement(CLIENT_SELECT_ID);
+    const searchInput = getElement(CLIENT_SEARCH_ID);
+    
+    const id = (hiddenInput?.value || '').trim();
+    const name = (searchInput?.value || '').trim();
 
     return {
-        id,
+        id: id || name, // Si no hay ID, usar el nombre como fallback
         name: name || id,
     };
 }
@@ -2099,7 +2096,12 @@ export function createSoftenerModule(deps = {}) {
         setDefaultResinVolume();
         updateAutonomia();
         updatePrefiltroCambioVisibility();
-        initializeClientAutocomplete(obtenerClientesFn);
+        
+        // Cargar clientes y luego inicializar autocomplete
+        loadClientes(obtenerClientesFn).then(() => {
+            initializeClientAutocomplete();
+        });
+        
         attachAutonomiaListeners();
         attachCabezalListeners();
         attachPrefilterInfoListeners();
