@@ -95,7 +95,7 @@ const STORAGE_KEY = 'reportesOBM.user';
 | Overlay visual | ✅ Funciona | El `login-container` cubre toda la pantalla con `position: fixed` y `z-50` |
 | Protección de datos | ⚠️ Parcial | Los datos SÍ requieren token para API calls |
 | Token en requests | ✅ Implementado | `getCurrentToken()` usado en `api.js` para autorización |
-| Service Role Key expuesta | ❌ **CRÍTICO** | La key está hardcodeada en el frontend |
+| Service Role Key expuesta | ✅ **CORREGIDO** | Se cambió a anon key + .env |
 | DEV_MODE bypass | ⚠️ Existe | `DEV_MODE = false` (desactivado actualmente, OK) |
 | Expiración de token | ✅ Implementado | Verifica `expiresAt` antes de usar token |
 | Logout | ✅ Implementado | Limpia localStorage y llama a `supabase.auth.signOut()` |
@@ -145,40 +145,41 @@ isDevMode()            // → boolean
 
 ## 6. Problemas Críticos Identificados
 
-### 🚨 1. Service Role Key expuesta en el frontend
+### ✅ 1. Service Role Key expuesta en el frontend - **SOLUCIONADO**
 
 **Archivo:** `frontend/js/supabaseClient.js`
 
 ```javascript
-// PROBLEMA: Esta key tiene permisos de ADMINISTRADOR
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+// ✅ SOLUCIÓN IMPLEMENTADA (Noviembre 2025)
+// Ahora usa anon key via variables de entorno:
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ```
 
-**Riesgo:** 
-- Cualquier persona que inspeccione el código puede obtener esta key
-- Con la service_role key se puede bypassear Row Level Security (RLS)
-- Permite acceso completo a TODOS los datos de la base de datos
+**Estado anterior (corregido):**
+- ❌ Service role key estaba hardcodeada en el código
+- ❌ Cualquier persona podía obtener la key inspeccionando el código
 
-**Solución:**
-- Usar la **anon key** en el frontend (tiene permisos limitados por RLS)
-- Mover la service_role key al backend únicamente
+**Cambios realizados:**
+- ✅ Se reemplazó service_role key por anon key
+- ✅ Credenciales movidas a archivo `.env` (excluido de git)
+- ✅ Se usa `import.meta.env` para variables de entorno de Vite
 
-### ⚠️ 2. Credenciales hardcodeadas
+**⚠️ PENDIENTE:** Rotar la service_role key en Supabase Dashboard (la anterior fue expuesta en commits históricos)
 
-Las credenciales de Supabase están en texto plano en el código:
+### ✅ 2. Credenciales hardcodeadas - **SOLUCIONADO**
 
-```javascript
-const supabaseUrl = "https://nvoihnnwpzeofzexblyg.supabase.co"
-const supabaseKey = "eyJhbGci..."
+Las credenciales ahora están en archivo `.env`:
+
+```bash
+# .env (NO se sube a git)
+VITE_SUPABASE_URL=https://nvoihnnwpzeofzexblyg.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ... (anon key, NO service role)
 ```
 
-**Solución:**
-- Mover a variables de entorno (`.env`)
-- Usar `import.meta.env.VITE_SUPABASE_URL` etc.
+### ✅ 3. Código comentado obsoleto - **LIMPIADO**
 
-### ⚠️ 3. Código comentado obsoleto
-
-El archivo `supabaseClient.js` tiene código comentado que sí usa variables de entorno correctamente, pero está desactivado.
+El archivo `supabaseClient.js` fue simplificado y ahora usa las variables de entorno correctamente.
 
 ---
 
@@ -249,9 +250,10 @@ El archivo `supabaseClient.js` tiene código comentado que sí usa variables de 
 
 ## 9. Próximos Pasos
 
-- [ ] Reemplazar service_role key por anon key
-- [ ] Descomentar código que usa variables de entorno
-- [ ] Crear archivo `.env` con credenciales
+- [x] ~~Reemplazar service_role key por anon key~~ ✅ Completado
+- [x] ~~Descomentar código que usa variables de entorno~~ ✅ Completado
+- [x] ~~Crear archivo `.env` con credenciales~~ ✅ Completado
+- [ ] **Rotar service_role key en Supabase Dashboard** (la anterior fue expuesta)
 - [ ] Verificar RLS en Supabase
 - [ ] Implementar refresh token
 - [ ] Agregar opción "Recordarme"
