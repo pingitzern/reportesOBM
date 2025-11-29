@@ -1,2 +1,7 @@
 dist/
 node_modules/
+
+# Environment variables (secrets - NO subir al repo)
+.env
+.env.local
+.env.*.local
