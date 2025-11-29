@@ -739,18 +739,6 @@ async function loadClientes(obtenerClientesFn) {
     await clientesLoadingPromise;
 }
 
-function initializeClientAutocomplete(obtenerClientesFn) {
-    if (!clientAutocompleteInitialized) {
-        configureClientDetailFieldInteractions();
-        resetClientSelection();
-        clientAutocompleteInitialized = true;
-    }
-
-    if (typeof obtenerClientesFn === 'function') {
-        loadClientes(obtenerClientesFn);
-    }
-}
-
 function setDefaultServiceDate() {
     const dateInput = getElement('softener-fecha-servicio');
     if (dateInput instanceof HTMLInputElement && !dateInput.value) {

@@ -54,6 +54,55 @@ export function createMaintenanceModule(api, callbacks = {}) {
         }
 
         isReportSaved = false;
+        hideFormLockedOverlay();
+    }
+
+    function showFormLockedOverlay() {
+        // Agregar overlay a cada form-card individualmente
+        const form = getElement('maintenance-form');
+        if (!form) return;
+        
+        const formCards = form.querySelectorAll('.form-card');
+        formCards.forEach(card => {
+            // Verificar si ya tiene overlay
+            if (card.querySelector('.form-card-overlay')) return;
+            
+            card.style.position = 'relative';
+            const overlay = document.createElement('div');
+            overlay.className = 'form-card-overlay';
+            card.appendChild(overlay);
+        });
+        
+        // Mostrar mensaje flotante
+        let message = getElement('form-locked-message');
+        if (!message) {
+            message = document.createElement('div');
+            message.id = 'form-locked-message';
+            message.className = 'form-locked-floating-message';
+            message.innerHTML = `
+                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Reporte guardado - Continuá con el remito o limpiá para uno nuevo</span>
+            `;
+            form.insertBefore(message, form.firstChild);
+        }
+        message.classList.remove('hidden');
+    }
+
+    function hideFormLockedOverlay() {
+        // Remover overlays de cada form-card
+        const form = getElement('maintenance-form');
+        if (!form) return;
+        
+        const overlays = form.querySelectorAll('.form-card-overlay');
+        overlays.forEach(overlay => overlay.remove());
+        
+        // Ocultar mensaje
+        const message = getElement('form-locked-message');
+        if (message) {
+            message.classList.add('hidden');
+        }
     }
 
     function setButtonsToSavedState() {
@@ -68,8 +117,8 @@ export function createMaintenanceModule(api, callbacks = {}) {
         }
 
         if (resetBtn) {
-            resetBtn.disabled = true;
-            resetBtn.style.cursor = 'not-allowed';
+            resetBtn.disabled = false;
+            resetBtn.style.cursor = 'pointer';
         }
 
         if (autoFillBtn) {
@@ -78,6 +127,7 @@ export function createMaintenanceModule(api, callbacks = {}) {
         }
 
         isReportSaved = true;
+        showFormLockedOverlay();
     }
 
     function attachEvents() {

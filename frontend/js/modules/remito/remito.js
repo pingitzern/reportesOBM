@@ -206,6 +206,13 @@ function getElement(id) {
 }
 
 function getSelectedOptionText(selectId) {
+    // Primero intentar con el input de búsqueda del autocomplete
+    const searchInput = getElement(`${selectId}-search`);
+    if (searchInput instanceof HTMLInputElement && searchInput.value) {
+        return searchInput.value.trim();
+    }
+    
+    // Fallback al select tradicional
     const select = getElement(selectId);
     if (!(select instanceof HTMLSelectElement)) {
         return '';
@@ -1567,7 +1574,7 @@ function enableButton(buttonId) {
     }
 }
 
-export function createRemitoModule({ showView, navigateToDashboard } = {}) {
+export function createRemitoModule({ showView, navigateToDashboard, onRemitoComplete } = {}) {
     let lastSavedReport = null;
     let eventsInitialized = false;
     let photoSlots = createEmptyPhotoSlots();
@@ -2108,6 +2115,11 @@ export function createRemitoModule({ showView, navigateToDashboard } = {}) {
                 navigateToDashboard();
             } else if (typeof showView === 'function') {
                 showView('tab-dashboard');
+            }
+
+            // Notificar que el remito se completó para limpiar formularios
+            if (typeof onRemitoComplete === 'function') {
+                onRemitoComplete();
             }
         } catch (error) {
             console.error('Error al generar el remito:', error);

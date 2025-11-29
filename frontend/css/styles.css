@@ -168,6 +168,30 @@
     #softener-cliente-search.has-selection {
         @apply bg-green-50 border-green-300;
     }
+
+    /* Form locked overlay - se aplica a cada form-card */
+    .form-card-overlay {
+        @apply absolute inset-0 z-10 rounded-2xl;
+        background: rgba(243, 244, 246, 0.75);
+        backdrop-filter: blur(1px);
+        pointer-events: all;
+    }
+
+    .form-locked-floating-message {
+        @apply flex items-center gap-2 p-3 mb-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm font-medium;
+    }
+
+    .form-locked-floating-message.hidden {
+        display: none !important;
+    }
+
+    .dark-theme .form-card-overlay {
+        background: rgba(31, 41, 55, 0.75);
+    }
+
+    .dark-theme .form-locked-floating-message {
+        @apply bg-green-900/30 border-green-700 text-green-300;
+    }
     
     .dark-theme .cliente-dropdown-item {
         @apply hover:bg-gray-700 focus:bg-gray-700;
@@ -414,7 +438,7 @@
     }
 
     .login-container {
-        @apply flex min-h-screen w-full items-center justify-center bg-slate-900 p-6;
+        @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-900 p-6;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         background-image: 
             radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15), transparent 50%),
@@ -1265,6 +1289,8 @@
         @apply rounded-2xl border-2 border-gray-200 bg-white shadow-lg p-6 sm:p-8;
         transition: all 0.3s ease;
         animation: fadeIn 0.5s ease-out;
+        position: relative;
+        overflow: hidden;
     }
 
     .dashboard-card {

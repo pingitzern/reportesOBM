@@ -148,4 +148,31 @@ export function renderComponentStages({
     container.appendChild(fragment);
 }
 
+export function resetComponentStages() {
+    COMPONENT_STAGES.forEach(stage => {
+        // Reset el toggle a 'Inspeccionado' (estado por defecto)
+        const inspectedRadio = document.getElementById(`${stage.id}_accion_inspeccionado`);
+        const changedRadio = document.getElementById(`${stage.id}_accion_cambiado`);
+        
+        if (inspectedRadio) {
+            inspectedRadio.checked = true;
+        }
+        if (changedRadio) {
+            changedRadio.checked = false;
+        }
+        
+        // Actualizar el data-state del toggle
+        const toggle = inspectedRadio?.closest('.component-toggle');
+        if (toggle) {
+            toggle.dataset.state = 'inspeccionado';
+        }
+        
+        // Limpiar el campo de detalles
+        const detailsInput = document.getElementById(`${stage.id}_detalles`);
+        if (detailsInput instanceof HTMLInputElement) {
+            detailsInput.value = '';
+        }
+    });
+}
+
 export { COMPONENT_STAGES };

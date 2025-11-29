@@ -1,6 +1,6 @@
 import * as config from '../../config.js';
 const { LMIN_TO_GPD = (60 * 24) / 3.78541, LMIN_TO_LPH = 60 } = config;
-import { COMPONENT_STAGES } from './templates.js';
+import { COMPONENT_STAGES, resetComponentStages } from './templates.js';
 
 function getElement(id) {
 	return document.getElementById(id);
@@ -1299,6 +1299,7 @@ export function resetForm() {
 	clearDerivedFields();
 	clearConversionOutputs();
 	resetValidationStates();
+	resetComponentStages();
 
 	applyStatusColorsToSelects();
 	resizeAutoResizeInputs();

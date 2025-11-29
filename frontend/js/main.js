@@ -38,6 +38,15 @@ function navigateToDashboard() {
 const remitoModule = createRemitoModule({
     showView,
     navigateToDashboard,
+    onRemitoComplete: () => {
+        // Limpiar formularios de mantenimiento después de completar el remito
+        if (appModules.maintenance && typeof appModules.maintenance.handleResetClick === 'function') {
+            appModules.maintenance.handleResetClick();
+        }
+        if (appModules.softener && typeof appModules.softener.silentReset === 'function') {
+            appModules.softener.silentReset();
+        }
+    },
 });
 
 const maintenanceModule = createMaintenanceModule(
