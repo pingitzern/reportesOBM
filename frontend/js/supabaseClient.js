@@ -21,4 +21,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(message);
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Configuración del cliente con auto-refresh de tokens
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,      // Refresca el token automáticamente antes de expirar
+    persistSession: true,         // Persiste la sesión en storage
+    detectSessionInUrl: false,    // No usamos OAuth redirects
+  },
+});

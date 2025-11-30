@@ -999,6 +999,84 @@
         @apply text-sm font-medium text-red-600;
     }
 
+    .login-success {
+        @apply text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg p-3;
+    }
+
+    .dark-theme .login-success {
+        @apply bg-green-900/20 border-green-800 text-green-400;
+    }
+
+    .login-forgot-link {
+        @apply mt-3 w-full text-center text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors duration-200 bg-transparent border-none;
+    }
+
+    .dark-theme .login-forgot-link {
+        @apply text-blue-400 hover:text-blue-300;
+    }
+
+    /* Pantalla de confirmación de email enviado */
+    .reset-sent-icon {
+        @apply mb-4 text-green-500;
+    }
+
+    .reset-sent-icon svg {
+        @apply w-16 h-16 mx-auto;
+    }
+
+    .reset-sent-title {
+        @apply text-xl font-bold text-center text-gray-800 mb-3;
+    }
+
+    .dark-theme .reset-sent-title {
+        @apply text-white;
+    }
+
+    .reset-sent-message {
+        @apply text-center text-gray-600 mb-4 leading-relaxed;
+    }
+
+    .dark-theme .reset-sent-message {
+        color: var(--app-color-text-soft);
+    }
+
+    .reset-sent-tips {
+        @apply bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4;
+    }
+
+    .dark-theme .reset-sent-tips {
+        @apply bg-blue-900/20 border-blue-800;
+    }
+
+    .reset-sent-tip {
+        @apply text-sm text-gray-600 mb-1 last:mb-0;
+    }
+
+    .dark-theme .reset-sent-tip {
+        color: var(--app-color-text-soft);
+    }
+
+    /* Checkbox "Recordarme" */
+    .login-form__remember {
+        @apply mt-3 mb-1;
+    }
+
+    .login-form__checkbox-label {
+        @apply flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none;
+    }
+
+    .login-form__checkbox {
+        @apply w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer;
+    }
+
+    .dark-theme .login-form__checkbox-label {
+        color: var(--app-color-text-soft);
+    }
+
+    .dark-theme .login-form__checkbox {
+        @apply border-gray-600 bg-gray-700;
+    }
+
     .login-submit-button {
         @apply mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-200 ease-out hover:bg-blue-700 hover:shadow-xl hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2;
     }

@@ -1514,12 +1514,85 @@
                     <label for="login-password" class="login-form__label">Contraseña</label>
                     <input id="login-password" name="password" type="password" autocomplete="current-password" class="login-form__input" required>
                 </div>
+                <div class="login-form__remember">
+                    <label class="login-form__checkbox-label">
+                        <input type="checkbox" id="login-remember" name="remember" class="login-form__checkbox" checked>
+                        <span>Recordarme en este dispositivo</span>
+                    </label>
+                </div>
                 <p id="login-error" class="login-error hidden" role="alert"></p>
                 <button type="submit" class="login-submit-button">
                     <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
                     Iniciar sesión
+                </button>
+                <button type="button" id="forgot-password-link" class="login-forgot-link">
+                    ¿Olvidaste tu contraseña?
+                </button>
+            </form>
+            
+            <!-- Formulario de recuperación de contraseña -->
+            <form id="reset-password-form" class="login-form hidden">
+                <p class="login-card__subtitle mb-4">Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.</p>
+                <div class="login-form__field">
+                    <label for="reset-email" class="login-form__label">Email</label>
+                    <input id="reset-email" name="email" type="email" autocomplete="email" class="login-form__input" required>
+                </div>
+                <p id="reset-error" class="login-error hidden" role="alert"></p>
+                <button type="submit" class="login-submit-button">
+                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Enviar enlace
+                </button>
+                <button type="button" id="back-to-login-link" class="login-forgot-link">
+                    ← Volver al inicio de sesión
+                </button>
+            </form>
+            
+            <!-- Confirmación de email enviado -->
+            <div id="reset-email-sent" class="login-form hidden">
+                <div class="reset-sent-icon">
+                    <svg class="w-16 h-16 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h3 class="reset-sent-title">¡Correo enviado!</h3>
+                <p class="reset-sent-message">
+                    Te hemos enviado un enlace para restablecer tu contraseña. 
+                    Revisá tu bandeja de entrada y seguí las instrucciones.
+                </p>
+                <div class="reset-sent-tips">
+                    <p class="reset-sent-tip">💡 Si no ves el correo, revisá tu carpeta de spam.</p>
+                    <p class="reset-sent-tip">⏱️ El enlace expira en 1 hora.</p>
+                </div>
+                <button type="button" id="back-to-login-from-sent" class="login-submit-button mt-4">
+                    Volver al inicio de sesión
+                </button>
+            </div>
+            
+            <!-- Formulario de nueva contraseña (después de clic en email) -->
+            <form id="new-password-form" class="login-form hidden">
+                <div class="login-card__header" style="padding: 0; margin-bottom: 1rem;">
+                    <h2 class="login-card__title">Restablecer Contraseña</h2>
+                    <p class="login-card__subtitle">Ingresa tu nueva contraseña para recuperar el acceso.</p>
+                </div>
+                <div class="login-form__field">
+                    <label for="new-password" class="login-form__label">Nueva contraseña</label>
+                    <input id="new-password" name="newPassword" type="password" autocomplete="new-password" class="login-form__input" required minlength="6">
+                </div>
+                <div class="login-form__field">
+                    <label for="confirm-password" class="login-form__label">Confirmar contraseña</label>
+                    <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" class="login-form__input" required minlength="6">
+                </div>
+                <p id="new-password-error" class="login-error hidden" role="alert"></p>
+                <p id="new-password-success" class="login-success hidden" role="status"></p>
+                <button type="submit" class="login-submit-button">
+                    <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Guardar nueva contraseña
                 </button>
             </form>
         </div>
