@@ -68,6 +68,12 @@ $$;
 -- PASO 4: POLÍTICAS PARA PROFILES
 -- ============================================================================
 
+-- Eliminar políticas existentes para recrearlas
+DROP POLICY IF EXISTS "profiles_select_authenticated" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_delete_admin" ON public.profiles;
+
 -- SELECT: Todos los autenticados pueden ver perfiles (necesario para mostrar nombres)
 CREATE POLICY "profiles_select_authenticated" ON public.profiles
     FOR SELECT
@@ -92,6 +98,12 @@ CREATE POLICY "profiles_delete_admin" ON public.profiles
 -- ============================================================================
 -- PASO 5: POLÍTICAS PARA CLIENTS
 -- ============================================================================
+
+-- Eliminar políticas existentes para recrearlas
+DROP POLICY IF EXISTS "clients_select_authenticated" ON public.clients;
+DROP POLICY IF EXISTS "clients_insert_authenticated" ON public.clients;
+DROP POLICY IF EXISTS "clients_update_authenticated" ON public.clients;
+DROP POLICY IF EXISTS "clients_delete_admin" ON public.clients;
 
 -- SELECT: Todos los autenticados pueden ver clientes
 CREATE POLICY "clients_select_authenticated" ON public.clients
@@ -118,6 +130,12 @@ CREATE POLICY "clients_delete_admin" ON public.clients
 -- PASO 6: POLÍTICAS PARA EQUIPMENTS
 -- ============================================================================
 
+-- Eliminar políticas existentes para recrearlas
+DROP POLICY IF EXISTS "equipments_select_authenticated" ON public.equipments;
+DROP POLICY IF EXISTS "equipments_insert_authenticated" ON public.equipments;
+DROP POLICY IF EXISTS "equipments_update_authenticated" ON public.equipments;
+DROP POLICY IF EXISTS "equipments_delete_admin" ON public.equipments;
+
 -- SELECT: Todos los autenticados pueden ver equipos
 CREATE POLICY "equipments_select_authenticated" ON public.equipments
     FOR SELECT
@@ -142,6 +160,12 @@ CREATE POLICY "equipments_delete_admin" ON public.equipments
 -- ============================================================================
 -- PASO 7: POLÍTICAS PARA MAINTENANCES
 -- ============================================================================
+
+-- Eliminar políticas existentes para recrearlas
+DROP POLICY IF EXISTS "maintenances_select_authenticated" ON public.maintenances;
+DROP POLICY IF EXISTS "maintenances_insert_authenticated" ON public.maintenances;
+DROP POLICY IF EXISTS "maintenances_update_owner" ON public.maintenances;
+DROP POLICY IF EXISTS "maintenances_delete_owner" ON public.maintenances;
 
 -- SELECT: Todos los autenticados pueden ver mantenimientos
 CREATE POLICY "maintenances_select_authenticated" ON public.maintenances
@@ -184,6 +208,12 @@ CREATE POLICY "maintenances_delete_owner" ON public.maintenances
 -- ============================================================================
 -- PASO 8: POLÍTICAS PARA REMITOS
 -- ============================================================================
+
+-- Eliminar políticas existentes para recrearlas
+DROP POLICY IF EXISTS "remitos_select_authenticated" ON public.remitos;
+DROP POLICY IF EXISTS "remitos_insert_authenticated" ON public.remitos;
+DROP POLICY IF EXISTS "remitos_update_owner" ON public.remitos;
+DROP POLICY IF EXISTS "remitos_delete_owner" ON public.remitos;
 
 -- SELECT: Todos los autenticados pueden ver remitos
 CREATE POLICY "remitos_select_authenticated" ON public.remitos
