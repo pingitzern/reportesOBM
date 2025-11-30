@@ -10,6 +10,7 @@ import { createRemitoModule } from './modules/remito/remito.js';
 import { createRemitosGestionModule } from './modules/remitos-gestion/remitos-gestion.js';
 import { createSoftenerModule } from './modules/mantenimiento-ablandador/ablandador.js';
 import { createFeedbackModule } from './modules/feedback/feedback.js';
+import { createAdminPanelModule } from './modules/admin/adminPanel.js';
 
 const {
     guardarMantenimiento,
@@ -105,6 +106,8 @@ const feedbackModule = createFeedbackModule({
     enviarFeedbackTicket,
 });
 
+const adminPanelModule = createAdminPanelModule();
+
 const appModules = {
     maintenance: maintenanceModule,
     remito: remitoModule,
@@ -113,6 +116,7 @@ const appModules = {
     remitosGestion: remitosGestionModule,
     softener: softenerModule,
     feedback: feedbackModule,
+    adminPanel: adminPanelModule,
 };
 
 const SECTION_LABELS = Object.freeze({
@@ -122,6 +126,7 @@ const SECTION_LABELS = Object.freeze({
     'tab-buscar': 'Buscar y Editar',
     'remito-view': 'Generación de Remito',
     'remitos-gestion-view': 'Gestión de Remitos',
+    'admin-panel-view': 'Panel de Administración',
 });
 
 function resolveSectionTitle(viewId) {
@@ -420,6 +425,9 @@ async function initializeApp() {
     try {
         // Primero autenticar
         await initializeAuth();
+        
+        // Inicializar panel de administración (muestra/oculta opción según rol)
+        appModules.adminPanel.init();
         
         // Después inicializar módulos que requieren datos del backend
         await appModules.maintenance.initialize();

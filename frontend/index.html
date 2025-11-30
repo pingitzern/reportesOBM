@@ -57,6 +57,13 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                         </a>
+                        <button id="admin-panel-menu-item" type="button" class="user-menu__item user-menu__admin hidden" role="menuitem" data-auth-action="admin">
+                            <span>Panel de Administración</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
                         <div class="user-menu__item user-menu__toggle" role="none">
                             <div class="user-menu__toggle-info">
                                 <span class="user-menu__toggle-label">Modo oscuro</span>
@@ -1400,6 +1407,255 @@
                 <div id="remitos-gestion-container" class="space-y-6"></div>
             </div>
         </section>
+
+        <!-- Panel de Administración -->
+        <section id="admin-panel-view" class="tab-content hidden">
+            <div class="max-w-7xl mx-auto">
+                <!-- Header del Panel Admin -->
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg rounded-3xl p-8 mb-6 text-white">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-white/20 rounded-2xl">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">Panel de Administración</h2>
+                            <p class="mt-1 text-indigo-100">Gestión de clientes, usuarios y configuración del sistema.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navegación del Admin -->
+                <div class="flex flex-wrap gap-3 mb-6">
+                    <button class="admin-tab-button active" id="admin-tab-clientes-btn" data-admin-tab="clientes">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Clientes
+                    </button>
+                </div>
+
+                <!-- Contenido de la pestaña Clientes -->
+                <div id="admin-tab-clientes" class="admin-tab-content">
+                    <!-- Barra de herramientas -->
+                    <div class="bg-white shadow-sm rounded-2xl p-4 mb-6 border border-gray-200">
+                        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div class="flex flex-col gap-3 md:flex-row md:items-center flex-1">
+                                <!-- Búsqueda -->
+                                <div class="relative flex-1 max-w-md">
+                                    <input type="text" 
+                                           id="admin-clientes-search" 
+                                           placeholder="Buscar por nombre, CUIT, dirección..." 
+                                           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <!-- Filtros -->
+                                <select id="admin-clientes-filter-division" class="border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Todas las divisiones</option>
+                                </select>
+                                <select id="admin-clientes-filter-canal" class="border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Todos los canales</option>
+                                </select>
+                            </div>
+                            <button id="admin-cliente-nuevo-btn" class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Nuevo Cliente
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas rápidas -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-indigo-100 rounded-xl">
+                                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Total Clientes</p>
+                                    <p id="admin-stat-total-clientes" class="text-xl font-bold text-gray-900">--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-green-100 rounded-xl">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Con Email</p>
+                                    <p id="admin-stat-con-email" class="text-xl font-bold text-gray-900">--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-blue-100 rounded-xl">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Con Teléfono</p>
+                                    <p id="admin-stat-con-telefono" class="text-xl font-bold text-gray-900">--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-purple-100 rounded-xl">
+                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Con CUIT</p>
+                                    <p id="admin-stat-con-cuit" class="text-xl font-bold text-gray-900">--</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de clientes -->
+                    <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
+                                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contacto</th>
+                                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">CUIT</th>
+                                        <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">División / Canal</th>
+                                        <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-clientes-tbody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Las filas se cargan dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Paginación -->
+                        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                            <p id="admin-clientes-info" class="text-sm text-gray-500">Mostrando 0 de 0 clientes</p>
+                            <div class="flex gap-2">
+                                <button id="admin-clientes-prev-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    Anterior
+                                </button>
+                                <button id="admin-clientes-next-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    Siguiente
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modal Crear/Editar Cliente -->
+        <div id="admin-cliente-modal-backdrop" class="hidden fixed inset-0 bg-black/50 z-40" aria-hidden="true"></div>
+        <div id="admin-cliente-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 text-white">
+                    <h3 id="admin-cliente-modal-title" class="text-xl font-bold">Nuevo Cliente</h3>
+                    <p class="text-indigo-100 text-sm mt-1">Complete los datos del cliente</p>
+                </div>
+                <form id="admin-cliente-form" class="flex-1 overflow-y-auto p-6 space-y-5">
+                    <input type="hidden" id="admin-cliente-id" name="id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="md:col-span-2">
+                            <label for="admin-cliente-razon-social" class="block text-sm font-medium text-gray-700 mb-1">Razón Social *</label>
+                            <input type="text" id="admin-cliente-razon-social" name="razon_social" required
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label for="admin-cliente-direccion" class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                            <input type="text" id="admin-cliente-direccion" name="direccion"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-cliente-telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                            <input type="tel" id="admin-cliente-telefono" name="telefono"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-cliente-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="admin-cliente-email" name="email"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-cliente-cuit" class="block text-sm font-medium text-gray-700 mb-1">CUIT</label>
+                            <input type="text" id="admin-cliente-cuit" name="cuit" placeholder="XX-XXXXXXXX-X"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-cliente-division" class="block text-sm font-medium text-gray-700 mb-1">División</label>
+                            <input type="text" id="admin-cliente-division" name="division"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-cliente-canal" class="block text-sm font-medium text-gray-700 mb-1">Canal</label>
+                            <input type="text" id="admin-cliente-canal" name="canal"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    
+                    <p id="admin-cliente-error" class="text-sm text-red-600 hidden" role="alert"></p>
+                </form>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button" id="admin-cliente-cancel-btn" class="px-5 py-2.5 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" form="admin-cliente-form" id="admin-cliente-save-btn" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Detalle Cliente -->
+        <div id="admin-cliente-detalle-backdrop" class="hidden fixed inset-0 bg-black/50 z-40" aria-hidden="true"></div>
+        <div id="admin-cliente-detalle-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 text-white flex items-center justify-between">
+                    <div>
+                        <h3 id="admin-cliente-detalle-title" class="text-xl font-bold">Detalle del Cliente</h3>
+                        <p id="admin-cliente-detalle-subtitle" class="text-indigo-100 text-sm mt-1"></p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" id="admin-cliente-detalle-edit-btn" class="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors" title="Editar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        <button type="button" id="admin-cliente-detalle-close-btn" class="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-colors" title="Cerrar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="admin-cliente-detalle-content" class="flex-1 overflow-y-auto p-6">
+                    <!-- Contenido cargado dinámicamente -->
+                </div>
+            </div>
+        </div>
         </div>
     </div>
 
