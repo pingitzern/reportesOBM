@@ -1,0 +1,170 @@
+Sistema,Codigo,Descripcion,Imagen,Vida util (dias)
+Ablandador 25 CAB,SOFTN25LPFC,"Ablandador automático de 25 Litros de
+resina, según descripción técnica.
+Incluye un cartucho de prefiltracion de
+sólidos + cloro.",Sistemas_Images/Ablandador 25 CAB.Imagen.170341.jpg,2555
+Ablandador 50 CAB,SOFTN50LPFC,"Ablandador automatico de 50 Litros de
+resina, según descripción técnica.
+Incluye un cartucho de prefiltracion de
+sólidos + cloro y una bolsa de sal de 25 Kg.",Sistemas_Images/Ablandador 50 CAB.Imagen.170307.jpg,2555
+Osmosis Bajo Mesada 50/75GPD 5e,OHMORBMZ5,Sistema de osmosis inversa de 5 etapas de purificación 75 GPD con tanque de almacenamiento de 12 Litros,Sistemas_Images/Osmosis Bajo Mesada 50-75GPD 5e.Imagen.165604.jpg,2555
+Osmosis Bajo Mesada 50/75GPD 6e,OHMORBMEZ6,Sistema de osmosis inversa de 6 etapas de purificación 75 GPD con tanque de almacenamiento de 12 Litros,Sistemas_Images/Osmosis Bajo Mesada 50-75GPD 6e.Imagen.170219.jpg,2555
+Osmosis Bajo Mesada Industrial,,,,2555
+Osmosis 300 l/h,OHMRO300LTS,"Sistema de osmosis inversa para producción de 300 l/h de agua potable, con sistema de pretratamiento.",Sistemas_Images/Osmosis 300 l-h.Imagen.133214.png,2555
+Osmosis 1500 l/h,OHMRO1500LTS,"Sistema de osmosis inversa para produccion de 1500 l/h de agua potable, con sistema de pretatamiento y bomba de baja presión.",Sistemas_Images/Osmosis 1500 l-h.Imagen.170952.jpg,2555
+,,,,
+Ablandador 50 PP,SOFTN50LPP,"Ablandador automático de 50 L de resina catiónica  con prefiltración de solidos. Incluye tanque salero, válvula de bypass, accesorios de instalación y bolsa de sal de 25 Kg.",,365
+Ablandador 150 PP,,,,
+Analisis de agua,ANALISOHM,"Opcional: análisis de nivel de dureza
+total en el agua de alimentación",Sistemas_Images/Analisis de agua.Imagen.161145.jpg,365
+Instalacion Ablandador,INSTALLOHM,"Instalacion y puesta en marcha. Incluye
+los accesorios basicos de instalacion",,365
+Ablandador 75 CAB,SOFTN75LPFC,"Ablandador automatico de 75 litros de resina, segun descripcion técnica. Incluye un cartucho de prefiltración de sólidos + cloro y una bolsa de sal de 25 Kg.",Sistemas_Images/Ablandador 75 CAB.Imagen.171221.jpg,2555
+Provisión especial,OHMLABOR,"Por la provisión de :
+- Sistema de dosificaion de cloro ( Bomba Aquatron A1) + tanque de 50 litros para cloro.
+- Sistema de ósmosis inversa para produccion de 300 l/h de agua libre de contaminantes.
+- Sistema de dosificacion de luz UV para esterilizacion final de agua producida.
+- Dispenser de agua potable, construido en acero inoxidable , de tamaño adeacuado para bidones de 20 litros.",,365
+HPLC CHROMASTER UV 5410,HPLCUV5410,"Sistema cromatográfico modelo Chromaster con detector UV 5410, Bomba CM5160, Inyector automático CM5260, Horno calefactor de columnas CM5310",Sistemas_Images/HPLC CHROMASTER UV 5410.Imagen.193516.jpg,2555
+MP HPLC CHROMASTER UV 5410,MPHPLCCM5410,"MANTENIMIENTO PREVENTIVO para sistema cromatográfico modelo Chromaster con detector UV 5410, Bomba CM5160, Inyector automático CM5260, Horno calefactor de columnas CM5310",Sistemas_Images/MP HPLC CHROMASTER UV 5410.Imagen.150356.jpg,365
+OQ HPLC CHROMASTER UV 5410,OQHPLCCM5410,"Calificación Operacional (OQ) para sistema cromatográfico modelo Chromaster con detector UV 5410, Bomba CM5160, Inyector automático CM5260, Horno calefactor de columnas CM5310",Sistemas_Images/OQ HPLC CHROMASTER UV 5410.Imagen.151608.jpg,356
+Servicio In-Company TZ 2,SINCTZ2,Viáticos,Sistemas_Images/Servicio In-Company TZ 2.Imagen.153541.jpg,365
+MP HPLC CHROMASTER DAD 5430,MPHPLCCM5430,"MANTENIMIENTO PREVENTIVO para sistema cromatográfico modelo Chromaster con detector DAD 5430, Bomba CM5160, Inyector automático CM5260, Horno calefactor de columnas CM5310",Sistemas_Images/MP HPLC CHROMASTER DAD 5430.Imagen.150343.jpg,365
+OQ HPLC CHROMASTER DAD 5430,OQHPLCCM5430,"CALIFICACION OPERACIONAL (OQ) para sistema cromatográfico modelo Chromaster con detector DAD 5430, Bomba CM5160, Inyector automático CM5260, Horno calefactor de columnas CM5310",Sistemas_Images/OQ HPLC CHROMASTER DAD 5430.Imagen.151558.jpg,365
+Capacitacion HPLC Basica,OHMCAPBASIC,"Capacitación básica sobre el uso de sistemas HPLC, detección y resolución de problemas, cuidados de módulos y columnas.",Sistemas_Images/Capacitacion HPLC Basica.Imagen.144725.jpg,365
+Osmosis Inversa 1000 l/h,OHMRO1000LTS,"Sistema de osmosis inversa para producción de 1000 l/h de agua potable, con sistema de pretratamiento y bomba de baja presión.",,2555
+Kit MP CM5160,OHMKITCM5160,Set de repuestos para bomba Chromaster modelo 5160,Sistemas_Images/Kit MP CM5160.Imagen.151607.jpg,365
+Ablandador 25 CAB Sin instalacion,SOFT25LPFCSIN,"Ablandador automatico de 25 Litros de
+resina, según descripción técnica.
+Incluye un cartucho de prefiltracion de
+sólidos + cloro y una bolsa de sal de 25 Kg. No incluye servicio técnico de instalación. 
+Puesto  sobre camión en Escobar, Buenos Aires.",Sistemas_Images/Ablandador 25 CAB Sin instalacion.Imagen.181716.jpg,2555
+Viaticos,VIATICOHM,Viaticos por una visita tecnica,Sistemas_Images/Viaticos.Imagen.135224.jpg,2
+Visita de Relevamiento,OHMVISREV,Relevamiento general de instalaciones.,,365
+OQ HPLC Marca Lachrom Elite,OQHPLCLACHROM,Calificacion Operacional (OQ) para sistema cromatografico modelo LaChrom Elite.,,1
+Ablandador 50 TEST,Abl50TEST,50TEST,,1
+Sistema de cloración automatico,CLORCISOHM,Clorador para tanque Cisterna. Incluye bomba dosificadora Acquatron A1y  Tanque de almacenamiento de cloro de 50 litros.,,2555
+Cartuchos de Prefiltración OI BM,OHMFILTOI10,"Mantenimiento de Equipo de Osmosis Inversa. 
+Elementos filtrantes por 3. 
+Filtro de polipropileno 10"" x 2,5""/5 micrones- 
+Filtro de carbón activado granular de 10"" x 2,5""-
+Filtro de carbón activado en bloque de 10"" x 2,5""/1 micrón-",,365
+Membrana OI BM,OHMMEM50,"Membrana de ósmosis inversa 50gpd. 
+Apertura de 0,0001 micrón (0,1 nm), que permite reducir bacterias en un orden de 4000 veces  y virus en un orden de 200 veces.",,730
+ETAPA5 OI BM,OHMOIE5,"Filtro de carbón activado. Regula el sabor del agua, mantiene el agua fresca.",,730
+Bomba presurizadora,OHMBOMPR,"Bomba Presurizadora para aumentar la presión de una red hidráulica. 
+Características:  60 l/min. 260 w/0,35 HP.",,1000
+ultrafiltración,OHMUF400,Sistema de Ultrafiltración. Capacidad 400 l/h con limpieza automática.,,720
+OHMD2LAMPCM,892-2550,Lampara de Deuterio (D2) para sistema HPLC,Sistemas_Images/OHMD2LAMPCM.Imagen.183557.jpg,365
+Servicio de Mantenimiento OBM,OHMSEROBM,Recambio de membrana de Osmosis Inversa  de 400 gpd en equipo de Osmosis de Bajo Mesada.,,730
+Sanitización y puesta a punto de Osmosis Inversa,OHMSERVOI,Sanitización de tanque hidroneumático de alimentación a equipo de Osmosis Inversa y puesta a punto. Incluye viáticos.,Sistemas_Images/Sanitización y puesta a punto de Os_10669899163082917113.Imagen.193442.jpg,365
+Servicio de instalación básico.,OHMSERVAA,"Servicio de instalación de equipo ablandador. Incluye dos  visitas, una de relevamiento y, otra, de instalación y puesta en marcha.                      
+Incluye análisis del agua tanto a tratar como tratada. 
+Para distancias mayores 50 km de Escobar, se cotizaran viáticos adicionales. 
+No incluye materiales.",Sistemas_Images/Servicio de instalación básico..Imagen.191517.jpg,365
+Osmosis bajo mesada doble paso 50/75 gpd- 5e,OIBMDP775E,"Sistema de osmosis inversa de 5 etapas de purificación , con doble paso de osmosis inversa 75 GPD con tanque de almacenamiento de 12 Litros.",Sistemas_Images/Osmosis bajo mesada doble paso 50-75 gpd- 5e.Imagen.181059.jpg,3000
+Osmosis bajo mesada doble paso 50/75 gpd- 5e USD,OIBMDP775EUSD,"Sistema de osmosis inversa de 5 etapas de purificación , con doble paso de osmosis inversa 75 GPD con tanque de almacenamiento de 12 Litros. COTIZACION EN DOLARES",Sistemas_Images/Osmosis bajo mesada doble paso 50-7_4289637036984419882.Imagen.203007.jpg,3000
+Bomba de Vacio c.Vacuo,OHMVACPMPV,"Bomba de vacío de 1/3 Hp, 70 Litros-
+1 Mano vacuómetro, marca IMT ó similar. Con salida inferior",Sistemas_Images/Bomba de Vacio c.Vacuo.Imagen.213626.jpg,2558
+Unidad Filtrante 2000mL comp.,OHMUFKITA2000C,"Sistema de filtración compuesto de Kitasato de 2000 ml, 1 vaso filtrante y 2 mts de manguera apta para alto vacío.",Sistemas_Images/Unidad Filtrante 2000mL comp..Imagen.214000.jpg,7000
+Unidad Filtrante 1000mL comp.,OHMUFKITA1000C,"Sistema de filtración compuesto de Kitasato de 1000 ml, 1 vaso filtrante y 2 mts de manguera apta para alto vacío.",Sistemas_Images/Unidad Filtrante 1000mL comp..Imagen.214112.jpg,7000
+Ablandador AA25L (S/I),SOFTN25LPFPSIN,"Ablandador automático de 25 litros de resina, según descripción técnica. Incluye un cartucho de prefiltración de sólidos, válvula de bypass y una bolsa de sal de 25 Kg.",Sistemas_Images/Ablandador AA25L (S-I).Imagen.153314.jpg,1100
+Ablandador AA75L de resina (S/I),SOFTN75LFPSIN,"Ablandador automático de 75 Litros de resina, según descripción técnica. Incluye un cartucho de prefiltración de sólidos y una bolsa de sal de 25 Kg.
+No Incluye instalación.",Sistemas_Images/Ablandador AA75L de resina (S-I).Imagen.135237.jpg,1100
+Carcasa filtro XL,OHMPRETXL,Carcasa filtro XL (Inclute Paleta y Escuadra),,365
+Filtro CAB 5 µM,OHMFILTCAXL,Filtro de Carbón Activado en Bloque,,365
+Visita de emergencia,VSEMEROHM,Visita de emergencia,Sistemas_Images/Visita de emergencia.Imagen.155055.jpg,365
+Bomba a Diafragma,OHMBDIAF,Bomba Diafragma para Osmosis Inversa. 26V. (no incluye transformador),,1000
+Analisis de conductividad de agua,OHMANALIST,"Determinación de conductividad en muestra de agua. Equipo utilizado:  Marca WTW 3310.Celda LR 305/001 Cte. nominal=0,01 cm -1",,1
+Puesta en marcha ablandador,INSTALLOHM,Correccion de detalles de instalacion existente en ablandador propiedad del cliente.,,1
+MATERIALES INSTALACION AA25,OHMMAT,Materiales para instalación de equipo ablandador AA25 según relevamiento N°45441.,,365
+Servicio de Mantenimiento AA25L,OHMSERVAA25L,"Servicio de mantenimiento de equipo ablandador de 25Lde resina.                                    -Cambio de resina.
+- Análisis de dureza.
+- Cheqeo y reparametrización del cabezal automático.",,365
+"Carcasa filtro Minie Blue 2,5"" x 10""",OHMPREMINI,Carcasa Filtro MiniBlue (Incluye paleta y Escuadra),,365
+Filtro Mini Blue CAB 5 µm,OHMFILTCABMB,"Filtro de carbón activado en bloque de 2,5"" x 10""",,365
+Tanque Hidroneumático 15L para Osmosis Inversa.,OHMTQ15,Tanque hidroneumático 15L de capacidad. Incluye instalación en cliente.,,365
+Filtro PP XL,OHMFILTPPXL,"Filtro de Partículas PP 2,5"" x 20""",,365
+Servicio de mantenimiento Ablandador (S/cambio de resina),OHMSERVTECAA,"Servicio de mantenimiento preventivo equipo ablandador. Cambio de prefiltros, chequeo de parámetros de funcionamiento,  tanque salero, conexiones y cabezal automático.",,180
+"Bolsa de sal de 25 Kg, marca Dos Anclas. Lavada, purificada y seca",OHMSALDOSA,"Sal lavada, purificada y seca.","Sistemas_Images/Bolsa de sal de 25 Kg, marca Dos An_6603812866738408061.Imagen.140101.png",30
+Provisión trabajos especiales,VALVELECOHM,Por trabajos de instalacion e una electrovalvula en la línea de permeado de la ósmosis inversa. Se incluyen todos los materiales y el servicio técnico.,,10
+Servicio de instalación básico Ablandador (zona S),OHMSERVAAS,"Servicio de instalación de equipo ablandador. Incluye dos  visitas, una de relevamiento y, otra, de instalación y puesta en marcha.                      
+Incluye análisis del agua tanto a tratar como tratada. 
+No incluye materiales de conexionado.",,365
+Análisis de parámetros fisicoquimicos en Agua,OHMANALISISFQ,Análisis de parámetros físico- químicos básicos en agua para ser tratada mediante equipo de Osmosis Inversa. Incluye SDI.,,30
+Repuesto Aqua,OHMREPDVAQUA,"Dispositivo apto solo para agua de red potable. 
+Capacidad de purificación: 2 litros de agua por minuto. 
+Rinde 14.000 Litros o 18 Meses.",,365
+Purificador de Agua,,Milli-Q® Reference A+,,1
+Espectrofotómetro,,Prove 300,,1
+Servicio de Mantenimiento Preventivo Anual para Ablandador AA25,OHMSERAA25,"Servicio de mantenimiento preventivo anual para equipo Ablandador automático de 25 L de resina. Incluye: Control trimestral de parámetros de funcionamiento del equipo, análisis de dureza. Sal para dicho periodo de operación (se entregan 3 bolsas de 25kg en cada visita). Recambio semestral de prefiltro No incluye cambio de resina.",,365
+Servicio de Mantenimiento preventivo anual AA50L,OHMSERAA50,"Servicio de mantenimiento preventivo anual para equipo Ablandador automático de 50 L de resina. Incluye: Control trimestral de parámetros de funcionamiento del equipo, análisis de dureza. Sal para dicho periodo de operación (se entregan 3 bolsas de 25kg en cada visita). Recambio semestral de prefiltro No incluye cambio de resina.",,365
+Servicio de mantenimiento de OIBM,OHMSERVOBM100,"Recambio de 3 prefiltros, membrana de OI, GAC y remineralizador. Sanitización de tanque hidroneumático. Chequeo de parámetros de funcionamiento y estado general del equipo.",,365
+Servicio de mantenimiento preventivo anual AA25-50,OHMSERVAA25/50MF,"Mantenimiento preventivo anual para equipo ablandador de agua de 25L y 50L de resina. Incluye: visitas trimestrales, con entrega de sal para la operación del mismo.                                                                                         
+Ver detalle del servicio en el documento: ""Plan de Mantenimiento Preventivo Anual AA25.50. rev.1"", adjunto al presente presupuesto.",,365
+Servicio de mantenimiento OIBM (ZS),OHMSERVOIBM100 (ZS),"Servicio de mantenimiento anual de equipo de Osmosis Inversa de Bajo mesada.
+Incluye: recambio de las etapas de prefiltración (3), sanitización de tanque hidroneumático, verificación de parámetros de funcionamiento indicar de la calidad del agua. Chequeo general del estado del equipo. 
+No incluye cambio de membrana de OI.
+No incluye repuestos no mencionados en la presente oferta.",,365
+"Ablandador auromatico de agua marca Elektrim, HF2500",ELKTHF2500,"Ablandador automatico de agua compacto, de 23 litros de resina. Marca Elektrim. Modelo HF 2500. Caudal max. de servicio 2,2 m3/h. Entrada y saluda de 1""",Sistemas_Images/Ablandador auromatico de agua marca_18078314368094795172.Imagen.143805.jpg,365
+Osmosis inversa 300 l/h- Bomba multiple etapa,OHMRO300BME,"Sistema de osmosis inversa para producción de 300
+ l/h de agua potable, con sistema de pretratamiento. La bomba de alta presión es una bomba de multiples etapas con bajo nivel de ruido.
+Se inlcuye tanque de alimentación de 300 litroa para almacenamiento de agua cruda.",,365
+Servicio de mantenimiento anual de Osmosis Inversa de bajo mesada,OHMSERVOIBM,"Visita de mantenimiento de equipo de Osmosis Inversa de bajo mesada. Incluye recambio de los tres prefiltros, chequeo de estado de la membrana de Osmosis y equipo en general. 
+Sanitización de tanque hidroneumático. 
+Medición de conductividad y pH del agua tratada.",,365
+Bolsa de sal RINSAL,SALRIN25KG,"Bolsa de sal por 25 Kg, marca Rinsal. Para ablandadores de agua",Sistemas_Images/Bolsa de sal RINSAL.Imagen.210251.jpg,1
+Ultrafiltración  para osmosis inversa,UFOHM300L,Sistema de ultrafiltración para pretratamiento de osmosis inversa,,1
+Disepenser Frio/ Calor para agua de pozo,DISPOHMPZ,"Dispenser para agua de pozo, equipado con sistema de ósmosis inversa.
+Caracteristicas:
+
+- Medidas 31x31x95cm
+
+- Flotante con sistema de corte.
+
+- Caldera y tacho de frío en acero inoxidable.
+
+- Leds indicadores de funcionamiento.
+
+- Canillas chopperas.
+
+Cuenta con un sistema de ósmosis inversa con bomba para el filtrado del agua.
+
+Motocompresor con sistema de gas ecologico.
+
+ 
+
+Temperatura maxima 85°c
+
+Temperatura minima 5°c
+
+No inlcuye la instalación",Sistemas_Images/Disepenser Frio- Calor para agua de pozo.Imagen.143446.jpg,1
+Cabezal volumetrico Runxin F116Q3,RUNXINF116Q3,"Cabezal Runxin x volumen- Modelo F116Q3. Caudal max. 4 m3/h, conexión entrada y salida 1”",Sistemas_Images/Cabezal volumetrico Runxin F116Q3.Imagen.154543.jpg,1
+,,,,
+Insumos Osmosis Inversa 300 l/h,OHMINS300,"Membrana LG CW4040 SF.                                                             
+Anti escalante y Antiincrustante para pretratamiento (bidón de 20L formulación OHM).",,365
+"Carcasa Porta filtro 10"" x 25"". Rosca 1/4"".",OHMCPF,"Carcasa Porta filtro para purificador bajo mesada. Medidas 10"" x 25"". Material Plástico.",,365
+Servicio de Mantenimiento AA50L,OHMSERAA50L,"Servicio de Mantenimiento de equipo ablandador de 50L de resina.  
+Incluye cambio de resina in situ, análisis de agua, chequeo del sistema y re parametrización de cabezal automático según los valores de dureza medidos.",,365
+Osmosis bajo mesada 100 GPD/ 6E,0HMORBMEZ100,Sistema de osmosis inversa de 6 etapas de purificación 75 GPD con tanque de almacenamiento de 12 Litros,Sistemas_Images/Osmosis bajo mesada 100 GPD- 6E.Imagen.122010.jpg,720
+,,,,
+Osmosis bajo mesada 600GPD,EQUIOSMOUTR700A,Equipo osmosis UTR 700A,Sistemas_Images/Osmosis bajo mesada 600GPD.Imagen.130029.jpg,720
+Ablandador 200 l,SOFTN200LPFC,Ablandador automatico de 200 l de resina,,720
+Ablandador compacto HF2500,OHMABLAHF25,"Ablandador , 2500 l/h, marca Elektrim",Sistemas_Images/Ablandador compacto HF2500.Imagen.141620.jpg,720
+Osmosis 600 l/h,OHMRO600LTS,"Sistema de osmosis inversa para producción de 600 l/h de agua potable, con sistema de pretratamiento",,720
+Osmosis bajo mesada 200 GPD 5E,OBM5ETAPACRA,Sistema de osmosis bajo mesada de 5 etapas de purificación  de 200 GPD con tanque de almacenamiento de 12 litros.,Sistemas_Images/Osmosis bajo mesada 200 GPD 5E.Imagen.130212.jpg,720
+Ablandador 250 l,SOFTN250L,Ablandador automático de 250 l de resina con sistema de prefiltración,,1000
+Muestreador de Aire,,FKC,,365
+HPLC Uv-vis LaCrom Elite,HPLC Uv-Vis 2420,Sistema HPLC con detector UV-Vis L-2420,,2250
+sistema TEST,modelo TEST,BLA,,1
+Spectroquant,Pharo 300,Espectro fotometro Pharo 300,Sistemas_Images/Spectroquant.Imagen.181305.jpg,2558
+Termoreactor,TR 420,Termoreactor,,2558
+EQ7000,Purificador de agua,Purificador de agua EQ7000,Sistemas_Images/EQ7000.Imagen.122402.jpg,2558
+HPLC Agulent 1220,G4288c 1220 LC System VL,"Cromatografo liquido modular, sin horno y válvula de inyección Manual",Sistemas_Images/HPLC Agulent 1220.Imagen.125135.jpg,2552
+HPLC LaChrom Elite DAD 2350,DAD 2350,HPLC LCE DAD con horno L-2350,Sistemas_Images/HPLC LaChrom Elite DAD 2350.Imagen.191537.jpg,2550
+HPLC LaChrom Elite ULTRA DAD,LCU DAD,HPLC LaChrom Elite ULTRA con detector DAD,Sistemas_Images/HPLC LaChrom Elite ULTRA DAD.Imagen.191820.jpg,2550
+Mili-Q IQ 7015,F2HB35837C,Purificador de agua Milli-Q,Sistemas_Images/Mili-Q IQ 7015.Imagen.161510.jpg,0
+Ablandador 125L,Ablandador125,Ablandador de agua de 125 litros de resina con cabezal runxin F116 O similar,,365
+Ablandador 25 PP,AA25PP,Ablandador automático de agua 25 litros con filtro de particulas,,365
+Ablandador 20L CAB,Ablandador20CAB,Ablandador de 20 litros con filtro de carbón en bloque,,365
+HPLC Varían 920LC,HPLCVAR920LC,Sistema cromatografico Varían con detector de Fluorescecia y celda de Bromacion,Sistemas_Images/HPLC Varían 920LC.Imagen.105321.jpg,2250
