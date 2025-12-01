@@ -64,7 +64,7 @@ export async function loadSistemas() {
             query = query.eq('categoria', sistemaFilters.categoria);
         }
 
-        const { data, error } = await query;
+        const { data, error } = await query.limit(15);
 
         if (error) throw error;
 
@@ -150,14 +150,14 @@ function renderSistemasTable(sistemas) {
 
 function updateSistemasStats() {
     const total = sistemasCache.length;
-    const ablandadores = sistemasCache.filter(s => s.categoria === 'ablandador').length;
-    const osmosis = sistemasCache.filter(s => s.categoria === 'osmosis').length;
-    const otros = total - ablandadores - osmosis;
+    const activos = sistemasCache.filter(s => s.activo !== false).length;
+    const categoriasUnicas = new Set(sistemasCache.map(s => s.categoria).filter(Boolean)).size;
+    const conVidaUtil = sistemasCache.filter(s => s.vida_util_dias && s.vida_util_dias > 0).length;
 
-    setElementText('admin-stat-total-sistemas', total);
-    setElementText('admin-stat-ablandadores', ablandadores);
-    setElementText('admin-stat-osmosis', osmosis);
-    setElementText('admin-stat-otros-sistemas', otros);
+    setElementText('admin-sistemas-total', total);
+    setElementText('admin-sistemas-activos', activos);
+    setElementText('admin-sistemas-categorias', categoriasUnicas);
+    setElementText('admin-sistemas-vida-util', conVidaUtil);
 }
 
 // Modal Sistema
@@ -348,7 +348,7 @@ export async function loadEquipos() {
             query = query.eq('sistema_id', equipoFilters.sistema);
         }
 
-        const { data, error } = await query.limit(100);
+        const { data, error } = await query.limit(15);
 
         if (error) throw error;
 
@@ -444,14 +444,15 @@ function renderEquiposTable(equipos) {
 
 function updateEquiposStats() {
     const total = equiposCache.length;
+    const activos = equiposCache.filter(e => e.activo !== false).length;
     const clientesUnicos = new Set(equiposCache.map(e => e.client_id).filter(Boolean)).size;
-    const conSerie = equiposCache.filter(e => e.serial_number && e.serial_number.trim()).length;
-    const conTag = equiposCache.filter(e => e.tag_id && e.tag_id.trim() && e.tag_id !== 'N/A').length;
+    // Contar inactivos requiere otra query, por ahora mostramos 0 o calcular desde total - activos
+    const inactivos = total - activos;
 
-    setElementText('admin-stat-total-equipos', total);
-    setElementText('admin-stat-clientes-equipos', clientesUnicos);
-    setElementText('admin-stat-con-serie', conSerie);
-    setElementText('admin-stat-con-tag', conTag);
+    setElementText('admin-equipos-total', total);
+    setElementText('admin-equipos-activos', activos);
+    setElementText('admin-equipos-clientes', clientesUnicos);
+    setElementText('admin-equipos-inactivos', inactivos);
 }
 
 function populateEquipoFilters() {
@@ -486,13 +487,17 @@ export function openEquipoNewModal() {
     title.textContent = 'Nuevo Equipo';
     form.reset();
     document.getElementById('admin-equipo-id').value = '';
+    document.getElementById('admin-equipo-cliente').value = '';
+    document.getElementById('admin-equipo-cliente-search').value = '';
+    document.getElementById('admin-equipo-sistema').value = '';
+    document.getElementById('admin-equipo-sistema-search').value = '';
     document.getElementById('admin-equipo-error').classList.add('hidden');
 
-    populateEquipoFormSelects();
+    setupSearchableDropdowns();
 
     modal.classList.remove('hidden');
     backdrop.classList.remove('hidden');
-    document.getElementById('admin-equipo-cliente').focus();
+    document.getElementById('admin-equipo-cliente-search').focus();
 }
 
 export function openEquipoEditModal(id) {
@@ -508,11 +513,20 @@ export function openEquipoEditModal(id) {
 
     title.textContent = 'Editar Equipo';
     
-    populateEquipoFormSelects();
+    setupSearchableDropdowns();
 
     document.getElementById('admin-equipo-id').value = equipo.id;
+    
+    // Set cliente
     document.getElementById('admin-equipo-cliente').value = equipo.client_id || '';
+    const clienteNombre = equipo.clients?.razon_social || '';
+    document.getElementById('admin-equipo-cliente-search').value = clienteNombre;
+    
+    // Set sistema
     document.getElementById('admin-equipo-sistema').value = equipo.sistema_id || '';
+    const sistemaNombre = equipo.sistemas ? `${equipo.sistemas.nombre}${equipo.sistemas.codigo ? ` (${equipo.sistemas.codigo})` : ''}` : '';
+    document.getElementById('admin-equipo-sistema-search').value = sistemaNombre;
+    
     document.getElementById('admin-equipo-serie').value = equipo.serial_number || '';
     document.getElementById('admin-equipo-modelo').value = equipo.modelo || '';
     document.getElementById('admin-equipo-tag').value = equipo.tag_id || '';
@@ -524,20 +538,109 @@ export function openEquipoEditModal(id) {
     backdrop.classList.remove('hidden');
 }
 
-function populateEquipoFormSelects() {
-    // Poblar select de clientes
-    const clienteSelect = document.getElementById('admin-equipo-cliente');
-    if (clienteSelect) {
-        clienteSelect.innerHTML = '<option value="">Seleccionar cliente...</option>' +
-            clientesCache.map(c => `<option value="${c.id}">${escapeHtml(c.razon_social)}</option>`).join('');
-    }
+function setupSearchableDropdowns() {
+    // Setup Cliente dropdown
+    setupSearchableDropdown({
+        inputId: 'admin-equipo-cliente-search',
+        hiddenInputId: 'admin-equipo-cliente',
+        dropdownId: 'admin-equipo-cliente-dropdown',
+        items: clientesCache,
+        getLabel: (item) => item.razon_social,
+        getValue: (item) => item.id,
+    });
 
-    // Poblar select de sistemas
-    const sistemaSelect = document.getElementById('admin-equipo-sistema');
-    if (sistemaSelect) {
-        sistemaSelect.innerHTML = '<option value="">Seleccionar sistema...</option>' +
-            sistemasCache.map(s => `<option value="${s.id}">${escapeHtml(s.nombre)} ${s.codigo ? `(${s.codigo})` : ''}</option>`).join('');
-    }
+    // Setup Sistema dropdown
+    setupSearchableDropdown({
+        inputId: 'admin-equipo-sistema-search',
+        hiddenInputId: 'admin-equipo-sistema',
+        dropdownId: 'admin-equipo-sistema-dropdown',
+        items: sistemasCache,
+        getLabel: (item) => `${item.nombre}${item.codigo ? ` (${item.codigo})` : ''}`,
+        getValue: (item) => item.id,
+    });
+}
+
+function setupSearchableDropdown({ inputId, hiddenInputId, dropdownId, items, getLabel, getValue }) {
+    const input = document.getElementById(inputId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    const dropdown = document.getElementById(dropdownId);
+
+    if (!input || !hiddenInput || !dropdown) return;
+
+    // Limpiar eventos previos clonando el elemento
+    const newInput = input.cloneNode(true);
+    input.parentNode.replaceChild(newInput, input);
+
+    const filterAndShowDropdown = (searchText) => {
+        const search = (searchText || '').toLowerCase();
+        const filtered = items.filter(item => {
+            const label = getLabel(item).toLowerCase();
+            return label.includes(search);
+        }).slice(0, 50); // Limitar a 50 resultados
+
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="px-4 py-3 text-gray-500 text-sm">No se encontraron resultados</div>';
+        } else {
+            dropdown.innerHTML = filtered.map(item => `
+                <div class="searchable-option px-4 py-2 cursor-pointer hover:bg-indigo-50 transition-colors text-sm" 
+                     data-value="${getValue(item)}">
+                    ${escapeHtml(getLabel(item))}
+                </div>
+            `).join('');
+        }
+
+        dropdown.classList.remove('hidden');
+
+        // Agregar listeners a las opciones
+        dropdown.querySelectorAll('.searchable-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const value = option.dataset.value;
+                const item = items.find(i => getValue(i) === value);
+                if (item) {
+                    newInput.value = getLabel(item);
+                    hiddenInput.value = value;
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+    };
+
+    // Input eventos
+    newInput.addEventListener('focus', () => {
+        filterAndShowDropdown(newInput.value);
+    });
+
+    newInput.addEventListener('input', (e) => {
+        // Limpiar selección cuando el usuario escribe
+        hiddenInput.value = '';
+        filterAndShowDropdown(e.target.value);
+    });
+
+    // Cerrar dropdown cuando se hace clic fuera
+    document.addEventListener('click', (e) => {
+        if (!newInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    // Teclado: Enter para seleccionar primera opción, Escape para cerrar
+    newInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            dropdown.classList.add('hidden');
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const firstOption = dropdown.querySelector('.searchable-option');
+            if (firstOption) {
+                firstOption.click();
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const firstOption = dropdown.querySelector('.searchable-option');
+            if (firstOption) {
+                firstOption.focus();
+            }
+        }
+    });
 }
 
 export function closeEquipoModal() {

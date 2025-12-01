@@ -137,6 +137,22 @@
 }
 
 @layer components {
+    /* ===== Searchable Dropdown (Admin Equipos) ===== */
+    .searchable-option {
+        @apply px-4 py-2.5 cursor-pointer transition-colors duration-150;
+        @apply hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none;
+        @apply border-b border-gray-100 last:border-b-0;
+    }
+    
+    .searchable-option:focus {
+        @apply bg-indigo-100;
+    }
+    
+    #admin-equipo-cliente-dropdown,
+    #admin-equipo-sistema-dropdown {
+        @apply z-[60];
+    }
+    
     /* ===== Cliente Autocomplete ===== */
     .cliente-dropdown-item {
         @apply px-4 py-3 cursor-pointer transition-colors duration-150;

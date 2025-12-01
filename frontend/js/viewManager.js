@@ -5,6 +5,7 @@ const MAIN_VIEW_IDS = [
     'tab-dashboard',
     'remito-view',
     'remitos-gestion-view',
+    'admin-panel-view',
 ];
 
 function hideElement(element) {
