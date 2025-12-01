@@ -1,3 +1,5 @@
+import { getEquiposByCliente } from '../admin/sistemasEquipos.js';
+
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_REMITO_PHOTOS = 4;
 const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -514,6 +516,12 @@ function getEmptyFormData() {
         cuit: '',
         reporteId: '',
         fotos: createEmptyPhotoSlots(),
+        // Campos de equipo
+        equipoId: '',
+        sistemaNombre: '',
+        modelo: '',
+        serie: '',
+        tagId: '',
     };
 }
 
@@ -588,6 +596,9 @@ function normalizeClientRecord(cliente, index = 0) {
     const telefono = sanitizeString(pickValue(cliente, CLIENT_PHONE_KEYS));
     const email = sanitizeString(pickValue(cliente, CLIENT_EMAIL_KEYS));
     const cuit = sanitizeString(pickValue(cliente, CLIENT_CUIT_KEYS));
+    
+    // Obtener el ID real del cliente (UUID de Supabase)
+    const clientId = cliente.id || cliente.ID || identificador;
 
     const label = nombre || identificador;
     if (!label) {
@@ -605,7 +616,7 @@ function normalizeClientRecord(cliente, index = 0) {
 
     return {
         key,
-        id: identificador,
+        id: clientId,
         label,
         nombre: nombre || identificador || '',
         direccion,
@@ -663,9 +674,18 @@ function syncSelectedClienteFromForm() {
     state.selectedClienteKey = match ? match.key : '';
 }
 
-function applyClienteSelection(key) {
+async function applyClienteSelection(key) {
     const option = findClienteByKey(key);
     state.selectedClienteKey = option ? option.key : '';
+    
+    // Limpiar equipos y datos de equipo previos
+    state.equiposCliente = [];
+    state.selectedEquipoId = '';
+    state.formData.equipoId = '';
+    state.formData.sistemaNombre = '';
+    state.formData.modelo = '';
+    state.formData.serie = '';
+    state.formData.tagId = '';
 
     if (!option) {
         return;
@@ -676,6 +696,76 @@ function applyClienteSelection(key) {
     state.formData.telefono = option.telefono || '';
     state.formData.email = option.email || '';
     state.formData.cuit = option.cuit || '';
+    
+    // Cargar equipos del cliente seleccionado
+    if (option.id) {
+        console.log('[RemitosGestion] Cargando equipos para cliente ID:', option.id, 'Nombre:', option.nombre);
+        state.isLoadingEquipos = true;
+        renderManagementView();
+        
+        try {
+            const equipos = await getEquiposByCliente(option.id);
+            console.log('[RemitosGestion] Equipos encontrados:', equipos?.length || 0, equipos);
+            state.equiposCliente = equipos || [];
+        } catch (error) {
+            console.warn('[RemitosGestion] Error cargando equipos del cliente:', error);
+            state.equiposCliente = [];
+        } finally {
+            state.isLoadingEquipos = false;
+            renderManagementView();
+        }
+    }
+}
+
+function applyEquipoSelection(equipoId) {
+    state.selectedEquipoId = equipoId || '';
+    state.formData.equipoId = equipoId || '';
+    
+    if (!equipoId) {
+        state.formData.sistemaNombre = '';
+        state.formData.modelo = '';
+        state.formData.serie = '';
+        state.formData.tagId = '';
+        return;
+    }
+    
+    const equipo = state.equiposCliente.find(e => e.id === equipoId);
+    if (equipo) {
+        state.formData.sistemaNombre = equipo.sistema_nombre || '';
+        state.formData.modelo = equipo.modelo || '';
+        state.formData.serie = equipo.serie || '';
+        state.formData.tagId = equipo.tag_id || '';
+    }
+}
+
+function buildEquiposOptionsHtml() {
+    if (state.isLoadingEquipos) {
+        return '<option value="">Cargando equipos...</option>';
+    }
+    
+    if (!Array.isArray(state.equiposCliente) || state.equiposCliente.length === 0) {
+        return '<option value="">Sin equipos registrados</option>';
+    }
+
+    const selectedId = sanitizeString(state.selectedEquipoId);
+
+    return '<option value="">Seleccionar equipo (opcional)...</option>' +
+        state.equiposCliente
+            .map(equipo => {
+                const selectedAttr = selectedId && equipo.id === selectedId ? ' selected' : '';
+                const label = buildEquipoLabel(equipo);
+                return `<option value="${equipo.id}"${selectedAttr}>${escapeHtml(label)}</option>`;
+            })
+            .join('');
+}
+
+function buildEquipoLabel(equipo) {
+    const parts = [];
+    if (equipo.sistema_nombre) parts.push(equipo.sistema_nombre);
+    if (equipo.modelo) parts.push(`Mod: ${equipo.modelo}`);
+    if (equipo.serie) parts.push(`S/N: ${equipo.serie}`);
+    if (equipo.tag_id) parts.push(`TAG: ${equipo.tag_id}`);
+    return parts.length > 0 ? parts.join(' | ') : 'Equipo sin datos';
 }
 
 function buildClienteOptionsHtml() {
@@ -1051,6 +1141,10 @@ const state = {
     isLoadingClientes: false,
     clientesError: null,
     selectedClienteKey: '',
+    // Equipos del cliente seleccionado
+    equiposCliente: [],
+    isLoadingEquipos: false,
+    selectedEquipoId: '',
 };
 
 function ensurePhotoSlotsInFormData() {
@@ -1187,6 +1281,9 @@ function resetFormState({ viewMode = 'list' } = {}) {
     state.editingRemitoOriginal = null;
     state.viewMode = viewMode;
     state.selectedClienteKey = '';
+    // Limpiar equipos
+    state.equiposCliente = [];
+    state.selectedEquipoId = '';
 }
 
 function renderManagementView() {
@@ -1198,14 +1295,56 @@ function renderManagementView() {
     ensurePhotoSlotsInFormData();
     const disableFormFields = state.isSaving || state.isLoading;
     const disabledAttr = disableFormFields ? 'disabled' : '';
-    const clienteOptionsHtml = buildClienteOptionsHtml();
-    const clientePlaceholder = state.isLoadingClientes
-        ? 'Cargando clientes...'
-        : 'Seleccioná un cliente';
-    const clienteHelperHtml = state.clientesError
-        ? `<p class="mt-1 text-xs text-red-600">${escapeHtml(state.clientesError)}</p>`
-        : '<p class="mt-1 text-xs text-gray-500">Seleccioná un cliente para completar los datos automáticamente.</p>';
-    const clienteSelectDisabledAttr = (disableFormFields || state.isLoadingClientes) ? 'disabled' : '';
+    
+    // Equipos del cliente
+    const hasClienteSelected = Boolean(state.selectedClienteKey);
+    const equiposOptionsHtml = buildEquiposOptionsHtml();
+    const equipoSelectDisabledAttr = (disableFormFields || state.isLoadingEquipos || !hasClienteSelected) ? 'disabled' : '';
+    const hasEquipos = hasClienteSelected && state.equiposCliente.length > 0;
+    const hasEquipoSelected = Boolean(state.selectedEquipoId);
+    
+    // Construir sección de equipo (solo si hay cliente seleccionado)
+    const equipoSectionHtml = hasClienteSelected ? `
+        <div class="flex flex-col gap-1">
+            <label for="remito-form-equipo-select" class="text-sm font-medium text-gray-700">Equipo del cliente</label>
+            <select id="remito-form-equipo-select" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" ${equipoSelectDisabledAttr}>
+                ${equiposOptionsHtml}
+            </select>
+            <p class="mt-1 text-xs text-gray-500">${hasEquipos ? 'Seleccioná un equipo para completar los datos técnicos.' : 'Este cliente no tiene equipos registrados.'}</p>
+        </div>
+        ${hasEquipoSelected ? `
+        <div class="rounded-lg bg-blue-50 border border-blue-200 p-4 space-y-3">
+            <p class="text-sm font-medium text-blue-800">Datos del equipo seleccionado:</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${state.formData.sistemaNombre ? `
+                <div class="flex flex-col">
+                    <span class="text-xs text-blue-600 font-medium">Sistema</span>
+                    <span class="text-sm text-blue-900">${escapeHtml(state.formData.sistemaNombre)}</span>
+                </div>
+                ` : ''}
+                ${state.formData.modelo ? `
+                <div class="flex flex-col">
+                    <span class="text-xs text-blue-600 font-medium">Modelo</span>
+                    <span class="text-sm text-blue-900">${escapeHtml(state.formData.modelo)}</span>
+                </div>
+                ` : ''}
+                ${state.formData.serie ? `
+                <div class="flex flex-col">
+                    <span class="text-xs text-blue-600 font-medium">N° de Serie</span>
+                    <span class="text-sm text-blue-900">${escapeHtml(state.formData.serie)}</span>
+                </div>
+                ` : ''}
+                ${state.formData.tagId ? `
+                <div class="flex flex-col">
+                    <span class="text-xs text-blue-600 font-medium">TAG / ID</span>
+                    <span class="text-sm text-blue-900">${escapeHtml(state.formData.tagId)}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        ` : ''}
+    ` : '';
+    
     const shouldShowNumeroRemitoPlaceholder = state.formMode === 'create'
         && !sanitizeString(state.formData.numeroRemito);
     const numeroRemitoPlaceholderAttr = shouldShowNumeroRemitoPlaceholder
@@ -1265,17 +1404,27 @@ function renderManagementView() {
                             </div>
                             ${numeroReporteFieldHtml}
                             <div class="flex flex-col gap-1">
-                                <label for="remito-form-cliente-select" class="text-sm font-medium text-gray-700">Cliente *</label>
-                                <select id="remito-form-cliente-select" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" ${clienteSelectDisabledAttr}>
-                                    <option value="">${escapeHtml(clientePlaceholder)}</option>
-                                    ${clienteOptionsHtml}
-                                </select>
-                                ${clienteHelperHtml}
-                            </div>
-                            <div class="flex flex-col gap-1">
                                 <label for="remito-form-cliente" class="text-sm font-medium text-gray-700">Razón social / Cliente *</label>
-                                <input id="remito-form-cliente" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="cliente" value="${escapeHtml(state.formData.cliente)}" placeholder="Nombre del cliente" ${disabledAttr}>
+                                <div class="relative">
+                                    <div class="flex gap-2">
+                                        <input id="remito-form-cliente" type="text" 
+                                            class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                            data-remito-field="cliente" 
+                                            value="${escapeHtml(state.formData.cliente)}" 
+                                            placeholder="${state.isLoadingClientes ? 'Cargando clientes...' : 'Buscar cliente...'}" 
+                                            autocomplete="off"
+                                            ${disabledAttr}>
+                                        ${hasClienteSelected ? `
+                                        <button type="button" id="remito-form-cliente-clear" class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-gray-300 transition-colors" title="Limpiar cliente" ${disabledAttr}>
+                                            ✕
+                                        </button>
+                                        ` : ''}
+                                    </div>
+                                    <div id="remito-form-cliente-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">${hasClienteSelected ? 'Cliente seleccionado. Los datos se completaron automáticamente.' : 'Escribí para buscar un cliente o ingresá los datos manualmente.'}</p>
                             </div>
+                            ${equipoSectionHtml}
                             <div class="flex flex-col gap-1">
                                 <label for="remito-form-fecha" class="text-sm font-medium text-gray-700">Fecha del remito</label>
                                 <input id="remito-form-fecha" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaRemitoISO" value="${escapeHtml(state.formData.fechaRemitoISO)}" ${disabledAttr}>
@@ -1722,6 +1871,58 @@ function handleFormInput(event) {
 }
 
 function handleContainerInput(event) {
+    const target = event?.target;
+    
+    // Búsqueda inteligente de cliente
+    if (target && target.id === 'remito-form-cliente') {
+        const searchText = (target.value || '').toLowerCase().trim();
+        const dropdown = document.getElementById('remito-form-cliente-dropdown');
+        
+        if (!dropdown) {
+            handleFormInput(event);
+            return;
+        }
+        
+        // Si el texto está vacío o muy corto, ocultar dropdown
+        if (searchText.length < 2) {
+            dropdown.classList.add('hidden');
+            dropdown.innerHTML = '';
+            // Si se borró el texto, limpiar selección
+            if (searchText.length === 0 && state.selectedClienteKey) {
+                state.selectedClienteKey = '';
+                state.equiposCliente = [];
+                state.selectedEquipoId = '';
+            }
+            handleFormInput(event);
+            return;
+        }
+        
+        // Filtrar clientes
+        const filtered = (state.clienteOptions || [])
+            .filter(option => {
+                const label = (option.label || option.nombre || '').toLowerCase();
+                return label.includes(searchText);
+            })
+            .slice(0, 5); // Limitar a 5 resultados
+        
+        if (filtered.length === 0) {
+            dropdown.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">No se encontraron clientes</div>';
+            dropdown.classList.remove('hidden');
+        } else {
+            dropdown.innerHTML = filtered.map(option => `
+                <div class="remito-cliente-option px-4 py-2.5 cursor-pointer hover:bg-blue-50 transition-colors text-sm border-b border-gray-100 last:border-b-0" 
+                     data-cliente-key="${option.key}">
+                    <div class="font-medium text-gray-800">${escapeHtml(option.label || option.nombre)}</div>
+                    ${option.direccion ? `<div class="text-xs text-gray-500 mt-0.5">${escapeHtml(option.direccion)}</div>` : ''}
+                </div>
+            `).join('');
+            dropdown.classList.remove('hidden');
+        }
+        
+        handleFormInput(event);
+        return;
+    }
+    
     handleFormInput(event);
 }
 
@@ -1742,10 +1943,10 @@ function handleContainerChange(event) {
         target.value = '';
         return;
     }
-
-    if (target.id === 'remito-form-cliente-select') {
+    
+    if (target.id === 'remito-form-equipo-select') {
         const value = typeof target.value === 'string' ? target.value : '';
-        applyClienteSelection(value);
+        applyEquipoSelection(value);
         renderManagementView();
         return;
     }
@@ -1879,6 +2080,30 @@ function handleContainerClick(event) {
     if (photoTrigger) {
         event.preventDefault();
         togglePhotoMenu(photoTrigger.dataset.remitoPhotoIndex);
+        return;
+    }
+    
+    // Selección de cliente desde dropdown
+    const clienteOption = event.target.closest('.remito-cliente-option');
+    if (clienteOption) {
+        event.preventDefault();
+        const key = clienteOption.dataset.clienteKey;
+        if (key) {
+            void applyClienteSelection(key);
+            // Ocultar dropdown
+            const dropdown = document.getElementById('remito-form-cliente-dropdown');
+            if (dropdown) {
+                dropdown.classList.add('hidden');
+                dropdown.innerHTML = '';
+            }
+        }
+        return;
+    }
+    
+    // Botón limpiar cliente
+    if (event.target.id === 'remito-form-cliente-clear' || event.target.closest('#remito-form-cliente-clear')) {
+        event.preventDefault();
+        void applyClienteSelection('');
         return;
     }
 
