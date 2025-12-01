@@ -1,3 +1,4 @@
+
 -- Migration: Agregar columnas extendidas a la tabla clients
 -- Fecha: 2025-11-30
 -- Descripción: Agrega campos telefono, email, division y canal para soportar
