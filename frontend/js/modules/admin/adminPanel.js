@@ -5,6 +5,7 @@
 
 import { supabase } from '../../supabaseClient.js';
 import { getCurrentUserRole } from '../login/auth.js';
+import { bindSistemasEquiposEventListeners, loadSistemas, loadEquipos } from './sistemasEquipos.js';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -838,6 +839,9 @@ function bindEventListeners() {
     
     // Event listeners para usuarios
     bindUsuarioEventListeners();
+    
+    // Event listeners para sistemas y equipos
+    bindSistemasEquiposEventListeners();
 }
 
 // ============================================
@@ -1531,9 +1535,13 @@ function bindUsuarioEventListeners() {
             const targetContent = document.getElementById(`admin-tab-${tabId}`);
             targetContent?.classList.remove('hidden');
             
-            // Cargar datos si es la pestaña de usuarios
+            // Cargar datos según la pestaña
             if (tabId === 'usuarios') {
                 loadUsuarios();
+            } else if (tabId === 'sistemas') {
+                loadSistemas();
+            } else if (tabId === 'equipos') {
+                loadEquipos();
             }
         });
     });

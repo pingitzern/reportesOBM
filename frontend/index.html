@@ -1449,6 +1449,18 @@
                         </svg>
                         Usuarios
                     </button>
+                    <button class="admin-tab-button" id="admin-tab-sistemas-btn" data-admin-tab="sistemas">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                        </svg>
+                        Sistemas
+                    </button>
+                    <button class="admin-tab-button" id="admin-tab-equipos-btn" data-admin-tab="equipos">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                        Equipos
+                    </button>
                 </div>
 
                 <!-- Contenido de la pestaña Clientes -->
@@ -1691,6 +1703,260 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Sistemas (Catálogo) -->
+            <div id="admin-tab-sistemas" class="admin-tab-content hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Catálogo de Sistemas</h2>
+                        <p class="text-sm text-gray-500">Gestiona los tipos de sistemas/equipos disponibles</p>
+                    </div>
+                    <button type="button" id="admin-sistema-new-btn" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nuevo Sistema
+                    </button>
+                </div>
+
+                <!-- Stats Sistemas -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3 3h10c1.5 0 3-1 3-3V7c0-2-1.5-3-3-3H7c-1.5 0-3 1-3 3z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Total Sistemas</p>
+                                <p id="admin-sistemas-total" class="text-xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Activos</p>
+                                <p id="admin-sistemas-activos" class="text-xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Categorías</p>
+                                <p id="admin-sistemas-categorias" class="text-xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Con Vida Útil</p>
+                                <p id="admin-sistemas-vida-util" class="text-xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros Sistemas -->
+                <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="flex-1 relative">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input type="text" id="admin-sistemas-search" placeholder="Buscar por nombre o código..." 
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <select id="admin-sistemas-filter-categoria" class="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Todas las categorías</option>
+                            <option value="ablandador">Ablandador</option>
+                            <option value="osmosis">Ósmosis</option>
+                            <option value="hplc">HPLC</option>
+                            <option value="laboratorio">Laboratorio</option>
+                            <option value="servicio">Servicio</option>
+                            <option value="insumo">Insumo</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tabla Sistemas -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nombre</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Categoría</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Vida Útil</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                                    <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-sistemas-tbody" class="divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <svg class="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                            Cargando sistemas...
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Equipos (Base Unificada) -->
+            <div id="admin-tab-equipos" class="admin-tab-content hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Equipos de Clientes</h2>
+                        <p class="text-sm text-gray-500">Gestiona los equipos asignados a cada cliente</p>
+                    </div>
+                    <button type="button" id="admin-equipo-new-btn" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nuevo Equipo
+                    </button>
+                </div>
+
+                <!-- Stats Equipos -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Total Equipos</p>
+                                <p id="admin-equipos-total" class="text-xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Activos</p>
+                                <p id="admin-equipos-activos" class="text-xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Clientes</p>
+                                <p id="admin-equipos-clientes" class="text-xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-200 p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Inactivos</p>
+                                <p id="admin-equipos-inactivos" class="text-xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros Equipos -->
+                <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="flex-1 relative">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input type="text" id="admin-equipos-search" placeholder="Buscar por cliente, equipo o TAG..." 
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <select id="admin-equipos-filter-cliente" class="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Todos los clientes</option>
+                        </select>
+                        <select id="admin-equipos-filter-sistema" class="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Todos los sistemas</option>
+                        </select>
+                        <select id="admin-equipos-filter-activo" class="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Todos</option>
+                            <option value="true">Activos</option>
+                            <option value="false">Inactivos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tabla Equipos -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cliente</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Sistema</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Modelo</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">TAG/ID</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Instalación</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                                    <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-equipos-tbody" class="divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <svg class="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                            Cargando equipos...
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1972,6 +2238,211 @@
                             Cancelar
                         </button>
                         <button type="button" id="admin-usuario-delete-confirm-btn" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Crear/Editar Sistema -->
+        <div id="admin-sistema-modal-backdrop" class="hidden fixed inset-0 bg-black/50 z-40" aria-hidden="true"></div>
+        <div id="admin-sistema-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 text-white">
+                    <h3 id="admin-sistema-modal-title" class="text-xl font-bold">Nuevo Sistema</h3>
+                    <p class="text-indigo-100 text-sm mt-1">Complete los datos del sistema</p>
+                </div>
+                <form id="admin-sistema-form" class="flex-1 overflow-y-auto p-6 space-y-5">
+                    <input type="hidden" id="admin-sistema-id" name="id">
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="admin-sistema-codigo" class="block text-sm font-medium text-gray-700 mb-1">Código *</label>
+                            <input type="text" id="admin-sistema-codigo" name="codigo" required
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Ej: OSM-001">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-sistema-nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                            <input type="text" id="admin-sistema-nombre" name="nombre" required
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Ej: Ósmosis Inversa Industrial">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-sistema-categoria" class="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                            <select id="admin-sistema-categoria" name="categoria" required
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                                <option value="">Seleccionar categoría...</option>
+                                <option value="ablandador">Ablandador</option>
+                                <option value="osmosis">Ósmosis</option>
+                                <option value="hplc">HPLC</option>
+                                <option value="laboratorio">Laboratorio</option>
+                                <option value="servicio">Servicio</option>
+                                <option value="insumo">Insumo</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="admin-sistema-descripcion" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                            <textarea id="admin-sistema-descripcion" name="descripcion" rows="3"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Descripción del sistema..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="admin-sistema-vida-util" class="block text-sm font-medium text-gray-700 mb-1">Vida Útil (días)</label>
+                            <input type="number" id="admin-sistema-vida-util" name="vida_util_dias" min="0"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Ej: 365">
+                            <p class="text-xs text-gray-500 mt-1">Dejar vacío si no aplica</p>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="admin-sistema-activo" name="activo" checked
+                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <label for="admin-sistema-activo" class="text-sm font-medium text-gray-700">Sistema activo</label>
+                        </div>
+                    </div>
+                    
+                    <p id="admin-sistema-error" class="text-sm text-red-600 hidden" role="alert"></p>
+                </form>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button" id="admin-sistema-cancel-btn" class="px-5 py-2.5 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" form="admin-sistema-form" id="admin-sistema-save-btn" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Confirmar Eliminar Sistema -->
+        <div id="admin-sistema-delete-backdrop" class="hidden fixed inset-0 bg-black/50 z-40" aria-hidden="true"></div>
+        <div id="admin-sistema-delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div class="p-6 text-center">
+                    <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 mb-4">
+                        <svg class="h-7 w-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Eliminar Sistema</h3>
+                    <p class="text-gray-600 mb-1">¿Estás seguro de que deseas eliminar el sistema</p>
+                    <p id="admin-sistema-delete-name" class="font-semibold text-gray-900 mb-4"></p>
+                    <p class="text-sm text-amber-600 mb-6">⚠️ Esto puede afectar equipos asociados a este sistema.</p>
+                    <input type="hidden" id="admin-sistema-delete-id">
+                    <div class="flex gap-3">
+                        <button type="button" id="admin-sistema-delete-cancel-btn" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="button" id="admin-sistema-delete-confirm-btn" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Crear/Editar Equipo -->
+        <div id="admin-equipo-modal-backdrop" class="hidden fixed inset-0 bg-black/50 z-40" aria-hidden="true"></div>
+        <div id="admin-equipo-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 text-white">
+                    <h3 id="admin-equipo-modal-title" class="text-xl font-bold">Nuevo Equipo</h3>
+                    <p class="text-indigo-100 text-sm mt-1">Asigne un equipo a un cliente</p>
+                </div>
+                <form id="admin-equipo-form" class="flex-1 overflow-y-auto p-6 space-y-5">
+                    <input type="hidden" id="admin-equipo-id" name="id">
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="admin-equipo-cliente" class="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
+                            <select id="admin-equipo-cliente" name="client_id" required
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                                <option value="">Seleccionar cliente...</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="admin-equipo-sistema" class="block text-sm font-medium text-gray-700 mb-1">Sistema *</label>
+                            <select id="admin-equipo-sistema" name="sistema_id" required
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                                <option value="">Seleccionar sistema...</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="admin-equipo-modelo" class="block text-sm font-medium text-gray-700 mb-1">Modelo</label>
+                            <input type="text" id="admin-equipo-modelo" name="modelo"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Ej: RO-5000">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-equipo-tag" class="block text-sm font-medium text-gray-700 mb-1">TAG / ID</label>
+                            <input type="text" id="admin-equipo-tag" name="tag_id"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Ej: EQ-001-SHELL">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-equipo-fecha-instalacion" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Instalación</label>
+                            <input type="date" id="admin-equipo-fecha-instalacion" name="fecha_instalacion"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label for="admin-equipo-notas" class="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+                            <textarea id="admin-equipo-notas" name="notas" rows="3"
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="Notas adicionales sobre el equipo..."></textarea>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="admin-equipo-activo" name="activo" checked
+                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <label for="admin-equipo-activo" class="text-sm font-medium text-gray-700">Equipo activo</label>
+                        </div>
+                    </div>
+                    
+                    <p id="admin-equipo-error" class="text-sm text-red-600 hidden" role="alert"></p>
+                </form>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button" id="admin-equipo-cancel-btn" class="px-5 py-2.5 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" form="admin-equipo-form" id="admin-equipo-save-btn" class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Confirmar Eliminar Equipo -->
+        <div id="admin-equipo-delete-backdrop" class="hidden fixed inset-0 bg-black/50 z-40" aria-hidden="true"></div>
+        <div id="admin-equipo-delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div class="p-6 text-center">
+                    <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-red-100 mb-4">
+                        <svg class="h-7 w-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Eliminar Equipo</h3>
+                    <p class="text-gray-600 mb-1">¿Estás seguro de que deseas eliminar el equipo</p>
+                    <p id="admin-equipo-delete-name" class="font-semibold text-gray-900 mb-4"></p>
+                    <p class="text-sm text-red-600 mb-6">Esta acción no se puede deshacer.</p>
+                    <input type="hidden" id="admin-equipo-delete-id">
+                    <div class="flex gap-3">
+                        <button type="button" id="admin-equipo-delete-cancel-btn" class="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="button" id="admin-equipo-delete-confirm-btn" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">
                             Eliminar
                         </button>
                     </div>
