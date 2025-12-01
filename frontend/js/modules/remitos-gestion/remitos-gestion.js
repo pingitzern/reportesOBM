@@ -1,4 +1,5 @@
 import { getEquiposByCliente } from '../admin/sistemasEquipos.js';
+import { getCurrentUserName } from '../login/auth.js';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_REMITO_PHOTOS = 4;
@@ -502,13 +503,17 @@ function normalizeRemitoForDisplay(remito) {
 }
 
 function getEmptyFormData() {
+    // Obtener el nombre del técnico logueado automáticamente
+    const tecnicoLogueado = getCurrentUserName() || '';
+    
     return {
         numeroRemito: '',
         numeroReporte: '',
         cliente: '',
         fechaRemitoISO: getTodayInputDate(),
         fechaServicioISO: '',
-        tecnico: '',
+        tecnico: tecnicoLogueado,
+        referencia: '', // Referencia / O.C / Presupuesto
         observaciones: '',
         direccion: '',
         telefono: '',
@@ -522,6 +527,8 @@ function getEmptyFormData() {
         modelo: '',
         serie: '',
         tagId: '',
+        // Repuestos
+        repuestos: [],
     };
 }
 
@@ -813,7 +820,7 @@ function buildPhotoSlotHtml(slot, index, disabledAttr) {
         : '';
 
     const menuHtml = `
-        <div class="absolute inset-0 z-10 hidden items-center justify-center rounded-xl bg-black/40 p-4" data-remito-photo-menu="${index}" aria-hidden="true">
+        <div class="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-black/40 p-4" data-remito-photo-menu="${index}" aria-hidden="true" style="display: none;">
             <button type="button" class="absolute inset-0 cursor-default" data-remito-photo-menu-dismiss></button>
             <div class="relative z-10 w-full max-w-[220px] space-y-2 rounded-lg bg-white p-4 text-center shadow-lg">
                 <p class="text-sm font-semibold text-gray-700">Seleccioná una opción</p>
@@ -843,48 +850,94 @@ function buildPhotoSlotHtml(slot, index, disabledAttr) {
     `;
 }
 
+function buildRepuestosSectionHtml(disableFormFields) {
+    const disabledAttr = disableFormFields ? ' disabled' : '';
+    const repuestos = Array.isArray(state.formData?.repuestos) ? state.formData.repuestos : [];
+    
+    const repuestosRowsHtml = repuestos.length > 0 
+        ? repuestos.map((rep, index) => `
+            <tr data-repuesto-index="${index}">
+                <td class="px-4 py-3">
+                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        data-repuesto-field="codigo" value="${escapeHtml(rep.codigo || '')}" placeholder="Código" ${disabledAttr}>
+                </td>
+                <td class="px-4 py-3">
+                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        data-repuesto-field="descripcion" value="${escapeHtml(rep.descripcion || '')}" placeholder="Descripción del repuesto" ${disabledAttr}>
+                </td>
+                <td class="px-4 py-3">
+                    <input type="number" min="1" class="w-24 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                        data-repuesto-field="cantidad" value="${escapeHtml(rep.cantidad || '1')}" ${disabledAttr}>
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <button type="button" class="text-red-500 hover:text-red-700 focus:outline-none" data-repuesto-remove="${index}" title="Eliminar repuesto" ${disabledAttr}>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </td>
+            </tr>
+        `).join('')
+        : `
+            <tr id="repuestos-empty-row">
+                <td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">
+                    No hay repuestos agregados. Usá el botón "Agregar repuesto" para añadir uno.
+                </td>
+            </tr>
+        `;
+    
+    return `
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Repuestos y Materiales</h3>
+                    <p class="text-sm text-gray-500">Detalle de los repuestos utilizados durante el servicio.</p>
+                </div>
+                <button type="button" id="remito-agregar-repuesto" 
+                    class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg font-semibold text-sm bg-blue-600 text-white shadow-sm transition-colors duration-150 ease-out hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
+                    ${disabledAttr}>
+                    Agregar repuesto
+                </button>
+            </div>
+            <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200" id="remito-repuestos-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Código</th>
+                            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Descripción</th>
+                            <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Cantidad</th>
+                            <th scope="col" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-16"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="remito-repuestos-body" class="bg-white divide-y divide-gray-200">
+                        ${repuestosRowsHtml}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    `;
+}
+
 function buildPhotoSectionHtml(disableFormFields) {
     const disabledAttr = disableFormFields ? ' disabled' : '';
     const slots = normalizePhotoSlots(state.formData?.fotos);
 
-    let highestSequentialFilled = -1;
-    for (let i = 0; i < slots.length; i += 1) {
-        if (hasPhotoContent(slots[i]) && i === highestSequentialFilled + 1) {
-            highestSequentialFilled = i;
-            continue;
-        }
-
-        if (i === highestSequentialFilled + 1 && !hasPhotoContent(slots[i])) {
-            break;
-        }
-    }
-
-    let lastExistingIndex = -1;
-    for (let i = 0; i < slots.length; i += 1) {
-        if (hasPhotoContent(slots[i])) {
-            lastExistingIndex = i;
-        }
-    }
-
-    const nextSequentialIndex = Math.min(highestSequentialFilled + 1, MAX_REMITO_PHOTOS - 1);
-    const displayUntil = Math.max(nextSequentialIndex, lastExistingIndex);
-    const totalSlotsToShow = Math.max(1, Math.min(slots.length, displayUntil + 1));
-
+    // Siempre mostrar los 4 slots de fotos
     const slotsHtml = slots
-        .slice(0, totalSlotsToShow)
+        .slice(0, MAX_REMITO_PHOTOS)
         .map((slot, index) => buildPhotoSlotHtml(slot, index, disabledAttr))
         .join('');
 
     return `
-        <div class="space-y-3">
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <div class="flex flex-col gap-1">
-                <span class="text-sm font-medium text-gray-700">Fotos del servicio</span>
-                <span class="text-xs text-gray-500">Podés subir hasta cuatro imágenes. Cada archivo puede pesar hasta 5 MB.</span>
+                <h3 class="text-lg font-semibold text-gray-800">Fotos del servicio</h3>
+                <p class="text-sm text-gray-500">Podés subir hasta cuatro imágenes. Cada archivo puede pesar hasta 5 MB.</p>
             </div>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 ${slotsHtml}
             </div>
-        </div>
+        </section>
     `;
 }
 
@@ -895,7 +948,7 @@ function closeAllPhotoMenus() {
 
     const menus = document.querySelectorAll('[data-remito-photo-menu]');
     menus.forEach((menu) => {
-        menu.classList.add('hidden');
+        menu.style.display = 'none';
         menu.setAttribute('aria-hidden', 'true');
     });
 }
@@ -916,10 +969,10 @@ function togglePhotoMenu(index) {
         return;
     }
 
-    const isHidden = menu.classList.contains('hidden');
+    const isHidden = menu.style.display === 'none' || menu.style.display === '';
     closeAllPhotoMenus();
     if (isHidden) {
-        menu.classList.remove('hidden');
+        menu.style.display = 'flex';
         menu.setAttribute('aria-hidden', 'false');
     }
 }
@@ -938,12 +991,26 @@ function buildPayloadFromForm(formData = {}) {
         fechaServicio: fechaServicioISO,
         fechaServicioISO,
         tecnico: sanitizeString(formData.tecnico),
+        referencia: sanitizeString(formData.referencia),
         observaciones: sanitizeString(formData.observaciones),
         direccion: sanitizeString(formData.direccion),
         telefono: sanitizeString(formData.telefono),
         email: sanitizeString(formData.email),
         cuit: sanitizeString(formData.cuit),
         reporteId: sanitizeString(formData.reporteId),
+        // Datos del equipo seleccionado
+        equipo_id: sanitizeString(formData.equipo_id),
+        equipo_numero_serie: sanitizeString(formData.equipo_numero_serie),
+        equipo_modelo: sanitizeString(formData.equipo_modelo),
+        equipo_ubicacion: sanitizeString(formData.equipo_ubicacion),
+        // Repuestos utilizados
+        repuestos: Array.isArray(formData.repuestos) 
+            ? formData.repuestos.map(r => ({
+                descripcion: sanitizeString(r.descripcion),
+                cantidad: parseInt(r.cantidad, 10) || 1,
+                codigo: sanitizeString(r.codigo)
+            })).filter(r => r.descripcion) // Solo incluir si tiene descripción
+            : [],
         fotos: fotoSlots.map((slot, index) => ({
             slot: index + 1,
             url: sanitizeString(slot.url),
@@ -1303,47 +1370,50 @@ function renderManagementView() {
     const hasEquipos = hasClienteSelected && state.equiposCliente.length > 0;
     const hasEquipoSelected = Boolean(state.selectedEquipoId);
     
-    // Construir sección de equipo (solo si hay cliente seleccionado)
+    // Construir sección de equipo - ahora como campos individuales para el grid
     const equipoSectionHtml = hasClienteSelected ? `
-        <div class="flex flex-col gap-1">
-            <label for="remito-form-equipo-select" class="text-sm font-medium text-gray-700">Equipo del cliente</label>
-            <select id="remito-form-equipo-select" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" ${equipoSelectDisabledAttr}>
+        <div class="md:col-span-2">
+            <label for="remito-form-equipo-select" class="block text-sm font-semibold text-gray-600">Equipo del cliente</label>
+            <select id="remito-form-equipo-select" class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" ${equipoSelectDisabledAttr}>
                 ${equiposOptionsHtml}
             </select>
             <p class="mt-1 text-xs text-gray-500">${hasEquipos ? 'Seleccioná un equipo para completar los datos técnicos.' : 'Este cliente no tiene equipos registrados.'}</p>
         </div>
-        ${hasEquipoSelected ? `
-        <div class="rounded-lg bg-blue-50 border border-blue-200 p-4 space-y-3">
-            <p class="text-sm font-medium text-blue-800">Datos del equipo seleccionado:</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                ${state.formData.sistemaNombre ? `
-                <div class="flex flex-col">
-                    <span class="text-xs text-blue-600 font-medium">Sistema</span>
-                    <span class="text-sm text-blue-900">${escapeHtml(state.formData.sistemaNombre)}</span>
-                </div>
-                ` : ''}
-                ${state.formData.modelo ? `
-                <div class="flex flex-col">
-                    <span class="text-xs text-blue-600 font-medium">Modelo</span>
-                    <span class="text-sm text-blue-900">${escapeHtml(state.formData.modelo)}</span>
-                </div>
-                ` : ''}
-                ${state.formData.serie ? `
-                <div class="flex flex-col">
-                    <span class="text-xs text-blue-600 font-medium">N° de Serie</span>
-                    <span class="text-sm text-blue-900">${escapeHtml(state.formData.serie)}</span>
-                </div>
-                ` : ''}
-                ${state.formData.tagId ? `
-                <div class="flex flex-col">
-                    <span class="text-xs text-blue-600 font-medium">TAG / ID</span>
-                    <span class="text-sm text-blue-900">${escapeHtml(state.formData.tagId)}</span>
-                </div>
-                ` : ''}
+        <div>
+            <label for="remito-form-sistema" class="block text-sm font-semibold text-gray-600">Sistema / Descripción</label>
+            <input id="remito-form-sistema" type="text" readonly
+                class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 bg-gray-50" 
+                value="${escapeHtml(state.formData.sistemaNombre || '')}" 
+                placeholder="Se completa al seleccionar equipo">
+        </div>
+        <div>
+            <label for="remito-form-modelo" class="block text-sm font-semibold text-gray-600">Modelo</label>
+            <input id="remito-form-modelo" type="text" readonly
+                class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 bg-gray-50" 
+                value="${escapeHtml(state.formData.modelo || '')}" 
+                placeholder="Se completa al seleccionar equipo">
+        </div>
+        <div>
+            <label for="remito-form-serie" class="block text-sm font-semibold text-gray-600">Número de Serie</label>
+            <input id="remito-form-serie" type="text" readonly
+                class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 bg-gray-50" 
+                value="${escapeHtml(state.formData.serie || '')}" 
+                placeholder="Se completa al seleccionar equipo">
+        </div>
+        <div>
+            <label for="remito-form-tag" class="block text-sm font-semibold text-gray-600">TAG / ID Interno</label>
+            <input id="remito-form-tag" type="text" readonly
+                class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 bg-gray-50" 
+                value="${escapeHtml(state.formData.tagId || '')}" 
+                placeholder="Se completa al seleccionar equipo">
+        </div>
+    ` : `
+        <div class="md:col-span-2">
+            <div class="rounded-lg bg-gray-50 border border-gray-200 p-4 text-center text-sm text-gray-500">
+                <p>Seleccioná un cliente para ver sus equipos disponibles.</p>
             </div>
         </div>
-        ` : ''}
-    ` : '';
+    `;
     
     const shouldShowNumeroRemitoPlaceholder = state.formMode === 'create'
         && !sanitizeString(state.formData.numeroRemito);
@@ -1385,37 +1455,78 @@ function renderManagementView() {
 
     const secondaryButtonHtml = secondaryButtons.join('');
     const photoSectionHtml = buildPhotoSectionHtml(disableFormFields);
+    
+    // Construir sección de repuestos
+    const repuestosHtml = buildRepuestosSectionHtml(disableFormFields);
 
     if (state.viewMode === 'form') {
         container.innerHTML = `
-            <div class="space-y-6">
+            <div class="max-w-5xl mx-auto space-y-6">
                 ${feedbackHtml ? `<div>${feedbackHtml}</div>` : ''}
-                <div class="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                    <div class="border-b border-gray-100 px-6 py-5">
-                        <h3 class="text-lg font-semibold text-gray-800">${escapeHtml(formTitle)}</h3>
-                        <p class="mt-1 text-sm text-gray-500">${formSubtitle}</p>
-                    </div>
-                    <form id="remito-abm-form" class="space-y-5 px-6 py-6">
-                        <div class="space-y-4">
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-numero" class="text-sm font-medium text-gray-700">Número de remito</label>
-                                <input id="remito-form-numero" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="numeroRemito" value="${escapeHtml(state.formData.numeroRemito)}"${numeroRemitoPlaceholderAttr} readonly ${disabledAttr}>
-                                ${numeroRemitoHelpHtml}
+                
+                <!-- Header -->
+                <div class="bg-white shadow-lg rounded-3xl p-8 border border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800">${escapeHtml(formTitle)}</h2>
+                    <p class="mt-2 text-sm text-gray-500">${formSubtitle}</p>
+                </div>
+
+                <form id="remito-abm-form" class="space-y-6">
+                    <!-- Número, Fecha, Técnico y Referencia -->
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-600">Número de Remito</label>
+                                <div class="mt-2 w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-2 text-gray-500 italic text-sm">
+                                    Automático
+                                </div>
                             </div>
-                            ${numeroReporteFieldHtml}
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-cliente" class="text-sm font-medium text-gray-700">Razón social / Cliente *</label>
-                                <div class="relative">
+                            <div>
+                                <label for="remito-form-fecha" class="block text-sm font-semibold text-gray-600">Fecha *</label>
+                                <input id="remito-form-fecha" type="date" 
+                                    class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                    data-remito-field="fechaRemitoISO" 
+                                    value="${escapeHtml(state.formData.fechaRemitoISO)}" 
+                                    ${disabledAttr}>
+                            </div>
+                            <div>
+                                <label for="remito-form-tecnico" class="block text-sm font-semibold text-gray-600">Técnico Responsable</label>
+                                <input id="remito-form-tecnico" type="text" 
+                                    class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 bg-gray-50" 
+                                    data-remito-field="tecnico" 
+                                    value="${escapeHtml(state.formData.tecnico)}" 
+                                    placeholder="Nombre del técnico"
+                                    readonly
+                                    ${disabledAttr}>
+                            </div>
+                            <div>
+                                <label for="remito-form-referencia" class="block text-sm font-semibold text-gray-600">Referencia / O.C / Presupuesto</label>
+                                <input id="remito-form-referencia" type="text" 
+                                    class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                    data-remito-field="referencia" 
+                                    value="${escapeHtml(state.formData.referencia || '')}" 
+                                    placeholder="Identificador asociado"
+                                    ${disabledAttr}>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Datos del Cliente -->
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Datos del Cliente</h3>
+                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div class="md:col-span-2">
+                                <label for="remito-form-cliente" class="block text-sm font-semibold text-gray-600">Razón Social *</label>
+                                <div class="relative mt-2">
                                     <div class="flex gap-2">
                                         <input id="remito-form-cliente" type="text" 
-                                            class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                             data-remito-field="cliente" 
                                             value="${escapeHtml(state.formData.cliente)}" 
                                             placeholder="${state.isLoadingClientes ? 'Cargando clientes...' : 'Buscar cliente...'}" 
                                             autocomplete="off"
                                             ${disabledAttr}>
                                         ${hasClienteSelected ? `
-                                        <button type="button" id="remito-form-cliente-clear" class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-gray-300 transition-colors" title="Limpiar cliente" ${disabledAttr}>
+                                        <button type="button" id="remito-form-cliente-clear" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-gray-300 transition-colors" title="Limpiar cliente" ${disabledAttr}>
                                             ✕
                                         </button>
                                         ` : ''}
@@ -1424,49 +1535,80 @@ function renderManagementView() {
                                 </div>
                                 <p class="mt-1 text-xs text-gray-500">${hasClienteSelected ? 'Cliente seleccionado. Los datos se completaron automáticamente.' : 'Escribí para buscar un cliente o ingresá los datos manualmente.'}</p>
                             </div>
-                            ${equipoSectionHtml}
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-fecha" class="text-sm font-medium text-gray-700">Fecha del remito</label>
-                                <input id="remito-form-fecha" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="fechaRemitoISO" value="${escapeHtml(state.formData.fechaRemitoISO)}" ${disabledAttr}>
+                            <div>
+                                <label for="remito-form-direccion" class="block text-sm font-semibold text-gray-600">Dirección</label>
+                                <input id="remito-form-direccion" type="text" 
+                                    class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                    data-remito-field="direccion" 
+                                    value="${escapeHtml(state.formData.direccion)}" 
+                                    placeholder="Domicilio del servicio"
+                                    ${disabledAttr}>
                             </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-tecnico" class="text-sm font-medium text-gray-700">Técnico</label>
-                                <input id="remito-form-tecnico" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="tecnico" value="${escapeHtml(state.formData.tecnico)}" placeholder="Nombre del técnico" ${disabledAttr}>
+                            <div>
+                                <label for="remito-form-telefono" class="block text-sm font-semibold text-gray-600">Teléfono</label>
+                                <input id="remito-form-telefono" type="tel" 
+                                    class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                    data-remito-field="telefono" 
+                                    value="${escapeHtml(state.formData.telefono)}" 
+                                    placeholder="Teléfono de contacto"
+                                    ${disabledAttr}>
                             </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-direccion" class="text-sm font-medium text-gray-700">Dirección</label>
-                                <input id="remito-form-direccion" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="direccion" value="${escapeHtml(state.formData.direccion)}" placeholder="Domicilio del servicio" ${disabledAttr}>
+                            <div>
+                                <label for="remito-form-email" class="block text-sm font-semibold text-gray-600">Email</label>
+                                <input id="remito-form-email" type="email" 
+                                    class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                    data-remito-field="email" 
+                                    value="${escapeHtml(state.formData.email)}" 
+                                    placeholder="Correo electrónico"
+                                    ${disabledAttr}>
                             </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-telefono" class="text-sm font-medium text-gray-700">Teléfono</label>
-                                <input id="remito-form-telefono" type="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="telefono" value="${escapeHtml(state.formData.telefono)}" placeholder="Teléfono de contacto" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-email" class="text-sm font-medium text-gray-700">Email</label>
-                                <input id="remito-form-email" type="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="email" value="${escapeHtml(state.formData.email)}" placeholder="Correo electrónico del cliente" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-cuit" class="text-sm font-medium text-gray-700">CUIT</label>
-                                <input id="remito-form-cuit" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="cuit" value="${escapeHtml(state.formData.cuit)}" placeholder="CUIT del cliente" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-reporte-id" class="text-sm font-medium text-gray-700">Número de referencia, O.C, Presupuesto</label>
-                                <input id="remito-form-reporte-id" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="reporteId" value="${escapeHtml(state.formData.reporteId)}" placeholder="Identificador asociado" ${disabledAttr}>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <label for="remito-form-observaciones" class="text-sm font-medium text-gray-700">Observaciones</label>
-                                <textarea id="remito-form-observaciones" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" data-remito-field="observaciones" placeholder="Notas adicionales" ${disabledAttr}>${escapeHtml(state.formData.observaciones)}</textarea>
+                            <div>
+                                <label for="remito-form-cuit" class="block text-sm font-semibold text-gray-600">CUIT</label>
+                                <input id="remito-form-cuit" type="text" 
+                                    class="mt-2 w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                    data-remito-field="cuit" 
+                                    value="${escapeHtml(state.formData.cuit)}" 
+                                    placeholder="CUIT del cliente"
+                                    ${disabledAttr}>
                             </div>
                         </div>
-                        ${photoSectionHtml}
-                        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    </section>
+
+                    <!-- Datos del Equipo -->
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Datos del Equipo</h3>
+                        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                            ${equipoSectionHtml}
+                        </div>
+                    </section>
+
+                    <!-- Repuestos y Materiales -->
+                    ${repuestosHtml}
+
+                    <!-- Fotos del Servicio -->
+                    ${photoSectionHtml}
+
+                    <!-- Observaciones -->
+                    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <label for="remito-form-observaciones" class="block text-lg font-semibold text-gray-800">Observaciones</label>
+                        <textarea id="remito-form-observaciones" 
+                            class="mt-4 w-full border border-gray-300 rounded-lg p-4 text-gray-700 min-h-[120px] focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                            data-remito-field="observaciones"
+                            placeholder="Agregá observaciones o comentarios relevantes"
+                            ${disabledAttr}>${escapeHtml(state.formData.observaciones)}</textarea>
+                    </section>
+
+                    <!-- Botones de acción -->
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <p class="text-sm text-gray-500">Al guardar, el número de remito se generará automáticamente.</p>
+                        <div class="flex flex-col items-stretch gap-3 md:flex-row md:items-center md:justify-end md:gap-3">
                             ${secondaryButtonHtml}
-                            <button type="submit" class="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" ${disabledAttr}>
+                            <button type="submit" class="inline-flex justify-center rounded-lg border border-transparent bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" ${disabledAttr}>
                                 ${escapeHtml(submitLabel)}
                             </button>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         `;
         return;
@@ -1708,6 +1850,71 @@ async function handleDeleteRemito(index) {
         setFeedback('error', error?.message || 'No se pudo eliminar el remito.');
         renderManagementView();
     }
+}
+
+/**
+ * Agrega un nuevo repuesto vacío a la lista
+ */
+function handleAgregarRepuesto() {
+    if (!Array.isArray(state.formData.repuestos)) {
+        state.formData.repuestos = [];
+    }
+    
+    // Recolectar valores actuales del formulario antes de agregar
+    collectRepuestosFromForm();
+    
+    state.formData.repuestos.push({
+        codigo: '',
+        descripcion: '',
+        cantidad: '1'
+    });
+    
+    renderManagementView();
+    
+    // Focus en el campo código del nuevo repuesto
+    setTimeout(() => {
+        const lastIndex = state.formData.repuestos.length - 1;
+        const codigoInput = document.querySelector(`tr[data-repuesto-index="${lastIndex}"] input[data-repuesto-field="codigo"]`);
+        if (codigoInput) {
+            codigoInput.focus();
+        }
+    }, 50);
+}
+
+/**
+ * Elimina un repuesto de la lista
+ */
+function handleRemoveRepuesto(index) {
+    if (!Array.isArray(state.formData.repuestos)) {
+        return;
+    }
+    
+    // Recolectar valores actuales antes de eliminar
+    collectRepuestosFromForm();
+    
+    if (index >= 0 && index < state.formData.repuestos.length) {
+        state.formData.repuestos.splice(index, 1);
+        renderManagementView();
+    }
+}
+
+/**
+ * Recolecta los valores de repuestos desde el formulario DOM
+ */
+function collectRepuestosFromForm() {
+    const rows = document.querySelectorAll('#remito-repuestos-body tr[data-repuesto-index]');
+    const repuestos = [];
+    
+    rows.forEach((row) => {
+        const codigo = row.querySelector('input[data-repuesto-field="codigo"]')?.value || '';
+        const descripcion = row.querySelector('input[data-repuesto-field="descripcion"]')?.value || '';
+        const cantidad = row.querySelector('input[data-repuesto-field="cantidad"]')?.value || '1';
+        
+        repuestos.push({ codigo, descripcion, cantidad });
+    });
+    
+    state.formData.repuestos = repuestos;
+    return repuestos;
 }
 
 /**
@@ -1959,6 +2166,9 @@ async function handleFormSubmit() {
         return;
     }
 
+    // Recolectar repuestos del formulario antes de validar
+    collectRepuestosFromForm();
+
     const errors = validateFormData(state.formData);
     if (errors.length > 0) {
         setFeedback('error', errors.join(' '));
@@ -2064,6 +2274,16 @@ function handleAction(action) {
 }
 
 function handleContainerClick(event) {
+    // Verificar si el click es en un trigger de foto PRIMERO
+    const photoTrigger = event.target.closest('[data-remito-photo-trigger]');
+    if (photoTrigger) {
+        event.preventDefault();
+        event.stopPropagation();
+        togglePhotoMenu(photoTrigger.dataset.remitoPhotoIndex);
+        return;
+    }
+
+    // Si el click no está dentro del menú ni en el trigger, cerrar menús
     const clickedInsidePhotoMenu = Boolean(event.target.closest('[data-remito-photo-menu]'));
     if (!clickedInsidePhotoMenu) {
         closeAllPhotoMenus();
@@ -2073,13 +2293,6 @@ function handleContainerClick(event) {
     if (photoMenuDismiss) {
         event.preventDefault();
         closeAllPhotoMenus();
-        return;
-    }
-
-    const photoTrigger = event.target.closest('[data-remito-photo-trigger]');
-    if (photoTrigger) {
-        event.preventDefault();
-        togglePhotoMenu(photoTrigger.dataset.remitoPhotoIndex);
         return;
     }
     
@@ -2158,6 +2371,25 @@ function handleContainerClick(event) {
         if (Number.isFinite(index)) {
             handleDescargarPdfRemito(index);
         }
+        return;
+    }
+    
+    // Agregar repuesto
+    if (event.target.id === 'remito-agregar-repuesto' || event.target.closest('#remito-agregar-repuesto')) {
+        event.preventDefault();
+        handleAgregarRepuesto();
+        return;
+    }
+    
+    // Eliminar repuesto
+    const removeRepuestoBtn = event.target.closest('[data-repuesto-remove]');
+    if (removeRepuestoBtn) {
+        event.preventDefault();
+        const index = Number.parseInt(removeRepuestoBtn.dataset.repuestoRemove, 10);
+        if (Number.isFinite(index)) {
+            handleRemoveRepuesto(index);
+        }
+        return;
     }
 }
 
