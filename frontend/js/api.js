@@ -644,6 +644,17 @@ export async function crearRemito(datos) {
 
     const reporteData = datos.reporteData || datos;
 
+    // Intentar generar número de remito manualmente si no se confía en el default de la BD
+    let numeroRemitoGenerado = null;
+    try {
+        const { data: nextNumber, error: rpcError } = await supabase.rpc('generate_remito_number');
+        if (!rpcError && nextNumber) {
+            numeroRemitoGenerado = nextNumber;
+        }
+    } catch (err) {
+        console.warn('No se pudo generar número de remito vía RPC, confiando en default de BD:', err);
+    }
+
     // Preparar datos para insertar
     const remitoData = {
         numero_reporte: reporteData.numero_reporte || reporteData.NumeroReporte || null,
@@ -665,7 +676,11 @@ export async function crearRemito(datos) {
         repuestos: JSON.stringify(reporteData.repuestos || []),
     };
 
-    // Insertar remito (el numero_remito se genera automáticamente)
+    if (numeroRemitoGenerado) {
+        remitoData.numero_remito = numeroRemitoGenerado;
+    }
+
+    // Insertar remito (el numero_remito se genera automáticamente si no se provee)
     const { data: remito, error } = await supabase
         .from('remitos')
         .insert([remitoData])

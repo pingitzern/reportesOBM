@@ -27,6 +27,7 @@ const {
     obtenerVersionServidor,
     enviarFeedbackTicket,
     obtenerUrlPdfRemito,
+    guardarPdfRemito,
 } = api;
 
 initializeTheme();
@@ -88,6 +89,7 @@ const remitosGestionModule = createRemitosGestionModule({
     eliminarRemito,
     obtenerClientes,
     obtenerUrlPdfRemito,
+    guardarPdfRemito,
 });
 
 const softenerModule = createSoftenerModule({

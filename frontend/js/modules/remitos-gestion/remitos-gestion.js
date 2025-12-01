@@ -1,5 +1,6 @@
 import { getEquiposByCliente } from '../admin/sistemasEquipos.js';
 import { getCurrentUserName } from '../login/auth.js';
+import { buildPrintableRemitoData, createRemitoPrintHtml, generatePdfBlob } from '../remito/remito.js';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_REMITO_PHOTOS = 4;
@@ -437,9 +438,9 @@ function normalizeRemitoForDisplay(remito) {
     const fechaRemitoISO = remito.fechaRemitoISO ?? remito.FechaRemitoISO;
     const fechaServicioISO = remito.fechaServicioISO ?? remito.FechaServicioISO;
 
-    const numeroRemitoValue = pickValue(remito, ['numeroRemito', 'NumeroRemito']);
-    const numeroReporteValue = pickValue(remito, ['numeroReporte', 'NumeroReporte']);
-    const clienteValue = pickValue(remito, ['cliente', 'Cliente', 'NombreCliente']);
+    const numeroRemitoValue = pickValue(remito, ['numeroRemito', 'NumeroRemito', 'numero_remito']);
+    const numeroReporteValue = pickValue(remito, ['numeroReporte', 'NumeroReporte', 'numero_reporte']);
+    const clienteValue = pickValue(remito, ['cliente', 'Cliente', 'NombreCliente', 'cliente_nombre']);
     const fechaRemitoValue = pickValue(remito, ['fechaRemito', 'FechaRemito', 'FechaCreacion']);
     const fechaRemitoIsoValue = pickValue(remito, ['fechaRemitoISO', 'FechaRemitoISO', 'FechaCreacionISO']);
     const fechaServicioValue = pickValue(remito, ['fechaServicio', 'FechaServicio']);
@@ -893,7 +894,7 @@ function buildRepuestosSectionHtml(disableFormFields) {
                     <h3 class="text-lg font-semibold text-gray-800">Repuestos y Materiales</h3>
                     <p class="text-sm text-gray-500">Detalle de los repuestos utilizados durante el servicio.</p>
                 </div>
-                <button type="button" id="remito-agregar-repuesto" 
+                <button type="button" id="remitos-gestion-agregar-repuesto" 
                     class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg font-semibold text-sm bg-blue-600 text-white shadow-sm transition-colors duration-150 ease-out hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
                     ${disabledAttr}>
                     Agregar repuesto
@@ -909,7 +910,7 @@ function buildRepuestosSectionHtml(disableFormFields) {
                             <th scope="col" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 w-16"></th>
                         </tr>
                     </thead>
-                    <tbody id="remito-repuestos-body" class="bg-white divide-y divide-gray-200">
+                    <tbody id="remitos-gestion-repuestos-body" class="bg-white divide-y divide-gray-200">
                         ${repuestosRowsHtml}
                     </tbody>
                 </table>
@@ -946,7 +947,12 @@ function closeAllPhotoMenus() {
         return;
     }
 
-    const menus = document.querySelectorAll('[data-remito-photo-menu]');
+    const container = getContainerElement();
+    if (!container) {
+        return;
+    }
+
+    const menus = container.querySelectorAll('[data-remito-photo-menu]');
     menus.forEach((menu) => {
         menu.style.display = 'none';
         menu.setAttribute('aria-hidden', 'true');
@@ -958,13 +964,18 @@ function togglePhotoMenu(index) {
         return;
     }
 
+    const container = getContainerElement();
+    if (!container) {
+        return;
+    }
+
     const normalizedIndex = Number(index);
     if (!Number.isFinite(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= MAX_REMITO_PHOTOS) {
         return;
     }
 
     const selector = `[data-remito-photo-menu="${normalizedIndex}"]`;
-    const menu = document.querySelector(selector);
+    const menu = container.querySelector(selector);
     if (!menu) {
         return;
     }
@@ -1240,6 +1251,9 @@ const defaultDependencies = {
     },
     obtenerUrlPdfRemito: async () => {
         return null; // Fallback: no hay URL, se regenerará el PDF
+    },
+    guardarPdfRemito: async () => {
+        return null; // Fallback: no se guarda PDF si no está provista
     },
 };
 
@@ -1717,6 +1731,41 @@ function renderManagementView() {
     `;
 }
 
+function showModal(title, contentHtml) {
+    const modalId = 'remito-detail-modal';
+    let modal = document.getElementById(modalId);
+    
+    if (modal) {
+        modal.remove();
+    }
+
+    const modalHtml = `
+        <div id="${modalId}" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-900 bg-opacity-50 p-4 md:inset-0 h-modal md:h-full">
+            <div class="relative w-full max-w-2xl h-full md:h-auto">
+                <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                    <div class="flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                            ${escapeHtml(title)}
+                        </h3>
+                        <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white" onclick="document.getElementById('${modalId}').remove()">
+                            <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                            <span class="sr-only">Cerrar</span>
+                        </button>
+                    </div>
+                    <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                        ${contentHtml}
+                    </div>
+                    <div class="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
+                        <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" onclick="document.getElementById('${modalId}').remove()">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
 function handleDetalleRemito(index) {
     if (!Array.isArray(state.remitos) || state.remitos.length === 0) {
         return;
@@ -1731,34 +1780,60 @@ function handleDetalleRemito(index) {
         return;
     }
 
-    const lines = [
-        `Número de Remito: ${getDisplayValue(remito.numeroRemito)}`,
-        `Fecha del Remito: ${getDisplayValue(remito.fechaRemito)}`,
-        `Cliente: ${getDisplayValue(remito.cliente)}`,
-        `Número de Reporte: ${getDisplayValue(remito.numeroReporte)}`,
+    const fields = [
+        { label: 'Número de Remito', value: remito.numeroRemito },
+        { label: 'Fecha del Remito', value: remito.fechaRemito },
+        { label: 'Cliente', value: remito.cliente },
+        { label: 'Número de Reporte', value: remito.numeroReporte },
+        { label: 'Referencia / O.C', value: remito.reporteId },
+        { label: 'Fecha del Servicio', value: remito.fechaServicio },
+        { label: 'Técnico', value: remito.tecnico },
+        { label: 'Dirección', value: remito.direccion },
+        { label: 'Teléfono', value: remito.telefono },
+        { label: 'Email', value: remito.email },
+        { label: 'Observaciones', value: remito.observaciones },
     ];
 
-    const optionalFields = [
-        ['Número de referencia, O.C, Presupuesto', remito.reporteId],
-        ['Fecha del Servicio', remito.fechaServicio],
-        ['Técnico', remito.tecnico],
-        ['Dirección', remito.direccion],
-        ['Teléfono', remito.telefono],
-        ['Email', remito.email],
-        ['Observaciones', remito.observaciones],
-    ];
-
-    optionalFields.forEach(([label, value]) => {
-        const sanitized = sanitizeString(value);
-        if (sanitized) {
-            lines.push(`${label}: ${sanitized}`);
-        }
-    });
-
-    const message = lines.join('\n');
-    if (message && typeof window !== 'undefined' && typeof window.alert === 'function') {
-        window.alert(message);
+    // Agregar datos del equipo si existen
+    if (remito.equipo_descripcion || remito.equipo_modelo) {
+        fields.push({ label: 'Equipo', value: `${remito.equipo_descripcion} ${remito.equipo_modelo}` });
+        if (remito.equipo_serie) fields.push({ label: 'Serie', value: remito.equipo_serie });
+        if (remito.equipo_ubicacion) fields.push({ label: 'Ubicación', value: remito.equipo_ubicacion });
     }
+
+    const contentHtml = `
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            ${fields.map(field => {
+                const val = getDisplayValue(field.value);
+                if (val === '-') return ''; // Omitir campos vacíos
+                return `
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">${escapeHtml(field.label)}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">${escapeHtml(val)}</dd>
+                    </div>
+                `;
+            }).join('')}
+        </dl>
+        ${remito.repuestos && remito.repuestos.length > 0 ? `
+            <div class="mt-6">
+                <h4 class="text-sm font-medium text-gray-900">Repuestos</h4>
+                <ul class="mt-2 border border-gray-200 rounded-md divide-y divide-gray-200">
+                    ${remito.repuestos.map(r => `
+                        <li class="pl-3 pr-4 py-3 flex items-center justify-between text-sm">
+                            <div class="w-0 flex-1 flex items-center">
+                                <span class="ml-2 flex-1 w-0 truncate">${escapeHtml(r.descripcion || r.Descripcion)} (${escapeHtml(r.codigo || r.Codigo || '-')})</span>
+                            </div>
+                            <div class="ml-4 flex-shrink-0">
+                                <span class="font-medium text-gray-900">Cant: ${r.cantidad || r.Cantidad}</span>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        ` : ''}
+    `;
+
+    showModal(`Detalle del Remito ${getDisplayValue(remito.numeroRemito)}`, contentHtml);
 }
 
 function handleEditRemito(index) {
@@ -1902,7 +1977,10 @@ function handleRemoveRepuesto(index) {
  * Recolecta los valores de repuestos desde el formulario DOM
  */
 function collectRepuestosFromForm() {
-    const rows = document.querySelectorAll('#remito-repuestos-body tr[data-repuesto-index]');
+    const container = getContainerElement();
+    if (!container) return [];
+    
+    const rows = container.querySelectorAll('#remitos-gestion-repuestos-body tr[data-repuesto-index]');
     const repuestos = [];
     
     rows.forEach((row) => {
@@ -2059,9 +2137,14 @@ function handlePhotoAction(action, index) {
         return;
     }
 
+    const container = getContainerElement();
+    if (!container) {
+        return;
+    }
+
     closeAllPhotoMenus();
     const selector = `[data-remito-photo-input="${action}"][data-remito-photo-index="${normalizedIndex}"]`;
-    const input = document.querySelector(selector);
+    const input = container.querySelector(selector);
     if (input) {
         input.value = '';
         input.click();
@@ -2202,13 +2285,39 @@ async function handleFormSubmit() {
         } else {
             const requestPayload = buildCreateRemitoRequest(payload);
             const response = await dependencies.crearRemito(requestPayload);
-            const nuevoNumero = sanitizeString(response?.NumeroRemito || response?.numeroRemito);
+            const nuevoNumero = sanitizeString(response?.NumeroRemito || response?.numeroRemito || response?.data?.NumeroRemito || response?.data?.numeroRemito);
             setFeedback(
                 'success',
                 nuevoNumero
                     ? `El remito ${nuevoNumero} se creó correctamente.`
                     : 'El remito se creó correctamente.',
             );
+
+            // Generar y guardar PDF para remitos creados manualmente
+            try {
+                const remitoId = sanitizeString(response?.data?.id || response?.id);
+                if (remitoId) {
+                    const reporteData = requestPayload?.reporteData || {};
+                    const printableReport = { ...reporteData, NumeroRemito: nuevoNumero };
+                    const photoSlots = normalizePhotoSlots(state.formData?.fotos || []);
+
+                    const printableData = buildPrintableRemitoData(printableReport, {
+                        observaciones: sanitizeString(payload?.observaciones || state.formData?.observaciones || ''),
+                        repuestos: Array.isArray(state.formData?.repuestos) ? state.formData.repuestos : [],
+                        photoSlots,
+                    });
+
+                    const html = createRemitoPrintHtml(printableData);
+                    if (html) {
+                        const blob = await generatePdfBlob(html);
+                        if (blob) {
+                            await dependencies.guardarPdfRemito(remitoId, blob, nuevoNumero);
+                        }
+                    }
+                }
+            } catch (pdfErr) {
+                console.warn('No se pudo generar/guardar el PDF del remito manual:', pdfErr);
+            }
         }
 
         resetFormState();
@@ -2375,7 +2484,7 @@ function handleContainerClick(event) {
     }
     
     // Agregar repuesto
-    if (event.target.id === 'remito-agregar-repuesto' || event.target.closest('#remito-agregar-repuesto')) {
+    if (event.target.id === 'remitos-gestion-agregar-repuesto' || event.target.closest('#remitos-gestion-agregar-repuesto')) {
         event.preventDefault();
         handleAgregarRepuesto();
         return;

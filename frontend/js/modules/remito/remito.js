@@ -2209,3 +2209,6 @@ export function createRemitoModule({ showView, navigateToDashboard, onRemitoComp
         getLastSavedReportForTests,
     };
 }
+
+// Utilidades exportadas para reutilizar en Gestión de Remitos (ABM manual)
+export { buildPrintableRemitoData, createRemitoPrintHtml, generatePdfBlob };
