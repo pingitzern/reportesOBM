@@ -6,6 +6,7 @@
     <title>OBM - Gestión de Mantenimientos</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/styles.build.css">
+    <link rel="stylesheet" href="./css/signature.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <!-- Google Maps Places API - Reemplazar YOUR_API_KEY con tu clave -->
     <script>
@@ -104,11 +105,11 @@
 
         <!-- Navegación por pestañas - SIN onclick -->
         <div class="flex flex-wrap justify-center gap-3 mb-8 no-print md:justify-start animate-slide-in">
-            <button class="tab-button active" id="tab-nuevo-btn">
+            <button class="tab-button" id="tab-mantenimientos-btn">
                 <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
-                Nuevo Mantenimiento
+                Mantenimientos
             </button>
             <button class="tab-button" id="tab-buscar-btn">
                 <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +133,7 @@
 
         <div class="space-y-8" id="main-content">
         <!-- Pestaña: Nuevo Mantenimiento -->
-        <section id="tab-nuevo" class="tab-content">
+        <section id="tab-nuevo" class="tab-content hidden">
             <form id="maintenance-form">
                 <!-- Sección A: Datos del Servicio y del Equipo -->
 
@@ -200,6 +201,10 @@
                                     </svg>
                                     Datos del Servicio y del Equipo
                                 </h3>
+                                <!-- Selector de equipos del cliente -->
+                                <div id="equipos-selector-container" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg"></div>
+                                <!-- Descripción técnica del sistema (autocompletada) -->
+                                <div id="sistema_descripcion" class="mb-2 text-sm text-gray-600 italic"></div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                     <div class="input-group flex flex-col gap-1">
                                         <label for="fecha_display" class="font-semibold text-gray-700">Fecha del Servicio:</label>
@@ -1160,6 +1165,151 @@
                     <button type="button" id="softener-generar-remito-btn" class="action-button print-btn w-full sm:w-auto" disabled>Generar Remito</button>
                 </div>
             </form>
+        </section>
+
+        <!-- Panel de Gestión de Mantenimientos -->
+        <section id="mantenimientos-gestion-view" class="tab-content hidden">
+            <div class="max-w-6xl mx-auto">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-cyan-600 shadow-lg rounded-3xl p-8 mb-6 text-white">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-white/20 rounded-2xl">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold">Mantenimientos</h2>
+                                <p class="mt-1 text-blue-100">Reportes de servicio de ósmosis y ablandadores</p>
+                            </div>
+                        </div>
+                        <button id="mant-gestion-nuevo-btn" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-colors shadow-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Nuevo Reporte
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estadísticas rápidas con filtros -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <button data-mant-filter="todos" class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all text-left ring-2 ring-blue-500 ring-offset-2">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-gray-100 rounded-xl">
+                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Total</p>
+                                <p id="mant-stat-total" class="text-xl font-bold text-gray-900">--</p>
+                            </div>
+                        </div>
+                    </button>
+                    <button data-mant-filter="osmosis" class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all text-left">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-100 rounded-xl">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Ósmosis</p>
+                                <p id="mant-stat-osmosis" class="text-xl font-bold text-gray-900">--</p>
+                            </div>
+                        </div>
+                    </button>
+                    <button data-mant-filter="ablandador" class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all text-left">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-emerald-100 rounded-xl">
+                                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Ablandadores</p>
+                                <p id="mant-stat-ablandador" class="text-xl font-bold text-gray-900">--</p>
+                            </div>
+                        </div>
+                    </button>
+                    <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-purple-100 rounded-xl">
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Este mes</p>
+                                <p id="mant-stat-mes" class="text-xl font-bold text-gray-900">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de filtros -->
+                <div class="bg-white shadow-sm rounded-2xl p-4 mb-6 border border-gray-200">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-center">
+                        <!-- Búsqueda -->
+                        <div class="relative flex-1 max-w-md">
+                            <input type="text" 
+                                   id="mant-gestion-search" 
+                                   placeholder="Buscar por cliente o técnico..." 
+                                   class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <!-- Filtro tipo -->
+                        <select id="mant-gestion-filter-tipo" class="border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="todos">Todos los tipos</option>
+                            <option value="osmosis">Ósmosis Inversa</option>
+                            <option value="ablandador">Ablandador</option>
+                        </select>
+                        <!-- Filtro fechas -->
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="mant-gestion-fecha-desde" class="border border-gray-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" title="Desde">
+                            <span class="text-gray-400">—</span>
+                            <input type="date" id="mant-gestion-fecha-hasta" class="border border-gray-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" title="Hasta">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de mantenimientos -->
+                <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Técnico</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Equipo</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
+                                    <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mant-gestion-tbody" class="bg-white divide-y divide-gray-200">
+                                <!-- Las filas se cargan dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Paginación -->
+                    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                        <p id="mant-gestion-info" class="text-sm text-gray-500">Cargando...</p>
+                        <div class="flex gap-2">
+                            <button id="mant-gestion-prev-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Anterior
+                            </button>
+                            <button id="mant-gestion-next-btn" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Siguiente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Pestaña: Buscar/Editar -->

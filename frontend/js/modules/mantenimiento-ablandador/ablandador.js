@@ -2,6 +2,8 @@ import {
     guardarMantenimientoAblandador as guardarMantenimientoAblandadorApi,
     obtenerClientes as obtenerClientesApi,
 } from '../../api.js';
+import { SignatureModal } from '../signature/signaturePad.js';
+import { getCurrentUserName } from '../login/auth.js';
 
 const SOFTENER_VIEW_ID = 'tab-ablandador';
 const FORM_ID = 'softener-maintenance-form';
@@ -110,6 +112,10 @@ let lastSavedMaintenanceId = null;
 // Autocomplete state
 let clientesListCache = [];
 let selectedClientIndex = -1;
+
+// Signature modal state
+let signatureModal = null;
+let pendingFormData = null;
 
 function getElement(id) {
     return typeof document !== 'undefined' ? document.getElementById(id) : null;
@@ -1919,6 +1925,7 @@ export function createSoftenerModule(deps = {}) {
         form.reset();
         
         setTimeout(() => {
+            setTechnicianFromLogin(); // Re-establecer técnico desde login
             resetClientSelection();
             setDefaultServiceDate();
             setDefaultResinVolume();
@@ -1975,39 +1982,79 @@ export function createSoftenerModule(deps = {}) {
             return;
         }
 
+        updateAutonomia();
+        const payload = collectFormData();
+        
+        if (typeof guardarMantenimientoFn !== 'function') {
+            alert('Servicio de mantenimiento de ablandador no disponible.');
+            return;
+        }
+
+        // Guardar datos pendientes y abrir modal de firmas
+        pendingFormData = payload;
+        
+        // Obtener nombre del técnico del formulario si existe
+        const tecnicoInput = getElement('softener-tecnico') || document.querySelector('[name="tecnico"]');
+        const technicianName = tecnicoInput?.value || '';
+        
+        // Crear o abrir modal de firmas
+        if (!signatureModal) {
+            signatureModal = new SignatureModal({
+                onComplete: handleSignaturesComplete,
+                onCancel: handleSignaturesCancel,
+                technicianName: technicianName
+            });
+        }
+        
+        signatureModal.open(technicianName);
+    }
+    
+    async function handleSignaturesComplete(signatures) {
+        const saveButton = getElement(SAVE_BUTTON_ID);
+        if (!saveButton || !pendingFormData) {
+            return;
+        }
+
         const originalText = saveButton.textContent;
-        saveButton.disabled = true;
         saveButton.textContent = 'Guardando...';
+        saveButton.disabled = true;
 
-        let saved = false;
         try {
-            updateAutonomia();
-            const payload = collectFormData();
-            if (typeof guardarMantenimientoFn !== 'function') {
-                throw new Error('Servicio de mantenimiento de ablandador no disponible.');
-            }
+            // Agregar firmas a los datos del formulario
+            pendingFormData.firmas = {
+                tecnico: {
+                    imagen: signatures.technician.image,
+                    nombre: signatures.technician.name,
+                    fecha: signatures.technician.timestamp
+                },
+                cliente: {
+                    imagen: signatures.client.image,
+                    nombre: signatures.client.name,
+                    fecha: signatures.client.timestamp
+                }
+            };
 
-            const result = await guardarMantenimientoFn({ payload });
+            const result = await guardarMantenimientoFn({ payload: pendingFormData });
             const maintenanceId = result?.maintenanceId || result?.id || result?.data?.id || null;
             if (maintenanceId) {
-                payload.maintenanceId = maintenanceId;
+                pendingFormData.maintenanceId = maintenanceId;
                 lastSavedMaintenanceId = maintenanceId;
             }
             
             // Actualizar el número de reporte en pantalla
-            const reportNumber = payload.metadata?.numero_reporte || 'ABL-PENDIENTE';
+            const reportNumber = pendingFormData.metadata?.numero_reporte || 'ABL-PENDIENTE';
             setReportNumber(reportNumber);
             
             // Guardar el payload para poder generar el PDF
-            lastSavedPayload = payload;
+            lastSavedPayload = pendingFormData;
             
             // Notificar al módulo de remito que hay un nuevo reporte guardado
             if (typeof onMaintenanceSaved === 'function') {
-                onMaintenanceSaved(payload);
+                onMaintenanceSaved(pendingFormData);
             }
-            
-            // Marcar como guardado exitosamente
-            saved = true;
+
+            // Limpiar datos pendientes
+            pendingFormData = null;
             
             // Restaurar texto del botón antes de cambiar al estado guardado
             saveButton.textContent = originalText;
@@ -2018,7 +2065,7 @@ export function createSoftenerModule(deps = {}) {
             // Mostrar overlay de formulario bloqueado
             showFormLockedOverlay();
             
-            alert(`✅ Mantenimiento de ablandador guardado correctamente.\n\nReporte N°: ${reportNumber}\n\nAhora podés generar el PDF o el Remito.\nPara crear un nuevo reporte, hacé clic en "Nuevo Reporte".`);
+            alert(`✅ Mantenimiento de ablandador guardado correctamente con firmas.\n\nReporte N°: ${reportNumber}\n\nAhora podés generar el PDF o el Remito.\nPara crear un nuevo reporte, hacé clic en "Nuevo Reporte".`);
         } catch (error) {
             console.error('Error al guardar mantenimiento de ablandador:', error);
             const message = error?.message || 'No se pudieron guardar los datos del mantenimiento.';
@@ -2026,6 +2073,25 @@ export function createSoftenerModule(deps = {}) {
             // Restaurar el botón solo si hubo error
             saveButton.disabled = false;
             saveButton.textContent = originalText;
+        }
+    }
+    
+    function handleSignaturesCancel() {
+        pendingFormData = null;
+        // El usuario canceló, no hacer nada más
+    }
+
+    // Establecer el técnico asignado desde el usuario logueado
+    function setTechnicianFromLogin() {
+        const tecnicoInput = getElement('softener-tecnico');
+        if (tecnicoInput && tecnicoInput instanceof HTMLInputElement) {
+            const userName = getCurrentUserName();
+            if (userName) {
+                tecnicoInput.value = userName;
+                // Hacer el campo readonly para evitar edición manual
+                tecnicoInput.readOnly = true;
+                tecnicoInput.classList.add('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed');
+            }
         }
     }
 
@@ -2037,6 +2103,7 @@ export function createSoftenerModule(deps = {}) {
         if (!(form instanceof HTMLFormElement)) {
             return;
         }
+        setTechnicianFromLogin();
         setDefaultServiceDate();
         setDefaultResinVolume();
         updateAutonomia();

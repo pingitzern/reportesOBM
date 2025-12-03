@@ -8,6 +8,7 @@ import {
     setReportNumber,
 } from '../../forms.js';
 import { renderComponentStages } from '../../templates.js';
+import { SignatureModal } from '../signature/signaturePad.js';
 
 function getElement(id) {
     return document.getElementById(id);
@@ -19,6 +20,8 @@ export function createMaintenanceModule(api, callbacks = {}) {
 
     let eventsInitialized = false;
     let isReportSaved = false;
+    let signatureModal = null;
+    let pendingFormData = null;
 
     function notifyReportReset() {
         if (typeof onReportReset === 'function') {
@@ -224,24 +227,67 @@ export function createMaintenanceModule(api, callbacks = {}) {
             }
         }
 
+        // Recopilar datos del formulario antes de abrir el modal de firmas
+        const reportNumber = generateReportNumber();
+        const datos = getFormData();
+        if (datos && typeof datos === 'object') {
+            datos.numero_reporte = reportNumber;
+        }
+        
+        // Guardar datos pendientes y abrir modal de firmas
+        pendingFormData = datos;
+        
+        // Obtener nombre del técnico del formulario si existe
+        const tecnicoInput = getElement('tecnico') || document.querySelector('[name="tecnico"]');
+        const technicianName = tecnicoInput?.value || '';
+        
+        // Crear o abrir modal de firmas
+        if (!signatureModal) {
+            signatureModal = new SignatureModal({
+                onComplete: handleSignaturesComplete,
+                onCancel: handleSignaturesCancel,
+                technicianName: technicianName
+            });
+        }
+        
+        signatureModal.open(technicianName);
+    }
+    
+    async function handleSignaturesComplete(signatures) {
+        const guardarBtn = getElement('guardarButton');
+        if (!guardarBtn || !pendingFormData) {
+            return;
+        }
+
         const originalText = guardarBtn.textContent;
         guardarBtn.textContent = 'Guardando...';
         guardarBtn.disabled = true;
 
         try {
-            const reportNumber = generateReportNumber();
-            const datos = getFormData();
-            if (datos && typeof datos === 'object') {
-                datos.numero_reporte = reportNumber;
-            }
+            // Agregar firmas a los datos del formulario
+            pendingFormData.firmas = {
+                tecnico: {
+                    imagen: signatures.technician.image,
+                    nombre: signatures.technician.name,
+                    fecha: signatures.technician.timestamp
+                },
+                cliente: {
+                    imagen: signatures.client.image,
+                    nombre: signatures.client.name,
+                    fecha: signatures.client.timestamp
+                }
+            };
 
-            await guardarMantenimiento(datos);
-            setReportNumber(reportNumber);
+            await guardarMantenimiento(pendingFormData);
+            setReportNumber(pendingFormData.numero_reporte);
             setButtonsToSavedState();
-            notifyReportSaved(datos);
+            notifyReportSaved(pendingFormData);
 
-            // Mostrar mensaje de éxito - el usuario decide si generar remito o nuevo reporte
-            alert('✅ Mantenimiento guardado correctamente.\n\nAhora podés:\n• Generar Remito (botón en la sección de remito)\n• Generar PDF\n• Crear nuevo reporte (botón Limpiar)');
+            // Limpiar datos pendientes
+            pendingFormData = null;
+
+            // Mostrar mensaje de éxito
+            alert('✅ Mantenimiento guardado correctamente con firmas.\n\nAhora podés:\n• Generar Remito (botón en la sección de remito)\n• Generar PDF\n• Crear nuevo reporte (botón Limpiar)');
         } catch (error) {
             console.error('Error al guardar mantenimiento:', error);
             const message = error?.message || 'Error desconocido al guardar los datos.';
@@ -251,6 +297,12 @@ export function createMaintenanceModule(api, callbacks = {}) {
             guardarBtn.textContent = originalText;
             guardarBtn.disabled = false;
         }
+    }
+    
+    function handleSignaturesCancel() {
+        // El usuario canceló la firma, no hacer nada
+        pendingFormData = null;
+        console.log('Firma cancelada por el usuario');
     }
 
     return {

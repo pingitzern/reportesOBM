@@ -1,4 +1,6 @@
 import * as config from '../../config.js';
+import { getCurrentUserName } from '../login/auth.js';
+import { getEquiposByCliente } from '../admin/sistemasEquipos.js';
 const { LMIN_TO_GPD = (60 * 24) / 3.78541, LMIN_TO_LPH = 60 } = config;
 import { COMPONENT_STAGES, resetComponentStages } from './templates.js';
 
@@ -102,6 +104,79 @@ function resizeAutoResizeInputs() {
 
 const clienteDataMap = new Map();
 let clienteSelectChangeHandler = null;
+
+// === Equipos por Cliente ===
+let equiposPorCliente = [];
+let equipoSeleccionado = null;
+let categoriaReporteActual = 'osmosis'; // Por defecto ósmosis, puede ser 'osmosis' o 'ablandador'
+
+// Función para establecer la categoría del reporte actual (llamada desde main.js al cambiar de tab)
+export function setCategoriaReporte(categoria) {
+	categoriaReporteActual = categoria;
+}
+
+async function cargarEquiposParaCliente(clientId) {
+	const todosEquipos = await getEquiposByCliente(clientId);
+	// Filtrar por la categoría del reporte actual
+	equiposPorCliente = todosEquipos.filter(eq => {
+		const cat = (eq.sistema_categoria || '').toLowerCase();
+		if (categoriaReporteActual === 'osmosis') {
+			return cat === 'osmosis' || cat === 'ósmosis';
+		} else if (categoriaReporteActual === 'ablandador') {
+			return cat === 'ablandador' || cat === 'softener';
+		}
+		return true; // Si no hay categoría definida, mostrar todos
+	});
+	equipoSeleccionado = null;
+	renderEquiposSelector();
+}
+
+function renderEquiposSelector() {
+	const container = document.getElementById('equipos-selector-container');
+	if (!container) return;
+	container.innerHTML = '';
+	if (!equiposPorCliente || equiposPorCliente.length === 0) {
+		container.innerHTML = '<div class="text-gray-500">No hay equipos asociados a este cliente.</div>';
+		return;
+	}
+	if (equiposPorCliente.length === 1) {
+		equipoSeleccionado = equiposPorCliente[0];
+		autocompletarCamposEquipo(equipoSeleccionado);
+		container.innerHTML = `<div class="text-green-600">Equipo: ${equiposPorCliente[0].modelo || ''} (${equiposPorCliente[0].serie || ''})</div>`;
+		return;
+	}
+	// Si hay más de uno, mostrar selector
+	const select = document.createElement('select');
+	select.id = 'equipo-selector';
+	select.className = 'form-select px-2 py-1 rounded border';
+	select.innerHTML = equiposPorCliente.map((eq, idx) =>
+		`<option value="${idx}">${eq.modelo || 'Equipo'} - ${eq.serie || ''} (${eq.sistema_nombre || ''})</option>`
+	).join('');
+	select.addEventListener('change', e => {
+		equipoSeleccionado = equiposPorCliente[parseInt(e.target.value)];
+		autocompletarCamposEquipo(equipoSeleccionado);
+	});
+	container.appendChild(select);
+	// Autocompletar el primero por defecto
+	equipoSeleccionado = equiposPorCliente[0];
+	autocompletarCamposEquipo(equipoSeleccionado);
+}
+
+function autocompletarCamposEquipo(equipo) {
+	if (!equipo) return;
+	setInputValue('modelo', equipo.modelo || '');
+	setInputValue('n_serie', equipo.serie || '');
+	setInputValue('id_interna', equipo.tag_id || '');
+	setInputValue('sistema', equipo.sistema_nombre || '');
+	setInputValue('sistema_categoria', equipo.sistema_categoria || '');
+	if (equipo.fecha_instalacion) setInputValue('fecha_instalacion', equipo.fecha_instalacion);
+	if (equipo.notas) setInputValue('notas', equipo.notas);
+	if (equipo.sistema_descripcion) {
+		const descEl = document.getElementById('sistema_descripcion');
+		if (descEl) descEl.textContent = equipo.sistema_descripcion;
+	}
+	if (equipo.vida_util_dias) setInputValue('vida_util_dias', equipo.vida_util_dias);
+}
 
 function normalizeStringValue(value) {
 	if (value === null || value === undefined) {
@@ -1114,7 +1189,14 @@ function selectClient(clientKey) {
 	// Store client details and apply them
 	clienteDataMap.set(clientKey, createClientDetails(cliente));
 	applyClientDetails(createClientDetails(cliente));
-	
+	// Consultar equipos y mostrar selector
+	const clientIdForEquipos = extractClientId(cliente);
+	if (clientIdForEquipos) {
+		cargarEquiposParaCliente(clientIdForEquipos);
+	} else {
+		equiposPorCliente = [];
+		renderEquiposSelector();
+	}
 	hideDropdown();
 }
 
@@ -1285,6 +1367,19 @@ export function initializeForm() {
 
 	configureSanitizacionRadios();
 	configureFieldValidation();
+
+	// Autocompletar técnico con el nombre del usuario logueado
+	const userName = getCurrentUserName();
+	if (userName) {
+		setInputValue('tecnico', userName);
+	}
+
+	// Autocompletar fecha próximo mantenimiento con fecha actual + 365 días
+	const proximoMant = addDays(new Date(), 365);
+	const proximoMantInput = getElement('proximo_mant');
+	if (proximoMantInput instanceof HTMLInputElement) {
+		proximoMantInput.value = normalizeDateToISO(proximoMant);
+	}
 
 	calculateAll();
 }

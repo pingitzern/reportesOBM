@@ -488,6 +488,101 @@ function buildPrintablePhotos(photoSlots = []) {
         .filter(Boolean);
 }
 
+/**
+ * Extrae los parámetros de operación del reporte (Sección B del formulario)
+ */
+function buildParametrosOperacion(report) {
+    if (!report || typeof report !== 'object') {
+        return null;
+    }
+
+    const getValue = (keys, fallback = '') => resolveReportValue(report, Array.isArray(keys) ? keys : [keys], fallback);
+    const getNumeric = (keys) => {
+        const val = getValue(keys);
+        return val !== '' && val !== null && val !== undefined ? val : '—';
+    };
+
+    return {
+        fugas: {
+            found: getValue(['fugas_found']),
+            left: getValue(['fugas_left']),
+        },
+        conductividadRed: {
+            found: getNumeric(['cond_red_found']),
+            left: getNumeric(['cond_red_left']),
+            unit: 'µS/cm',
+        },
+        conductividadPermeado: {
+            found: getNumeric(['cond_perm_found']),
+            left: getNumeric(['cond_perm_left']),
+            unit: 'µS/cm',
+        },
+        rechazoIonico: {
+            found: getNumeric(['rechazo_found', 'rechazo_found_hidden']),
+            left: getNumeric(['rechazo_left', 'rechazo_left_hidden']),
+            unit: '%',
+        },
+        presion: {
+            found: getNumeric(['presion_found']),
+            left: getNumeric(['presion_left']),
+            unit: 'bar',
+        },
+        caudalPermeado: {
+            found: getNumeric(['caudal_perm_found']),
+            left: getNumeric(['caudal_perm_left']),
+            unit: 'l/min',
+        },
+        caudalRechazo: {
+            found: getNumeric(['caudal_rech_found']),
+            left: getNumeric(['caudal_rech_left']),
+            unit: 'l/min',
+        },
+        relacionRechazoPermeado: {
+            found: getNumeric(['relacion_found', 'relacion_found_hidden']),
+            left: getNumeric(['relacion_left', 'relacion_left_hidden']),
+            unit: '',
+        },
+        precargaTanque: {
+            found: getNumeric(['precarga_found']),
+            left: getNumeric(['precarga_left']),
+            unit: 'bar',
+        },
+        presostatoAlta: {
+            found: getValue(['presostato_alta_found']),
+            left: getValue(['presostato_alta_left']),
+        },
+        presostatoBaja: {
+            found: getValue(['presostato_baja_found']),
+            left: getValue(['presostato_baja_left']),
+        },
+    };
+}
+
+/**
+ * Extrae el registro de componentes del reporte (Sección C del formulario)
+ */
+function buildRegistroComponentes(report, stages = COMPONENT_STAGES) {
+    if (!report || typeof report !== 'object') {
+        return [];
+    }
+
+    return stages.map(stage => {
+        const accionKey = `${stage.id}_accion`;
+        const detallesKey = `${stage.id}_detalles`;
+
+        const accion = normalizeString(report[accionKey]) || 'Inspeccionado';
+        const detalles = normalizeString(report[detallesKey]);
+
+        return {
+            id: stage.id,
+            title: stage.title,
+            accion,
+            detalles,
+            cambiado: isReplacementAction(accion),
+        };
+    });
+}
+
 function buildPrintableRemitoData(report, { observaciones = '', repuestos = [], photoSlots = [] } = {}) {
     if (!report || typeof report !== 'object') {
         return null;
@@ -495,6 +590,7 @@ function buildPrintableRemitoData(report, { observaciones = '', repuestos = [], 
 
     const numero = resolveReportValue(report, ['NumeroRemito', 'numero_remito', 'remitoNumero', 'numero_reporte']);
     const fecha = formatDateValue(resolveReportValue(report, ['fecha_display', 'fecha']));
+    const proximoMantenimiento = formatDateValue(resolveReportValue(report, ['proximo_mant', 'proximo_mantenimiento']));
 
     const cliente = {
         nombre: resolveReportValue(report, ['clienteNombre', 'cliente_nombre', 'cliente']),
@@ -512,6 +608,15 @@ function buildPrintableRemitoData(report, { observaciones = '', repuestos = [], 
         ubicacion: resolveReportValue(report, ['ubicacion', 'direccion', 'cliente_direccion']),
         tecnico: resolveReportValue(report, ['tecnico', 'tecnico_asignado']),
     };
+
+    // Parámetros de operación (Sección B)
+    const parametrosOperacion = buildParametrosOperacion(report);
+
+    // Registro de componentes (Sección C)
+    const registroComponentes = buildRegistroComponentes(report);
+
+    // Sanitización
+    const sanitizacion = resolveReportValue(report, ['sanitizacion']) || 'N/A';
 
     const repuestosFuente = buildPrintableRepuestosList(repuestos, report);
     const repuestosNormalizados = Array.isArray(repuestosFuente)
@@ -531,8 +636,12 @@ function buildPrintableRemitoData(report, { observaciones = '', repuestos = [], 
     return {
         numero: normalizeString(numero),
         fecha: normalizeString(fecha),
+        proximoMantenimiento: normalizeString(proximoMantenimiento),
         cliente,
         equipo,
+        parametrosOperacion,
+        registroComponentes,
+        sanitizacion,
         repuestos: repuestosNormalizados,
         observaciones: observacionesTexto,
         fotos,
@@ -552,6 +661,117 @@ function buildInfoTableRows(entries = []) {
             `;
         })
         .join('');
+}
+
+/**
+ * Genera la tabla de parámetros de operación (As Found / As Left)
+ */
+function buildParametrosOperacionSection(params) {
+    if (!params) {
+        return '';
+    }
+
+    const rows = [
+        { label: 'Fugas visibles', found: params.fugas?.found, left: params.fugas?.left, unit: '' },
+        { label: 'Conductividad Red', found: params.conductividadRed?.found, left: params.conductividadRed?.left, unit: params.conductividadRed?.unit },
+        { label: 'Conductividad Permeado', found: params.conductividadPermeado?.found, left: params.conductividadPermeado?.left, unit: params.conductividadPermeado?.unit },
+        { label: '% Rechazo Iónico', found: params.rechazoIonico?.found, left: params.rechazoIonico?.left, unit: params.rechazoIonico?.unit, highlight: true },
+        { label: 'Presión Entrada Membrana', found: params.presion?.found, left: params.presion?.left, unit: params.presion?.unit },
+        { label: 'Caudal Permeado', found: params.caudalPermeado?.found, left: params.caudalPermeado?.left, unit: params.caudalPermeado?.unit },
+        { label: 'Caudal Rechazo', found: params.caudalRechazo?.found, left: params.caudalRechazo?.left, unit: params.caudalRechazo?.unit },
+        { label: 'Relación Rechazo:Permeado', found: params.relacionRechazoPermeado?.found, left: params.relacionRechazoPermeado?.left, unit: '' },
+        { label: 'Precarga Tanque', found: params.precargaTanque?.found, left: params.precargaTanque?.left, unit: params.precargaTanque?.unit },
+        { label: 'Test Presostato Alta', found: params.presostatoAlta?.found, left: params.presostatoAlta?.left, unit: '' },
+        { label: 'Test Presostato Baja', found: params.presostatoBaja?.found, left: params.presostatoBaja?.left, unit: '' },
+    ];
+
+    const formatValue = (val, unit) => {
+        if (val === undefined || val === null || val === '') return '—';
+        const escaped = escapeHtml(String(val));
+        return unit ? `${escaped} ${escapeHtml(unit)}` : escaped;
+    };
+
+    const tableRows = rows.map(row => {
+        const foundVal = formatValue(row.found, row.unit);
+        const leftVal = formatValue(row.left, row.unit);
+        const highlightClass = row.highlight ? ' class="highlight-row"' : '';
+        return `
+            <tr${highlightClass}>
+                <td class="param-label">${escapeHtml(row.label)}</td>
+                <td class="param-value">${foundVal}</td>
+                <td class="param-value">${leftVal}</td>
+            </tr>
+        `;
+    }).join('');
+
+    return `
+        <section class="section">
+            <h2 class="section__title">Parámetros de Operación</h2>
+            <table class="params-table">
+                <thead>
+                    <tr>
+                        <th>Parámetro</th>
+                        <th>Estado Inicial (As Found)</th>
+                        <th>Estado Final (As Left)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </section>
+    `;
+}
+
+/**
+ * Genera la sección de registro de componentes
+ */
+function buildRegistroComponentesSection(componentes, sanitizacion) {
+    if (!Array.isArray(componentes) || componentes.length === 0) {
+        return '';
+    }
+
+    const componentRows = componentes.map(comp => {
+        const accionClass = comp.cambiado ? 'accion-cambiado' : 'accion-inspeccionado';
+        const accionIcon = comp.cambiado ? '🔄' : '✓';
+        const detalles = escapeHtml(comp.detalles) || '<span class="placeholder">—</span>';
+        return `
+            <tr>
+                <td class="comp-title">${escapeHtml(comp.title)}</td>
+                <td class="comp-detalles">${detalles}</td>
+                <td class="comp-accion ${accionClass}">
+                    <span class="accion-badge">${accionIcon} ${escapeHtml(comp.accion)}</span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    const sanitizacionClass = sanitizacion === 'Realizada' ? 'sanitizacion-realizada' : 
+                              sanitizacion === 'No Realizada' ? 'sanitizacion-pendiente' : 'sanitizacion-na';
+    const sanitizacionIcon = sanitizacion === 'Realizada' ? '✓' : 
+                             sanitizacion === 'No Realizada' ? '⚠' : '—';
+
+    return `
+        <section class="section">
+            <h2 class="section__title">Registro de Componentes</h2>
+            <table class="components-table">
+                <thead>
+                    <tr>
+                        <th>Etapa</th>
+                        <th>Detalles</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${componentRows}
+                </tbody>
+            </table>
+            <div class="sanitizacion-row ${sanitizacionClass}">
+                <span class="sanitizacion-label">Sanitización del Sistema:</span>
+                <span class="sanitizacion-value">${sanitizacionIcon} ${escapeHtml(sanitizacion || 'N/A')}</span>
+            </div>
+        </section>
+    `;
 }
 
 function buildRepuestosTableRows(repuestos = []) {
@@ -621,6 +841,7 @@ function createRemitoPrintHtml(data) {
 
     const numero = escapeHtml(data.numero || '—');
     const fecha = escapeHtml(data.fecha || '—');
+    const proximoMantenimiento = escapeHtml(data.proximoMantenimiento || '');
     const logoUrl = escapeHtml(getRemitoLogoUrl());
     const observaciones = data.observaciones
         ? escapeHtml(data.observaciones).replace(/\r?\n/g, '<br>')
@@ -635,7 +856,6 @@ function createRemitoPrintHtml(data) {
     ]);
 
     const equipoRows = buildInfoTableRows([
-        { label: 'Descripción', value: data.equipo?.descripcion },
         { label: 'Modelo', value: data.equipo?.modelo },
         { label: 'N° de serie', value: data.equipo?.serie },
         { label: 'Activo / ID interno', value: data.equipo?.interno },
@@ -643,8 +863,20 @@ function createRemitoPrintHtml(data) {
         { label: 'Técnico responsable', value: data.equipo?.tecnico },
     ]);
 
+    // Nuevas secciones
+    const parametrosSection = buildParametrosOperacionSection(data.parametrosOperacion);
+    const componentesSection = buildRegistroComponentesSection(data.registroComponentes, data.sanitizacion);
+
     const repuestosRows = buildRepuestosTableRows(data.repuestos);
     const fotosSection = buildPhotosSection(data.fotos);
+
+    // Próximo mantenimiento
+    const proximoMantHtml = proximoMantenimiento 
+        ? `<div class="proximo-mantenimiento">
+             <span class="proximo-label">📅 Próximo Mantenimiento Programado:</span>
+             <span class="proximo-fecha">${proximoMantenimiento}</span>
+           </div>`
+        : '';
 
     return `<!DOCTYPE html>
 <html lang="es">
@@ -659,7 +891,7 @@ function createRemitoPrintHtml(data) {
 
         @page {
             size: A4;
-            margin: 1.5cm;
+            margin: 1cm;
         }
 
         * {
@@ -669,15 +901,15 @@ function createRemitoPrintHtml(data) {
         body {
             margin: 0;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.5;
+            font-size: 11px;
+            line-height: 1.4;
             color: #111827;
             background: #f3f4f6;
         }
 
         .document {
             background: #ffffff;
-            padding: 28px;
+            padding: 20px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
         }
@@ -687,9 +919,9 @@ function createRemitoPrintHtml(data) {
             justify-content: space-between;
             align-items: center;
             gap: 16px;
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 18px;
-            margin-bottom: 24px;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .document__identity {
@@ -699,23 +931,30 @@ function createRemitoPrintHtml(data) {
         }
 
         .document__title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: #1f2937;
+            margin: 0;
+        }
+
+        .document__subtitle {
+            font-size: 12px;
+            color: #6b7280;
             margin: 0;
         }
 
         .document__meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 16px;
             color: #374151;
             font-weight: 600;
+            font-size: 12px;
         }
 
         .document__logo {
             flex: none;
-            max-width: 140px;
+            max-width: 120px;
         }
 
         .document__logo img {
@@ -724,41 +963,50 @@ function createRemitoPrintHtml(data) {
             display: block;
         }
 
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
         .section {
-            margin-bottom: 24px;
+            margin-bottom: 16px;
+        }
+
+        .section--compact {
+            margin-bottom: 12px;
         }
 
         .section__title {
-            font-size: 15px;
+            font-size: 12px;
             font-weight: 700;
-            margin: 0 0 12px;
+            margin: 0 0 8px;
             color: #1f2937;
             text-transform: uppercase;
             letter-spacing: 0.04em;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #e5e7eb;
         }
 
-        .info-table,
-        .repuestos-table {
+        .info-table {
             width: 100%;
             border-collapse: collapse;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            overflow: hidden;
+            font-size: 10px;
         }
 
         .info-table th,
         .info-table td {
             text-align: left;
-            padding: 8px 10px;
+            padding: 5px 8px;
             border-bottom: 1px solid #e5e7eb;
             vertical-align: top;
         }
 
         .info-table th {
-            width: 32%;
+            width: 35%;
             font-weight: 600;
             background: #f9fafb;
-            color: #1f2937;
+            color: #374151;
         }
 
         .info-table tr:last-child th,
@@ -766,32 +1014,197 @@ function createRemitoPrintHtml(data) {
             border-bottom: none;
         }
 
+        /* Tabla de Parámetros de Operación */
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .params-table thead {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: #ffffff;
+        }
+
+        .params-table th {
+            padding: 8px 10px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .params-table th:first-child {
+            text-align: left;
+            width: 40%;
+        }
+
+        .params-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .params-table td.param-label {
+            font-weight: 500;
+            color: #374151;
+            background: #f9fafb;
+        }
+
+        .params-table td.param-value {
+            text-align: center;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .params-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .params-table tr.highlight-row td {
+            background: #fef3c7;
+        }
+
+        .params-table tr.highlight-row td.param-label {
+            background: #fde68a;
+        }
+
+        /* Tabla de Componentes */
+        .components-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .components-table thead {
+            background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+            color: #ffffff;
+        }
+
+        .components-table th {
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .components-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }
+
+        .components-table td.comp-title {
+            font-weight: 600;
+            color: #1f2937;
+            width: 25%;
+            background: #f9fafb;
+        }
+
+        .components-table td.comp-detalles {
+            width: 45%;
+            color: #4b5563;
+        }
+
+        .components-table td.comp-accion {
+            width: 30%;
+            text-align: center;
+        }
+
+        .accion-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .accion-cambiado .accion-badge {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
+
+        .accion-inspeccionado .accion-badge {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .sanitizacion-row {
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .sanitizacion-realizada {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+
+        .sanitizacion-pendiente {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .sanitizacion-na {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #6b7280;
+        }
+
+        /* Tabla de Repuestos */
+        .repuestos-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
         .repuestos-table thead {
-            background: #2563eb;
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
             color: #ffffff;
         }
 
         .repuestos-table th,
         .repuestos-table td {
-            padding: 10px;
+            padding: 8px 10px;
             border-bottom: 1px solid #e5e7eb;
         }
 
         .repuestos-table th {
             text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.05em;
+            font-size: 10px;
+            letter-spacing: 0.03em;
+            font-weight: 600;
         }
 
         .repuestos-table td.index {
-            width: 48px;
+            width: 40px;
             font-weight: 600;
             text-align: center;
+            background: #f9fafb;
         }
 
         .repuestos-table td.cantidad {
-            text-align: right;
-            width: 80px;
+            text-align: center;
+            width: 70px;
             font-weight: 600;
         }
 
@@ -805,34 +1218,57 @@ function createRemitoPrintHtml(data) {
         }
 
         .observaciones {
-            padding: 16px;
+            padding: 12px;
             border: 1px solid #d1d5db;
-            border-radius: 10px;
+            border-radius: 8px;
             background: #f9fafb;
-            min-height: 90px;
+            min-height: 60px;
             white-space: pre-line;
+            font-size: 11px;
+        }
+
+        .proximo-mantenimiento {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .proximo-label {
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .proximo-fecha {
+            font-weight: 700;
+            font-size: 13px;
+            color: #1e3a8a;
         }
 
         .photo-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
         }
 
         .photo-item {
             margin: 0;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
         }
 
         .photo-item__frame {
             position: relative;
             overflow: hidden;
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1px solid #e5e7eb;
             background: #111827;
-            aspect-ratio: 3 / 2;
+            aspect-ratio: 4 / 3;
         }
 
         .photo-item__frame img {
@@ -843,23 +1279,27 @@ function createRemitoPrintHtml(data) {
         }
 
         .photo-item figcaption {
-            font-size: 11px;
+            font-size: 9px;
             color: #4b5563;
             text-align: center;
         }
 
         .document__footer {
-            margin-top: 32px;
+            margin-top: 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 24px;
+            padding-top: 16px;
+            border-top: 2px solid #e5e7eb;
         }
 
         .firma {
-            border-top: 1px solid #9ca3af;
-            padding-top: 12px;
+            border-top: 1px solid #374151;
+            padding-top: 8px;
             text-align: center;
             color: #6b7280;
+            font-size: 10px;
+            margin-top: 40px;
         }
 
         @media print {
@@ -871,10 +1311,7 @@ function createRemitoPrintHtml(data) {
 
             .document {
                 box-shadow: none;
-            }
-
-            .document__header {
-                margin-bottom: 18px;
+                padding: 0;
             }
 
             .section {
@@ -891,9 +1328,10 @@ function createRemitoPrintHtml(data) {
     <div class="document">
         <header class="document__header">
             <div class="document__identity">
-                <p class="document__title">Remito de servicio</p>
+                <p class="document__title">Reporte de Mantenimiento Preventivo</p>
+                <p class="document__subtitle">Ósmosis Inversa</p>
                 <div class="document__meta">
-                    <span>Número: <strong>${numero}</strong></span>
+                    <span>N° Remito: <strong>${numero}</strong></span>
                     <span>Fecha: <strong>${fecha}</strong></span>
                 </div>
             </div>
@@ -902,33 +1340,39 @@ function createRemitoPrintHtml(data) {
             </div>
         </header>
 
-        <section class="section">
-            <h2 class="section__title">Datos del cliente</h2>
-            <table class="info-table">
-                <tbody>
-                    ${clienteRows}
-                </tbody>
-            </table>
-        </section>
+        <div class="two-columns">
+            <section class="section section--compact">
+                <h2 class="section__title">Datos del Cliente</h2>
+                <table class="info-table">
+                    <tbody>
+                        ${clienteRows}
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="section section--compact">
+                <h2 class="section__title">Datos del Equipo</h2>
+                <table class="info-table">
+                    <tbody>
+                        ${equipoRows}
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        ${parametrosSection}
+
+        ${componentesSection}
 
         <section class="section">
-            <h2 class="section__title">Datos del equipo</h2>
-            <table class="info-table">
-                <tbody>
-                    ${equipoRows}
-                </tbody>
-            </table>
-        </section>
-
-        <section class="section">
-            <h2 class="section__title">Repuestos y materiales</h2>
+            <h2 class="section__title">Repuestos y Materiales Utilizados</h2>
             <table class="repuestos-table">
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Código</th>
                         <th>Descripción</th>
-                        <th>Cantidad</th>
+                        <th>Cant.</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -938,21 +1382,22 @@ function createRemitoPrintHtml(data) {
         </section>
 
         <section class="section">
-            <h2 class="section__title">Observaciones</h2>
+            <h2 class="section__title">Observaciones y Recomendaciones</h2>
             <div class="observaciones">${observaciones}</div>
+            ${proximoMantHtml}
         </section>
 
         <section class="section">
-            <h2 class="section__title">Registro fotográfico</h2>
+            <h2 class="section__title">Registro Fotográfico</h2>
             ${fotosSection}
         </section>
 
         <footer class="document__footer">
             <div class="firma">
-                <p>Firma del responsable de OHM Agua</p>
+                <p>Firma del Técnico OHM Agua</p>
             </div>
             <div class="firma">
-                <p>Firma y aclaración del cliente</p>
+                <p>Firma y Aclaración del Cliente</p>
             </div>
         </footer>
     </div>

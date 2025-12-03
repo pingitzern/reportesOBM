@@ -50,7 +50,7 @@ export async function guardarMantenimientoAblandador({ payload } = {}) {
     return guardarMantenimientoSupabase(normalizedPayload);
 }
 
-export async function generarPdfAblandador({ maintenanceId, forceRegenerate = false } = {}) {
+export async function generarPdfMantenimiento({ maintenanceId, forceRegenerate = false } = {}) {
     if (!maintenanceId) {
         throw new Error('maintenanceId es requerido para generar el PDF.');
     }
@@ -61,10 +61,40 @@ export async function generarPdfAblandador({ maintenanceId, forceRegenerate = fa
 
     if (error) {
         console.error('Supabase PDF generation failed', error);
-        throw new Error('No se pudo generar el PDF del ablandador.');
+        throw new Error('No se pudo generar el PDF del mantenimiento.');
+    }
+
+    // Actualizar pdf_path en la tabla maintenances
+    if (data?.path) {
+        await supabase
+            .from('maintenances')
+            .update({ pdf_path: data.path })
+            .eq('id', maintenanceId);
     }
 
     return data;
+}
+
+// Alias para compatibilidad con código existente
+export async function generarPdfAblandador(options) {
+    return generarPdfMantenimiento(options);
+}
+
+export async function obtenerUrlPdfMantenimiento(pdfPath) {
+    if (!pdfPath) {
+        return null;
+    }
+
+    const { data, error } = await supabase.storage
+        .from('maintenance-reports')
+        .createSignedUrl(pdfPath, 3600); // URL válida por 1 hora
+
+    if (error) {
+        console.error('Error obteniendo URL del PDF:', error);
+        return null;
+    }
+
+    return data?.signedUrl || null;
 }
 
 export async function buscarMantenimientos(filtros = {}) {
@@ -80,6 +110,7 @@ export async function buscarMantenimientos(filtros = {}) {
             status,
             type,
             report_data,
+            pdf_path,
             clients:client_id (
                 id,
                 razon_social
@@ -168,6 +199,8 @@ export async function buscarMantenimientos(filtros = {}) {
             // Tipo de mantenimiento
             type: m.type,
             status: m.status,
+            // PDF path
+            pdf_path: m.pdf_path || null,
             // Todo el report_data por si se necesita
             ...reportData
         };
@@ -993,15 +1026,38 @@ export async function guardarMantenimientoSupabase(payload = {}) {
     delete reportData.service_date;
     delete reportData.fecha_servicio;
 
+    // Intentar obtener el technician_id basado en el nombre del técnico
+    let technicianId = null;
+    const tecnicoNombre = payload.Tecnico_Asignado || payload.tecnico_asignado || payload.tecnico || '';
+    if (tecnicoNombre) {
+        const { data: tecnicoData } = await supabase
+            .from('profiles')
+            .select('id')
+            .ilike('full_name', tecnicoNombre)
+            .limit(1)
+            .single();
+        
+        if (tecnicoData?.id) {
+            technicianId = tecnicoData.id;
+        }
+    }
+
+    const insertData = {
+        client_id: clientId,
+        type,
+        report_data: reportData,
+        service_date: serviceDate,
+        status: 'finalizado',
+    };
+
+    // Solo agregar technician_id si se encontró
+    if (technicianId) {
+        insertData.technician_id = technicianId;
+    }
+
     const { data, error } = await supabase
         .from('maintenances')
-        .insert({
-            client_id: clientId,
-            type,
-            report_data: reportData,
-            service_date: serviceDate,
-            status: 'finalizado',
-        })
+        .insert(insertData)
         .select('id')
         .single();
 

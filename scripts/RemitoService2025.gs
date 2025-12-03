@@ -711,7 +711,47 @@ const RemitoService = {
       RepuestosDetalle: repuestosDetalle,
       repuestos: repuestosDetalle,
       Observaciones: observaciones,
-      IdUnico: idUnico
+      IdUnico: idUnico,
+      // Incluir datos adicionales del formulario para el PDF
+      tecnico: reporteData.tecnico || usuarioMail,
+      proximo_mant: reporteData.proximo_mant || '',
+      sanitizacion: reporteData.sanitizacion || 'N/A',
+      // Parámetros de operación (Sección B del formulario)
+      fugas_found: reporteData.fugas_found,
+      fugas_left: reporteData.fugas_left,
+      cond_red_found: reporteData.cond_red_found,
+      cond_red_left: reporteData.cond_red_left,
+      cond_perm_found: reporteData.cond_perm_found,
+      cond_perm_left: reporteData.cond_perm_left,
+      rechazo_found: reporteData.rechazo_found,
+      rechazo_left: reporteData.rechazo_left,
+      presion_found: reporteData.presion_found,
+      presion_left: reporteData.presion_left,
+      caudal_perm_found: reporteData.caudal_perm_found,
+      caudal_perm_left: reporteData.caudal_perm_left,
+      caudal_rech_found: reporteData.caudal_rech_found,
+      caudal_rech_left: reporteData.caudal_rech_left,
+      relacion_found: reporteData.relacion_found,
+      relacion_left: reporteData.relacion_left,
+      precarga_found: reporteData.precarga_found,
+      precarga_left: reporteData.precarga_left,
+      presostato_alta_found: reporteData.presostato_alta_found,
+      presostato_alta_left: reporteData.presostato_alta_left,
+      presostato_baja_found: reporteData.presostato_baja_found,
+      presostato_baja_left: reporteData.presostato_baja_left,
+      // Registro de componentes (Sección C del formulario)
+      etapa1_accion: reporteData.etapa1_accion,
+      etapa1_detalles: reporteData.etapa1_detalles,
+      etapa2_accion: reporteData.etapa2_accion,
+      etapa2_detalles: reporteData.etapa2_detalles,
+      etapa3_accion: reporteData.etapa3_accion,
+      etapa3_detalles: reporteData.etapa3_detalles,
+      etapa4_accion: reporteData.etapa4_accion,
+      etapa4_detalles: reporteData.etapa4_detalles,
+      etapa5_accion: reporteData.etapa5_accion,
+      etapa5_detalles: reporteData.etapa5_detalles,
+      etapa6_accion: reporteData.etapa6_accion,
+      etapa6_detalles: reporteData.etapa6_detalles,
     };
 
     const fotosProcesadas = this.procesarFotos_(fotos, remito.NumeroRemito, idUnico);
@@ -852,6 +892,7 @@ const RemitoService = {
 
     const numero = this.resolveRemitoValue_(remito, ['NumeroRemito', 'numero_remito', 'remitoNumero', 'NumeroReporte', 'numero_reporte']);
     const fecha = this.formatDateForDisplay_(remito.FechaCreacion || remito.FechaRemito || remito.fechaRemito || remito.FechaRemitoISO);
+    const proximoMantenimiento = this.formatDateForDisplay_(remito.proximo_mant || remito.ProximoMantenimiento);
 
     const cliente = {
       nombre: this.resolveRemitoValue_(remito, ['NombreCliente', 'clienteNombre', 'cliente']),
@@ -869,6 +910,15 @@ const RemitoService = {
       ubicacion: this.resolveRemitoValue_(remito, ['Ubicacion', 'ubicacion', 'Direccion', 'cliente_direccion']),
       tecnico: this.resolveRemitoValue_(remito, ['TecnicoResponsable', 'tecnico', 'MailTecnico']),
     };
+
+    // Parámetros de operación
+    const parametrosOperacion = this.buildParametrosOperacion_(remito);
+
+    // Registro de componentes
+    const registroComponentes = this.buildRegistroComponentes_(remito);
+
+    // Sanitización
+    const sanitizacion = this.resolveRemitoValue_(remito, ['sanitizacion', 'Sanitizacion']) || 'N/A';
 
     const repuestosFuente = Array.isArray(remito.RepuestosDetalle) && remito.RepuestosDetalle.length
       ? remito.RepuestosDetalle
@@ -898,13 +948,127 @@ const RemitoService = {
     return {
       numero,
       fecha,
+      proximoMantenimiento,
       cliente,
       equipo,
+      parametrosOperacion,
+      registroComponentes,
+      sanitizacion,
       repuestos,
       observaciones,
       fotos,
       logo: logoSource,
     };
+  },
+
+  /**
+   * Extrae los parámetros de operación del reporte
+   */
+  buildParametrosOperacion_(remito) {
+    if (!remito || typeof remito !== 'object') {
+      return null;
+    }
+
+    const getValue = (keys) => {
+      for (const key of keys) {
+        const val = remito[key];
+        if (val !== undefined && val !== null && val !== '') {
+          return val;
+        }
+      }
+      return '—';
+    };
+
+    return {
+      fugas: {
+        found: getValue(['fugas_found', 'FugasFound']),
+        left: getValue(['fugas_left', 'FugasLeft']),
+      },
+      conductividadRed: {
+        found: getValue(['cond_red_found', 'CondRedFound']),
+        left: getValue(['cond_red_left', 'CondRedLeft']),
+        unit: 'µS/cm',
+      },
+      conductividadPermeado: {
+        found: getValue(['cond_perm_found', 'CondPermFound']),
+        left: getValue(['cond_perm_left', 'CondPermLeft']),
+        unit: 'µS/cm',
+      },
+      rechazoIonico: {
+        found: getValue(['rechazo_found', 'RechazoFound']),
+        left: getValue(['rechazo_left', 'RechazoLeft']),
+        unit: '%',
+      },
+      presion: {
+        found: getValue(['presion_found', 'PresionFound']),
+        left: getValue(['presion_left', 'PresionLeft']),
+        unit: 'bar',
+      },
+      caudalPermeado: {
+        found: getValue(['caudal_perm_found', 'CaudalPermFound']),
+        left: getValue(['caudal_perm_left', 'CaudalPermLeft']),
+        unit: 'l/min',
+      },
+      caudalRechazo: {
+        found: getValue(['caudal_rech_found', 'CaudalRechFound']),
+        left: getValue(['caudal_rech_left', 'CaudalRechLeft']),
+        unit: 'l/min',
+      },
+      relacionRechazoPermeado: {
+        found: getValue(['relacion_found', 'RelacionFound']),
+        left: getValue(['relacion_left', 'RelacionLeft']),
+        unit: '',
+      },
+      precargaTanque: {
+        found: getValue(['precarga_found', 'PrecargaFound']),
+        left: getValue(['precarga_left', 'PrecargaLeft']),
+        unit: 'bar',
+      },
+      presostatoAlta: {
+        found: getValue(['presostato_alta_found', 'PresostatoAltaFound']),
+        left: getValue(['presostato_alta_left', 'PresostatoAltaLeft']),
+      },
+      presostatoBaja: {
+        found: getValue(['presostato_baja_found', 'PresostaBajaFound']),
+        left: getValue(['presostato_baja_left', 'PresostaBajaLeft']),
+      },
+    };
+  },
+
+  /**
+   * Extrae el registro de componentes del reporte
+   */
+  buildRegistroComponentes_(remito) {
+    if (!remito || typeof remito !== 'object') {
+      return [];
+    }
+
+    const stages = [
+      { id: 'etapa1', title: '1ª Sedimentos (PP)' },
+      { id: 'etapa2', title: '2ª Carbón Bloque (CTO)' },
+      { id: 'etapa3', title: '3ª Carbón GAC / PP' },
+      { id: 'etapa4', title: '4ª Membrana RO' },
+      { id: 'etapa5', title: '5ª Post-Filtro' },
+      { id: 'etapa6', title: '6ª Adicional' },
+    ];
+
+    return stages.map(stage => {
+      const accionKey = `${stage.id}_accion`;
+      const detallesKey = `${stage.id}_detalles`;
+
+      const accion = this.normalizeString_(remito[accionKey]) || 'Inspeccionado';
+      const detalles = this.normalizeString_(remito[detallesKey]);
+
+      const cambiado = /cambi|reempl|instal|nuevo/i.test(accion);
+
+      return {
+        id: stage.id,
+        title: stage.title,
+        accion,
+        detalles,
+        cambiado,
+      };
+    });
   },
 
   buildPrintablePhotos_(remito) {
@@ -975,6 +1139,117 @@ const RemitoService = {
       .join('');
   },
 
+  /**
+   * Genera la sección de parámetros de operación
+   */
+  buildRemitoPdfParametrosSection_(params) {
+    if (!params) {
+      return '';
+    }
+
+    const rows = [
+      { label: 'Fugas visibles', found: params.fugas?.found, left: params.fugas?.left, unit: '' },
+      { label: 'Conductividad Red', found: params.conductividadRed?.found, left: params.conductividadRed?.left, unit: params.conductividadRed?.unit },
+      { label: 'Conductividad Permeado', found: params.conductividadPermeado?.found, left: params.conductividadPermeado?.left, unit: params.conductividadPermeado?.unit },
+      { label: '% Rechazo Iónico', found: params.rechazoIonico?.found, left: params.rechazoIonico?.left, unit: params.rechazoIonico?.unit, highlight: true },
+      { label: 'Presión Entrada Membrana', found: params.presion?.found, left: params.presion?.left, unit: params.presion?.unit },
+      { label: 'Caudal Permeado', found: params.caudalPermeado?.found, left: params.caudalPermeado?.left, unit: params.caudalPermeado?.unit },
+      { label: 'Caudal Rechazo', found: params.caudalRechazo?.found, left: params.caudalRechazo?.left, unit: params.caudalRechazo?.unit },
+      { label: 'Relación Rechazo:Permeado', found: params.relacionRechazoPermeado?.found, left: params.relacionRechazoPermeado?.left, unit: '' },
+      { label: 'Precarga Tanque', found: params.precargaTanque?.found, left: params.precargaTanque?.left, unit: params.precargaTanque?.unit },
+      { label: 'Test Presostato Alta', found: params.presostatoAlta?.found, left: params.presostatoAlta?.left, unit: '' },
+      { label: 'Test Presostato Baja', found: params.presostatoBaja?.found, left: params.presostatoBaja?.left, unit: '' },
+    ];
+
+    const formatValue = (val, unit) => {
+      if (val === undefined || val === null || val === '' || val === '—') return '—';
+      const escaped = this.escapeHtml_(String(val));
+      return unit ? `${escaped} ${this.escapeHtml_(unit)}` : escaped;
+    };
+
+    const tableRows = rows.map(row => {
+      const foundVal = formatValue(row.found, row.unit);
+      const leftVal = formatValue(row.left, row.unit);
+      const highlightClass = row.highlight ? ' class="highlight-row"' : '';
+      return `
+        <tr${highlightClass}>
+          <td class="param-label">${this.escapeHtml_(row.label)}</td>
+          <td class="param-value">${foundVal}</td>
+          <td class="param-value">${leftVal}</td>
+        </tr>
+      `;
+    }).join('');
+
+    return `
+      <section class="section">
+        <h2 class="section__title">Parámetros de Operación</h2>
+        <table class="params-table">
+          <thead>
+            <tr>
+              <th>Parámetro</th>
+              <th>Estado Inicial (As Found)</th>
+              <th>Estado Final (As Left)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </section>
+    `;
+  },
+
+  /**
+   * Genera la sección de registro de componentes
+   */
+  buildRemitoPdfComponentesSection_(componentes, sanitizacion) {
+    if (!Array.isArray(componentes) || componentes.length === 0) {
+      return '';
+    }
+
+    const componentRows = componentes.map(comp => {
+      const accionClass = comp.cambiado ? 'accion-cambiado' : 'accion-inspeccionado';
+      const accionIcon = comp.cambiado ? '🔄' : '✓';
+      const detalles = this.escapeHtml_(comp.detalles) || '<span class="placeholder">—</span>';
+      return `
+        <tr>
+          <td class="comp-title">${this.escapeHtml_(comp.title)}</td>
+          <td class="comp-detalles">${detalles}</td>
+          <td class="comp-accion ${accionClass}">
+            <span class="accion-badge">${accionIcon} ${this.escapeHtml_(comp.accion)}</span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    const sanitizacionClass = sanitizacion === 'Realizada' ? 'sanitizacion-realizada' : 
+                              sanitizacion === 'No Realizada' ? 'sanitizacion-pendiente' : 'sanitizacion-na';
+    const sanitizacionIcon = sanitizacion === 'Realizada' ? '✓' : 
+                             sanitizacion === 'No Realizada' ? '⚠' : '—';
+
+    return `
+      <section class="section">
+        <h2 class="section__title">Registro de Componentes</h2>
+        <table class="components-table">
+          <thead>
+            <tr>
+              <th>Etapa</th>
+              <th>Detalles</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${componentRows}
+          </tbody>
+        </table>
+        <div class="sanitizacion-row ${sanitizacionClass}">
+          <span class="sanitizacion-label">Sanitización del Sistema:</span>
+          <span class="sanitizacion-value">${sanitizacionIcon} ${this.escapeHtml_(sanitizacion || 'N/A')}</span>
+        </div>
+      </section>
+    `;
+  },
+
   buildRemitoPdfRepuestosRows_(repuestos = []) {
     if (!Array.isArray(repuestos) || repuestos.length === 0) {
       return '<tr class="empty-row"><td colspan="4">Sin repuestos registrados.</td></tr>';
@@ -1036,6 +1311,7 @@ const RemitoService = {
 
     const numero = this.escapeHtml_(data.numero) || '—';
     const fecha = this.escapeHtml_(data.fecha) || '—';
+    const proximoMantenimiento = this.escapeHtml_(data.proximoMantenimiento) || '';
     const logoUrl = this.escapeHtml_(data.logo || '');
     const observaciones = data.observaciones
       ? this.escapeHtml_(data.observaciones).replace(/\r?\n/g, '<br>')
@@ -1050,7 +1326,6 @@ const RemitoService = {
     ]);
 
     const equipoRows = this.buildRemitoPdfInfoRows_([
-      { label: 'Descripción', value: data.equipo?.descripcion },
       { label: 'Modelo', value: data.equipo?.modelo },
       { label: 'N° de serie', value: data.equipo?.serie },
       { label: 'Activo / ID interno', value: data.equipo?.interno },
@@ -1058,8 +1333,20 @@ const RemitoService = {
       { label: 'Técnico responsable', value: data.equipo?.tecnico },
     ]);
 
+    // Nuevas secciones
+    const parametrosSection = this.buildRemitoPdfParametrosSection_(data.parametrosOperacion);
+    const componentesSection = this.buildRemitoPdfComponentesSection_(data.registroComponentes, data.sanitizacion);
+
     const repuestosRows = this.buildRemitoPdfRepuestosRows_(data.repuestos);
     const fotosSection = this.buildRemitoPdfPhotosSection_(data.fotos);
+
+    // Próximo mantenimiento
+    const proximoMantHtml = proximoMantenimiento 
+      ? `<div class="proximo-mantenimiento">
+           <span class="proximo-label">📅 Próximo Mantenimiento Programado:</span>
+           <span class="proximo-fecha">${proximoMantenimiento}</span>
+         </div>`
+      : '';
 
     return `<!DOCTYPE html>
 <html lang="es">
@@ -1074,7 +1361,7 @@ const RemitoService = {
 
     @page {
       size: A4;
-      margin: 1.5cm;
+      margin: 1cm;
     }
 
     * {
@@ -1084,15 +1371,15 @@ const RemitoService = {
     body {
       margin: 0;
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 11px;
+      line-height: 1.4;
       color: #111827;
       background: #f3f4f6;
     }
 
     .document {
       background: #ffffff;
-      padding: 28px;
+      padding: 20px;
       border-radius: 12px;
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
     }
@@ -1102,9 +1389,9 @@ const RemitoService = {
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      border-bottom: 2px solid #2563eb;
-      padding-bottom: 18px;
-      margin-bottom: 24px;
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .document__identity {
@@ -1114,23 +1401,30 @@ const RemitoService = {
     }
 
     .document__title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       color: #1f2937;
+      margin: 0;
+    }
+
+    .document__subtitle {
+      font-size: 12px;
+      color: #6b7280;
       margin: 0;
     }
 
     .document__meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 16px;
       color: #374151;
       font-weight: 600;
+      font-size: 12px;
     }
 
     .document__logo {
       flex: none;
-      max-width: 140px;
+      max-width: 120px;
     }
 
     .document__logo img {
@@ -1139,83 +1433,248 @@ const RemitoService = {
       display: block;
     }
 
+    .two-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
     .section {
-      margin-bottom: 24px;
+      margin-bottom: 16px;
+    }
+
+    .section--compact {
+      margin-bottom: 12px;
     }
 
     .section__title {
-      font-size: 15px;
+      font-size: 12px;
       font-weight: 700;
-      margin: 0 0 12px;
+      margin: 0 0 8px;
       color: #1f2937;
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #e5e7eb;
     }
 
     .info-table {
       width: 100%;
       border-collapse: collapse;
-      background: #f9fafb;
-      border-radius: 10px;
-      overflow: hidden;
+      font-size: 10px;
     }
 
     .info-table th,
     .info-table td {
-      padding: 10px 14px;
       text-align: left;
+      padding: 5px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
     }
 
     .info-table th {
-      width: 180px;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #6b7280;
-      background: #e5e7eb;
+      width: 35%;
+      font-weight: 600;
+      background: #f9fafb;
+      color: #374151;
     }
 
-    .info-table td {
-      color: #1f2937;
-      font-weight: 500;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
+    .info-table tr:last-child th,
     .info-table tr:last-child td {
       border-bottom: none;
     }
 
+    /* Tabla de Parámetros de Operación */
+    .params-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .params-table thead {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: #ffffff;
+    }
+
+    .params-table th {
+      padding: 8px 10px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .params-table th:first-child {
+      text-align: left;
+      width: 40%;
+    }
+
+    .params-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .params-table td.param-label {
+      font-weight: 500;
+      color: #374151;
+      background: #f9fafb;
+    }
+
+    .params-table td.param-value {
+      text-align: center;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .params-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .params-table tr.highlight-row td {
+      background: #fef3c7;
+    }
+
+    .params-table tr.highlight-row td.param-label {
+      background: #fde68a;
+    }
+
+    /* Tabla de Componentes */
+    .components-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .components-table thead {
+      background: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+      color: #ffffff;
+    }
+
+    .components-table th {
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .components-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: middle;
+    }
+
+    .components-table td.comp-title {
+      font-weight: 600;
+      color: #1f2937;
+      width: 25%;
+      background: #f9fafb;
+    }
+
+    .components-table td.comp-detalles {
+      width: 45%;
+      color: #4b5563;
+    }
+
+    .components-table td.comp-accion {
+      width: 30%;
+      text-align: center;
+    }
+
+    .accion-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .accion-cambiado .accion-badge {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #f59e0b;
+    }
+
+    .accion-inspeccionado .accion-badge {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+
+    .sanitizacion-row {
+      margin-top: 10px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .sanitizacion-realizada {
+      background: #d1fae5;
+      border: 1px solid #10b981;
+      color: #065f46;
+    }
+
+    .sanitizacion-pendiente {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+    }
+
+    .sanitizacion-na {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      color: #6b7280;
+    }
+
+    /* Tabla de Repuestos */
     .repuestos-table {
       width: 100%;
       border-collapse: collapse;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
+      font-size: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
       overflow: hidden;
+    }
+
+    .repuestos-table thead {
+      background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+      color: #ffffff;
     }
 
     .repuestos-table th,
     .repuestos-table td {
-      padding: 10px;
+      padding: 8px 10px;
       border-bottom: 1px solid #e5e7eb;
     }
 
     .repuestos-table th {
       text-transform: uppercase;
-      font-size: 11px;
-      letter-spacing: 0.05em;
-      color: #4b5563;
-      background: #f3f4f6;
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      font-weight: 600;
     }
 
     .repuestos-table td.index {
-      width: 48px;
+      width: 40px;
       font-weight: 600;
       text-align: center;
+      background: #f9fafb;
     }
 
     .repuestos-table td.cantidad {
-      text-align: right;
-      width: 80px;
+      text-align: center;
+      width: 70px;
       font-weight: 600;
     }
 
@@ -1229,33 +1688,56 @@ const RemitoService = {
     }
 
     .observaciones {
-      padding: 16px;
+      padding: 12px;
       border: 1px solid #d1d5db;
-      border-radius: 10px;
+      border-radius: 8px;
       background: #f9fafb;
-      min-height: 90px;
+      min-height: 60px;
+      font-size: 11px;
+    }
+
+    .proximo-mantenimiento {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border: 1px solid #3b82f6;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .proximo-label {
+      font-weight: 600;
+      color: #1e40af;
+    }
+
+    .proximo-fecha {
+      font-weight: 700;
+      font-size: 13px;
+      color: #1e3a8a;
     }
 
     .photo-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
 
     .photo-item {
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
     }
 
     .photo-item__frame {
       position: relative;
       overflow: hidden;
-      border-radius: 12px;
+      border-radius: 8px;
       border: 1px solid #e5e7eb;
       background: #111827;
-      aspect-ratio: 3 / 2;
+      aspect-ratio: 4 / 3;
     }
 
     .photo-item__frame img {
@@ -1266,23 +1748,27 @@ const RemitoService = {
     }
 
     .photo-item figcaption {
-      font-size: 11px;
+      font-size: 9px;
       color: #4b5563;
       text-align: center;
     }
 
     .document__footer {
-      margin-top: 32px;
+      margin-top: 20px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: 1fr 1fr;
       gap: 24px;
+      padding-top: 16px;
+      border-top: 2px solid #e5e7eb;
     }
 
     .firma {
-      border-top: 1px solid #9ca3af;
-      padding-top: 12px;
+      border-top: 1px solid #374151;
+      padding-top: 8px;
       text-align: center;
       color: #6b7280;
+      font-size: 10px;
+      margin-top: 40px;
     }
 
     @media print {
@@ -1294,10 +1780,7 @@ const RemitoService = {
 
       .document {
         box-shadow: none;
-      }
-
-      .document__header {
-        margin-bottom: 18px;
+        padding: 0;
       }
 
       .section {
@@ -1314,42 +1797,49 @@ const RemitoService = {
   <div class="document">
     <header class="document__header">
       <div class="document__identity">
-        <p class="document__title">Remito de servicio</p>
+        <p class="document__title">Reporte de Mantenimiento Preventivo</p>
+        <p class="document__subtitle">Ósmosis Inversa</p>
         <div class="document__meta">
-          <span>Número: <strong>${numero}</strong></span>
+          <span>N° Remito: <strong>${numero}</strong></span>
           <span>Fecha: <strong>${fecha}</strong></span>
         </div>
       </div>
       ${logoUrl ? `<div class="document__logo"><img src="${logoUrl}" alt="Logo de OHM Agua"></div>` : ''}
     </header>
 
-    <section class="section">
-      <h2 class="section__title">Datos del cliente</h2>
-      <table class="info-table">
-        <tbody>
-          ${clienteRows}
-        </tbody>
-      </table>
-    </section>
+    <div class="two-columns">
+      <section class="section section--compact">
+        <h2 class="section__title">Datos del Cliente</h2>
+        <table class="info-table">
+          <tbody>
+            ${clienteRows}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section section--compact">
+        <h2 class="section__title">Datos del Equipo</h2>
+        <table class="info-table">
+          <tbody>
+            ${equipoRows}
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    ${parametrosSection}
+
+    ${componentesSection}
 
     <section class="section">
-      <h2 class="section__title">Datos del equipo</h2>
-      <table class="info-table">
-        <tbody>
-          ${equipoRows}
-        </tbody>
-      </table>
-    </section>
-
-    <section class="section">
-      <h2 class="section__title">Repuestos y materiales</h2>
+      <h2 class="section__title">Repuestos y Materiales Utilizados</h2>
       <table class="repuestos-table">
         <thead>
           <tr>
             <th>#</th>
             <th>Código</th>
             <th>Descripción</th>
-            <th>Cantidad</th>
+            <th>Cant.</th>
           </tr>
         </thead>
         <tbody>
@@ -1359,21 +1849,22 @@ const RemitoService = {
     </section>
 
     <section class="section">
-      <h2 class="section__title">Observaciones</h2>
+      <h2 class="section__title">Observaciones y Recomendaciones</h2>
       <div class="observaciones">${observaciones}</div>
+      ${proximoMantHtml}
     </section>
 
     <section class="section">
-      <h2 class="section__title">Registro fotográfico</h2>
+      <h2 class="section__title">Registro Fotográfico</h2>
       ${fotosSection}
     </section>
 
     <footer class="document__footer">
       <div class="firma">
-        <p>Firma del responsable de OHM Agua</p>
+        <p>Firma del Técnico OHM Agua</p>
       </div>
       <div class="firma">
-        <p>Firma y aclaración del cliente</p>
+        <p>Firma y Aclaración del Cliente</p>
       </div>
     </footer>
   </div>

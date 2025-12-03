@@ -1,0 +1,388 @@
+/* ========================================
+   Signature Pad Modal Styles
+   ======================================== */
+
+/* Modal Container */
+.signature-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.signature-modal.hidden {
+    display: none;
+}
+
+/* Backdrop */
+.signature-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+/* Modal Content */
+.signature-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Dark mode */
+.dark .signature-modal-content {
+    background: #1f2937;
+}
+
+/* Header */
+.signature-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    color: white;
+}
+
+.signature-modal-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.signature-modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.signature-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Body */
+.signature-modal-body {
+    padding: 1.25rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Steps Indicator */
+.signature-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.signature-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.signature-step.active .step-number {
+    background: #3b82f6;
+    color: white;
+}
+
+.signature-step.active .step-label {
+    color: #3b82f6;
+}
+
+.signature-step.completed .step-number {
+    background: #10b981;
+    color: white;
+}
+
+.signature-step.completed .step-label {
+    color: #10b981;
+}
+
+.signature-step-connector {
+    width: 60px;
+    height: 2px;
+    background: #e5e7eb;
+    margin: 0 0.75rem;
+    margin-bottom: 1rem;
+}
+
+/* Dark mode steps */
+.dark .step-number {
+    background: #374151;
+    color: #9ca3af;
+}
+
+.dark .step-label {
+    color: #9ca3af;
+}
+
+.dark .signature-step-connector {
+    background: #374151;
+}
+
+/* Step Content */
+.signature-step-content {
+    animation: fadeIn 0.3s ease;
+}
+
+.signature-step-content.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Instruction */
+.signature-instruction {
+    text-align: center;
+    color: #4b5563;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.dark .signature-instruction {
+    color: #9ca3af;
+}
+
+/* Canvas Container */
+.signature-canvas-container {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    background: #fafafa;
+    overflow: hidden;
+    touch-action: none;
+}
+
+.signature-canvas-container canvas {
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+}
+
+.dark .signature-canvas-container {
+    border-color: #4b5563;
+    background: #111827;
+}
+
+/* Placeholder text */
+.signature-canvas-container::before {
+    content: 'Firme aquí';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #9ca3af;
+    font-size: 0.875rem;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Name Input */
+.signature-name-input {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.signature-name-input label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.signature-name-input input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.signature-name-input input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark .signature-name-input label {
+    color: #9ca3af;
+}
+
+.dark .signature-name-input input {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+
+/* Footer */
+.signature-modal-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+.dark .signature-modal-footer {
+    background: #111827;
+    border-top-color: #374151;
+}
+
+/* Buttons */
+.signature-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.signature-btn.hidden {
+    display: none;
+}
+
+.signature-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.signature-btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.signature-btn-secondary:hover {
+    background: #d1d5db;
+}
+
+.dark .signature-btn-secondary {
+    background: #374151;
+    color: #e5e7eb;
+}
+
+.dark .signature-btn-secondary:hover {
+    background: #4b5563;
+}
+
+.signature-btn-primary {
+    background: #3b82f6;
+    color: white;
+    margin-left: auto;
+}
+
+.signature-btn-primary:hover {
+    background: #2563eb;
+}
+
+.signature-btn-success {
+    background: #10b981;
+    color: white;
+    margin-left: auto;
+}
+
+.signature-btn-success:hover {
+    background: #059669;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .signature-modal {
+        padding: 0.5rem;
+    }
+    
+    .signature-modal-content {
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+    
+    .signature-canvas-container {
+        height: 180px;
+    }
+    
+    .signature-modal-footer {
+        flex-wrap: wrap;
+    }
+    
+    .signature-btn {
+        flex: 1;
+        min-width: calc(50% - 0.375rem);
+    }
+    
+    .signature-btn-primary,
+    .signature-btn-success {
+        margin-left: 0;
+        min-width: 100%;
+        order: -1;
+    }
+}
+
+/* Animation for modal open */
+.signature-modal:not(.hidden) .signature-modal-content {
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

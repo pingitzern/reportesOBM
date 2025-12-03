@@ -1,13 +1,15 @@
 /* global __APP_VERSION__ */
 import { showView } from './viewManager.js';
 import * as api from './api.js';
-import { initializeAuth } from './modules/login/auth.js';
+import { initializeAuth, getCurrentUserRole } from './modules/login/auth.js';
 import { initializeTheme } from './modules/theme/theme.js';
 import { createDashboardModule } from './modules/dashboard/dashboard.js';
 import { createMaintenanceModule } from './modules/mantenimiento/maintenance.js';
+import { setCategoriaReporte } from './modules/mantenimiento/forms.js';
 import { createSearchModule } from './modules/busqueda/busqueda.js';
 import { createRemitoModule } from './modules/remito/remito.js';
 import { createRemitosGestionModule } from './modules/remitos-gestion/remitos-gestion.js';
+import { createMantenimientosGestionModule } from './modules/mantenimientos-gestion/mantenimientos-gestion.js';
 import { createSoftenerModule } from './modules/mantenimiento-ablandador/ablandador.js';
 import { createFeedbackModule } from './modules/feedback/feedback.js';
 import { createAdminPanelModule } from './modules/admin/adminPanel.js';
@@ -28,9 +30,20 @@ const {
     enviarFeedbackTicket,
     obtenerUrlPdfRemito,
     guardarPdfRemito,
+    generarPdfMantenimiento,
+    obtenerUrlPdfMantenimiento,
 } = api;
 
 initializeTheme();
+
+function navigateToMantenimientos() {
+    showView('mantenimientos-gestion-view');
+    setActiveNavigation(null, 'tab-mantenimientos-btn');
+    // Recargar lista de mantenimientos
+    if (appModules.mantenimientosGestion) {
+        appModules.mantenimientosGestion.loadMantenimientos();
+    }
+}
 
 function navigateToDashboard() {
     showView('tab-dashboard');
@@ -39,7 +52,7 @@ function navigateToDashboard() {
 
 const remitoModule = createRemitoModule({
     showView,
-    navigateToDashboard,
+    navigateToDashboard: navigateToMantenimientos, // Ahora va a mantenimientos después del remito
     onRemitoComplete: () => {
         // Limpiar formularios de mantenimiento después de completar el remito
         if (appModules.maintenance && typeof appModules.maintenance.handleResetClick === 'function') {
@@ -48,6 +61,8 @@ const remitoModule = createRemitoModule({
         if (appModules.softener && typeof appModules.softener.silentReset === 'function') {
             appModules.softener.silentReset();
         }
+        // Volver al panel de mantenimientos
+        navigateToMantenimientos();
     },
 });
 
@@ -110,12 +125,21 @@ const feedbackModule = createFeedbackModule({
 
 const adminPanelModule = createAdminPanelModule();
 
+const mantenimientosGestionModule = createMantenimientosGestionModule({
+    buscarMantenimientos,
+    generarPdfMantenimiento,
+    obtenerUrlPdfMantenimiento,
+    showView,
+    onNuevoReporte: () => openMaintenanceTypeModal(),
+});
+
 const appModules = {
     maintenance: maintenanceModule,
     remito: remitoModule,
     search: searchModule,
     dashboard: dashboardModule,
     remitosGestion: remitosGestionModule,
+    mantenimientosGestion: mantenimientosGestionModule,
     softener: softenerModule,
     feedback: feedbackModule,
     adminPanel: adminPanelModule,
@@ -123,6 +147,7 @@ const appModules = {
 
 const SECTION_LABELS = Object.freeze({
     'tab-dashboard': 'Dashboard',
+    'mantenimientos-gestion-view': 'Mantenimientos',
     'tab-nuevo': 'Mantenimiento Ósmosis',
     'tab-ablandador': 'Mantenimiento Ablandador',
     'tab-buscar': 'Buscar y Editar',
@@ -291,6 +316,7 @@ function showMaintenanceTab() {
     if (appModules.softener && typeof appModules.softener.silentReset === 'function') {
         appModules.softener.silentReset();
     }
+    setCategoriaReporte('osmosis');
     showView('tab-nuevo');
     setActiveNavigation('nuevo');
 }
@@ -300,6 +326,7 @@ function showSoftenerTab() {
     if (appModules.maintenance && typeof appModules.maintenance.handleResetClick === 'function') {
         appModules.maintenance.handleResetClick();
     }
+    setCategoriaReporte('ablandador');
     appModules.softener.show();
     setActiveNavigation('nuevo');
 }
@@ -344,10 +371,12 @@ async function showDashboardTab() {
 }
 
 function initializeNavigation() {
-    const tabNuevoBtn = document.getElementById('tab-nuevo-btn');
-    if (tabNuevoBtn) {
-        tabNuevoBtn.addEventListener('click', () => {
-            openMaintenanceTypeModal();
+    const tabMantenimientosBtn = document.getElementById('tab-mantenimientos-btn');
+    if (tabMantenimientosBtn) {
+        tabMantenimientosBtn.addEventListener('click', () => {
+            showView('mantenimientos-gestion-view');
+            setActiveNavigation(null, 'tab-mantenimientos-btn');
+            appModules.mantenimientosGestion.loadMantenimientos();
         });
     }
 
@@ -423,6 +452,7 @@ async function initializeApp() {
     appModules.remito.initialize();
     appModules.search.initialize();
     appModules.remitosGestion.initialize();
+    appModules.mantenimientosGestion.initialize();
 
     try {
         // Primero autenticar
@@ -435,7 +465,25 @@ async function initializeApp() {
         await appModules.maintenance.initialize();
         appModules.softener.initialize();
         
-        // await showDashboardTab(); // Skip dashboard load until Supabase replaces Apps Script
+        // Redirigir según el rol del usuario
+        const userRole = getCurrentUserRole();
+        console.log('[main] Usuario autenticado con rol:', userRole);
+        
+        if (userRole === 'Administrador' || userRole === 'admin') {
+            // Admins van al dashboard
+            showView('tab-dashboard');
+            setActiveNavigation('dashboard');
+            appModules.dashboard.show();
+        } else if (userRole === 'Técnico' || userRole === 'tecnico') {
+            // Técnicos van a gestión de remitos
+            showView('remitos-gestion-view');
+            setActiveNavigation('remitos');
+        } else {
+            // Fallback: mostrar panel de mantenimientos
+            showView('mantenimientos-gestion-view');
+            setActiveNavigation(null, 'tab-mantenimientos-btn');
+            appModules.mantenimientosGestion.loadMantenimientos();
+        }
     } catch (error) {
         console.error('Error inicializando la aplicación:', error);
         alert('No se pudo inicializar la aplicación. Revisa la consola para más detalles.');
