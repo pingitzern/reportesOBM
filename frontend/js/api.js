@@ -1305,3 +1305,169 @@ function pickFirstTruthy(values) {
     return '';
 }
 
+// ============================================================================
+// EQUIPOS ABLANDADOR - Gestión de configuración fija de equipos
+// ============================================================================
+
+/**
+ * Obtiene todos los equipos ablandador asociados a un cliente
+ * @param {string} clienteId - UUID del cliente
+ * @returns {Promise<Array>} Lista de equipos del cliente
+ */
+export async function obtenerEquiposAblandadorPorCliente(clienteId) {
+    if (!clienteId) {
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('equipos_ablandador')
+        .select('*')
+        .eq('cliente_id', clienteId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error obteniendo equipos ablandador:', error);
+        throw new Error('No se pudieron obtener los equipos del cliente.');
+    }
+
+    return data || [];
+}
+
+/**
+ * Obtiene un equipo ablandador por su número de serie y cliente
+ * @param {string} clienteId - UUID del cliente
+ * @param {string} numeroSerie - Número de serie del equipo
+ * @returns {Promise<Object|null>} Equipo encontrado o null
+ */
+export async function obtenerEquipoAblandadorPorSerie(clienteId, numeroSerie) {
+    if (!clienteId || !numeroSerie) {
+        return null;
+    }
+
+    const { data, error } = await supabase
+        .from('equipos_ablandador')
+        .select('*')
+        .eq('cliente_id', clienteId)
+        .eq('numero_serie', numeroSerie.trim())
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error obteniendo equipo por serie:', error);
+        return null;
+    }
+
+    return data || null;
+}
+
+/**
+ * Crea un nuevo equipo ablandador
+ * @param {Object} equipo - Datos del equipo
+ * @returns {Promise<Object>} Equipo creado
+ */
+export async function crearEquipoAblandador(equipo) {
+    const { data, error } = await supabase
+        .from('equipos_ablandador')
+        .insert([{
+            cliente_id: equipo.cliente_id,
+            numero_serie: equipo.numero_serie?.trim(),
+            tipo_ablandador: equipo.tipo_ablandador || 'Custom',
+            modelo: equipo.modelo || '',
+            volumen_resina: equipo.volumen_resina || 25,
+            ubicacion: equipo.ubicacion || '',
+            tipo_regeneracion: equipo.tipo_regeneracion || 'Por Volumen',
+            prefiltro: equipo.prefiltro || 'No Aplica',
+            proteccion_entrada: equipo.proteccion_entrada || 'No Aplica',
+            manometros: equipo.manometros || 'No cuenta con manómetros',
+            notas_equipo: equipo.notas_equipo || '',
+            created_by: equipo.created_by || '',
+            updated_by: equipo.created_by || '',
+        }])
+        .select()
+        .single();
+
+    if (error) {
+        // Error de duplicado
+        if (error.code === '23505') {
+            throw new Error(`Ya existe un equipo con número de serie "${equipo.numero_serie}" para este cliente.`);
+        }
+        console.error('Error creando equipo ablandador:', error);
+        throw new Error('No se pudo crear el equipo ablandador.');
+    }
+
+    return data;
+}
+
+/**
+ * Actualiza un equipo ablandador existente
+ * @param {string} equipoId - UUID del equipo
+ * @param {Object} cambios - Campos a actualizar
+ * @returns {Promise<Object>} Equipo actualizado
+ */
+export async function actualizarEquipoAblandador(equipoId, cambios) {
+    if (!equipoId) {
+        throw new Error('Se requiere el ID del equipo para actualizar.');
+    }
+
+    const { data, error } = await supabase
+        .from('equipos_ablandador')
+        .update({
+            tipo_ablandador: cambios.tipo_ablandador,
+            modelo: cambios.modelo,
+            volumen_resina: cambios.volumen_resina,
+            ubicacion: cambios.ubicacion,
+            tipo_regeneracion: cambios.tipo_regeneracion,
+            prefiltro: cambios.prefiltro,
+            proteccion_entrada: cambios.proteccion_entrada,
+            manometros: cambios.manometros,
+            notas_equipo: cambios.notas_equipo,
+            updated_by: cambios.updated_by || '',
+        })
+        .eq('id', equipoId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error actualizando equipo ablandador:', error);
+        throw new Error('No se pudo actualizar el equipo ablandador.');
+    }
+
+    return data;
+}
+
+/**
+ * Verifica si hay cambios entre los datos del formulario y el equipo guardado
+ * @param {Object} equipoGuardado - Datos del equipo en BD
+ * @param {Object} datosFormulario - Datos actuales del formulario
+ * @returns {Object} { hayCambios: boolean, cambios: Object }
+ */
+export function detectarCambiosEquipo(equipoGuardado, datosFormulario) {
+    const camposAComparar = [
+        'tipo_ablandador',
+        'modelo',
+        'volumen_resina',
+        'ubicacion',
+        'tipo_regeneracion',
+        'prefiltro',
+        'proteccion_entrada',
+        'manometros',
+        'notas_equipo',
+    ];
+
+    const cambios = {};
+    let hayCambios = false;
+
+    for (const campo of camposAComparar) {
+        const valorGuardado = String(equipoGuardado[campo] || '').trim();
+        const valorFormulario = String(datosFormulario[campo] || '').trim();
+        
+        if (valorGuardado !== valorFormulario) {
+            hayCambios = true;
+            cambios[campo] = {
+                anterior: valorGuardado,
+                nuevo: valorFormulario,
+            };
+        }
+    }
+
+    return { hayCambios, cambios };
+}

@@ -1,6 +1,11 @@
 import {
     guardarMantenimientoAblandador as guardarMantenimientoAblandadorApi,
     obtenerClientes as obtenerClientesApi,
+    obtenerEquiposAblandadorPorCliente,
+    obtenerEquipoAblandadorPorSerie,
+    crearEquipoAblandador,
+    actualizarEquipoAblandador,
+    detectarCambiosEquipo,
 } from '../../api.js';
 import { SignatureModal } from '../signature/signaturePad.js';
 import { getCurrentUserName } from '../login/auth.js';
@@ -51,6 +56,19 @@ const CHECK_CAMBIO_FILTRO_ID = 'softener-check-cambio-filtro';
 const DETALLE_CAMBIO_FILTRO_ID = 'softener-detalle-cambio-filtro';
 const FILTRO_TIPO_INSTALADO_ID = 'softener-filtro-tipo-instalado';
 const FILTRO_LOTE_SERIE_ID = 'softener-filtro-lote-serie';
+// IDs para tren de prefiltrado
+const PREFILTRO_TREN_CHECKBOX_ID = 'softener-prefiltro-tren';
+const PREFILTRO_TREN_CONTAINER_ID = 'softener-prefiltro-tren-container';
+const PREFILTRO_SIMPLE_CONTAINER_ID = 'softener-prefiltro-simple-container';
+const PREFILTRO_ETAPAS_INPUT_ID = 'softener-prefiltro-etapas';
+const PREFILTRO_ETAPAS_CONTAINER_ID = 'softener-prefiltro-etapas-container';
+
+// IDs para cambio de filtro en checklist (Sección D) - modo simple y tren
+const CAMBIO_FILTRO_TREN_CONTAINER_ID = 'softener-cambio-filtro-tren-container';
+const CAMBIO_FILTRO_TREN_ETAPAS_ID = 'softener-cambio-filtro-tren-etapas';
+const DETALLE_CAMBIO_FILTRO_TREN_ID = 'softener-detalle-cambio-filtro-tren';
+const LOTES_TREN_CONTAINER_ID = 'softener-lotes-tren-container';
+
 const PROTECTION_INFO_BTN_ID = 'softener-protection-info-btn';
 const PROTECTION_INFO_POPUP_ID = 'softener-protection-info-popup';
 const PROTECCION_ENTRADA_ID = 'softener-equipo-proteccion-entrada';
@@ -58,6 +76,20 @@ const PROTECCION_ENTRADA_ID = 'softener-equipo-proteccion-entrada';
 const MANOMETRO_INFO_BTN_ID = 'softener-manometro-info-btn';
 const MANOMETRO_INFO_POPUP_ID = 'softener-manometro-info-popup';
 const MANOMETRO_SELECT_ID = 'softener-equipo-manometros';
+
+// IDs de campos Sección B (Información del Equipo)
+const EQUIPO_TIPO_ID = 'softener-equipo-tipo';
+const EQUIPO_MODELO_ID = 'softener-equipo-modelo';
+const EQUIPO_NUMERO_SERIE_ID = 'softener-equipo-numero-serie';
+const EQUIPO_UBICACION_ID = 'softener-equipo-ubicacion';
+const EQUIPO_NOTAS_ID = 'softener-equipo-notas';
+
+// Estado de equipo precargado
+let equipoActualCargado = null; // Equipo cargado desde BD
+let equiposDelCliente = []; // Lista de equipos del cliente
+let seccionBEditada = false; // Flag para detectar ediciones manuales
+let seccionBDesbloqueada = false; // Flag para modo edición
+
 const CLIENT_SELECT_ID = 'softener-cliente-nombre'; // Hidden input now
 const CLIENT_SEARCH_ID = 'softener-cliente-search';
 const CLIENT_DROPDOWN_ID = 'softener-cliente-dropdown';
@@ -554,7 +586,7 @@ function hideDropdown() {
     selectedClientIndex = -1;
 }
 
-function selectClient(clientKey) {
+async function selectClient(clientKey) {
     const index = parseInt(clientKey.replace('softener-cliente-', ''), 10);
     const cliente = clientesListCache[index];
     if (!cliente) return;
@@ -566,8 +598,13 @@ function selectClient(clientKey) {
     const clientId = extractClientId(cliente) || extractClientName(cliente);
     const clientName = extractClientName(cliente);
     
+    // Obtener el UUID real del cliente para buscar equipos
+    const clienteUUID = cliente.id || null;
+    
     if (hiddenInput) {
         hiddenInput.value = clientId;
+        // Guardar también el UUID para uso posterior
+        hiddenInput.dataset.clienteUuid = clienteUUID || '';
     }
     
     if (searchInput) {
@@ -584,6 +621,11 @@ function selectClient(clientKey) {
     applyClientDetails(createClientDetails(cliente));
     
     hideDropdown();
+    
+    // Buscar y cargar equipos del cliente
+    if (clienteUUID) {
+        await cargarEquiposDelCliente(clienteUUID);
+    }
 }
 
 function clearClientSelection() {
@@ -607,6 +649,483 @@ function clearClientSelection() {
     
     clearClientDetails();
     hideDropdown();
+    
+    // Limpiar también los datos del equipo
+    limpiarSeccionB();
+}
+
+// ============================================================================
+// GESTIÓN DE EQUIPOS ABLANDADOR - Sección B
+// ============================================================================
+
+/**
+ * Carga los equipos asociados a un cliente y muestra selector si hay más de uno
+ */
+async function cargarEquiposDelCliente(clienteUUID) {
+    try {
+        equiposDelCliente = await obtenerEquiposAblandadorPorCliente(clienteUUID);
+        
+        if (equiposDelCliente.length === 0) {
+            // No hay equipos registrados - formulario vacío para nuevo equipo
+            limpiarSeccionB();
+            mostrarMensajeNuevoEquipo();
+        } else if (equiposDelCliente.length === 1) {
+            // Un solo equipo - autocompletar directamente
+            cargarDatosEquipoEnFormulario(equiposDelCliente[0]);
+        } else {
+            // Múltiples equipos - mostrar selector
+            mostrarSelectorEquipos(equiposDelCliente);
+        }
+    } catch (error) {
+        console.error('Error cargando equipos del cliente:', error);
+        limpiarSeccionB();
+    }
+}
+
+/**
+ * Muestra un mensaje indicando que es un equipo nuevo
+ */
+function mostrarMensajeNuevoEquipo() {
+    const seccionB = getElement('softener-section-b');
+    if (!seccionB) return;
+    
+    // Remover banner existente si hay
+    const bannerExistente = seccionB.querySelector('.equipo-status-banner');
+    if (bannerExistente) bannerExistente.remove();
+    
+    const banner = document.createElement('div');
+    banner.className = 'equipo-status-banner mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg flex items-center gap-3';
+    banner.innerHTML = `
+        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div class="text-sm text-blue-700 dark:text-blue-300">
+            <strong>Nuevo equipo:</strong> Este cliente no tiene equipos registrados. Los datos que cargues en esta sección se guardarán para futuros mantenimientos.
+        </div>
+    `;
+    
+    const titulo = seccionB.querySelector('h2');
+    if (titulo) {
+        titulo.parentNode.insertBefore(banner, titulo.nextSibling.nextSibling);
+    }
+    
+    // Habilitar edición de campos
+    habilitarEdicionSeccionB(true);
+    seccionBDesbloqueada = true;
+}
+
+/**
+ * Muestra un selector cuando el cliente tiene múltiples equipos
+ */
+function mostrarSelectorEquipos(equipos) {
+    const seccionB = getElement('softener-section-b');
+    if (!seccionB) return;
+    
+    // Remover selector/banner existente
+    const existente = seccionB.querySelector('.equipo-selector-container, .equipo-status-banner');
+    if (existente) existente.remove();
+    
+    const container = document.createElement('div');
+    container.className = 'equipo-selector-container mt-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg';
+    
+    const opciones = equipos.map((eq, idx) => {
+        const serie = eq.numero_serie || 'Sin número de serie';
+        const tipo = eq.tipo_ablandador || 'Custom';
+        const ubicacion = eq.ubicacion || 'Sin ubicación';
+        return `<option value="${idx}">${serie} - ${tipo} (${ubicacion})</option>`;
+    }).join('');
+    
+    container.innerHTML = `
+        <div class="flex items-center gap-3 mb-3">
+            <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            <span class="text-sm font-medium text-amber-700 dark:text-amber-300">Este cliente tiene ${equipos.length} equipos registrados. Seleccioná uno:</span>
+        </div>
+        <div class="flex gap-3 items-center">
+            <select id="softener-equipo-selector" class="flex-1 rounded-md border border-amber-300 dark:border-amber-600 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-gray-100">
+                <option value="">-- Seleccionar equipo --</option>
+                ${opciones}
+                <option value="nuevo">➕ Registrar nuevo equipo</option>
+            </select>
+        </div>
+    `;
+    
+    const titulo = seccionB.querySelector('h2');
+    if (titulo) {
+        titulo.parentNode.insertBefore(container, titulo.nextSibling.nextSibling);
+    }
+    
+    // Event listener para el selector
+    const selector = container.querySelector('#softener-equipo-selector');
+    selector.addEventListener('change', (e) => {
+        const valor = e.target.value;
+        if (valor === '') {
+            limpiarSeccionB(false); // No remover el selector
+        } else if (valor === 'nuevo') {
+            limpiarSeccionB(false);
+            habilitarEdicionSeccionB(true);
+            seccionBDesbloqueada = true;
+            equipoActualCargado = null;
+        } else {
+            const idx = parseInt(valor, 10);
+            cargarDatosEquipoEnFormulario(equipos[idx]);
+        }
+    });
+}
+
+/**
+ * Carga los datos de un equipo en los campos de la sección B
+ */
+function cargarDatosEquipoEnFormulario(equipo) {
+    if (!equipo) return;
+    
+    equipoActualCargado = equipo;
+    seccionBEditada = false;
+    
+    // Mapeo de campos BD -> formulario
+    setSelectValue(EQUIPO_TIPO_ID, equipo.tipo_ablandador);
+    setInputValue(EQUIPO_MODELO_ID, equipo.modelo || '');
+    setInputValue(VOLUMEN_RESINA_ID, equipo.volumen_resina || 25);
+    setInputValue(EQUIPO_NUMERO_SERIE_ID, equipo.numero_serie || '');
+    setSelectValue(EQUIPO_UBICACION_ID, equipo.ubicacion || '');
+    setSelectValue(SECCION_B_TIPO_REGENERACION_ID, equipo.tipo_regeneracion || 'Por Volumen');
+    
+    // Cargar prefiltro - verificar si es tren
+    let trenData = null;
+    try {
+        if (equipo.prefiltro && equipo.prefiltro.startsWith('{')) {
+            trenData = JSON.parse(equipo.prefiltro);
+        }
+    } catch (e) {
+        // No es JSON, es prefiltro simple
+    }
+    
+    if (trenData && trenData.es_tren) {
+        cargarTrenPrefiltrado(trenData);
+    } else {
+        cargarTrenPrefiltrado(null); // Reset a modo simple
+        setSelectValue(PREFILTER_SELECT_ID, equipo.prefiltro || 'No Aplica');
+    }
+    
+    setSelectValue(PROTECCION_ENTRADA_ID, equipo.proteccion_entrada || 'No Aplica');
+    setSelectValue(MANOMETRO_SELECT_ID, equipo.manometros || 'No cuenta con manómetros');
+    setInputValue(EQUIPO_NOTAS_ID, equipo.notas_equipo || '');
+    
+    // Actualizar cálculo de autonomía
+    updateAutonomia();
+    
+    // Mostrar banner de equipo cargado
+    mostrarBannerEquipoCargado(equipo);
+    
+    // Bloquear campos y agregar listeners de cambio
+    habilitarEdicionSeccionB(false);
+    attachSeccionBChangeListeners();
+}
+
+/**
+ * Muestra banner indicando que los datos fueron precargados
+ */
+function mostrarBannerEquipoCargado(equipo) {
+    const seccionB = getElement('softener-section-b');
+    if (!seccionB) return;
+    
+    // Remover banner/selector existente
+    const existente = seccionB.querySelector('.equipo-status-banner, .equipo-selector-container');
+    if (existente) existente.remove();
+    
+    const banner = document.createElement('div');
+    banner.className = 'equipo-status-banner mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg';
+    banner.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-sm text-emerald-700 dark:text-emerald-300">
+                    <strong>Equipo cargado:</strong> ${equipo.numero_serie || 'Sin serie'} - ${equipo.tipo_ablandador || 'Custom'}
+                    <span class="text-xs text-emerald-600 dark:text-emerald-400 ml-2">(Última actualización: ${formatearFecha(equipo.updated_at)})</span>
+                </div>
+            </div>
+            <button type="button" id="softener-editar-equipo-btn" class="px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-700 rounded-md transition-colors">
+                ✏️ Editar configuración
+            </button>
+        </div>
+    `;
+    
+    const titulo = seccionB.querySelector('h2');
+    if (titulo) {
+        titulo.parentNode.insertBefore(banner, titulo.nextSibling.nextSibling);
+    }
+    
+    // Event listener para botón de editar
+    const btnEditar = banner.querySelector('#softener-editar-equipo-btn');
+    btnEditar.addEventListener('click', () => {
+        habilitarEdicionSeccionB(true);
+        seccionBDesbloqueada = true;
+        btnEditar.textContent = '🔓 Modo edición activo';
+        btnEditar.disabled = true;
+        btnEditar.classList.add('opacity-50', 'cursor-not-allowed');
+    });
+}
+
+/**
+ * Formatea una fecha ISO a formato legible
+ */
+function formatearFecha(fechaISO) {
+    if (!fechaISO) return 'N/A';
+    try {
+        const fecha = new Date(fechaISO);
+        return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch {
+        return 'N/A';
+    }
+}
+
+/**
+ * Habilita o deshabilita la edición de campos de la sección B
+ */
+function habilitarEdicionSeccionB(habilitar) {
+    const campos = [
+        EQUIPO_TIPO_ID,
+        EQUIPO_MODELO_ID,
+        VOLUMEN_RESINA_ID,
+        EQUIPO_NUMERO_SERIE_ID,
+        EQUIPO_UBICACION_ID,
+        SECCION_B_TIPO_REGENERACION_ID,
+        PREFILTER_SELECT_ID,
+        PROTECCION_ENTRADA_ID,
+        MANOMETRO_SELECT_ID,
+        EQUIPO_NOTAS_ID,
+    ];
+    
+    campos.forEach(id => {
+        const el = getElement(id);
+        if (el) {
+            if (habilitar) {
+                el.removeAttribute('readonly');
+                el.disabled = false;
+                el.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed', 'opacity-75');
+            } else {
+                // Para selects, usamos disabled; para inputs, readonly
+                if (el.tagName === 'SELECT') {
+                    el.disabled = true;
+                } else {
+                    el.readOnly = true;
+                }
+                el.classList.add('bg-gray-100', 'dark:bg-gray-700', 'cursor-not-allowed', 'opacity-75');
+            }
+        }
+    });
+    
+    // El número de serie siempre debe ser editable si es nuevo equipo
+    if (habilitar && !equipoActualCargado) {
+        const serieInput = getElement(EQUIPO_NUMERO_SERIE_ID);
+        if (serieInput) {
+            serieInput.classList.remove('opacity-75');
+        }
+    }
+}
+
+/**
+ * Limpia los campos de la sección B
+ */
+function limpiarSeccionB(removerBanner = true) {
+    equipoActualCargado = null;
+    equiposDelCliente = [];
+    seccionBEditada = false;
+    seccionBDesbloqueada = false;
+    
+    // Limpiar campos
+    setSelectValue(EQUIPO_TIPO_ID, 'Custom');
+    setInputValue(EQUIPO_MODELO_ID, '');
+    setInputValue(VOLUMEN_RESINA_ID, 25);
+    setInputValue(EQUIPO_NUMERO_SERIE_ID, '');
+    setSelectValue(EQUIPO_UBICACION_ID, '');
+    setSelectValue(SECCION_B_TIPO_REGENERACION_ID, 'Por Volumen');
+    setSelectValue(PREFILTER_SELECT_ID, 'No Aplica');
+    setSelectValue(PROTECCION_ENTRADA_ID, 'No Aplica');
+    setSelectValue(MANOMETRO_SELECT_ID, 'No cuenta con manómetros');
+    setInputValue(EQUIPO_NOTAS_ID, '');
+    
+    // Reset tren de prefiltrado
+    cargarTrenPrefiltrado(null);
+    
+    // Remover banner/selector si corresponde
+    if (removerBanner) {
+        const seccionB = getElement('softener-section-b');
+        if (seccionB) {
+            const banner = seccionB.querySelector('.equipo-status-banner, .equipo-selector-container');
+            if (banner) banner.remove();
+        }
+    }
+    
+    // Habilitar edición
+    habilitarEdicionSeccionB(true);
+}
+
+/**
+ * Adjunta listeners para detectar cambios en la sección B
+ */
+function attachSeccionBChangeListeners() {
+    const campos = [
+        EQUIPO_TIPO_ID,
+        EQUIPO_MODELO_ID,
+        VOLUMEN_RESINA_ID,
+        EQUIPO_UBICACION_ID,
+        SECCION_B_TIPO_REGENERACION_ID,
+        PREFILTER_SELECT_ID,
+        PROTECCION_ENTRADA_ID,
+        MANOMETRO_SELECT_ID,
+        EQUIPO_NOTAS_ID,
+    ];
+    
+    campos.forEach(id => {
+        const el = getElement(id);
+        if (el && !el.dataset.seccionBListener) {
+            el.addEventListener('change', () => {
+                if (seccionBDesbloqueada) {
+                    seccionBEditada = true;
+                }
+            });
+            el.addEventListener('input', () => {
+                if (seccionBDesbloqueada) {
+                    seccionBEditada = true;
+                }
+            });
+            el.dataset.seccionBListener = 'true';
+        }
+    });
+}
+
+/**
+ * Obtiene los datos actuales de la sección B del formulario
+ */
+function obtenerDatosSeccionB() {
+    // Verificar si es tren de prefiltrado
+    const trenData = obtenerValoresTrenPrefiltrado();
+    
+    return {
+        tipo_ablandador: getSelectValue(EQUIPO_TIPO_ID) || 'Custom',
+        modelo: getInputValue(EQUIPO_MODELO_ID) || '',
+        volumen_resina: parseFloat(getInputValue(VOLUMEN_RESINA_ID)) || 25,
+        numero_serie: getInputValue(EQUIPO_NUMERO_SERIE_ID)?.trim() || '',
+        ubicacion: getSelectValue(EQUIPO_UBICACION_ID) || '',
+        tipo_regeneracion: getSelectValue(SECCION_B_TIPO_REGENERACION_ID) || 'Por Volumen',
+        prefiltro: trenData ? JSON.stringify(trenData) : (getSelectValue(PREFILTER_SELECT_ID) || 'No Aplica'),
+        prefiltro_tren: trenData, // Datos estructurados del tren (null si no es tren)
+        proteccion_entrada: getSelectValue(PROTECCION_ENTRADA_ID) || 'No Aplica',
+        manometros: getSelectValue(MANOMETRO_SELECT_ID) || 'No cuenta con manómetros',
+        notas_equipo: getInputValue(EQUIPO_NOTAS_ID) || '',
+    };
+}
+
+/**
+ * Verifica y maneja cambios en la configuración del equipo al guardar
+ * @returns {Promise<{continuar: boolean, equipoId: string|null}>}
+ */
+async function verificarYGuardarEquipo() {
+    const hiddenInput = getElement(CLIENT_SELECT_ID);
+    const clienteUUID = hiddenInput?.dataset?.clienteUuid;
+    
+    if (!clienteUUID) {
+        // No hay cliente seleccionado con UUID válido
+        return { continuar: true, equipoId: null };
+    }
+    
+    const datosFormulario = obtenerDatosSeccionB();
+    const numeroSerie = datosFormulario.numero_serie;
+    
+    if (!numeroSerie) {
+        alert('⚠️ El número de serie es obligatorio para registrar el equipo.');
+        return { continuar: false, equipoId: null };
+    }
+    
+    const tecnicoActual = getCurrentUserName() || 'Sistema';
+    
+    // Caso 1: Es un equipo nuevo (no había equipo cargado)
+    if (!equipoActualCargado) {
+        try {
+            // Verificar si ya existe un equipo con ese número de serie para este cliente
+            const equipoExistente = await obtenerEquipoAblandadorPorSerie(clienteUUID, numeroSerie);
+            
+            if (equipoExistente) {
+                alert(`⚠️ Ya existe un equipo con el número de serie "${numeroSerie}" para este cliente.\n\nSi es el mismo equipo, seleccionalo de la lista.`);
+                return { continuar: false, equipoId: null };
+            }
+            
+            // Crear nuevo equipo
+            const nuevoEquipo = await crearEquipoAblandador({
+                cliente_id: clienteUUID,
+                ...datosFormulario,
+                created_by: tecnicoActual,
+            });
+            
+            console.log('✅ Nuevo equipo creado:', nuevoEquipo.id);
+            return { continuar: true, equipoId: nuevoEquipo.id };
+        } catch (error) {
+            console.error('Error creando equipo:', error);
+            alert(`❌ Error al registrar el equipo: ${error.message}`);
+            return { continuar: false, equipoId: null };
+        }
+    }
+    
+    // Caso 2: Hay equipo cargado - verificar si hubo cambios
+    if (seccionBEditada && seccionBDesbloqueada) {
+        const { hayCambios, cambios } = detectarCambiosEquipo(equipoActualCargado, datosFormulario);
+        
+        if (hayCambios) {
+            // Mostrar modal de confirmación
+            const detallesCambios = Object.entries(cambios)
+                .map(([campo, { anterior, nuevo }]) => `• ${formatearNombreCampo(campo)}: "${anterior || '(vacío)'}" → "${nuevo || '(vacío)'}"`)
+                .join('\n');
+            
+            const mensaje = `Se detectaron cambios en la configuración del equipo:\n\n${detallesCambios}\n\n¿Desea actualizar la ficha del equipo para futuros mantenimientos?`;
+            
+            const actualizarFicha = confirm(mensaje);
+            
+            if (actualizarFicha) {
+                try {
+                    await actualizarEquipoAblandador(equipoActualCargado.id, {
+                        ...datosFormulario,
+                        updated_by: tecnicoActual,
+                    });
+                    console.log('✅ Equipo actualizado:', equipoActualCargado.id);
+                } catch (error) {
+                    console.error('Error actualizando equipo:', error);
+                    alert(`⚠️ No se pudo actualizar la ficha del equipo: ${error.message}\n\nEl mantenimiento se guardará de todas formas.`);
+                }
+            }
+        }
+    }
+    
+    return { continuar: true, equipoId: equipoActualCargado?.id || null };
+}
+
+/**
+ * Formatea el nombre de un campo para mostrar al usuario
+ */
+function formatearNombreCampo(campo) {
+    const nombres = {
+        tipo_ablandador: 'Tipo de ablandador',
+        modelo: 'Modelo',
+        volumen_resina: 'Volumen de resina',
+        ubicacion: 'Ubicación',
+        tipo_regeneracion: 'Tipo de regeneración',
+        prefiltro: 'Prefiltro',
+        proteccion_entrada: 'Protección de entrada',
+        manometros: 'Manómetros',
+        notas_equipo: 'Notas del equipo',
+    };
+    return nombres[campo] || campo;
+}
+
+/**
+ * Helper para obtener valor de un select
+ */
+function getSelectValue(id) {
+    const el = getElement(id);
+    return el?.value || '';
 }
 
 function initializeClientAutocomplete() {
@@ -925,6 +1444,185 @@ function attachPrefilterInfoListeners() {
     });
 }
 
+// ============================================================================
+// TREN DE PREFILTRADO - Múltiples etapas de filtración
+// ============================================================================
+
+const PREFILTRO_OPTIONS = [
+    { value: 'No Aplica', label: 'No Aplica' },
+    { value: 'Particulas - Mini Blue (10"x2.5")', label: 'Partículas - Mini Blue (10"x2.5")' },
+    { value: 'Particulas - XL (20"x2.5")', label: 'Partículas - XL (20"x2.5")' },
+    { value: 'Particulas - Jumbo (10"x4.5")', label: 'Partículas - Jumbo (10"x4.5")' },
+    { value: 'Particulas - Big Blue (20"x4.5")', label: 'Partículas - Big Blue (20"x4.5")' },
+    { value: 'CAB - Mini Blue (10"x2.5")', label: 'CAB - Mini Blue (10"x2.5")' },
+    { value: 'CAB - XL (20"x2.5")', label: 'CAB - XL (20"x2.5")' },
+    { value: 'CAB - Jumbo (10"x4.5")', label: 'CAB - Jumbo (10"x4.5")' },
+    { value: 'CAB - Big Blue (20"x4.5")', label: 'CAB - Big Blue (20"x4.5")' },
+    { value: 'GAC - Mini Blue (10"x2.5")', label: 'GAC - Mini Blue (10"x2.5")' },
+    { value: 'GAC - XL (20"x2.5")', label: 'GAC - XL (20"x2.5")' },
+    { value: 'GAC - Jumbo (10"x4.5")', label: 'GAC - Jumbo (10"x4.5")' },
+    { value: 'GAC - Big Blue (20"x4.5")', label: 'GAC - Big Blue (20"x4.5")' },
+];
+
+/**
+ * Genera los selectores dinámicos para cada etapa del tren de prefiltrado
+ */
+function generarSelectoresEtapas(numEtapas) {
+    const container = getElement(PREFILTRO_ETAPAS_CONTAINER_ID);
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    for (let i = 1; i <= numEtapas; i++) {
+        const etapaDiv = document.createElement('div');
+        etapaDiv.className = 'flex items-center gap-2';
+        
+        const label = document.createElement('label');
+        label.className = 'text-xs font-medium text-gray-700 dark:text-gray-300 w-16 flex-shrink-0';
+        label.textContent = `Etapa ${i}:`;
+        label.setAttribute('for', `softener-prefiltro-etapa-${i}`);
+        
+        const select = document.createElement('select');
+        select.id = `softener-prefiltro-etapa-${i}`;
+        select.name = `prefiltro_etapa_${i}`;
+        select.className = 'flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1.5 text-sm text-gray-900 dark:text-gray-100 focus:border-emerald-500 focus:outline-none';
+        
+        PREFILTRO_OPTIONS.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            select.appendChild(option);
+        });
+        
+        etapaDiv.appendChild(label);
+        etapaDiv.appendChild(select);
+        container.appendChild(etapaDiv);
+    }
+}
+
+/**
+ * Obtiene los valores de todas las etapas del tren
+ */
+function obtenerValoresTrenPrefiltrado() {
+    const checkbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
+    if (!checkbox || !checkbox.checked) {
+        return null; // No es tren
+    }
+    
+    const numEtapas = parseInt(getInputValue(PREFILTRO_ETAPAS_INPUT_ID)) || 0;
+    const etapas = [];
+    
+    for (let i = 1; i <= numEtapas; i++) {
+        const select = getElement(`softener-prefiltro-etapa-${i}`);
+        if (select) {
+            etapas.push({
+                etapa: i,
+                tipo: select.value
+            });
+        }
+    }
+    
+    return {
+        es_tren: true,
+        num_etapas: numEtapas,
+        etapas: etapas
+    };
+}
+
+/**
+ * Carga los valores del tren de prefiltrado desde la BD
+ */
+function cargarTrenPrefiltrado(trenData) {
+    const checkbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
+    const etapasInput = getElement(PREFILTRO_ETAPAS_INPUT_ID);
+    const trenContainer = getElement(PREFILTRO_TREN_CONTAINER_ID);
+    const simpleContainer = getElement(PREFILTRO_SIMPLE_CONTAINER_ID);
+    
+    if (!trenData || !trenData.es_tren) {
+        // No es tren - mostrar selector simple
+        if (checkbox) checkbox.checked = false;
+        if (trenContainer) trenContainer.classList.add('hidden');
+        if (simpleContainer) simpleContainer.classList.remove('hidden');
+        return;
+    }
+    
+    // Es tren - configurar
+    if (checkbox) checkbox.checked = true;
+    if (trenContainer) trenContainer.classList.remove('hidden');
+    if (simpleContainer) simpleContainer.classList.add('hidden');
+    
+    if (etapasInput) {
+        etapasInput.value = trenData.num_etapas || 2;
+    }
+    
+    // Generar selectores y cargar valores
+    generarSelectoresEtapas(trenData.num_etapas || 2);
+    
+    // Cargar valores de cada etapa
+    if (trenData.etapas && Array.isArray(trenData.etapas)) {
+        trenData.etapas.forEach(etapa => {
+            const select = getElement(`softener-prefiltro-etapa-${etapa.etapa}`);
+            if (select) {
+                select.value = etapa.tipo;
+            }
+        });
+    }
+}
+
+/**
+ * Inicializa los listeners para el tren de prefiltrado
+ */
+function attachTrenPrefiltradoListeners() {
+    const checkbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
+    const etapasInput = getElement(PREFILTRO_ETAPAS_INPUT_ID);
+    const trenContainer = getElement(PREFILTRO_TREN_CONTAINER_ID);
+    const simpleContainer = getElement(PREFILTRO_SIMPLE_CONTAINER_ID);
+    
+    if (!checkbox) return;
+    
+    // Toggle tren on/off
+    checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+            if (trenContainer) trenContainer.classList.remove('hidden');
+            if (simpleContainer) simpleContainer.classList.add('hidden');
+            // Generar selectores iniciales
+            const numEtapas = parseInt(etapasInput?.value) || 2;
+            generarSelectoresEtapas(numEtapas);
+        } else {
+            if (trenContainer) trenContainer.classList.add('hidden');
+            if (simpleContainer) simpleContainer.classList.remove('hidden');
+        }
+        
+        // Actualizar la sección de cambio de filtros en checklist
+        updatePrefiltroCambioVisibility();
+        
+        // Marcar sección B como editada
+        if (seccionBDesbloqueada) {
+            seccionBEditada = true;
+        }
+    });
+    
+    // Cambio en número de etapas
+    if (etapasInput) {
+        etapasInput.addEventListener('change', () => {
+            const numEtapas = parseInt(etapasInput.value) || 2;
+            // Limitar entre 2 y 6
+            const limitado = Math.max(2, Math.min(6, numEtapas));
+            etapasInput.value = limitado;
+            generarSelectoresEtapas(limitado);
+            
+            // Actualizar checkboxes de cambio de filtro después de generar selectores
+            setTimeout(() => {
+                generarCheckboxesCambioFiltroTren();
+            }, 50);
+            
+            if (seccionBDesbloqueada) {
+                seccionBEditada = true;
+            }
+        });
+    }
+}
+
 function hideProtectionInfo() {
     const btn = getElement(PROTECTION_INFO_BTN_ID);
     const popup = getElement(PROTECTION_INFO_POPUP_ID);
@@ -1071,8 +1769,13 @@ function attachAutonomiaRestanteInfoListeners() {
 function updatePrefiltroCambioVisibility() {
     const prefiltroValue = getInputValue(PREFILTER_SELECT_ID);
     const section = getElement(PREFILTRACION_SECTION_ID);
-    const container = getElement(CAMBIO_FILTRO_CONTAINER_ID);
+    const containerSimple = getElement(CAMBIO_FILTRO_CONTAINER_ID);
+    const containerTren = getElement(CAMBIO_FILTRO_TREN_CONTAINER_ID);
     const tipoFiltroInput = getElement(FILTRO_TIPO_INSTALADO_ID);
+    const trenCheckbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
+    
+    // Verificar si está en modo tren
+    const esTren = trenCheckbox instanceof HTMLInputElement && trenCheckbox.checked;
     
     // Mostrar toda la sección solo si hay prefiltro configurado (no vacío y no "No Aplica")
     const tienePrefiltro = prefiltroValue && prefiltroValue.trim() !== '' && prefiltroValue !== 'No Aplica';
@@ -1086,23 +1789,202 @@ function updatePrefiltroCambioVisibility() {
         }
     }
     
-    if (!container) return;
-    
-    if (tienePrefiltro) {
-        container.classList.remove('hidden');
-        // Heredar el tipo de filtro configurado
-        if (tipoFiltroInput) {
-            tipoFiltroInput.value = prefiltroValue;
-        }
-    } else {
-        container.classList.add('hidden');
+    // Si no hay prefiltro, ocultar ambos containers
+    if (!tienePrefiltro) {
+        if (containerSimple) containerSimple.classList.add('hidden');
+        if (containerTren) containerTren.classList.add('hidden');
         // Limpiar campos cuando se oculta
         const checkCambio = getElement(CHECK_CAMBIO_FILTRO_ID);
         if (checkCambio instanceof HTMLInputElement) {
             checkCambio.checked = false;
         }
         updateDetalleCambioFiltro();
+        return;
     }
+    
+    // Determinar qué container mostrar según modo
+    if (esTren) {
+        // Modo tren: ocultar simple, mostrar tren y generar checkboxes dinámicos
+        if (containerSimple) containerSimple.classList.add('hidden');
+        if (containerTren) {
+            containerTren.classList.remove('hidden');
+            generarCheckboxesCambioFiltroTren();
+        }
+    } else {
+        // Modo simple: mostrar simple, ocultar tren
+        if (containerSimple) {
+            containerSimple.classList.remove('hidden');
+            // Heredar el tipo de filtro configurado
+            if (tipoFiltroInput) {
+                tipoFiltroInput.value = prefiltroValue;
+            }
+        }
+        if (containerTren) containerTren.classList.add('hidden');
+    }
+}
+
+/**
+ * Genera los checkboxes dinámicos para el cambio de filtros en modo tren
+ * Basado en las etapas configuradas en la Sección B
+ */
+function generarCheckboxesCambioFiltroTren() {
+    const etapasContainer = getElement(CAMBIO_FILTRO_TREN_ETAPAS_ID);
+    if (!etapasContainer) return;
+    
+    // Obtener las etapas configuradas en Sección B
+    const etapas = obtenerEtapasTrenConfiguradas();
+    
+    if (etapas.length === 0) {
+        etapasContainer.innerHTML = `
+            <p class="text-sm text-gray-500 dark:text-gray-400 italic">
+                No hay etapas de tren configuradas en la Sección B
+            </p>
+        `;
+        return;
+    }
+    
+    // Generar checkboxes para cada etapa
+    let html = '';
+    etapas.forEach((etapa, index) => {
+        const checkboxId = `softener-cambio-filtro-etapa-${index}`;
+        html += `
+            <label class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-600 dark:bg-gray-800">
+                <input type="checkbox" 
+                       id="${checkboxId}" 
+                       data-etapa-index="${index}"
+                       data-etapa-nombre="${etapa}"
+                       class="cambio-filtro-etapa-checkbox mt-1 h-5 w-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-500">
+                <span class="text-sm text-gray-700 dark:text-gray-300">
+                    <strong>Etapa ${index + 1}:</strong> ${etapa}
+                </span>
+            </label>
+        `;
+    });
+    
+    etapasContainer.innerHTML = html;
+    
+    // Agregar listeners a los checkboxes generados
+    attachCambioFiltroTrenListeners();
+}
+
+/**
+ * Obtiene las etapas de tren configuradas en la Sección B
+ * @returns {string[]} Array con los nombres de las etapas
+ */
+function obtenerEtapasTrenConfiguradas() {
+    const etapas = [];
+    const selectoresEtapas = document.querySelectorAll('#' + PREFILTRO_ETAPAS_CONTAINER_ID + ' select');
+    
+    selectoresEtapas.forEach((select) => {
+        if (select instanceof HTMLSelectElement && select.value) {
+            etapas.push(select.value);
+        }
+    });
+    
+    return etapas;
+}
+
+/**
+ * Agrega listeners a los checkboxes de cambio de filtro en modo tren
+ */
+function attachCambioFiltroTrenListeners() {
+    const checkboxes = document.querySelectorAll('.cambio-filtro-etapa-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            updateDetalleCambioFiltroTren();
+        });
+    });
+}
+
+/**
+ * Actualiza la visibilidad del detalle de lotes/series para modo tren
+ * Solo muestra los inputs de lote para las etapas que tienen checkbox marcado
+ */
+function updateDetalleCambioFiltroTren() {
+    const detalleContainer = getElement(DETALLE_CAMBIO_FILTRO_TREN_ID);
+    const lotesContainer = getElement(LOTES_TREN_CONTAINER_ID);
+    
+    if (!detalleContainer || !lotesContainer) return;
+    
+    // Obtener checkboxes marcados
+    const checkboxesMarcados = document.querySelectorAll('.cambio-filtro-etapa-checkbox:checked');
+    
+    if (checkboxesMarcados.length === 0) {
+        detalleContainer.classList.add('hidden');
+        lotesContainer.innerHTML = '';
+        return;
+    }
+    
+    // Mostrar container de detalle
+    detalleContainer.classList.remove('hidden');
+    
+    // Generar inputs de lote/serie para cada etapa marcada
+    let html = '';
+    checkboxesMarcados.forEach((checkbox) => {
+        if (checkbox instanceof HTMLInputElement) {
+            const index = checkbox.dataset.etapaIndex;
+            const nombre = checkbox.dataset.etapaNombre;
+            const inputId = `softener-lote-etapa-${index}`;
+            
+            html += `
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <label class="text-xs font-medium text-gray-600 dark:text-gray-400 min-w-[120px]">
+                        Etapa ${parseInt(index) + 1} (${nombre}):
+                    </label>
+                    <input type="text" 
+                           id="${inputId}" 
+                           data-etapa-index="${index}"
+                           class="lote-etapa-input flex-1 rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-amber-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" 
+                           placeholder="Lote o serie del filtro">
+                </div>
+            `;
+        }
+    });
+    
+    lotesContainer.innerHTML = html;
+}
+
+/**
+ * Obtiene los datos del cambio de filtros para modo tren
+ * @returns {Object} Objeto con los datos del cambio de filtros en modo tren
+ */
+function obtenerDatosCambioFiltroTren() {
+    const trenCheckbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
+    const esTren = trenCheckbox instanceof HTMLInputElement && trenCheckbox.checked;
+    
+    if (!esTren) {
+        return null;
+    }
+    
+    const etapas = obtenerEtapasTrenConfiguradas();
+    const filtrosCambiados = [];
+    
+    // Obtener checkboxes marcados
+    const checkboxes = document.querySelectorAll('.cambio-filtro-etapa-checkbox:checked');
+    
+    checkboxes.forEach((checkbox) => {
+        if (checkbox instanceof HTMLInputElement) {
+            const index = parseInt(checkbox.dataset.etapaIndex || '0', 10);
+            const nombre = checkbox.dataset.etapaNombre || '';
+            
+            // Buscar el input de lote correspondiente
+            const loteInput = document.getElementById(`softener-lote-etapa-${index}`);
+            const lote = loteInput instanceof HTMLInputElement ? loteInput.value : '';
+            
+            filtrosCambiados.push({
+                etapa: index + 1,
+                tipo: nombre,
+                lote_serie: lote
+            });
+        }
+    });
+    
+    return {
+        es_tren: true,
+        total_etapas: etapas.length,
+        etapas_configuradas: etapas,
+        filtros_cambiados: filtrosCambiados
+    };
 }
 
 function updateDetalleCambioFiltro() {
@@ -1134,11 +2016,54 @@ function attachPrefiltroCambioListeners() {
         });
     }
     
-    // Listener para el checkbox de "¿Realizó cambio de filtro?"
+    // Listener para el checkbox de "¿Realizó cambio de filtro?" (modo simple)
     const checkCambio = getElement(CHECK_CAMBIO_FILTRO_ID);
     if (checkCambio instanceof HTMLInputElement) {
         checkCambio.addEventListener('change', () => {
             updateDetalleCambioFiltro();
+        });
+    }
+    
+    // Listener para cambios en el checkbox "Tren" de Sección B
+    const trenCheckbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
+    if (trenCheckbox instanceof HTMLInputElement) {
+        trenCheckbox.addEventListener('change', () => {
+            updatePrefiltroCambioVisibility();
+        });
+    }
+    
+    // Listener para cambios en la cantidad de etapas del tren
+    const etapasInput = getElement(PREFILTRO_ETAPAS_INPUT_ID);
+    if (etapasInput instanceof HTMLInputElement) {
+        etapasInput.addEventListener('change', () => {
+            // Pequeño delay para que se generen los selectores primero
+            setTimeout(() => {
+                updatePrefiltroCambioVisibility();
+            }, 100);
+        });
+    }
+    
+    // Observer para detectar cambios en los selectores de etapas del tren
+    const etapasContainer = getElement(PREFILTRO_ETAPAS_CONTAINER_ID);
+    if (etapasContainer) {
+        // Usar MutationObserver para detectar cuando se agregan/cambian selectores
+        const observer = new MutationObserver(() => {
+            // Actualizar los checkboxes de cambio de filtro cuando cambian las etapas
+            const trenCheckbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
+            if (trenCheckbox instanceof HTMLInputElement && trenCheckbox.checked) {
+                setTimeout(() => {
+                    generarCheckboxesCambioFiltroTren();
+                }, 100);
+            }
+        });
+        
+        observer.observe(etapasContainer, { childList: true, subtree: true });
+        
+        // También agregar listener de cambio a los selectores existentes
+        etapasContainer.addEventListener('change', (e) => {
+            if (e.target instanceof HTMLSelectElement) {
+                generarCheckboxesCambioFiltroTren();
+            }
         });
     }
 }
@@ -1585,6 +2510,9 @@ function collectFormData() {
     const durezaSalidaAsFound = getNumberValue('softener-param-dureza-salida-found');
     const durezaSalidaAsLeft = getNumberValue('softener-param-dureza-salida-left');
 
+    // Obtener datos del tren de prefiltrado si está configurado
+    const trenPrefiltradoConfig = obtenerValoresTrenPrefiltrado();
+
     const seccionB = buildSection([
         ['tipo', getInputValue('softener-equipo-tipo')],
         ['modelo', getInputValue('softener-equipo-modelo')],
@@ -1593,7 +2521,8 @@ function collectFormData() {
         ['volumen_resina', volumenResina],
         ['notas_equipo', getInputValue('softener-equipo-notas')],
         ['tipo_regeneracion', getInputValue(SECCION_B_TIPO_REGENERACION_ID)],
-        ['prefiltro', getInputValue('softener-equipo-prefiltro')],
+        ['prefiltro', trenPrefiltradoConfig ? null : getInputValue('softener-equipo-prefiltro')],
+        ['tren_prefiltrado', trenPrefiltradoConfig],
         ['proteccion_entrada', getInputValue(PROTECCION_ENTRADA_ID)],
         ['manometros', getInputValue(MANOMETRO_SELECT_ID)],
     ]);
@@ -1616,13 +2545,19 @@ function collectFormData() {
         ['autonomia_ajustada_valor_calculado', autonomiaAjustada],
     ]);
 
+    // Obtener datos de cambio de filtro (modo simple o tren)
+    const datosCambioFiltroTren = obtenerDatosCambioFiltroTren();
+    const esTrenPrefiltrado = datosCambioFiltroTren !== null;
+    
     const seccionD = buildSection([
         // Inspección General
         ['inspeccion_fugas', getCheckboxValue('softener-check-fugas')],
-        // Sistema de Prefiltración
-        ['cambio_filtro_realizado', getCheckboxValue(CHECK_CAMBIO_FILTRO_ID)],
-        ['filtro_tipo_instalado', getInputValue(FILTRO_TIPO_INSTALADO_ID)],
-        ['filtro_lote_serie', getInputValue(FILTRO_LOTE_SERIE_ID)],
+        // Sistema de Prefiltración - modo simple
+        ['cambio_filtro_realizado', esTrenPrefiltrado ? false : getCheckboxValue(CHECK_CAMBIO_FILTRO_ID)],
+        ['filtro_tipo_instalado', esTrenPrefiltrado ? '' : getInputValue(FILTRO_TIPO_INSTALADO_ID)],
+        ['filtro_lote_serie', esTrenPrefiltrado ? '' : getInputValue(FILTRO_LOTE_SERIE_ID)],
+        // Sistema de Prefiltración - modo tren
+        ['tren_prefiltrado', datosCambioFiltroTren],
         // Tanque Salero
         ['limpieza_tanque_sal', getCheckboxValue('softener-check-limpieza-tanque')],
         ['verificacion_nivel_agua', getCheckboxValue('softener-check-nivel-agua')],
@@ -1927,6 +2862,7 @@ export function createSoftenerModule(deps = {}) {
         setTimeout(() => {
             setTechnicianFromLogin(); // Re-establecer técnico desde login
             resetClientSelection();
+            limpiarSeccionB(); // Limpiar sección B y estado de equipos
             setDefaultServiceDate();
             setDefaultResinVolume();
             resetCabezalSection();
@@ -1983,7 +2919,19 @@ export function createSoftenerModule(deps = {}) {
         }
 
         updateAutonomia();
+        
+        // Verificar y guardar/actualizar equipo antes de continuar
+        const { continuar, equipoId } = await verificarYGuardarEquipo();
+        if (!continuar) {
+            return; // El usuario canceló o hubo un error con el equipo
+        }
+        
         const payload = collectFormData();
+        
+        // Agregar referencia al equipo si existe
+        if (equipoId) {
+            payload.equipo_ablandador_id = equipoId;
+        }
         
         if (typeof guardarMantenimientoFn !== 'function') {
             alert('Servicio de mantenimiento de ablandador no disponible.');
@@ -2117,6 +3065,7 @@ export function createSoftenerModule(deps = {}) {
         attachAutonomiaListeners();
         attachCabezalListeners();
         attachPrefilterInfoListeners();
+        attachTrenPrefiltradoListeners();
         attachProtectionInfoListeners();
         attachManometroInfoListeners();
         attachAutonomiaRestanteInfoListeners();
