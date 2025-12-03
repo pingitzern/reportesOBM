@@ -163,13 +163,19 @@
         
         // Verificar si es modo tren
         const trenData = equipoData.trenPrefiltrado;
-        if (trenData && trenData.es_tren && trenData.etapas && trenData.etapas.length > 0) {
-          // Formato: "Tren (3 etapas): PP-10, CAB, GAC"
-          const etapasTexto = trenData.etapas.map((e, i) => {
-            const tipo = e.tipo || e;
-            return `${i + 1}. ${tipo}`;
-          }).join(' → ');
-          return `Tren (${trenData.etapas.length} etapas): ${etapasTexto}`;
+        if (trenData && trenData.es_tren) {
+          // Obtener etapas - puede venir como array de objetos o array de strings
+          const etapas = trenData.etapas || trenData.etapas_configuradas || [];
+          if (etapas.length > 0) {
+            // Formato: "Tren (2 etapas): 1. PP-10 → 2. CAB"
+            const etapasTexto = etapas.map((e, i) => {
+              // e puede ser un objeto {etapa, tipo} o un string directamente
+              const tipo = (typeof e === 'object') ? (e.tipo || e) : e;
+              return `${i + 1}. ${tipo}`;
+            }).join(' → ');
+            const numEtapas = trenData.num_etapas || trenData.total_etapas || etapas.length;
+            return `Tren (${numEtapas} etapas): ${etapasTexto}`;
+          }
         }
         
         // Modo simple

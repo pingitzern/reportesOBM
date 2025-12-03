@@ -1543,6 +1543,8 @@ function cargarTrenPrefiltrado(trenData) {
         if (checkbox) checkbox.checked = false;
         if (trenContainer) trenContainer.classList.add('hidden');
         if (simpleContainer) simpleContainer.classList.remove('hidden');
+        // Actualizar la sección de cambio de filtros
+        updatePrefiltroCambioVisibility();
         return;
     }
     
@@ -1567,6 +1569,9 @@ function cargarTrenPrefiltrado(trenData) {
             }
         });
     }
+    
+    // Actualizar la sección de cambio de filtros después de cargar el tren
+    updatePrefiltroCambioVisibility();
 }
 
 /**
@@ -1777,8 +1782,13 @@ function updatePrefiltroCambioVisibility() {
     // Verificar si está en modo tren
     const esTren = trenCheckbox instanceof HTMLInputElement && trenCheckbox.checked;
     
-    // Mostrar toda la sección solo si hay prefiltro configurado (no vacío y no "No Aplica")
-    const tienePrefiltro = prefiltroValue && prefiltroValue.trim() !== '' && prefiltroValue !== 'No Aplica';
+    // En modo tren, verificar si hay etapas configuradas
+    const etapasTren = esTren ? obtenerEtapasTrenConfiguradas() : [];
+    const tieneTrenConfigurado = esTren && etapasTren.length > 0;
+    
+    // Mostrar toda la sección si hay prefiltro simple configurado O si hay tren con etapas
+    const tienePrefiltroSimple = !esTren && prefiltroValue && prefiltroValue.trim() !== '' && prefiltroValue !== 'No Aplica';
+    const tienePrefiltro = tienePrefiltroSimple || tieneTrenConfigurado;
     
     // Controlar visibilidad de toda la sección
     if (section) {
