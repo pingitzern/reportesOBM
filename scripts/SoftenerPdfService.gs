@@ -156,6 +156,83 @@
       },
 
       /**
+       * Formatea el prefiltro del equipo (simple o tren)
+       */
+      formatPrefiltroEquipo_(equipoData) {
+        if (!equipoData) return '—';
+        
+        // Verificar si es modo tren
+        const trenData = equipoData.trenPrefiltrado;
+        if (trenData && trenData.es_tren && trenData.etapas && trenData.etapas.length > 0) {
+          // Formato: "Tren (3 etapas): PP-10, CAB, GAC"
+          const etapasTexto = trenData.etapas.map((e, i) => {
+            const tipo = e.tipo || e;
+            return `${i + 1}. ${tipo}`;
+          }).join(' → ');
+          return `Tren (${trenData.etapas.length} etapas): ${etapasTexto}`;
+        }
+        
+        // Modo simple
+        return equipoData.prefiltro || '—';
+      },
+
+      /**
+       * Construye las filas de cambio de filtro para el checklist (simple o tren)
+       */
+      buildCambioFiltroRows_(checklistData) {
+        if (!checklistData) return '';
+        
+        const trenData = checklistData.trenPrefiltrado;
+        
+        // Verificar si es modo tren
+        if (trenData && trenData.es_tren) {
+          let html = '';
+          const filtrosCambiados = trenData.filtros_cambiados || [];
+          
+          if (filtrosCambiados.length === 0) {
+            // No se cambiaron filtros
+            html = `<tr><td>☐ Cambio de prefiltro (Tren de ${trenData.total_etapas || '?'} etapas) - No se realizaron cambios</td></tr>`;
+          } else {
+            // Mostrar cada filtro cambiado
+            html = `<tr><td>☑ Cambio de prefiltro (Tren de ${trenData.total_etapas || '?'} etapas)</td></tr>`;
+            filtrosCambiados.forEach(filtro => {
+              const etapaNum = filtro.etapa || '?';
+              const tipo = this.escapeHtml_(filtro.tipo || '—');
+              const lote = filtro.lote_serie ? this.escapeHtml_(filtro.lote_serie) : '';
+              html += `<tr><td style="padding-left: 24px;">☑ Etapa ${etapaNum}: ${tipo}${lote ? ` (Lote: ${lote})` : ''}</td></tr>`;
+            });
+            
+            // Mostrar etapas no cambiadas
+            const etapasConfig = trenData.etapas_configuradas || [];
+            etapasConfig.forEach((tipo, index) => {
+              const etapaNum = index + 1;
+              const fueCambiado = filtrosCambiados.some(f => f.etapa === etapaNum);
+              if (!fueCambiado) {
+                html += `<tr><td style="padding-left: 24px; color: #6b7280;">☐ Etapa ${etapaNum}: ${this.escapeHtml_(tipo)} (sin cambio)</td></tr>`;
+              }
+            });
+          }
+          
+          return html;
+        }
+        
+        // Modo simple
+        const cambioRealizado = checklistData.cambioFiltro === 'SÍ';
+        let html = `<tr><td>${cambioRealizado ? '☑' : '☐'} Cambio de prefiltro</td></tr>`;
+        
+        if (cambioRealizado) {
+          if (checklistData.filtroTipo && checklistData.filtroTipo !== '—') {
+            html += `<tr><td style="padding-left: 24px;">Tipo: ${this.escapeHtml_(checklistData.filtroTipo)}</td></tr>`;
+          }
+          if (checklistData.filtroLote && checklistData.filtroLote !== '—') {
+            html += `<tr><td style="padding-left: 24px;">Lote/Serie: ${this.escapeHtml_(checklistData.filtroLote)}</td></tr>`;
+          }
+        }
+        
+        return html;
+      },
+
+      /**
        * Prepara los datos para el PDF
        */
       buildPrintableData_(payload) {
@@ -201,6 +278,7 @@
             volumenResina: this.getValue_(equipoData, 'volumen_resina'),
             tipoRegeneracion: this.getValue_(equipoData, 'tipo_regeneracion'),
             prefiltro: this.getValue_(equipoData, 'prefiltro'),
+            trenPrefiltrado: equipoData.tren_prefiltrado || null,
             proteccionEntrada: this.getValue_(equipoData, 'proteccion_entrada'),
             manometros: this.getValue_(equipoData, 'manometros'),
             notas: this.getValue_(equipoData, 'notas_equipo')
@@ -239,6 +317,7 @@
             cambioFiltro: this.formatBoolean_(checklistData.cambio_filtro_realizado),
             filtroTipo: this.getValue_(checklistData, 'filtro_tipo_instalado'),
             filtroLote: this.getValue_(checklistData, 'filtro_lote_serie'),
+            trenPrefiltrado: checklistData.tren_prefiltrado || null,
             limpiezaTanque: this.formatBoolean_(checklistData.limpieza_tanque_sal),
             nivelAgua: this.formatBoolean_(checklistData.verificacion_nivel_agua),
             cargaSal: this.formatBoolean_(checklistData.carga_sal),
@@ -539,7 +618,7 @@
             { label: 'Ubicación', value: data.equipo.ubicacion },
             { label: 'Volumen Resina (L)', value: data.equipo.volumenResina },
             { label: 'Tipo Regeneración', value: data.equipo.tipoRegeneracion },
-            { label: 'Prefiltro', value: data.equipo.prefiltro },
+            { label: 'Prefiltro', value: this.formatPrefiltroEquipo_(data.equipo) },
             { label: 'Protección Entrada', value: data.equipo.proteccionEntrada },
             { label: 'Manómetros', value: data.equipo.manometros }
           ])}
@@ -621,9 +700,7 @@
       <table class="checklist-table">
         <tbody>
           <tr><td>${data.checklist.inspeccionFugas === 'SÍ' ? '☑' : '☐'} Inspección de fugas</td></tr>
-          <tr><td>${data.checklist.cambioFiltro === 'SÍ' ? '☑' : '☐'} Cambio de prefiltro</td></tr>
-          ${data.checklist.filtroTipo !== '—' ? `<tr><td style="padding-left: 24px;">Tipo: ${this.escapeHtml_(data.checklist.filtroTipo)}</td></tr>` : ''}
-          ${data.checklist.filtroLote !== '—' ? `<tr><td style="padding-left: 24px;">Lote/Serie: ${this.escapeHtml_(data.checklist.filtroLote)}</td></tr>` : ''}
+          ${this.buildCambioFiltroRows_(data.checklist)}
           <tr><td>${data.checklist.limpiezaTanque === 'SÍ' ? '☑' : '☐'} Limpieza tanque de sal</td></tr>
           <tr><td>${data.checklist.nivelAgua === 'SÍ' ? '☑' : '☐'} Verificación nivel de agua</td></tr>
           <tr><td>${data.checklist.cargaSal === 'SÍ' ? '☑' : '☐'} Carga de sal</td></tr>
