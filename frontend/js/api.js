@@ -118,6 +118,11 @@ export async function buscarMantenimientos(filtros = {}) {
             profiles:technician_id (
                 id,
                 full_name
+            ),
+            equipments:equipment_id (
+                id,
+                modelo,
+                serial_number
             )
         `)
         .order('service_date', { ascending: false });
@@ -178,7 +183,22 @@ export async function buscarMantenimientos(filtros = {}) {
     return (data || []).map(m => {
         const reportData = m.report_data || {};
         const clienteName = m.clients?.razon_social || reportData.Cliente || reportData.cliente || '';
-        const tecnicoName = m.profiles?.full_name || reportData.Tecnico_Asignado || reportData.tecnico || '';
+        
+        // Buscar técnico en múltiples ubicaciones
+        const tecnicoName = m.profiles?.full_name 
+            || reportData.Tecnico_Asignado 
+            || reportData.tecnico 
+            || reportData.seccion_A_cliente?.tecnico
+            || reportData.seccion_A_identificacion?.tecnico
+            || '';
+        
+        // Buscar modelo de equipo en múltiples ubicaciones
+        const modeloEquipo = m.equipments?.modelo 
+            || reportData.Modelo_Equipo 
+            || reportData.modelo 
+            || reportData.equipo 
+            || reportData.seccion_B_equipo?.modelo
+            || '';
         
         return {
             // ID único para edición/eliminación
@@ -191,7 +211,8 @@ export async function buscarMantenimientos(filtros = {}) {
             fecha_servicio: m.service_date,
             Tecnico_Asignado: tecnicoName,
             tecnico: tecnicoName,
-            Modelo_Equipo: reportData.Modelo_Equipo || reportData.modelo || reportData.equipo || '',
+            Modelo_Equipo: modeloEquipo,
+            modelo: modeloEquipo,
             // Campos adicionales del report_data para edición
             Proximo_Mantenimiento: reportData.Proximo_Mantenimiento || reportData.proximo_mantenimiento || '',
             Conductividad_Permeado_Left: reportData.Conductividad_Permeado_Left || reportData.conductividad_permeado || 0,
@@ -1027,8 +1048,15 @@ export async function guardarMantenimientoSupabase(payload = {}) {
     delete reportData.fecha_servicio;
 
     // Intentar obtener el technician_id basado en el nombre del técnico
+    // Buscar en múltiples ubicaciones del payload
     let technicianId = null;
-    const tecnicoNombre = payload.Tecnico_Asignado || payload.tecnico_asignado || payload.tecnico || '';
+    const tecnicoNombre = payload.Tecnico_Asignado 
+        || payload.tecnico_asignado 
+        || payload.tecnico 
+        || payload.seccion_A_cliente?.tecnico
+        || payload.seccion_A_identificacion?.tecnico
+        || '';
+    
     if (tecnicoNombre) {
         const { data: tecnicoData } = await supabase
             .from('profiles')
@@ -1039,6 +1067,48 @@ export async function guardarMantenimientoSupabase(payload = {}) {
         
         if (tecnicoData?.id) {
             technicianId = tecnicoData.id;
+        }
+    }
+
+    // Intentar obtener o crear el equipment_id basado en los datos del equipo
+    let equipmentId = null;
+    const equipoData = payload.seccion_B_equipo || {};
+    const equipoModelo = equipoData.modelo || '';
+    const equipoSerial = equipoData.numero_serie || '';
+    
+    if (clientId && (equipoModelo || equipoSerial)) {
+        // Buscar equipo existente por cliente y serial/modelo
+        let equipoQuery = supabase
+            .from('equipments')
+            .select('id')
+            .eq('client_id', clientId);
+        
+        if (equipoSerial) {
+            equipoQuery = equipoQuery.eq('serial_number', equipoSerial);
+        } else if (equipoModelo) {
+            equipoQuery = equipoQuery.eq('modelo', equipoModelo);
+        }
+        
+        const { data: equipoExistente } = await equipoQuery.limit(1).single();
+        
+        if (equipoExistente?.id) {
+            equipmentId = equipoExistente.id;
+        } else if (equipoModelo || equipoSerial) {
+            // Crear nuevo equipo
+            const { data: nuevoEquipo } = await supabase
+                .from('equipments')
+                .insert({
+                    client_id: clientId,
+                    modelo: equipoModelo || null,
+                    serial_number: equipoSerial || null,
+                    type: type || 'softener'
+                })
+                .select('id')
+                .single();
+            
+            if (nuevoEquipo?.id) {
+                equipmentId = nuevoEquipo.id;
+            }
         }
     }
 
@@ -1053,6 +1123,11 @@ export async function guardarMantenimientoSupabase(payload = {}) {
     // Solo agregar technician_id si se encontró
     if (technicianId) {
         insertData.technician_id = technicianId;
+    }
+
+    // Solo agregar equipment_id si se encontró o creó
+    if (equipmentId) {
+        insertData.equipment_id = equipmentId;
     }
 
     const { data, error } = await supabase

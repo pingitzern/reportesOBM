@@ -379,7 +379,7 @@ async function drawSoftenerContent(ctx: PdfContext, payload: Record<string, unkn
     }
 
     // === INFORMACIÓN DEL EQUIPO ===
-    ensureSpace(ctx, 100);
+    ensureSpace(ctx, 120);
     const equipoSection = getSection(payload, 'seccion_B_equipo');
     const modelo = equipoSection.modelo || '';
     const nSerie = equipoSection.numero_serie || '';
@@ -394,28 +394,21 @@ async function drawSoftenerContent(ctx: PdfContext, payload: Record<string, unkn
     const notasEquipo = equipoSection.notas_equipo || '';
     
     drawSectionTitleCompact(ctx, 'INFORMACION DEL EQUIPO');
-    const equipoData: string[][] = [
-        ['Tipo', String(tipoEquipo), 'Modelo', String(modelo)],
-        ['N. Serie', String(nSerie), 'Ubicacion', String(ubicacion)],
-        ['Vol. Resina (L)', String(volumenResina), 'Regeneracion', String(tipoRegeneracion)],
-        ['Prefiltro', String(prefiltro), 'Proteccion Entrada', String(proteccionEntrada) || 'N/A'],
-    ];
-    if (manometros) {
-        equipoData.push(['Manometros', String(manometros), '', '']);
-    }
-    drawCompactTable4Col(ctx, equipoData);
     
-    if (notasEquipo) {
-        ctx.cursorY -= 2;
-        ctx.page.drawText(`Notas: ${notasEquipo}`, {
-            x: ctx.marginX,
-            y: ctx.cursorY,
-            size: 7,
-            font: ctx.font,
-            color: rgb(0.4, 0.4, 0.4),
-        });
-        ctx.cursorY -= 10;
-    }
+    // Dibujar tabla de equipo con layout mejorado para prefiltro y notas
+    drawEquipoTableWithNotes(ctx, {
+        tipo: String(tipoEquipo || '-'),
+        modelo: String(modelo || '-'),
+        nSerie: String(nSerie || '-'),
+        ubicacion: String(ubicacion || '-'),
+        volumenResina: String(volumenResina || '-'),
+        tipoRegeneracion: String(tipoRegeneracion || '-'),
+        prefiltro: String(prefiltro || 'Sin prefiltro'),
+        proteccionEntrada: proteccionEntrada ? String(proteccionEntrada) : 'Sin Protección',
+        manometros: manometros ? String(manometros) : '',
+        notas: notasEquipo ? String(notasEquipo) : '',
+    });
+    
     ctx.cursorY -= 6;
 
     // === CONFIGURACIÓN DEL CABEZAL (As Found / As Left) ===
@@ -515,47 +508,21 @@ async function drawSoftenerContent(ctx: PdfContext, payload: Record<string, unkn
         
         drawCompactChecklistTable(ctx, tasks);
         
-        // Mostrar detalles de cambio de filtro
+        // Mostrar detalles de cambio de filtro en cuadro integrado
         if (trenPrefiltradoChecklist && trenPrefiltradoChecklist.es_tren) {
-            // Modo tren: mostrar cada filtro cambiado
+            // Modo tren: mostrar cada filtro cambiado en cuadro
             const filtrosCambiados = (trenPrefiltradoChecklist.filtros_cambiados || []) as Array<Record<string, unknown>>;
             if (filtrosCambiados.length > 0) {
-                ctx.cursorY -= 4;
-                ctx.page.drawText('Filtros reemplazados:', {
-                    x: ctx.marginX,
-                    y: ctx.cursorY,
-                    size: 7,
-                    font: ctx.fontBold,
-                    color: rgb(0.2, 0.5, 0.2),
-                });
-                ctx.cursorY -= 10;
-                
-                filtrosCambiados.forEach(filtro => {
-                    const etapaNum = filtro.etapa || '?';
-                    const tipo = String(filtro.tipo || '-');
-                    const lote = filtro.lote_serie ? ` (Lote: ${filtro.lote_serie})` : '';
-                    ctx.page.drawText(`  • Etapa ${etapaNum}: ${tipo}${lote}`, {
-                        x: ctx.marginX,
-                        y: ctx.cursorY,
-                        size: 7,
-                        font: ctx.font,
-                        color: rgb(0.2, 0.5, 0.2),
-                    });
-                    ctx.cursorY -= 10;
-                });
+                drawFiltrosReemplazadosBox(ctx, filtrosCambiados, true);
             }
         } else if (checklistSection.cambio_filtro_realizado && (checklistSection.filtro_tipo_instalado || checklistSection.filtro_lote_serie)) {
-            // Modo simple: mostrar detalle del filtro
-            ctx.cursorY -= 4;
-            const filtroInfo = `Filtro instalado: ${checklistSection.filtro_tipo_instalado || '-'} | Lote/Serie: ${checklistSection.filtro_lote_serie || '-'}`;
-            ctx.page.drawText(filtroInfo, {
-                x: ctx.marginX,
-                y: ctx.cursorY,
-                size: 7,
-                font: ctx.font,
-                color: rgb(0.2, 0.5, 0.2),
-            });
-            ctx.cursorY -= 10;
+            // Modo simple: mostrar detalle del filtro en cuadro
+            const filtroSimple = [{
+                etapa: 1,
+                tipo: checklistSection.filtro_tipo_instalado || '-',
+                lote_serie: checklistSection.filtro_lote_serie || ''
+            }];
+            drawFiltrosReemplazadosBox(ctx, filtroSimple, false);
         }
         
         // Otros trabajos
@@ -964,6 +931,409 @@ function drawCompactTable(ctx: PdfContext, data: string[][], colWidths: number[]
     });
 }
 
+// Tabla de filtros reemplazados - estilo consistente con checklist
+function drawFiltrosReemplazadosBox(ctx: PdfContext, filtros: Array<Record<string, unknown>>, esTren: boolean) {
+    const startX = ctx.marginX;
+    const tableWidth = 480;
+    const rowHeight = 16;
+    const padding = 6;
+    const borderColor = rgb(0.75, 0.75, 0.75);
+    const headerBg = rgb(0.92, 0.96, 0.92);
+    const rowBgEven = rgb(0.98, 0.99, 0.98);
+    const rowBgOdd = rgb(0.95, 0.97, 0.95);
+    const headerTextColor = rgb(0.15, 0.4, 0.15);
+    const textColor = rgb(0.2, 0.2, 0.2);
+    
+    ctx.cursorY -= 8;
+    
+    // Definir anchos de columnas según modo
+    let colWidths: number[];
+    let colHeaders: string[];
+    
+    if (esTren) {
+        // Tren: 3 columnas - Etapa | Tipo | Lote
+        colWidths = [60, 260, 160];
+        colHeaders = ['Etapa', 'Tipo de Filtro', 'Lote / Serie'];
+    } else {
+        // Simple: 2 columnas - Tipo | Lote
+        colWidths = [320, 160];
+        colHeaders = ['Tipo de Filtro', 'Lote / Serie'];
+    }
+    
+    const numRows = filtros.length + 1; // +1 para header
+    const totalHeight = numRows * rowHeight;
+    
+    // Fondo completo de la tabla
+    ctx.page.drawRectangle({
+        x: startX,
+        y: ctx.cursorY - totalHeight + 4,
+        width: tableWidth,
+        height: totalHeight,
+        borderColor: borderColor,
+        borderWidth: 0.5,
+    });
+    
+    // === HEADER ROW ===
+    let headerY = ctx.cursorY;
+    
+    // Fondo del header
+    ctx.page.drawRectangle({
+        x: startX,
+        y: headerY - rowHeight + 4,
+        width: tableWidth,
+        height: rowHeight,
+        color: headerBg,
+    });
+    
+    // Dibujar celdas del header
+    let xOffset = startX;
+    colHeaders.forEach((header, i) => {
+        // Borde izquierdo de celda
+        if (i > 0) {
+            ctx.page.drawLine({
+                start: { x: xOffset, y: headerY + 4 },
+                end: { x: xOffset, y: headerY - rowHeight + 4 },
+                thickness: 0.5,
+                color: borderColor,
+            });
+        }
+        
+        // Texto centrado en la celda
+        const textWidth = ctx.fontBold.widthOfTextAtSize(header, 8);
+        const textX = xOffset + (colWidths[i] - textWidth) / 2;
+        const textY = headerY - rowHeight / 2 - 3; // Centrado vertical
+        
+        ctx.page.drawText(header, {
+            x: textX,
+            y: textY,
+            size: 8,
+            font: ctx.fontBold,
+            color: headerTextColor,
+        });
+        
+        xOffset += colWidths[i];
+    });
+    
+    // Línea inferior del header
+    ctx.page.drawLine({
+        start: { x: startX, y: headerY - rowHeight + 4 },
+        end: { x: startX + tableWidth, y: headerY - rowHeight + 4 },
+        thickness: 0.5,
+        color: borderColor,
+    });
+    
+    ctx.cursorY -= rowHeight;
+    
+    // === DATA ROWS ===
+    filtros.forEach((filtro, rowIndex) => {
+        const rowY = ctx.cursorY;
+        const isEven = rowIndex % 2 === 0;
+        
+        // Fondo alternado
+        ctx.page.drawRectangle({
+            x: startX,
+            y: rowY - rowHeight + 4,
+            width: tableWidth,
+            height: rowHeight,
+            color: isEven ? rowBgEven : rowBgOdd,
+        });
+        
+        // Preparar datos de la fila
+        let rowData: string[];
+        if (esTren) {
+            rowData = [
+                String(filtro.etapa || '-'),
+                String(filtro.tipo || '-'),
+                String(filtro.lote_serie || '-')
+            ];
+        } else {
+            rowData = [
+                String(filtro.tipo || '-'),
+                String(filtro.lote_serie || '-')
+            ];
+        }
+        
+        // Dibujar celdas de datos
+        xOffset = startX;
+        rowData.forEach((cellText, i) => {
+            // Borde izquierdo de celda (excepto primera)
+            if (i > 0) {
+                ctx.page.drawLine({
+                    start: { x: xOffset, y: rowY + 4 },
+                    end: { x: xOffset, y: rowY - rowHeight + 4 },
+                    thickness: 0.5,
+                    color: borderColor,
+                });
+            }
+            
+            // Para etapa centrar, para otros alinear izquierda con padding
+            let textX: number;
+            const fontSize = 8;
+            if (esTren && i === 0) {
+                // Centrar número de etapa
+                const textWidth = ctx.font.widthOfTextAtSize(cellText, fontSize);
+                textX = xOffset + (colWidths[i] - textWidth) / 2;
+            } else {
+                textX = xOffset + padding;
+            }
+            
+            const textY = rowY - rowHeight / 2 - 3; // Centrado vertical
+            
+            ctx.page.drawText(cellText, {
+                x: textX,
+                y: textY,
+                size: fontSize,
+                font: ctx.font,
+                color: textColor,
+            });
+            
+            xOffset += colWidths[i];
+        });
+        
+        // Línea inferior de la fila
+        ctx.page.drawLine({
+            start: { x: startX, y: rowY - rowHeight + 4 },
+            end: { x: startX + tableWidth, y: rowY - rowHeight + 4 },
+            thickness: 0.5,
+            color: borderColor,
+        });
+        
+        ctx.cursorY -= rowHeight;
+    });
+    
+    ctx.cursorY -= 4;
+}
+
+// Tipo para datos de equipo
+type EquipoData = {
+    tipo: string;
+    modelo: string;
+    nSerie: string;
+    ubicacion: string;
+    volumenResina: string;
+    tipoRegeneracion: string;
+    prefiltro: string;
+    proteccionEntrada: string;
+    manometros: string;
+    notas: string;
+};
+
+// Tabla de equipo con layout mejorado para prefiltro y notas integradas
+function drawEquipoTableWithNotes(ctx: PdfContext, data: EquipoData) {
+    const startX = ctx.marginX;
+    const tableWidth = 480;
+    const rowHeight = 16;
+    const padding = 5;
+    const borderColor = rgb(0.75, 0.75, 0.75);
+    const labelBg = rgb(0.95, 0.95, 0.98);
+    const notesBg = rgb(0.98, 0.98, 0.95);
+    
+    // Configuración de columnas: Label1, Value1, Label2, Value2
+    const col1LabelW = 100;
+    const col1ValueW = 140;
+    const col2LabelW = 110;
+    const col2ValueW = 130;
+    
+    // Filas de la tabla principal (sin prefiltro ni notas)
+    const rows: [string, string, string, string][] = [
+        ['Tipo', data.tipo, 'Modelo', data.modelo],
+        ['N. Serie', data.nSerie, 'Ubicacion', data.ubicacion],
+        ['Vol. Resina (L)', data.volumenResina, 'Regeneracion', data.tipoRegeneracion],
+    ];
+    
+    // Calcular altura total
+    let totalRows = rows.length;
+    const hasPrefiltro = data.prefiltro && data.prefiltro !== 'Sin prefiltro';
+    const hasManometros = data.manometros && data.manometros.trim() !== '';
+    const hasNotas = data.notas && data.notas.trim() !== '';
+    
+    if (hasPrefiltro || hasManometros) totalRows++; // Fila de prefiltro/protección
+    if (hasManometros && hasPrefiltro) totalRows++; // Fila extra para manómetros si hay prefiltro largo
+    
+    // Borde superior de la tabla
+    ctx.page.drawLine({
+        start: { x: startX, y: ctx.cursorY + 4 },
+        end: { x: startX + tableWidth, y: ctx.cursorY + 4 },
+        thickness: 0.5,
+        color: borderColor,
+    });
+    
+    // Dibujar filas principales
+    rows.forEach((row, rowIndex) => {
+        const rowY = ctx.cursorY;
+        let xOffset = startX;
+        const colWidths = [col1LabelW, col1ValueW, col2LabelW, col2ValueW];
+        
+        row.forEach((cell, colIndex) => {
+            const isLabel = colIndex === 0 || colIndex === 2;
+            
+            // Fondo para labels
+            if (isLabel && cell) {
+                ctx.page.drawRectangle({
+                    x: xOffset,
+                    y: rowY - rowHeight + 4,
+                    width: colWidths[colIndex],
+                    height: rowHeight,
+                    color: labelBg,
+                });
+            }
+            
+            // Borde izquierdo
+            ctx.page.drawLine({
+                start: { x: xOffset, y: rowY + 4 },
+                end: { x: xOffset, y: rowY - rowHeight + 4 },
+                thickness: 0.5,
+                color: borderColor,
+            });
+            
+            // Texto
+            if (cell) {
+                ctx.page.drawText(cell, {
+                    x: xOffset + padding,
+                    y: rowY - 10,
+                    size: 8,
+                    font: isLabel ? ctx.fontBold : ctx.font,
+                    color: isLabel ? ctx.primaryColor : rgb(0.15, 0.15, 0.15),
+                });
+            }
+            
+            xOffset += colWidths[colIndex];
+        });
+        
+        // Borde derecho
+        ctx.page.drawLine({
+            start: { x: startX + tableWidth, y: rowY + 4 },
+            end: { x: startX + tableWidth, y: rowY - rowHeight + 4 },
+            thickness: 0.5,
+            color: borderColor,
+        });
+        
+        // Borde inferior
+        ctx.page.drawLine({
+            start: { x: startX, y: rowY - rowHeight + 4 },
+            end: { x: startX + tableWidth, y: rowY - rowHeight + 4 },
+            thickness: 0.5,
+            color: borderColor,
+        });
+        
+        ctx.cursorY -= rowHeight;
+    });
+    
+    // Fila de Prefiltro (ancho completo para el valor)
+    if (hasPrefiltro) {
+        const rowY = ctx.cursorY;
+        const prefiltroLabelW = col1LabelW;
+        const prefiltroValueW = col1ValueW + col2LabelW + col2ValueW;
+        
+        // Fondo label
+        ctx.page.drawRectangle({
+            x: startX,
+            y: rowY - rowHeight + 4,
+            width: prefiltroLabelW,
+            height: rowHeight,
+            color: labelBg,
+        });
+        
+        // Bordes
+        ctx.page.drawLine({ start: { x: startX, y: rowY + 4 }, end: { x: startX, y: rowY - rowHeight + 4 }, thickness: 0.5, color: borderColor });
+        ctx.page.drawLine({ start: { x: startX + prefiltroLabelW, y: rowY + 4 }, end: { x: startX + prefiltroLabelW, y: rowY - rowHeight + 4 }, thickness: 0.5, color: borderColor });
+        ctx.page.drawLine({ start: { x: startX + tableWidth, y: rowY + 4 }, end: { x: startX + tableWidth, y: rowY - rowHeight + 4 }, thickness: 0.5, color: borderColor });
+        ctx.page.drawLine({ start: { x: startX, y: rowY - rowHeight + 4 }, end: { x: startX + tableWidth, y: rowY - rowHeight + 4 }, thickness: 0.5, color: borderColor });
+        
+        // Texto
+        ctx.page.drawText('Prefiltro', { x: startX + padding, y: rowY - 10, size: 8, font: ctx.fontBold, color: ctx.primaryColor });
+        
+        // Valor del prefiltro - ajustar tamaño de fuente si es muy largo
+        let prefiltroFontSize = 8;
+        const maxPrefiltroWidth = prefiltroValueW - padding * 2;
+        if (ctx.font.widthOfTextAtSize(data.prefiltro, prefiltroFontSize) > maxPrefiltroWidth) {
+            prefiltroFontSize = 7;
+        }
+        if (ctx.font.widthOfTextAtSize(data.prefiltro, prefiltroFontSize) > maxPrefiltroWidth) {
+            prefiltroFontSize = 6;
+        }
+        ctx.page.drawText(data.prefiltro, { x: startX + prefiltroLabelW + padding, y: rowY - 10, size: prefiltroFontSize, font: ctx.font, color: rgb(0.15, 0.15, 0.15) });
+        
+        ctx.cursorY -= rowHeight;
+    }
+    
+    // Fila de Protección y Manómetros
+    {
+        const rowY = ctx.cursorY;
+        const colWidths = [col1LabelW, col1ValueW, col2LabelW, col2ValueW];
+        const rowData = ['Proteccion Entrada', data.proteccionEntrada, 'Manometros', data.manometros || 'N/A'];
+        let xOffset = startX;
+        
+        rowData.forEach((cell, colIndex) => {
+            const isLabel = colIndex === 0 || colIndex === 2;
+            
+            if (isLabel) {
+                ctx.page.drawRectangle({
+                    x: xOffset,
+                    y: rowY - rowHeight + 4,
+                    width: colWidths[colIndex],
+                    height: rowHeight,
+                    color: labelBg,
+                });
+            }
+            
+            ctx.page.drawLine({ start: { x: xOffset, y: rowY + 4 }, end: { x: xOffset, y: rowY - rowHeight + 4 }, thickness: 0.5, color: borderColor });
+            
+            if (cell) {
+                let fontSize = 8;
+                const maxW = colWidths[colIndex] - padding * 2;
+                if (ctx.font.widthOfTextAtSize(cell, fontSize) > maxW) fontSize = 7;
+                ctx.page.drawText(cell, { x: xOffset + padding, y: rowY - 10, size: fontSize, font: isLabel ? ctx.fontBold : ctx.font, color: isLabel ? ctx.primaryColor : rgb(0.15, 0.15, 0.15) });
+            }
+            
+            xOffset += colWidths[colIndex];
+        });
+        
+        ctx.page.drawLine({ start: { x: startX + tableWidth, y: rowY + 4 }, end: { x: startX + tableWidth, y: rowY - rowHeight + 4 }, thickness: 0.5, color: borderColor });
+        ctx.page.drawLine({ start: { x: startX, y: rowY - rowHeight + 4 }, end: { x: startX + tableWidth, y: rowY - rowHeight + 4 }, thickness: 0.5, color: borderColor });
+        
+        ctx.cursorY -= rowHeight;
+    }
+    
+    // Fila de Notas (integrada en el cuadro)
+    if (hasNotas) {
+        const notasRowHeight = 22; // Un poco más alto para las notas
+        const rowY = ctx.cursorY;
+        
+        // Fondo para toda la fila de notas
+        ctx.page.drawRectangle({
+            x: startX,
+            y: rowY - notasRowHeight + 4,
+            width: tableWidth,
+            height: notasRowHeight,
+            color: notesBg,
+        });
+        
+        // Bordes
+        ctx.page.drawLine({ start: { x: startX, y: rowY + 4 }, end: { x: startX, y: rowY - notasRowHeight + 4 }, thickness: 0.5, color: borderColor });
+        ctx.page.drawLine({ start: { x: startX + tableWidth, y: rowY + 4 }, end: { x: startX + tableWidth, y: rowY - notasRowHeight + 4 }, thickness: 0.5, color: borderColor });
+        ctx.page.drawLine({ start: { x: startX, y: rowY - notasRowHeight + 4 }, end: { x: startX + tableWidth, y: rowY - notasRowHeight + 4 }, thickness: 0.5, color: borderColor });
+        
+        // Texto "Notas:" en bold
+        ctx.page.drawText('Notas:', { x: startX + padding, y: rowY - 8, size: 7, font: ctx.fontBold, color: rgb(0.4, 0.4, 0.4) });
+        
+        // Contenido de las notas - truncar si es muy largo
+        let notasText = data.notas;
+        const maxNotasWidth = tableWidth - 50 - padding * 2;
+        let notasFontSize = 7;
+        if (ctx.font.widthOfTextAtSize(notasText, notasFontSize) > maxNotasWidth) {
+            // Truncar el texto
+            while (ctx.font.widthOfTextAtSize(notasText + '...', notasFontSize) > maxNotasWidth && notasText.length > 10) {
+                notasText = notasText.slice(0, -5);
+            }
+            notasText += '...';
+        }
+        ctx.page.drawText(notasText, { x: startX + 45, y: rowY - 8, size: notasFontSize, font: ctx.font, color: rgb(0.3, 0.3, 0.3) });
+        
+        ctx.cursorY -= notasRowHeight;
+    }
+}
+
 // Tabla compacta de 4 columnas para datos de equipo - anchos ajustados para mejor legibilidad
 function drawCompactTable4Col(ctx: PdfContext, data: string[][]) {
     const colWidths = [130, 110, 130, 110]; // Labels mas anchos, valores mas compactos
@@ -1067,82 +1437,144 @@ function drawCompactTable4Col(ctx: PdfContext, data: string[][]) {
     });
 }
 
-// Checklist compacto en formato tabla (2 columnas) con mejor diseño
+// Checklist en formato planilla/tabla con celdas definidas
 function drawCompactChecklistTable(ctx: PdfContext, tasks: [string, boolean][]) {
-    const colWidth = 240;
-    const rowHeight = 14;
-    const padding = 6;
     const startX = ctx.marginX;
-    const tableWidth = colWidth * 2;
-    const borderColor = rgb(0.8, 0.8, 0.8);
-    const bgColor = rgb(0.98, 0.98, 0.99);
+    const tableWidth = 480;
+    const colWidth = tableWidth / 2;
+    const rowHeight = 16;
+    const padding = 8;
+    const borderColor = rgb(0.75, 0.75, 0.75);
+    const headerBg = rgb(0.94, 0.94, 0.96);
+    const rowBgEven = rgb(0.98, 0.98, 0.99);
+    const rowBgOdd = rgb(0.96, 0.96, 0.97);
+    const checkColor = rgb(0.1, 0.45, 0.1);
+    const uncheckColor = rgb(0.5, 0.5, 0.5);
     
     // Dividir tareas en dos columnas
     const midPoint = Math.ceil(tasks.length / 2);
     const leftTasks = tasks.slice(0, midPoint);
     const rightTasks = tasks.slice(midPoint);
-    
     const maxRows = Math.max(leftTasks.length, rightTasks.length);
     const totalHeight = maxRows * rowHeight;
     
-    // Fondo del checklist
+    // Borde exterior de la tabla
     ctx.page.drawRectangle({
         x: startX,
         y: ctx.cursorY - totalHeight + 4,
         width: tableWidth,
         height: totalHeight,
-        color: bgColor,
         borderColor: borderColor,
         borderWidth: 0.5,
     });
     
-    // Linea divisoria vertical entre columnas
-    ctx.page.drawLine({
-        start: { x: startX + colWidth, y: ctx.cursorY + 4 },
-        end: { x: startX + colWidth, y: ctx.cursorY - totalHeight + 4 },
-        thickness: 0.5,
-        color: borderColor,
-    });
-    
+    // Dibujar cada fila
     for (let i = 0; i < maxRows; i++) {
         const rowY = ctx.cursorY;
+        const isEven = i % 2 === 0;
+        const rowBg = isEven ? rowBgEven : rowBgOdd;
+        
+        // Fondo de la fila completa
+        ctx.page.drawRectangle({
+            x: startX,
+            y: rowY - rowHeight + 4,
+            width: tableWidth,
+            height: rowHeight,
+            color: rowBg,
+        });
+        
+        // Línea divisoria vertical central
+        ctx.page.drawLine({
+            start: { x: startX + colWidth, y: rowY + 4 },
+            end: { x: startX + colWidth, y: rowY - rowHeight + 4 },
+            thickness: 0.5,
+            color: borderColor,
+        });
+        
+        // Línea inferior de la fila
+        ctx.page.drawLine({
+            start: { x: startX, y: rowY - rowHeight + 4 },
+            end: { x: startX + tableWidth, y: rowY - rowHeight + 4 },
+            thickness: 0.5,
+            color: borderColor,
+        });
         
         // Columna izquierda
         if (leftTasks[i]) {
             const [taskName, isDone] = leftTasks[i];
-            const checkMark = isDone ? '[X]' : '[ ]';
-            const textColor = isDone ? rgb(0.1, 0.45, 0.1) : rgb(0.45, 0.45, 0.45);
-            const fontToUse = isDone ? ctx.fontBold : ctx.font;
-            
-            ctx.page.drawText(`${checkMark} ${taskName}`, {
-                x: startX + padding,
-                y: rowY - 10,
-                size: 8,
-                font: fontToUse,
-                color: textColor,
-            });
+            drawChecklistCell(ctx, startX, rowY, colWidth, rowHeight, taskName, isDone, padding, checkColor, uncheckColor);
         }
         
         // Columna derecha
         if (rightTasks[i]) {
             const [taskName, isDone] = rightTasks[i];
-            const checkMark = isDone ? '[X]' : '[ ]';
-            const textColor = isDone ? rgb(0.1, 0.45, 0.1) : rgb(0.45, 0.45, 0.45);
-            const fontToUse = isDone ? ctx.fontBold : ctx.font;
-            
-            ctx.page.drawText(`${checkMark} ${taskName}`, {
-                x: startX + colWidth + padding,
-                y: rowY - 10,
-                size: 8,
-                font: fontToUse,
-                color: textColor,
-            });
+            drawChecklistCell(ctx, startX + colWidth, rowY, colWidth, rowHeight, taskName, isDone, padding, checkColor, uncheckColor);
         }
         
         ctx.cursorY -= rowHeight;
     }
     
-    ctx.cursorY -= 2; // Pequeño espacio despues del checklist
+    ctx.cursorY -= 4;
+}
+
+// Helper para dibujar una celda del checklist
+function drawChecklistCell(
+    ctx: PdfContext, 
+    x: number, 
+    y: number, 
+    width: number, 
+    height: number, 
+    taskName: string, 
+    isDone: boolean, 
+    padding: number,
+    checkColor: { type: string; red: number; green: number; blue: number },
+    uncheckColor: { type: string; red: number; green: number; blue: number }
+) {
+    const checkBoxSize = 10;
+    const checkBoxX = x + padding;
+    const checkBoxY = y - height / 2 - checkBoxSize / 2 + 2;
+    const textX = checkBoxX + checkBoxSize + 6;
+    const textY = y - height / 2 - 3;
+    
+    // Dibujar checkbox
+    ctx.page.drawRectangle({
+        x: checkBoxX,
+        y: checkBoxY,
+        width: checkBoxSize,
+        height: checkBoxSize,
+        borderColor: isDone ? checkColor : uncheckColor,
+        borderWidth: 1,
+        color: isDone ? rgb(0.9, 0.96, 0.9) : rgb(1, 1, 1),
+    });
+    
+    // Dibujar check si está marcado
+    if (isDone) {
+        // Línea diagonal del check (de abajo-izquierda a arriba-derecha)
+        ctx.page.drawLine({
+            start: { x: checkBoxX + 2, y: checkBoxY + checkBoxSize / 2 },
+            end: { x: checkBoxX + checkBoxSize / 2 - 1, y: checkBoxY + 2 },
+            thickness: 1.5,
+            color: checkColor,
+        });
+        ctx.page.drawLine({
+            start: { x: checkBoxX + checkBoxSize / 2 - 1, y: checkBoxY + 2 },
+            end: { x: checkBoxX + checkBoxSize - 2, y: checkBoxY + checkBoxSize - 2 },
+            thickness: 1.5,
+            color: checkColor,
+        });
+    }
+    
+    // Texto de la tarea
+    const textColor = isDone ? checkColor : uncheckColor;
+    const fontToUse = isDone ? ctx.fontBold : ctx.font;
+    
+    ctx.page.drawText(taskName, {
+        x: textX,
+        y: textY,
+        size: 8,
+        font: fontToUse,
+        color: textColor,
+    });
 }
 
 // Tabla de componentes compacta con colores - offsets ajustados
