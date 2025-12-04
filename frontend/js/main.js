@@ -484,6 +484,8 @@ async function initializeApp() {
             // Técnicos van a gestión de remitos
             showView('remitos-gestion-view');
             setActiveNavigation('remitos');
+            // Cargar el listado de remitos automáticamente
+            void appModules.remitosGestion.renderListado({ page: 1 });
         } else {
             // Fallback: mostrar panel de mantenimientos
             showView('mantenimientos-gestion-view');
