@@ -387,7 +387,8 @@ async function drawSoftenerContent(ctx: PdfContext, payload: Record<string, unkn
     const ubicacion = equipoSection.ubicacion || '';
     const volumenResina = equipoSection.volumen_resina || '';
     const tipoRegeneracion = equipoSection.tipo_regeneracion || '';
-    const prefiltro = equipoSection.prefiltro || 'Sin prefiltro';
+    const trenPrefiltrado = equipoSection.tren_prefiltrado as Record<string, unknown> | null;
+    const prefiltro = formatPrefiltroEquipo(equipoSection.prefiltro, trenPrefiltrado);
     const proteccionEntrada = equipoSection.proteccion_entrada || '';
     const manometros = equipoSection.manometros || '';
     const notasEquipo = equipoSection.notas_equipo || '';
@@ -498,15 +499,53 @@ async function drawSoftenerContent(ctx: PdfContext, payload: Record<string, unkn
             ['Regeneracion Manual', !!checklistSection.regeneracion_manual],
         ];
         
-        // Agregar cambio de filtro si aplica
-        if (checklistSection.cambio_filtro_realizado) {
+        // Verificar si hay tren de prefiltrado
+        const trenPrefiltradoChecklist = checklistSection.tren_prefiltrado as Record<string, unknown> | null;
+        
+        // Agregar cambio de filtro si aplica (modo simple o tren)
+        if (trenPrefiltradoChecklist && trenPrefiltradoChecklist.es_tren) {
+            // Modo tren: verificar si se cambiaron filtros
+            const filtrosCambiados = (trenPrefiltradoChecklist.filtros_cambiados || []) as Array<Record<string, unknown>>;
+            if (filtrosCambiados.length > 0) {
+                tasks.push([`Cambio Filtros (${filtrosCambiados.length} etapas)`, true]);
+            }
+        } else if (checklistSection.cambio_filtro_realizado) {
             tasks.push(['Cambio de Filtro', true]);
         }
         
         drawCompactChecklistTable(ctx, tasks);
         
-        // Mostrar detalles de filtro si hubo cambio
-        if (checklistSection.cambio_filtro_realizado && (checklistSection.filtro_tipo_instalado || checklistSection.filtro_lote_serie)) {
+        // Mostrar detalles de cambio de filtro
+        if (trenPrefiltradoChecklist && trenPrefiltradoChecklist.es_tren) {
+            // Modo tren: mostrar cada filtro cambiado
+            const filtrosCambiados = (trenPrefiltradoChecklist.filtros_cambiados || []) as Array<Record<string, unknown>>;
+            if (filtrosCambiados.length > 0) {
+                ctx.cursorY -= 4;
+                ctx.page.drawText('Filtros reemplazados:', {
+                    x: ctx.marginX,
+                    y: ctx.cursorY,
+                    size: 7,
+                    font: ctx.fontBold,
+                    color: rgb(0.2, 0.5, 0.2),
+                });
+                ctx.cursorY -= 10;
+                
+                filtrosCambiados.forEach(filtro => {
+                    const etapaNum = filtro.etapa || '?';
+                    const tipo = String(filtro.tipo || '-');
+                    const lote = filtro.lote_serie ? ` (Lote: ${filtro.lote_serie})` : '';
+                    ctx.page.drawText(`  • Etapa ${etapaNum}: ${tipo}${lote}`, {
+                        x: ctx.marginX,
+                        y: ctx.cursorY,
+                        size: 7,
+                        font: ctx.font,
+                        color: rgb(0.2, 0.5, 0.2),
+                    });
+                    ctx.cursorY -= 10;
+                });
+            }
+        } else if (checklistSection.cambio_filtro_realizado && (checklistSection.filtro_tipo_instalado || checklistSection.filtro_lote_serie)) {
+            // Modo simple: mostrar detalle del filtro
             ctx.cursorY -= 4;
             const filtroInfo = `Filtro instalado: ${checklistSection.filtro_tipo_instalado || '-'} | Lote/Serie: ${checklistSection.filtro_lote_serie || '-'}`;
             ctx.page.drawText(filtroInfo, {
@@ -1583,6 +1622,32 @@ function formatDateDisplay(value?: string | null): string {
         month: 'long',
         day: 'numeric',
     });
+}
+
+/**
+ * Formatea el prefiltro del equipo, soportando modo simple y tren
+ */
+function formatPrefiltroEquipo(prefiltroSimple: unknown, trenData: Record<string, unknown> | null): string {
+    // Verificar si es modo tren
+    if (trenData && trenData.es_tren) {
+        // Obtener etapas - puede venir como array de objetos o array de strings
+        const etapas = (trenData.etapas || trenData.etapas_configuradas || []) as Array<unknown>;
+        if (etapas.length > 0) {
+            // Formato compacto para el PDF
+            const etapasTexto = etapas.map((e, i) => {
+                // e puede ser un objeto {etapa, tipo} o un string directamente
+                const tipo = (typeof e === 'object' && e !== null) 
+                    ? ((e as Record<string, unknown>).tipo || e) 
+                    : e;
+                return `${i + 1}.${String(tipo).split(' - ')[0]}`; // Solo el tipo sin tamaño para ahorrar espacio
+            }).join(' / ');
+            const numEtapas = trenData.num_etapas || trenData.total_etapas || etapas.length;
+            return `Tren ${numEtapas} etapas: ${etapasTexto}`;
+        }
+    }
+    
+    // Modo simple
+    return prefiltroSimple ? String(prefiltroSimple) : 'Sin prefiltro';
 }
 
 function formatNum(value: unknown): string {
