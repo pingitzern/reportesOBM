@@ -8,14 +8,28 @@
     <link rel="stylesheet" href="./css/styles.build.css">
     <link rel="stylesheet" href="./css/signature.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
-    <!-- Google Maps Places API - Reemplazar YOUR_API_KEY con tu clave -->
+    <!-- Google Maps Places API - La clave debe configurarse en el entorno -->
     <script>
         window.initGooglePlaces = function() {
             window.googlePlacesReady = true;
             document.dispatchEvent(new CustomEvent('google-places-ready'));
         };
+        // Clave de Google Maps - configurar en config.js o variable de entorno
+        window.GOOGLE_MAPS_API_KEY = window.GOOGLE_MAPS_API_KEY || '';
     </script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBaf-q2yMEeFgrPerrN--Ld95E2Nd5WrGc&libraries=places&callback=initGooglePlaces&language=es&region=AR"></script>
+    <script id="google-maps-script"></script>
+    <script>
+        // Cargar Google Maps dinámicamente si hay clave configurada
+        (function() {
+            const key = window.GOOGLE_MAPS_API_KEY;
+            if (key) {
+                const script = document.getElementById('google-maps-script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initGooglePlaces&language=es&region=AR`;
+                script.async = true;
+                script.defer = true;
+            }
+        })();
+    </script>
 </head>
 <body class="bg-gray-100">
     <div id="main-view" class="container mx-auto p-4 md:p-8 max-w-7xl hidden">
