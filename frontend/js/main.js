@@ -36,6 +36,12 @@ const {
 
 initializeTheme();
 
+// Cargar Google Maps API si está configurada
+const googleMapsApiKey = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY || '';
+if (googleMapsApiKey && typeof window.loadGoogleMaps === 'function') {
+    window.loadGoogleMaps(googleMapsApiKey);
+}
+
 function navigateToMantenimientos() {
     showView('mantenimientos-gestion-view');
     setActiveNavigation(null, 'tab-mantenimientos-btn');
