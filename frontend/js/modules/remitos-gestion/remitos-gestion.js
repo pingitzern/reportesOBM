@@ -1,6 +1,12 @@
 import { getEquiposByCliente } from '../admin/sistemasEquipos.js';
-import { getCurrentUserName } from '../login/auth.js';
+import { getCurrentUserName, getCurrentUserRole } from '../login/auth.js';
 import { buildPrintableRemitoData, createRemitoPrintHtml, generatePdfBlob } from '../remito/remito.js';
+
+// Verificar si el usuario es administrador
+function isAdmin() {
+    const role = getCurrentUserRole();
+    return role === 'Administrador' || role === 'admin';
+}
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_REMITO_PHOTOS = 4;
@@ -1637,6 +1643,16 @@ function renderManagementView() {
                 const numeroReporte = escapeHtml(getDisplayValue(remito.numeroReporte));
                 const isDeletingRow = state.isDeleting && state.deletingIndex === index;
 
+                // Botones de editar/eliminar solo para administradores
+                const adminButtons = isAdmin() ? `
+                                <button type="button" class="text-sm font-semibold text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2" data-remito-edit="${index}">
+                                    Editar
+                                </button>
+                                <button type="button" class="text-sm font-semibold text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-delete="${index}" ${isDeletingRow ? 'disabled' : ''}>
+                                    ${isDeletingRow ? 'Eliminando...' : 'Eliminar'}
+                                </button>
+                ` : '';
+
                 return `
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">${numeroRemito}</td>
@@ -1651,12 +1667,7 @@ function renderManagementView() {
                                 <button type="button" class="text-sm font-semibold text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-remito-detalle="${index}">
                                     Ver detalle
                                 </button>
-                                <button type="button" class="text-sm font-semibold text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2" data-remito-edit="${index}">
-                                    Editar
-                                </button>
-                                <button type="button" class="text-sm font-semibold text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" data-remito-delete="${index}" ${isDeletingRow ? 'disabled' : ''}>
-                                    ${isDeletingRow ? 'Eliminando...' : 'Eliminar'}
-                                </button>
+                                ${adminButtons}
                             </div>
                         </td>
                     </tr>

@@ -1,8 +1,15 @@
 import { serializeForm, normalizeDateToISO } from '../mantenimiento/forms.js';
 import { state } from '../mantenimiento/state.js';
+import { getCurrentUserRole } from '../login/auth.js';
 
 function getElement(id) {
     return document.getElementById(id);
+}
+
+// Verificar si el usuario es administrador
+function isAdmin() {
+    const role = getCurrentUserRole();
+    return role === 'Administrador' || role === 'admin';
 }
 
 function toDateInputValue(value) {
@@ -57,20 +64,30 @@ export function renderSearchResults(mantenimientos, { onEdit, onDelete }) {
         const acciones = document.createElement('td');
         acciones.className = 'px-6 py-4 whitespace-nowrap';
 
-        const editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'text-blue-600 hover:text-blue-900 mr-2';
-        editBtn.textContent = 'Editar';
-        editBtn.addEventListener('click', () => onEdit(mantenimiento));
+        // Solo administradores pueden editar y eliminar
+        if (isAdmin()) {
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'text-blue-600 hover:text-blue-900 mr-2';
+            editBtn.textContent = 'Editar';
+            editBtn.addEventListener('click', () => onEdit(mantenimiento));
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.className = 'text-red-600 hover:text-red-900';
-        deleteBtn.textContent = 'Eliminar';
-        deleteBtn.addEventListener('click', () => onDelete(mantenimiento));
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'text-red-600 hover:text-red-900';
+            deleteBtn.textContent = 'Eliminar';
+            deleteBtn.addEventListener('click', () => onDelete(mantenimiento));
 
-        acciones.appendChild(editBtn);
-        acciones.appendChild(deleteBtn);
+            acciones.appendChild(editBtn);
+            acciones.appendChild(deleteBtn);
+        } else {
+            // Técnicos solo pueden ver
+            const viewText = document.createElement('span');
+            viewText.className = 'text-gray-500 text-sm';
+            viewText.textContent = 'Solo lectura';
+            acciones.appendChild(viewText);
+        }
+
         fila.appendChild(acciones);
 
         tabla.appendChild(fila);
