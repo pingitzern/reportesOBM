@@ -211,7 +211,7 @@ function getSelectedOptionText(selectId) {
     if (searchInput instanceof HTMLInputElement && searchInput.value) {
         return searchInput.value.trim();
     }
-    
+
     // Fallback al select tradicional
     const select = getElement(selectId);
     if (!(select instanceof HTMLSelectElement)) {
@@ -621,13 +621,13 @@ function buildPrintableRemitoData(report, { observaciones = '', repuestos = [], 
     const repuestosFuente = buildPrintableRepuestosList(repuestos, report);
     const repuestosNormalizados = Array.isArray(repuestosFuente)
         ? repuestosFuente
-              .map(item => normalizeRepuestoItem(item))
-              .map(item => ({
-                  codigo: normalizeString(item.codigo),
-                  descripcion: normalizeString(item.descripcion),
-                  cantidad: normalizeString(item.cantidad),
-              }))
-              .filter(item => hasContent(item.codigo) || hasContent(item.descripcion) || hasContent(item.cantidad))
+            .map(item => normalizeRepuestoItem(item))
+            .map(item => ({
+                codigo: normalizeString(item.codigo),
+                descripcion: normalizeString(item.descripcion),
+                cantidad: normalizeString(item.cantidad),
+            }))
+            .filter(item => hasContent(item.codigo) || hasContent(item.descripcion) || hasContent(item.cantidad))
         : [];
 
     const observacionesTexto = normalizeString(observaciones || report.observaciones || report.resumen || '');
@@ -746,10 +746,10 @@ function buildRegistroComponentesSection(componentes, sanitizacion) {
         `;
     }).join('');
 
-    const sanitizacionClass = sanitizacion === 'Realizada' ? 'sanitizacion-realizada' : 
-                              sanitizacion === 'No Realizada' ? 'sanitizacion-pendiente' : 'sanitizacion-na';
-    const sanitizacionIcon = sanitizacion === 'Realizada' ? '✓' : 
-                             sanitizacion === 'No Realizada' ? '⚠' : '—';
+    const sanitizacionClass = sanitizacion === 'Realizada' ? 'sanitizacion-realizada' :
+        sanitizacion === 'No Realizada' ? 'sanitizacion-pendiente' : 'sanitizacion-na';
+    const sanitizacionIcon = sanitizacion === 'Realizada' ? '✓' :
+        sanitizacion === 'No Realizada' ? '⚠' : '—';
 
     return `
         <section class="section">
@@ -810,17 +810,17 @@ function buildPhotosSection(fotos = []) {
     return `
         <div class="photo-grid">
             ${fotos
-                .map((foto, index) => {
-                    const labelValue = normalizeString(foto?.label) || `Foto ${index + 1}`;
-                    const sanitizedLabel = escapeHtml(labelValue);
-                    const sourceValue = normalizeString(foto?.src);
-                    if (!sourceValue) {
-                        return '';
-                    }
+            .map((foto, index) => {
+                const labelValue = normalizeString(foto?.label) || `Foto ${index + 1}`;
+                const sanitizedLabel = escapeHtml(labelValue);
+                const sourceValue = normalizeString(foto?.src);
+                if (!sourceValue) {
+                    return '';
+                }
 
-                    const sanitizedSource = escapeHtml(sourceValue);
-                    const altText = escapeHtml(`Registro fotográfico ${labelValue}`);
-                    return `
+                const sanitizedSource = escapeHtml(sourceValue);
+                const altText = escapeHtml(`Registro fotográfico ${labelValue}`);
+                return `
                         <figure class="photo-item">
                             <div class="photo-item__frame">
                                 <img src="${sanitizedSource}" alt="${altText}" loading="lazy">
@@ -828,8 +828,8 @@ function buildPhotosSection(fotos = []) {
                             <figcaption>${sanitizedLabel}</figcaption>
                         </figure>
                     `;
-                })
-                .join('')}
+            })
+            .join('')}
         </div>
     `;
 }
@@ -871,7 +871,7 @@ function createRemitoPrintHtml(data) {
     const fotosSection = buildPhotosSection(data.fotos);
 
     // Próximo mantenimiento
-    const proximoMantHtml = proximoMantenimiento 
+    const proximoMantHtml = proximoMantenimiento
         ? `<div class="proximo-mantenimiento">
              <span class="proximo-label">📅 Próximo Mantenimiento Programado:</span>
              <span class="proximo-fecha">${proximoMantenimiento}</span>
@@ -1328,8 +1328,8 @@ function createRemitoPrintHtml(data) {
     <div class="document">
         <header class="document__header">
             <div class="document__identity">
-                <p class="document__title">Reporte de Mantenimiento Preventivo</p>
-                <p class="document__subtitle">Ósmosis Inversa</p>
+                <p class="document__title">Remito de Materiales y Servicios</p>
+                <p class="document__subtitle">OHM División Agua</p>
                 <div class="document__meta">
                     <span>N° Remito: <strong>${numero}</strong></span>
                     <span>Fecha: <strong>${fecha}</strong></span>
@@ -1453,16 +1453,16 @@ async function generatePdfBlob(html) {
 
     // Escribir el HTML en el iframe
     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    
+
     // Bloquear window.print en el iframe antes de escribir
     try {
-        iframe.contentWindow.print = () => {};
-        iframe.contentWindow.alert = () => {};
+        iframe.contentWindow.print = () => { };
+        iframe.contentWindow.alert = () => { };
         iframe.contentWindow.confirm = () => true;
     } catch (e) {
         // Sandbox puede bloquear esto, está ok
     }
-    
+
     iframeDoc.open();
     iframeDoc.write(cleanHtml);
     iframeDoc.close();
@@ -1542,7 +1542,7 @@ async function generatePdfBlob(html) {
             const pageCanvas = document.createElement('canvas');
             pageCanvas.width = canvas.width;
             pageCanvas.height = Math.min(pageImgHeight, remainingHeight);
-            
+
             const ctx = pageCanvas.getContext('2d');
             ctx.drawImage(
                 canvas,
@@ -1553,11 +1553,11 @@ async function generatePdfBlob(html) {
             );
 
             const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
-            
+
             if (position > 0) {
                 pdf.addPage();
             }
-            
+
             pdf.addImage(
                 pageImgData,
                 'JPEG',
@@ -1797,7 +1797,7 @@ function transformAblandadorToRemitoFormat(ablandadorData) {
         NumeroRemito: '', // Se asignará al finalizar
         fecha_display: ablandadorData.seccion_A_cliente?.fecha_servicio || '',
         fecha: ablandadorData.seccion_A_cliente?.fecha_servicio || '',
-        
+
         // Cliente
         cliente: ablandadorData.seccion_A_cliente?.nombre || '',
         clienteNombre: ablandadorData.seccion_A_cliente?.nombre || '',
@@ -1810,7 +1810,7 @@ function transformAblandadorToRemitoFormat(ablandadorData) {
         email: ablandadorData.seccion_A_cliente?.email || '',
         cliente_cuit: ablandadorData.seccion_A_cliente?.cuit || '',
         cuit: ablandadorData.seccion_A_cliente?.cuit || '',
-        
+
         // Equipo
         equipo: ablandadorData.seccion_B_equipo?.tipo || 'Ablandador',
         modelo: ablandadorData.seccion_B_equipo?.modelo || '',
@@ -1822,16 +1822,16 @@ function transformAblandadorToRemitoFormat(ablandadorData) {
         ubicacion: ablandadorData.seccion_B_equipo?.ubicacion || '',
         tecnico: ablandadorData.seccion_A_cliente?.tecnico || '',
         tecnico_asignado: ablandadorData.seccion_A_cliente?.tecnico || '',
-        
+
         // Observaciones
         observaciones: ablandadorData.seccion_E_resumen?.trabajo_realizado || '',
         resumen: ablandadorData.seccion_E_resumen?.trabajo_realizado || '',
-        
+
         // Componentes/Repuestos - se construirán según cambio de filtro
         componentes: [],
         repuestos: []
     };
-    
+
     // Construir repuestos según si se cambió el filtro
     if (ablandadorData.seccion_D_checklist?.cambio_filtro_realizado) {
         const tipoFiltro = ablandadorData.seccion_D_checklist?.filtro_tipo_instalado || 'Prefiltro';
@@ -1850,7 +1850,7 @@ function transformAblandadorToRemitoFormat(ablandadorData) {
             cantidad: 0
         });
     }
-    
+
     // Conservar las secciones originales para que el flujo del remito pueda
     // reutilizar la misma lógica que con ósmosis (por ejemplo, para completar
     // el formulario en pantalla). Sin estas secciones, `populateRemitoForm`
@@ -1872,7 +1872,7 @@ function createReportSnapshot(rawData) {
     if (rawData?.metadata?.formulario === 'mantenimiento_ablandador') {
         return transformAblandadorToRemitoFormat(rawData);
     }
-    
+
     // Para ósmosis, usar lógica original
     const snapshot = cloneReportData(rawData);
 
@@ -1916,7 +1916,7 @@ function populateRemitoForm(report) {
         telefono = report.seccion_A_cliente?.telefono || '';
         email = report.seccion_A_cliente?.email || '';
         cuit = report.seccion_A_cliente?.cuit || '';
-        
+
         // Equipo
         const tipoEquipo = report.seccion_B_equipo?.tipo || 'Ablandador';
         modelo = report.seccion_B_equipo?.modelo || '';
@@ -1970,7 +1970,7 @@ function populateRemitoForm(report) {
 
     // Construir repuestos según el tipo de reporte
     let repuestos = [];
-    
+
     if (isAblandador) {
         // Para ablandadores: solo prefiltro si se cambió
         if (report.seccion_D_checklist?.cambio_filtro_realizado) {
@@ -2489,7 +2489,7 @@ export function createRemitoModule({ showView, navigateToDashboard, onRemitoComp
             const emailStatus = remitoData?.emailStatus;
             const numeroRemito = normalizeString(remitoData?.NumeroRemito);
             const remitoId = remitoData?.id;
-            
+
             if (numeroRemito) {
                 lastSavedReport.NumeroRemito = numeroRemito;
                 setReadonlyInputValue('remito-numero', numeroRemito);
@@ -2500,21 +2500,21 @@ export function createRemitoModule({ showView, navigateToDashboard, onRemitoComp
 
             const printableReport = lastPrintableSnapshot?.report || lastSavedReport;
             const printablePhotoSlots = lastPrintableSnapshot?.photoSlots || clonePhotoSlots(photoSlots);
-            
+
             // Generar el HTML del PDF con todos los datos (incluyendo fotos)
             const printableData = buildPrintableRemitoData(printableReport, {
                 observaciones: printableReport?.observaciones,
                 repuestos: printableReport?.repuestos,
                 photoSlots: printablePhotoSlots,
             });
-            
+
             if (printableData && remitoId) {
                 // Actualizar el número de remito en los datos
                 printableData.numero = numeroRemito || printableData.numero;
-                
+
                 // Generar el HTML
                 const pdfHtml = createRemitoPrintHtml(printableData);
-                
+
                 // Generar PDF blob y guardarlo en Storage (en background)
                 if (pdfHtml) {
                     generatePdfBlob(pdfHtml)

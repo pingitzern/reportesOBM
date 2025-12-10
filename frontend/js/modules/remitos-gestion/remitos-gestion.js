@@ -512,7 +512,7 @@ function normalizeRemitoForDisplay(remito) {
 function getEmptyFormData() {
     // Obtener el nombre del técnico logueado automáticamente
     const tecnicoLogueado = getCurrentUserName() || '';
-    
+
     return {
         numeroRemito: '',
         numeroReporte: '',
@@ -610,7 +610,7 @@ function normalizeClientRecord(cliente, index = 0) {
     const telefono = sanitizeString(pickValue(cliente, CLIENT_PHONE_KEYS));
     const email = sanitizeString(pickValue(cliente, CLIENT_EMAIL_KEYS));
     const cuit = sanitizeString(pickValue(cliente, CLIENT_CUIT_KEYS));
-    
+
     // Obtener el ID real del cliente (UUID de Supabase)
     const clientId = cliente.id || cliente.ID || identificador;
 
@@ -691,7 +691,7 @@ function syncSelectedClienteFromForm() {
 async function applyClienteSelection(key) {
     const option = findClienteByKey(key);
     state.selectedClienteKey = option ? option.key : '';
-    
+
     // Limpiar equipos y datos de equipo previos
     state.equiposCliente = [];
     state.selectedEquipoId = '';
@@ -710,13 +710,13 @@ async function applyClienteSelection(key) {
     state.formData.telefono = option.telefono || '';
     state.formData.email = option.email || '';
     state.formData.cuit = option.cuit || '';
-    
+
     // Cargar equipos del cliente seleccionado
     if (option.id) {
         console.log('[RemitosGestion] Cargando equipos para cliente ID:', option.id, 'Nombre:', option.nombre);
         state.isLoadingEquipos = true;
         renderManagementView();
-        
+
         try {
             const equipos = await getEquiposByCliente(option.id);
             console.log('[RemitosGestion] Equipos encontrados:', equipos?.length || 0, equipos);
@@ -734,7 +734,7 @@ async function applyClienteSelection(key) {
 function applyEquipoSelection(equipoId) {
     state.selectedEquipoId = equipoId || '';
     state.formData.equipoId = equipoId || '';
-    
+
     if (!equipoId) {
         state.formData.sistemaNombre = '';
         state.formData.modelo = '';
@@ -742,7 +742,7 @@ function applyEquipoSelection(equipoId) {
         state.formData.tagId = '';
         return;
     }
-    
+
     const equipo = state.equiposCliente.find(e => e.id === equipoId);
     if (equipo) {
         state.formData.sistemaNombre = equipo.sistema_nombre || '';
@@ -756,7 +756,7 @@ function buildEquiposOptionsHtml() {
     if (state.isLoadingEquipos) {
         return '<option value="">Cargando equipos...</option>';
     }
-    
+
     if (!Array.isArray(state.equiposCliente) || state.equiposCliente.length === 0) {
         return '<option value="">Sin equipos registrados</option>';
     }
@@ -860,8 +860,8 @@ function buildPhotoSlotHtml(slot, index, disabledAttr) {
 function buildRepuestosSectionHtml(disableFormFields) {
     const disabledAttr = disableFormFields ? ' disabled' : '';
     const repuestos = Array.isArray(state.formData?.repuestos) ? state.formData.repuestos : [];
-    
-    const repuestosRowsHtml = repuestos.length > 0 
+
+    const repuestosRowsHtml = repuestos.length > 0
         ? repuestos.map((rep, index) => `
             <tr data-repuesto-index="${index}">
                 <td class="px-4 py-3">
@@ -892,7 +892,7 @@ function buildRepuestosSectionHtml(disableFormFields) {
                 </td>
             </tr>
         `;
-    
+
     return `
         <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -1021,7 +1021,7 @@ function buildPayloadFromForm(formData = {}) {
         equipo_modelo: sanitizeString(formData.equipo_modelo),
         equipo_ubicacion: sanitizeString(formData.equipo_ubicacion),
         // Repuestos utilizados
-        repuestos: Array.isArray(formData.repuestos) 
+        repuestos: Array.isArray(formData.repuestos)
             ? formData.repuestos.map(r => ({
                 descripcion: sanitizeString(r.descripcion),
                 cantidad: parseInt(r.cantidad, 10) || 1,
@@ -1382,14 +1382,14 @@ function renderManagementView() {
     ensurePhotoSlotsInFormData();
     const disableFormFields = state.isSaving || state.isLoading;
     const disabledAttr = disableFormFields ? 'disabled' : '';
-    
+
     // Equipos del cliente
     const hasClienteSelected = Boolean(state.selectedClienteKey);
     const equiposOptionsHtml = buildEquiposOptionsHtml();
     const equipoSelectDisabledAttr = (disableFormFields || state.isLoadingEquipos || !hasClienteSelected) ? 'disabled' : '';
     const hasEquipos = hasClienteSelected && state.equiposCliente.length > 0;
     const hasEquipoSelected = Boolean(state.selectedEquipoId);
-    
+
     // Construir sección de equipo - ahora como campos individuales para el grid
     const equipoSectionHtml = hasClienteSelected ? `
         <div class="md:col-span-2">
@@ -1434,7 +1434,7 @@ function renderManagementView() {
             </div>
         </div>
     `;
-    
+
     const shouldShowNumeroRemitoPlaceholder = state.formMode === 'create'
         && !sanitizeString(state.formData.numeroRemito);
     const numeroRemitoPlaceholderAttr = shouldShowNumeroRemitoPlaceholder
@@ -1475,7 +1475,7 @@ function renderManagementView() {
 
     const secondaryButtonHtml = secondaryButtons.join('');
     const photoSectionHtml = buildPhotoSectionHtml(disableFormFields);
-    
+
     // Construir sección de repuestos
     const repuestosHtml = buildRepuestosSectionHtml(disableFormFields);
 
@@ -1745,7 +1745,7 @@ function renderManagementView() {
 function showModal(title, contentHtml) {
     const modalId = 'remito-detail-modal';
     let modal = document.getElementById(modalId);
-    
+
     if (modal) {
         modal.remove();
     }
@@ -1815,15 +1815,15 @@ function handleDetalleRemito(index) {
     const contentHtml = `
         <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
             ${fields.map(field => {
-                const val = getDisplayValue(field.value);
-                if (val === '-') return ''; // Omitir campos vacíos
-                return `
+        const val = getDisplayValue(field.value);
+        if (val === '-') return ''; // Omitir campos vacíos
+        return `
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">${escapeHtml(field.label)}</dt>
                         <dd class="mt-1 text-sm text-gray-900">${escapeHtml(val)}</dd>
                     </div>
                 `;
-            }).join('')}
+    }).join('')}
         </dl>
         ${remito.repuestos && remito.repuestos.length > 0 ? `
             <div class="mt-6">
@@ -1945,18 +1945,18 @@ function handleAgregarRepuesto() {
     if (!Array.isArray(state.formData.repuestos)) {
         state.formData.repuestos = [];
     }
-    
+
     // Recolectar valores actuales del formulario antes de agregar
     collectRepuestosFromForm();
-    
+
     state.formData.repuestos.push({
         codigo: '',
         descripcion: '',
         cantidad: '1'
     });
-    
+
     renderManagementView();
-    
+
     // Focus en el campo código del nuevo repuesto
     setTimeout(() => {
         const lastIndex = state.formData.repuestos.length - 1;
@@ -1974,10 +1974,10 @@ function handleRemoveRepuesto(index) {
     if (!Array.isArray(state.formData.repuestos)) {
         return;
     }
-    
+
     // Recolectar valores actuales antes de eliminar
     collectRepuestosFromForm();
-    
+
     if (index >= 0 && index < state.formData.repuestos.length) {
         state.formData.repuestos.splice(index, 1);
         renderManagementView();
@@ -1990,18 +1990,18 @@ function handleRemoveRepuesto(index) {
 function collectRepuestosFromForm() {
     const container = getContainerElement();
     if (!container) return [];
-    
+
     const rows = container.querySelectorAll('#remitos-gestion-repuestos-body tr[data-repuesto-index]');
     const repuestos = [];
-    
+
     rows.forEach((row) => {
         const codigo = row.querySelector('input[data-repuesto-field="codigo"]')?.value || '';
         const descripcion = row.querySelector('input[data-repuesto-field="descripcion"]')?.value || '';
         const cantidad = row.querySelector('input[data-repuesto-field="cantidad"]')?.value || '1';
-        
+
         repuestos.push({ codigo, descripcion, cantidad });
     });
-    
+
     state.formData.repuestos = repuestos;
     return repuestos;
 }
@@ -2011,37 +2011,57 @@ function collectRepuestosFromForm() {
  * Si no hay PDF guardado (remitos antiguos), muestra un mensaje informativo.
  */
 async function handleDescargarPdfRemito(index) {
+    console.log('[PDF Debug] handleDescargarPdfRemito llamado con index:', index);
+
     if (!Array.isArray(state.remitos) || index < 0 || index >= state.remitos.length) {
+        console.log('[PDF Debug] Index inválido o remitos vacío');
         return;
     }
 
     const remito = state.remitos[index];
+    console.log('[PDF Debug] Remito encontrado:', {
+        numeroRemito: remito?.numeroRemito,
+        pdf_path: remito?.pdf_path,
+        id: remito?.id,
+    });
+
     if (!remito) {
+        console.log('[PDF Debug] Remito es null/undefined');
         return;
     }
 
     // Solo intentar descargar si hay PDF guardado (Snapshot Inmutable)
     if (remito.pdf_path) {
+        console.log('[PDF Debug] Tiene pdf_path, intentando obtener URL firmada...');
         try {
             const obtenerUrlPdfRemito = dependencies.obtenerUrlPdfRemito;
+            console.log('[PDF Debug] obtenerUrlPdfRemito disponible:', typeof obtenerUrlPdfRemito === 'function');
+
             if (typeof obtenerUrlPdfRemito === 'function') {
                 const url = await obtenerUrlPdfRemito(remito.pdf_path);
+                console.log('[PDF Debug] URL obtenida:', url ? 'SÍ (abriendo...)' : 'NO (null)');
+
                 if (url) {
                     // Abrir el PDF guardado directamente
                     window.open(url, '_blank');
                     return;
+                } else {
+                    console.warn('[PDF Debug] obtenerUrlPdfRemito retornó null para path:', remito.pdf_path);
                 }
             }
         } catch (error) {
-            console.warn('Error obteniendo URL del PDF guardado:', error);
+            console.warn('[PDF Debug] Error obteniendo URL del PDF guardado:', error);
             setFeedback('error', 'No se pudo obtener el PDF. Intentá nuevamente.');
             renderManagementView();
             return;
         }
+    } else {
+        console.log('[PDF Debug] Remito NO tiene pdf_path');
     }
 
     // Si no hay PDF guardado, mostrar mensaje informativo
     // Los remitos nuevos siempre tendrán PDF guardado
+    console.log('[PDF Debug] Mostrando warning - sin PDF guardado');
     setFeedback('warning', `El remito ${remito.numeroRemito || ''} no tiene PDF guardado. Solo los remitos generados a partir de ahora tendrán PDF disponible.`);
     renderManagementView();
 }
@@ -2173,17 +2193,17 @@ function handleFormInput(event) {
 
 function handleContainerInput(event) {
     const target = event?.target;
-    
+
     // Búsqueda inteligente de cliente
     if (target && target.id === 'remito-form-cliente') {
         const searchText = (target.value || '').toLowerCase().trim();
         const dropdown = document.getElementById('remito-form-cliente-dropdown');
-        
+
         if (!dropdown) {
             handleFormInput(event);
             return;
         }
-        
+
         // Si el texto está vacío o muy corto, ocultar dropdown
         if (searchText.length < 2) {
             dropdown.classList.add('hidden');
@@ -2197,7 +2217,7 @@ function handleContainerInput(event) {
             handleFormInput(event);
             return;
         }
-        
+
         // Filtrar clientes
         const filtered = (state.clienteOptions || [])
             .filter(option => {
@@ -2205,7 +2225,7 @@ function handleContainerInput(event) {
                 return label.includes(searchText);
             })
             .slice(0, 5); // Limitar a 5 resultados
-        
+
         if (filtered.length === 0) {
             dropdown.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">No se encontraron clientes</div>';
             dropdown.classList.remove('hidden');
@@ -2219,11 +2239,11 @@ function handleContainerInput(event) {
             `).join('');
             dropdown.classList.remove('hidden');
         }
-        
+
         handleFormInput(event);
         return;
     }
-    
+
     handleFormInput(event);
 }
 
@@ -2244,7 +2264,7 @@ function handleContainerChange(event) {
         target.value = '';
         return;
     }
-    
+
     if (target.id === 'remito-form-equipo-select') {
         const value = typeof target.value === 'string' ? target.value : '';
         applyEquipoSelection(value);
@@ -2415,7 +2435,7 @@ function handleContainerClick(event) {
         closeAllPhotoMenus();
         return;
     }
-    
+
     // Selección de cliente desde dropdown
     const clienteOption = event.target.closest('.remito-cliente-option');
     if (clienteOption) {
@@ -2432,7 +2452,7 @@ function handleContainerClick(event) {
         }
         return;
     }
-    
+
     // Botón limpiar cliente
     if (event.target.id === 'remito-form-cliente-clear' || event.target.closest('#remito-form-cliente-clear')) {
         event.preventDefault();
@@ -2493,14 +2513,14 @@ function handleContainerClick(event) {
         }
         return;
     }
-    
+
     // Agregar repuesto
     if (event.target.id === 'remitos-gestion-agregar-repuesto' || event.target.closest('#remitos-gestion-agregar-repuesto')) {
         event.preventDefault();
         handleAgregarRepuesto();
         return;
     }
-    
+
     // Eliminar repuesto
     const removeRepuestoBtn = event.target.closest('[data-repuesto-remove]');
     if (removeRepuestoBtn) {

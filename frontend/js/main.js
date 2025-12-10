@@ -13,6 +13,8 @@ import { createMantenimientosGestionModule } from './modules/mantenimientos-gest
 import { createSoftenerModule } from './modules/mantenimiento-ablandador/ablandador.js';
 import { createFeedbackModule } from './modules/feedback/feedback.js';
 import { createAdminPanelModule } from './modules/admin/adminPanel.js';
+import { initEquipmentHistory } from './modules/equipmentHistory/equipmentHistory.js';
+import { supabase } from './supabaseClient.js';
 
 const {
     guardarMantenimiento,
@@ -291,7 +293,7 @@ async function showScriptVersion() {
 function initializeHelpToggle() {
     const helpButton = document.getElementById('help-menu-item');
     const helpInfo = document.getElementById('help-info');
-    
+
     if (helpButton && helpInfo) {
         helpButton.addEventListener('click', (e) => {
             e.preventDefault();
@@ -371,9 +373,20 @@ function showSearchTab() {
     setActiveNavigation('buscar');
 }
 
+let historyInitialized = false;
+
 async function showDashboardTab() {
     setActiveNavigation('dashboard');
     await appModules.dashboard.show();
+
+    // Inicializar historial de equipos una sola vez
+    if (!historyInitialized) {
+        const target = document.getElementById('equipment-history-target');
+        if (target) {
+            await initEquipmentHistory(api, supabase, target);
+            historyInitialized = true;
+        }
+    }
 }
 
 function initializeNavigation() {
@@ -463,18 +476,18 @@ async function initializeApp() {
     try {
         // Primero autenticar
         await initializeAuth();
-        
+
         // Inicializar panel de administración (muestra/oculta opción según rol)
         appModules.adminPanel.init();
-        
+
         // Después inicializar módulos que requieren datos del backend
         await appModules.maintenance.initialize();
         appModules.softener.initialize();
-        
+
         // Redirigir según el rol del usuario
         const userRole = getCurrentUserRole();
         console.log('[main] Usuario autenticado con rol:', userRole);
-        
+
         if (userRole === 'Administrador' || userRole === 'admin') {
             // Admins van al dashboard
             showView('tab-dashboard');

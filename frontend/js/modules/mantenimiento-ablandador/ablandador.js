@@ -9,6 +9,7 @@ import {
 } from '../../api.js';
 import { SignatureModal } from '../signature/signaturePad.js';
 import { getCurrentUserName } from '../login/auth.js';
+import { initSoftenerValidation, canSaveForm, showBlockingErrors } from './softenerValidationUI.js';
 
 const SOFTENER_VIEW_ID = 'tab-ablandador';
 const FORM_ID = 'softener-maintenance-form';
@@ -157,18 +158,18 @@ function getElement(id) {
 function showFormLockedOverlay() {
     const form = getElement(FORM_ID);
     if (!form) return;
-    
+
     const formCards = form.querySelectorAll('.form-card');
     formCards.forEach(card => {
         // Verificar si ya tiene overlay
         if (card.querySelector('.form-card-overlay')) return;
-        
+
         card.style.position = 'relative';
         const overlay = document.createElement('div');
         overlay.className = 'form-card-overlay';
         card.appendChild(overlay);
     });
-    
+
     // Mostrar mensaje flotante
     let message = getElement('softener-form-locked-message');
     if (!message) {
@@ -189,10 +190,10 @@ function showFormLockedOverlay() {
 function hideFormLockedOverlay() {
     const form = getElement(FORM_ID);
     if (!form) return;
-    
+
     const overlays = form.querySelectorAll('.form-card-overlay');
     overlays.forEach(overlay => overlay.remove());
-    
+
     const message = getElement('softener-form-locked-message');
     if (message) {
         message.classList.add('hidden');
@@ -311,7 +312,7 @@ function getClientSelection() {
     // Ahora usamos autocomplete: hidden input para ID, search input para nombre
     const hiddenInput = getElement(CLIENT_SELECT_ID);
     const searchInput = getElement(CLIENT_SEARCH_ID);
-    
+
     const id = (hiddenInput?.value || '').trim();
     const name = (searchInput?.value || '').trim();
 
@@ -486,7 +487,7 @@ function resetClientSelection() {
     if (hiddenInput) {
         hiddenInput.value = '';
     }
-    
+
     // Ocultar botón de limpiar
     const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
     if (clearBtn) {
@@ -515,7 +516,7 @@ function highlightMatch(text, query) {
     const normalizedQuery = normalizeForSearch(query);
     const index = normalizedText.indexOf(normalizedQuery);
     if (index === -1) return text;
-    
+
     const before = text.slice(0, index);
     const match = text.slice(index, index + query.length);
     const after = text.slice(index + query.length);
@@ -526,18 +527,18 @@ function filterClientes(query) {
     if (!query || query.length < 1) {
         return clientesListCache.slice(0, 10);
     }
-    
+
     const normalizedQuery = normalizeForSearch(query);
-    
+
     return clientesListCache
         .filter(cliente => {
             const name = normalizeForSearch(extractClientName(cliente));
             const direccion = normalizeForSearch(cliente.direccion || '');
             const cuit = normalizeForSearch(cliente.cuit || '');
-            
-            return name.includes(normalizedQuery) || 
-                   direccion.includes(normalizedQuery) || 
-                   cuit.includes(normalizedQuery);
+
+            return name.includes(normalizedQuery) ||
+                direccion.includes(normalizedQuery) ||
+                cuit.includes(normalizedQuery);
         })
         .slice(0, 15);
 }
@@ -545,7 +546,7 @@ function filterClientes(query) {
 function renderDropdown(clientes, query) {
     const dropdown = getElement(CLIENT_DROPDOWN_ID);
     if (!dropdown) return;
-    
+
     if (clientes.length === 0) {
         dropdown.innerHTML = `
             <div class="cliente-dropdown-empty">
@@ -555,14 +556,14 @@ function renderDropdown(clientes, query) {
         dropdown.classList.remove('hidden');
         return;
     }
-    
+
     dropdown.innerHTML = clientes.map((cliente, index) => {
         const name = extractClientName(cliente);
         const direccion = cliente.direccion || '';
         const highlightedName = highlightMatch(name, query);
         const highlightedDireccion = highlightMatch(direccion, query);
         const clientKey = `softener-cliente-${clientesListCache.indexOf(cliente)}`;
-        
+
         return `
             <div class="cliente-dropdown-item ${index === selectedClientIndex ? 'selected' : ''}" 
                  data-cliente-key="${clientKey}"
@@ -574,7 +575,7 @@ function renderDropdown(clientes, query) {
             </div>
         `;
     }).join('');
-    
+
     dropdown.classList.remove('hidden');
 }
 
@@ -590,38 +591,38 @@ async function selectClient(clientKey) {
     const index = parseInt(clientKey.replace('softener-cliente-', ''), 10);
     const cliente = clientesListCache[index];
     if (!cliente) return;
-    
+
     const searchInput = getElement(CLIENT_SEARCH_ID);
     const hiddenInput = getElement(CLIENT_SELECT_ID);
     const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
-    
+
     const clientId = extractClientId(cliente) || extractClientName(cliente);
     const clientName = extractClientName(cliente);
-    
+
     // Obtener el UUID real del cliente para buscar equipos
     const clienteUUID = cliente.id || null;
-    
+
     if (hiddenInput) {
         hiddenInput.value = clientId;
         // Guardar también el UUID para uso posterior
         hiddenInput.dataset.clienteUuid = clienteUUID || '';
     }
-    
+
     if (searchInput) {
         searchInput.value = clientName;
         searchInput.classList.add('has-selection');
     }
-    
+
     if (clearBtn) {
         clearBtn.classList.remove('hidden');
     }
-    
+
     // Store client details and apply them
     clienteDataMap.set(clientKey, createClientDetails(cliente));
     applyClientDetails(createClientDetails(cliente));
-    
+
     hideDropdown();
-    
+
     // Buscar y cargar equipos del cliente
     if (clienteUUID) {
         await cargarEquiposDelCliente(clienteUUID);
@@ -632,24 +633,24 @@ function clearClientSelection() {
     const searchInput = getElement(CLIENT_SEARCH_ID);
     const hiddenInput = getElement(CLIENT_SELECT_ID);
     const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
-    
+
     if (searchInput) {
         searchInput.value = '';
         searchInput.classList.remove('has-selection');
         searchInput.focus();
     }
-    
+
     if (hiddenInput) {
         hiddenInput.value = '';
     }
-    
+
     if (clearBtn) {
         clearBtn.classList.add('hidden');
     }
-    
+
     clearClientDetails();
     hideDropdown();
-    
+
     // Limpiar también los datos del equipo
     limpiarSeccionB();
 }
@@ -664,7 +665,7 @@ function clearClientSelection() {
 async function cargarEquiposDelCliente(clienteUUID) {
     try {
         equiposDelCliente = await obtenerEquiposAblandadorPorCliente(clienteUUID);
-        
+
         if (equiposDelCliente.length === 0) {
             // No hay equipos registrados - formulario vacío para nuevo equipo
             limpiarSeccionB();
@@ -688,11 +689,11 @@ async function cargarEquiposDelCliente(clienteUUID) {
 function mostrarMensajeNuevoEquipo() {
     const seccionB = getElement('softener-section-b');
     if (!seccionB) return;
-    
+
     // Remover banner existente si hay
     const bannerExistente = seccionB.querySelector('.equipo-status-banner');
     if (bannerExistente) bannerExistente.remove();
-    
+
     const banner = document.createElement('div');
     banner.className = 'equipo-status-banner mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg flex items-center gap-3';
     banner.innerHTML = `
@@ -703,12 +704,12 @@ function mostrarMensajeNuevoEquipo() {
             <strong>Nuevo equipo:</strong> Este cliente no tiene equipos registrados. Los datos que cargues en esta sección se guardarán para futuros mantenimientos.
         </div>
     `;
-    
+
     const titulo = seccionB.querySelector('h2');
     if (titulo) {
         titulo.parentNode.insertBefore(banner, titulo.nextSibling.nextSibling);
     }
-    
+
     // Habilitar edición de campos
     habilitarEdicionSeccionB(true);
     seccionBDesbloqueada = true;
@@ -720,21 +721,21 @@ function mostrarMensajeNuevoEquipo() {
 function mostrarSelectorEquipos(equipos) {
     const seccionB = getElement('softener-section-b');
     if (!seccionB) return;
-    
+
     // Remover selector/banner existente
     const existente = seccionB.querySelector('.equipo-selector-container, .equipo-status-banner');
     if (existente) existente.remove();
-    
+
     const container = document.createElement('div');
     container.className = 'equipo-selector-container mt-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg';
-    
+
     const opciones = equipos.map((eq, idx) => {
         const serie = eq.numero_serie || 'Sin número de serie';
         const tipo = eq.tipo_ablandador || 'Custom';
         const ubicacion = eq.ubicacion || 'Sin ubicación';
         return `<option value="${idx}">${serie} - ${tipo} (${ubicacion})</option>`;
     }).join('');
-    
+
     container.innerHTML = `
         <div class="flex items-center gap-3 mb-3">
             <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -750,12 +751,12 @@ function mostrarSelectorEquipos(equipos) {
             </select>
         </div>
     `;
-    
+
     const titulo = seccionB.querySelector('h2');
     if (titulo) {
         titulo.parentNode.insertBefore(container, titulo.nextSibling.nextSibling);
     }
-    
+
     // Event listener para el selector
     const selector = container.querySelector('#softener-equipo-selector');
     selector.addEventListener('change', (e) => {
@@ -779,10 +780,10 @@ function mostrarSelectorEquipos(equipos) {
  */
 function cargarDatosEquipoEnFormulario(equipo) {
     if (!equipo) return;
-    
+
     equipoActualCargado = equipo;
     seccionBEditada = false;
-    
+
     // Mapeo de campos BD -> formulario
     setSelectValue(EQUIPO_TIPO_ID, equipo.tipo_ablandador);
     setInputValue(EQUIPO_MODELO_ID, equipo.modelo || '');
@@ -790,7 +791,7 @@ function cargarDatosEquipoEnFormulario(equipo) {
     setInputValue(EQUIPO_NUMERO_SERIE_ID, equipo.numero_serie || '');
     setSelectValue(EQUIPO_UBICACION_ID, equipo.ubicacion || '');
     setSelectValue(SECCION_B_TIPO_REGENERACION_ID, equipo.tipo_regeneracion || 'Por Volumen');
-    
+
     // Cargar prefiltro - verificar si es tren
     let trenData = null;
     try {
@@ -800,24 +801,24 @@ function cargarDatosEquipoEnFormulario(equipo) {
     } catch (e) {
         // No es JSON, es prefiltro simple
     }
-    
+
     if (trenData && trenData.es_tren) {
         cargarTrenPrefiltrado(trenData);
     } else {
         cargarTrenPrefiltrado(null); // Reset a modo simple
         setSelectValue(PREFILTER_SELECT_ID, equipo.prefiltro || 'No Aplica');
     }
-    
+
     setSelectValue(PROTECCION_ENTRADA_ID, equipo.proteccion_entrada || 'No Aplica');
     setSelectValue(MANOMETRO_SELECT_ID, equipo.manometros || 'No cuenta con manómetros');
     setInputValue(EQUIPO_NOTAS_ID, equipo.notas_equipo || '');
-    
+
     // Actualizar cálculo de autonomía
     updateAutonomia();
-    
+
     // Mostrar banner de equipo cargado
     mostrarBannerEquipoCargado(equipo);
-    
+
     // Bloquear campos y agregar listeners de cambio
     habilitarEdicionSeccionB(false);
     attachSeccionBChangeListeners();
@@ -829,11 +830,11 @@ function cargarDatosEquipoEnFormulario(equipo) {
 function mostrarBannerEquipoCargado(equipo) {
     const seccionB = getElement('softener-section-b');
     if (!seccionB) return;
-    
+
     // Remover banner/selector existente
     const existente = seccionB.querySelector('.equipo-status-banner, .equipo-selector-container');
     if (existente) existente.remove();
-    
+
     const banner = document.createElement('div');
     banner.className = 'equipo-status-banner mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg';
     banner.innerHTML = `
@@ -852,12 +853,12 @@ function mostrarBannerEquipoCargado(equipo) {
             </button>
         </div>
     `;
-    
+
     const titulo = seccionB.querySelector('h2');
     if (titulo) {
         titulo.parentNode.insertBefore(banner, titulo.nextSibling.nextSibling);
     }
-    
+
     // Event listener para botón de editar
     const btnEditar = banner.querySelector('#softener-editar-equipo-btn');
     btnEditar.addEventListener('click', () => {
@@ -898,7 +899,7 @@ function habilitarEdicionSeccionB(habilitar) {
         MANOMETRO_SELECT_ID,
         EQUIPO_NOTAS_ID,
     ];
-    
+
     campos.forEach(id => {
         const el = getElement(id);
         if (el) {
@@ -917,7 +918,7 @@ function habilitarEdicionSeccionB(habilitar) {
             }
         }
     });
-    
+
     // El número de serie siempre debe ser editable si es nuevo equipo
     if (habilitar && !equipoActualCargado) {
         const serieInput = getElement(EQUIPO_NUMERO_SERIE_ID);
@@ -935,7 +936,7 @@ function limpiarSeccionB(removerBanner = true) {
     equiposDelCliente = [];
     seccionBEditada = false;
     seccionBDesbloqueada = false;
-    
+
     // Limpiar campos
     setSelectValue(EQUIPO_TIPO_ID, 'Custom');
     setInputValue(EQUIPO_MODELO_ID, '');
@@ -947,10 +948,10 @@ function limpiarSeccionB(removerBanner = true) {
     setSelectValue(PROTECCION_ENTRADA_ID, 'No Aplica');
     setSelectValue(MANOMETRO_SELECT_ID, 'No cuenta con manómetros');
     setInputValue(EQUIPO_NOTAS_ID, '');
-    
+
     // Reset tren de prefiltrado
     cargarTrenPrefiltrado(null);
-    
+
     // Remover banner/selector si corresponde
     if (removerBanner) {
         const seccionB = getElement('softener-section-b');
@@ -959,7 +960,7 @@ function limpiarSeccionB(removerBanner = true) {
             if (banner) banner.remove();
         }
     }
-    
+
     // Habilitar edición
     habilitarEdicionSeccionB(true);
 }
@@ -979,7 +980,7 @@ function attachSeccionBChangeListeners() {
         MANOMETRO_SELECT_ID,
         EQUIPO_NOTAS_ID,
     ];
-    
+
     campos.forEach(id => {
         const el = getElement(id);
         if (el && !el.dataset.seccionBListener) {
@@ -1004,7 +1005,7 @@ function attachSeccionBChangeListeners() {
 function obtenerDatosSeccionB() {
     // Verificar si es tren de prefiltrado
     const trenData = obtenerValoresTrenPrefiltrado();
-    
+
     return {
         tipo_ablandador: getSelectValue(EQUIPO_TIPO_ID) || 'Custom',
         modelo: getInputValue(EQUIPO_MODELO_ID) || '',
@@ -1027,40 +1028,40 @@ function obtenerDatosSeccionB() {
 async function verificarYGuardarEquipo() {
     const hiddenInput = getElement(CLIENT_SELECT_ID);
     const clienteUUID = hiddenInput?.dataset?.clienteUuid;
-    
+
     if (!clienteUUID) {
         // No hay cliente seleccionado con UUID válido
         return { continuar: true, equipoId: null };
     }
-    
+
     const datosFormulario = obtenerDatosSeccionB();
     const numeroSerie = datosFormulario.numero_serie;
-    
+
     if (!numeroSerie) {
         alert('⚠️ El número de serie es obligatorio para registrar el equipo.');
         return { continuar: false, equipoId: null };
     }
-    
+
     const tecnicoActual = getCurrentUserName() || 'Sistema';
-    
+
     // Caso 1: Es un equipo nuevo (no había equipo cargado)
     if (!equipoActualCargado) {
         try {
             // Verificar si ya existe un equipo con ese número de serie para este cliente
             const equipoExistente = await obtenerEquipoAblandadorPorSerie(clienteUUID, numeroSerie);
-            
+
             if (equipoExistente) {
                 alert(`⚠️ Ya existe un equipo con el número de serie "${numeroSerie}" para este cliente.\n\nSi es el mismo equipo, seleccionalo de la lista.`);
                 return { continuar: false, equipoId: null };
             }
-            
+
             // Crear nuevo equipo
             const nuevoEquipo = await crearEquipoAblandador({
                 cliente_id: clienteUUID,
                 ...datosFormulario,
                 created_by: tecnicoActual,
             });
-            
+
             console.log('✅ Nuevo equipo creado:', nuevoEquipo.id);
             return { continuar: true, equipoId: nuevoEquipo.id };
         } catch (error) {
@@ -1069,21 +1070,21 @@ async function verificarYGuardarEquipo() {
             return { continuar: false, equipoId: null };
         }
     }
-    
+
     // Caso 2: Hay equipo cargado - verificar si hubo cambios
     if (seccionBEditada && seccionBDesbloqueada) {
         const { hayCambios, cambios } = detectarCambiosEquipo(equipoActualCargado, datosFormulario);
-        
+
         if (hayCambios) {
             // Mostrar modal de confirmación
             const detallesCambios = Object.entries(cambios)
                 .map(([campo, { anterior, nuevo }]) => `• ${formatearNombreCampo(campo)}: "${anterior || '(vacío)'}" → "${nuevo || '(vacío)'}"`)
                 .join('\n');
-            
+
             const mensaje = `Se detectaron cambios en la configuración del equipo:\n\n${detallesCambios}\n\n¿Desea actualizar la ficha del equipo para futuros mantenimientos?`;
-            
+
             const actualizarFicha = confirm(mensaje);
-            
+
             if (actualizarFicha) {
                 try {
                     await actualizarEquipoAblandador(equipoActualCargado.id, {
@@ -1098,7 +1099,7 @@ async function verificarYGuardarEquipo() {
             }
         }
     }
-    
+
     return { continuar: true, equipoId: equipoActualCargado?.id || null };
 }
 
@@ -1130,33 +1131,33 @@ function getSelectValue(id) {
 
 function initializeClientAutocomplete() {
     if (clientAutocompleteInitialized) return;
-    
+
     const searchInput = getElement(CLIENT_SEARCH_ID);
     const dropdown = getElement(CLIENT_DROPDOWN_ID);
     const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
-    
+
     if (!searchInput || !dropdown) return;
-    
+
     // Input event - filter as user types
     searchInput.addEventListener('input', (e) => {
         const query = e.target.value;
         searchInput.classList.remove('has-selection');
-        
+
         // Clear hidden input when user modifies search
         const hiddenInput = getElement(CLIENT_SELECT_ID);
         if (hiddenInput) {
             hiddenInput.value = '';
         }
-        
+
         if (clearBtn) {
             clearBtn.classList.toggle('hidden', !query);
         }
-        
+
         const filtered = filterClientes(query);
         selectedClientIndex = -1;
         renderDropdown(filtered, query);
     });
-    
+
     // Focus event - show dropdown
     searchInput.addEventListener('focus', () => {
         const query = searchInput.value;
@@ -1165,11 +1166,11 @@ function initializeClientAutocomplete() {
             renderDropdown(filtered, query);
         }
     });
-    
+
     // Keyboard navigation
     searchInput.addEventListener('keydown', (e) => {
         const items = dropdown.querySelectorAll('.cliente-dropdown-item');
-        
+
         if (e.key === 'ArrowDown') {
             e.preventDefault();
             selectedClientIndex = Math.min(selectedClientIndex + 1, items.length - 1);
@@ -1188,7 +1189,7 @@ function initializeClientAutocomplete() {
             hideDropdown();
         }
     });
-    
+
     // Click on dropdown item
     dropdown.addEventListener('click', (e) => {
         const item = e.target.closest('.cliente-dropdown-item');
@@ -1197,7 +1198,7 @@ function initializeClientAutocomplete() {
             selectClient(clientKey);
         }
     });
-    
+
     // Clear button
     if (clearBtn) {
         clearBtn.addEventListener('click', (e) => {
@@ -1205,7 +1206,7 @@ function initializeClientAutocomplete() {
             clearClientSelection();
         });
     }
-    
+
     // Click outside to close
     document.addEventListener('click', (e) => {
         const container = getElement(CLIENT_CONTAINER_ID);
@@ -1213,7 +1214,7 @@ function initializeClientAutocomplete() {
             hideDropdown();
         }
     });
-    
+
     clientAutocompleteInitialized = true;
 }
 
@@ -1229,7 +1230,7 @@ function updateDropdownSelection(items) {
 function populateClientSelect(clientes = []) {
     // Store clients for autocomplete
     clientesListCache = Array.isArray(clientes) ? clientes : [];
-    
+
     // Clear and rebuild the data map
     clienteDataMap.clear();
     clientesListCache.forEach((cliente, index) => {
@@ -1237,21 +1238,21 @@ function populateClientSelect(clientes = []) {
         const clientKey = `softener-cliente-${index}`;
         clienteDataMap.set(clientKey, createClientDetails(cliente));
     });
-    
+
     // Initialize autocomplete if not already done
     initializeClientAutocomplete();
-    
+
     // If there was a previous selection, try to restore it
     const hiddenInput = getElement(CLIENT_SELECT_ID);
     const searchInput = getElement(CLIENT_SEARCH_ID);
-    
+
     if (hiddenInput && hiddenInput.value && searchInput) {
         // Find the client by ID
         const existingClient = clientesListCache.find(c => {
             const id = extractClientId(c) || extractClientName(c);
             return id === hiddenInput.value;
         });
-        
+
         if (existingClient) {
             searchInput.value = extractClientName(existingClient);
             searchInput.classList.add('has-selection');
@@ -1278,7 +1279,7 @@ async function loadClientes(obtenerClientesFn) {
     clientesLoadingPromise = (async () => {
         let retries = 3;
         let delay = 500;
-        
+
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 const clientes = await obtenerClientesFn({ forceRefresh: false });
@@ -1287,7 +1288,7 @@ async function loadClientes(obtenerClientesFn) {
                 return; // Éxito, salir
             } catch (error) {
                 console.warn(`Intento ${attempt}/${retries} de cargar clientes falló:`, error);
-                
+
                 if (attempt < retries) {
                     // Esperar antes del próximo intento
                     await new Promise(resolve => setTimeout(resolve, delay));
@@ -1314,6 +1315,19 @@ function setDefaultServiceDate() {
             .toISOString()
             .slice(0, 10);
         dateInput.value = iso;
+
+        // Setear próximo servicio a +365 días
+        setDefaultNextServiceDate(iso);
+    }
+}
+
+function setDefaultNextServiceDate(serviceDateIso) {
+    const nextServiceInput = getElement('softener-resumen-proximo-servicio');
+    if (nextServiceInput instanceof HTMLInputElement && !nextServiceInput.value) {
+        const serviceDate = new Date(serviceDateIso);
+        serviceDate.setFullYear(serviceDate.getFullYear() + 1); // +365 días aprox
+        const nextIso = serviceDate.toISOString().slice(0, 10);
+        nextServiceInput.value = nextIso;
     }
 }
 
@@ -1470,30 +1484,30 @@ const PREFILTRO_OPTIONS = [
 function generarSelectoresEtapas(numEtapas) {
     const container = getElement(PREFILTRO_ETAPAS_CONTAINER_ID);
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
     for (let i = 1; i <= numEtapas; i++) {
         const etapaDiv = document.createElement('div');
         etapaDiv.className = 'flex items-center gap-2';
-        
+
         const label = document.createElement('label');
         label.className = 'text-xs font-medium text-gray-700 dark:text-gray-300 w-16 flex-shrink-0';
         label.textContent = `Etapa ${i}:`;
         label.setAttribute('for', `softener-prefiltro-etapa-${i}`);
-        
+
         const select = document.createElement('select');
         select.id = `softener-prefiltro-etapa-${i}`;
         select.name = `prefiltro_etapa_${i}`;
         select.className = 'flex-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1.5 text-sm text-gray-900 dark:text-gray-100 focus:border-emerald-500 focus:outline-none';
-        
+
         PREFILTRO_OPTIONS.forEach(opt => {
             const option = document.createElement('option');
             option.value = opt.value;
             option.textContent = opt.label;
             select.appendChild(option);
         });
-        
+
         etapaDiv.appendChild(label);
         etapaDiv.appendChild(select);
         container.appendChild(etapaDiv);
@@ -1508,10 +1522,10 @@ function obtenerValoresTrenPrefiltrado() {
     if (!checkbox || !checkbox.checked) {
         return null; // No es tren
     }
-    
+
     const numEtapas = parseInt(getInputValue(PREFILTRO_ETAPAS_INPUT_ID)) || 0;
     const etapas = [];
-    
+
     for (let i = 1; i <= numEtapas; i++) {
         const select = getElement(`softener-prefiltro-etapa-${i}`);
         if (select) {
@@ -1521,7 +1535,7 @@ function obtenerValoresTrenPrefiltrado() {
             });
         }
     }
-    
+
     return {
         es_tren: true,
         num_etapas: numEtapas,
@@ -1537,7 +1551,7 @@ function cargarTrenPrefiltrado(trenData) {
     const etapasInput = getElement(PREFILTRO_ETAPAS_INPUT_ID);
     const trenContainer = getElement(PREFILTRO_TREN_CONTAINER_ID);
     const simpleContainer = getElement(PREFILTRO_SIMPLE_CONTAINER_ID);
-    
+
     if (!trenData || !trenData.es_tren) {
         // No es tren - mostrar selector simple
         if (checkbox) checkbox.checked = false;
@@ -1547,19 +1561,19 @@ function cargarTrenPrefiltrado(trenData) {
         updatePrefiltroCambioVisibility();
         return;
     }
-    
+
     // Es tren - configurar
     if (checkbox) checkbox.checked = true;
     if (trenContainer) trenContainer.classList.remove('hidden');
     if (simpleContainer) simpleContainer.classList.add('hidden');
-    
+
     if (etapasInput) {
         etapasInput.value = trenData.num_etapas || 2;
     }
-    
+
     // Generar selectores y cargar valores
     generarSelectoresEtapas(trenData.num_etapas || 2);
-    
+
     // Cargar valores de cada etapa
     if (trenData.etapas && Array.isArray(trenData.etapas)) {
         trenData.etapas.forEach(etapa => {
@@ -1569,7 +1583,7 @@ function cargarTrenPrefiltrado(trenData) {
             }
         });
     }
-    
+
     // Actualizar la sección de cambio de filtros después de cargar el tren
     updatePrefiltroCambioVisibility();
 }
@@ -1582,9 +1596,9 @@ function attachTrenPrefiltradoListeners() {
     const etapasInput = getElement(PREFILTRO_ETAPAS_INPUT_ID);
     const trenContainer = getElement(PREFILTRO_TREN_CONTAINER_ID);
     const simpleContainer = getElement(PREFILTRO_SIMPLE_CONTAINER_ID);
-    
+
     if (!checkbox) return;
-    
+
     // Toggle tren on/off
     checkbox.addEventListener('change', () => {
         if (checkbox.checked) {
@@ -1597,16 +1611,16 @@ function attachTrenPrefiltradoListeners() {
             if (trenContainer) trenContainer.classList.add('hidden');
             if (simpleContainer) simpleContainer.classList.remove('hidden');
         }
-        
+
         // Actualizar la sección de cambio de filtros en checklist
         updatePrefiltroCambioVisibility();
-        
+
         // Marcar sección B como editada
         if (seccionBDesbloqueada) {
             seccionBEditada = true;
         }
     });
-    
+
     // Cambio en número de etapas
     if (etapasInput) {
         etapasInput.addEventListener('change', () => {
@@ -1615,12 +1629,12 @@ function attachTrenPrefiltradoListeners() {
             const limitado = Math.max(2, Math.min(6, numEtapas));
             etapasInput.value = limitado;
             generarSelectoresEtapas(limitado);
-            
+
             // Actualizar checkboxes de cambio de filtro después de generar selectores
             setTimeout(() => {
                 generarCheckboxesCambioFiltroTren();
             }, 50);
-            
+
             if (seccionBDesbloqueada) {
                 seccionBEditada = true;
             }
@@ -1778,18 +1792,18 @@ function updatePrefiltroCambioVisibility() {
     const containerTren = getElement(CAMBIO_FILTRO_TREN_CONTAINER_ID);
     const tipoFiltroInput = getElement(FILTRO_TIPO_INSTALADO_ID);
     const trenCheckbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
-    
+
     // Verificar si está en modo tren
     const esTren = trenCheckbox instanceof HTMLInputElement && trenCheckbox.checked;
-    
+
     // En modo tren, verificar si hay etapas configuradas
     const etapasTren = esTren ? obtenerEtapasTrenConfiguradas() : [];
     const tieneTrenConfigurado = esTren && etapasTren.length > 0;
-    
+
     // Mostrar toda la sección si hay prefiltro simple configurado O si hay tren con etapas
     const tienePrefiltroSimple = !esTren && prefiltroValue && prefiltroValue.trim() !== '' && prefiltroValue !== 'No Aplica';
     const tienePrefiltro = tienePrefiltroSimple || tieneTrenConfigurado;
-    
+
     // Controlar visibilidad de toda la sección
     if (section) {
         if (tienePrefiltro) {
@@ -1798,7 +1812,7 @@ function updatePrefiltroCambioVisibility() {
             section.classList.add('hidden');
         }
     }
-    
+
     // Si no hay prefiltro, ocultar ambos containers
     if (!tienePrefiltro) {
         if (containerSimple) containerSimple.classList.add('hidden');
@@ -1811,7 +1825,7 @@ function updatePrefiltroCambioVisibility() {
         updateDetalleCambioFiltro();
         return;
     }
-    
+
     // Determinar qué container mostrar según modo
     if (esTren) {
         // Modo tren: ocultar simple, mostrar tren y generar checkboxes dinámicos
@@ -1840,10 +1854,10 @@ function updatePrefiltroCambioVisibility() {
 function generarCheckboxesCambioFiltroTren() {
     const etapasContainer = getElement(CAMBIO_FILTRO_TREN_ETAPAS_ID);
     if (!etapasContainer) return;
-    
+
     // Obtener las etapas configuradas en Sección B
     const etapas = obtenerEtapasTrenConfiguradas();
-    
+
     if (etapas.length === 0) {
         etapasContainer.innerHTML = `
             <p class="text-sm text-gray-500 dark:text-gray-400 italic">
@@ -1852,7 +1866,7 @@ function generarCheckboxesCambioFiltroTren() {
         `;
         return;
     }
-    
+
     // Generar checkboxes para cada etapa
     let html = '';
     etapas.forEach((etapa, index) => {
@@ -1870,9 +1884,9 @@ function generarCheckboxesCambioFiltroTren() {
             </label>
         `;
     });
-    
+
     etapasContainer.innerHTML = html;
-    
+
     // Agregar listeners a los checkboxes generados
     attachCambioFiltroTrenListeners();
 }
@@ -1884,13 +1898,13 @@ function generarCheckboxesCambioFiltroTren() {
 function obtenerEtapasTrenConfiguradas() {
     const etapas = [];
     const selectoresEtapas = document.querySelectorAll('#' + PREFILTRO_ETAPAS_CONTAINER_ID + ' select');
-    
+
     selectoresEtapas.forEach((select) => {
         if (select instanceof HTMLSelectElement && select.value) {
             etapas.push(select.value);
         }
     });
-    
+
     return etapas;
 }
 
@@ -1913,21 +1927,21 @@ function attachCambioFiltroTrenListeners() {
 function updateDetalleCambioFiltroTren() {
     const detalleContainer = getElement(DETALLE_CAMBIO_FILTRO_TREN_ID);
     const lotesContainer = getElement(LOTES_TREN_CONTAINER_ID);
-    
+
     if (!detalleContainer || !lotesContainer) return;
-    
+
     // Obtener checkboxes marcados
     const checkboxesMarcados = document.querySelectorAll('.cambio-filtro-etapa-checkbox:checked');
-    
+
     if (checkboxesMarcados.length === 0) {
         detalleContainer.classList.add('hidden');
         lotesContainer.innerHTML = '';
         return;
     }
-    
+
     // Mostrar container de detalle
     detalleContainer.classList.remove('hidden');
-    
+
     // Generar inputs de lote/serie para cada etapa marcada
     let html = '';
     checkboxesMarcados.forEach((checkbox) => {
@@ -1935,7 +1949,7 @@ function updateDetalleCambioFiltroTren() {
             const index = checkbox.dataset.etapaIndex;
             const nombre = checkbox.dataset.etapaNombre;
             const inputId = `softener-lote-etapa-${index}`;
-            
+
             html += `
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2">
                     <label class="text-xs font-medium text-gray-600 dark:text-gray-400 min-w-[120px]">
@@ -1950,7 +1964,7 @@ function updateDetalleCambioFiltroTren() {
             `;
         }
     });
-    
+
     lotesContainer.innerHTML = html;
 }
 
@@ -1961,26 +1975,26 @@ function updateDetalleCambioFiltroTren() {
 function obtenerDatosCambioFiltroTren() {
     const trenCheckbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
     const esTren = trenCheckbox instanceof HTMLInputElement && trenCheckbox.checked;
-    
+
     if (!esTren) {
         return null;
     }
-    
+
     const etapas = obtenerEtapasTrenConfiguradas();
     const filtrosCambiados = [];
-    
+
     // Obtener checkboxes marcados
     const checkboxes = document.querySelectorAll('.cambio-filtro-etapa-checkbox:checked');
-    
+
     checkboxes.forEach((checkbox) => {
         if (checkbox instanceof HTMLInputElement) {
             const index = parseInt(checkbox.dataset.etapaIndex || '0', 10);
             const nombre = checkbox.dataset.etapaNombre || '';
-            
+
             // Buscar el input de lote correspondiente
             const loteInput = document.getElementById(`softener-lote-etapa-${index}`);
             const lote = loteInput instanceof HTMLInputElement ? loteInput.value : '';
-            
+
             filtrosCambiados.push({
                 etapa: index + 1,
                 tipo: nombre,
@@ -1988,7 +2002,7 @@ function obtenerDatosCambioFiltroTren() {
             });
         }
     });
-    
+
     return {
         es_tren: true,
         total_etapas: etapas.length,
@@ -2000,11 +2014,11 @@ function obtenerDatosCambioFiltroTren() {
 function updateDetalleCambioFiltro() {
     const checkCambio = getElement(CHECK_CAMBIO_FILTRO_ID);
     const detalleContainer = getElement(DETALLE_CAMBIO_FILTRO_ID);
-    
+
     if (!detalleContainer) return;
-    
+
     const isChecked = checkCambio instanceof HTMLInputElement && checkCambio.checked;
-    
+
     if (isChecked) {
         detalleContainer.classList.remove('hidden');
     } else {
@@ -2025,7 +2039,7 @@ function attachPrefiltroCambioListeners() {
             updatePrefiltroCambioVisibility();
         });
     }
-    
+
     // Listener para el checkbox de "¿Realizó cambio de filtro?" (modo simple)
     const checkCambio = getElement(CHECK_CAMBIO_FILTRO_ID);
     if (checkCambio instanceof HTMLInputElement) {
@@ -2033,7 +2047,7 @@ function attachPrefiltroCambioListeners() {
             updateDetalleCambioFiltro();
         });
     }
-    
+
     // Listener para cambios en el checkbox "Tren" de Sección B
     const trenCheckbox = getElement(PREFILTRO_TREN_CHECKBOX_ID);
     if (trenCheckbox instanceof HTMLInputElement) {
@@ -2041,7 +2055,7 @@ function attachPrefiltroCambioListeners() {
             updatePrefiltroCambioVisibility();
         });
     }
-    
+
     // Listener para cambios en la cantidad de etapas del tren
     const etapasInput = getElement(PREFILTRO_ETAPAS_INPUT_ID);
     if (etapasInput instanceof HTMLInputElement) {
@@ -2052,7 +2066,7 @@ function attachPrefiltroCambioListeners() {
             }, 100);
         });
     }
-    
+
     // Observer para detectar cambios en los selectores de etapas del tren
     const etapasContainer = getElement(PREFILTRO_ETAPAS_CONTAINER_ID);
     if (etapasContainer) {
@@ -2066,9 +2080,9 @@ function attachPrefiltroCambioListeners() {
                 }, 100);
             }
         });
-        
+
         observer.observe(etapasContainer, { childList: true, subtree: true });
-        
+
         // También agregar listener de cambio a los selectores existentes
         etapasContainer.addEventListener('change', (e) => {
             if (e.target instanceof HTMLSelectElement) {
@@ -2080,10 +2094,10 @@ function attachPrefiltroCambioListeners() {
 
 function updateManometroState() {
     const val = getInputValue(MANOMETRO_SELECT_ID);
-    
+
     // Solo mostrar sección y campos de presión si tiene "Manómetros IN / OUT"
     const showPressure = val === 'Manómetros IN / OUT';
-    
+
     // Controlar visibilidad de toda la sección de presiones
     const presionesSection = getElement('softener-presiones-section');
     if (presionesSection) {
@@ -2093,7 +2107,7 @@ function updateManometroState() {
             presionesSection.classList.add('hidden');
         }
     }
-    
+
     const containerIds = [
         'softener-presion-entrada-found-container',
         'softener-presion-salida-found-container',
@@ -2102,14 +2116,14 @@ function updateManometroState() {
         'softener-presion-salida-left-container',
         'softener-deltaP-left-container'
     ];
-    
+
     containerIds.forEach(id => {
         const container = getElement(id);
         if (container && container.style) {
             container.style.display = showPressure ? '' : 'none';
         }
     });
-    
+
     // Si ocultamos, limpiamos valores
     if (!showPressure) {
         const inputIds = [
@@ -2292,16 +2306,16 @@ function autoFillSoftenerForm() {
         'Mendoza, Mendoza',
         'Mar del Plata, Buenos Aires'
     ];
-    
+
     const idx = Math.floor(Math.random() * clientes.length);
-    
+
     // Sección A - Cliente y Servicio
     // El campo cliente ahora es un autocomplete
     const clienteValue = clientes[idx];
     const searchInput = getElement(CLIENT_SEARCH_ID);
     const hiddenInput = getElement(CLIENT_SELECT_ID);
     const clearBtn = getElement(CLIENT_CLEAR_BTN_ID);
-    
+
     if (searchInput) {
         searchInput.value = clienteValue;
         searchInput.classList.add('has-selection');
@@ -2312,35 +2326,35 @@ function autoFillSoftenerForm() {
     if (clearBtn) {
         clearBtn.classList.remove('hidden');
     }
-    
+
     setInputValue('softener-cliente-direccion', direcciones[idx]);
     setInputValue('softener-cliente-localidad', localidades[idx]);
     setInputValue('softener-cliente-contacto', 'Juan Pérez');
     setInputValue('softener-cliente-telefono', '011-4567-8900');
     setInputValue('softener-cliente-email', 'contacto@cliente.com.ar');
     setInputValue('softener-cliente-cuit', '30-12345678-9');
-    
+
     // Fecha de servicio: hoy
     const today = new Date().toISOString().split('T')[0];
     setInputValue('softener-fecha-servicio', today);
-    
+
     // Técnico responsable (es un input text, no select)
     const tecnicos = ['Carlos Rodríguez', 'Miguel Fernández', 'Roberto García', 'Fernando López'];
     setInputValue('softener-tecnico', tecnicos[Math.floor(Math.random() * tecnicos.length)]);
-    
+
     // Sección B - Equipo
     const tipos = ['Todo en uno', 'Custom', 'Industrial'];
     const modelos = ['ECO-SOFT-50', 'ULTRA-SOFT-75', 'DUPLEX-SOFT-100', 'PREMIUM-SOFT-60'];
     const ubicaciones = ['Lavadero', 'Patio', 'Terraza', 'Gabinete', 'Sala de Máquinas'];
-    
+
     setSelectValue('softener-equipo-tipo', tipos[Math.floor(Math.random() * tipos.length)]);
     setInputValue('softener-equipo-modelo', modelos[Math.floor(Math.random() * modelos.length)]);
     setInputValue('softener-equipo-numero-serie', 'ABL-2024-' + Math.floor(Math.random() * 9000 + 1000));
     setSelectValue('softener-equipo-ubicacion', ubicaciones[Math.floor(Math.random() * ubicaciones.length)]);
     setInputValue(VOLUMEN_RESINA_ID, (Math.floor(Math.random() * 8) + 3) * 10); // 30-100L
-    
+
     setSelectValue(SECCION_B_TIPO_REGENERACION_ID, Math.random() > 0.5 ? 'Por Volumen' : 'Por Tiempo');
-    
+
     // Prefiltro con opciones variadas
     const prefiltros = [
         'No Aplica',
@@ -2351,36 +2365,36 @@ function autoFillSoftenerForm() {
         'GAC - Mini Blue (10"x2.5")'
     ];
     setSelectValue(PREFILTER_SELECT_ID, prefiltros[Math.floor(Math.random() * prefiltros.length)]);
-    
+
     // Protección de entrada
     const protecciones = ['No Aplica', 'Sin Protección', 'VRP', 'VA', 'VRP + VA'];
     setSelectValue(PROTECCION_ENTRADA_ID, protecciones[Math.floor(Math.random() * protecciones.length)]);
-    
+
     // Manómetros - valores correctos según el HTML
     const manometrosOpciones = ['No cuenta con manómetros', 'Manómetro IN', 'Manómetros IN / OUT'];
     setSelectValue(MANOMETRO_SELECT_ID, manometrosOpciones[Math.floor(Math.random() * manometrosOpciones.length)]);
-    
+
     setInputValue('softener-equipo-notas', 'Equipo en operación normal. Sin novedades reportadas.');
-    
+
     // Sección C - Parámetros
     const durezaValues = [450, 520, 680, 750, 820, 550, 620];
     setInputValue(DUREZA_AGUA_CRUDA_ID, durezaValues[Math.floor(Math.random() * durezaValues.length)]);
     setInputValue(AUTONOMIA_RESTANTE_ID, Math.floor(Math.random() * 200) + 50);
     setInputValue(AUTONOMIA_SETEO_ACTUAL_ID, Math.floor(Math.random() * 150) + 100);
-    
+
     const aplicarProteccion = Math.random() > 0.5;
     const checkProteccion = getElement(FACTOR_PROTECCION_ID);
     if (checkProteccion instanceof HTMLInputElement) {
         checkProteccion.checked = aplicarProteccion;
     }
-    
+
     // Configuración del Cabezal
     const horaActual = new Date().toTimeString().slice(0, 5);
     setInputValue(CABEZAL_HORA_CABEZAL_FOUND_ID, horaActual);
     setInputValue(CABEZAL_HORA_CABEZAL_LEFT_ID, horaActual);
     setInputValue(CABEZAL_HORA_REGENERACION_FOUND_ID, '02:00');
     setInputValue(CABEZAL_HORA_REGENERACION_LEFT_ID, '02:00');
-    
+
     setInputValue(CABEZAL_P1_FOUND_ID, 10);
     setInputValue(CABEZAL_P1_LEFT_ID, 10);
     setInputValue(CABEZAL_P2_FOUND_ID, 60);
@@ -2389,17 +2403,17 @@ function autoFillSoftenerForm() {
     setInputValue(CABEZAL_P3_LEFT_ID, 10);
     setInputValue(CABEZAL_P4_FOUND_ID, 5);
     setInputValue(CABEZAL_P4_LEFT_ID, 5);
-    
+
     // Frecuencia solo si "Por Tiempo"
     const tipoRegen = getInputValue(SECCION_B_TIPO_REGENERACION_ID);
     if (tipoRegen === 'Por Tiempo') {
         setInputValue(CABEZAL_FRECUENCIA_DIAS_FOUND_ID, Math.floor(Math.random() * 5) + 2);
         setInputValue(CABEZAL_FRECUENCIA_DIAS_LEFT_ID, Math.floor(Math.random() * 5) + 2);
     }
-    
+
     // Sección D - Checklist
     setCheckboxValue('softener-check-fugas', Math.random() > 0.8);
-    
+
     // Cambio de filtro
     const cambioFiltro = Math.random() > 0.6;
     setCheckboxValue(CHECK_CAMBIO_FILTRO_ID, cambioFiltro);
@@ -2408,7 +2422,7 @@ function autoFillSoftenerForm() {
         setInputValue(FILTRO_TIPO_INSTALADO_ID, prefiltroValue);
         setInputValue(FILTRO_LOTE_SERIE_ID, 'LOTE-' + Math.floor(Math.random() * 9000 + 1000));
     }
-    
+
     setCheckboxValue('softener-check-limpieza-tanque', Math.random() > 0.7);
     setCheckboxValue('softener-check-nivel-agua', Math.random() > 0.3);
     setCheckboxValue('softener-check-carga-sal', Math.random() > 0.4);
@@ -2416,10 +2430,10 @@ function autoFillSoftenerForm() {
     setCheckboxValue('softener-check-parametros-ciclo', Math.random() > 0.3);
     setCheckboxValue('softener-check-ajuste-autonomia', Math.random() > 0.5);
     setCheckboxValue('softener-check-regeneracion-manual', Math.random() > 0.8);
-    
+
     setInputValue('softener-check-otros', '');
     setInputValue('softener-check-observaciones', 'Sistema funcionando correctamente. Parámetros dentro de rango normal.');
-    
+
     // Sección E - Resumen
     const trabajos = [
         'Mantenimiento preventivo completo. Verificación de ciclos y parámetros.',
@@ -2428,7 +2442,7 @@ function autoFillSoftenerForm() {
         'Calibración de cabezal y verificación de presiones del sistema.'
     ];
     setInputValue('softener-resumen-trabajo', trabajos[Math.floor(Math.random() * trabajos.length)]);
-    
+
     const recomendaciones = [
         'Monitorear dureza de salida semanalmente.',
         'Verificar nivel de sal mensualmente.',
@@ -2436,15 +2450,15 @@ function autoFillSoftenerForm() {
         'Controlar presiones de entrada periódicamente.'
     ];
     setInputValue('softener-resumen-recomendaciones', recomendaciones[Math.floor(Math.random() * recomendaciones.length)]);
-    
+
     // Próximo servicio: 6 meses
     const nextService = new Date();
     nextService.setMonth(nextService.getMonth() + 6);
     setInputValue('softener-resumen-proximo-servicio', nextService.toISOString().split('T')[0]);
-    
+
     setInputValue('softener-resumen-materiales', 'Sal pellets x 25kg, Cartucho prefiltro 5µm');
     setInputValue('softener-resumen-notas-cliente', 'Cliente conforme con el servicio realizado.');
-    
+
     // Sección F - Condiciones de Operación
     const manometros = getInputValue(MANOMETRO_SELECT_ID);
     if (manometros === 'Manómetros IN/OUT') {
@@ -2453,26 +2467,26 @@ function autoFillSoftenerForm() {
         setInputValue('softener-presion-salida-as-found', (Math.random() * 1.5 + 1.5).toFixed(2));
         setInputValue('softener-presion-salida-as-left', (Math.random() * 1.5 + 1.5).toFixed(2));
     }
-    
+
     setSelectValue('softener-nivel-sal-as-found', ['Adecuado', 'Bajo', 'Alto'][Math.floor(Math.random() * 3)]);
     setSelectValue('softener-nivel-sal-as-left', 'Adecuado');
     setSelectValue('softener-temperatura-ambiente', ['Controlada', 'Alta (>30°C)', 'Variable'][Math.floor(Math.random() * 3)]);
     setSelectValue('softener-estado-gabinete', ['Óptimo', 'Bueno', 'Regular'][Math.floor(Math.random() * 3)]);
-    
+
     setInputValue('softener-param-test-cloro-found', (Math.random() * 2).toFixed(2));
     setInputValue('softener-param-test-cloro-left', (Math.random() * 2).toFixed(2));
     setInputValue('softener-param-dureza-salida-found', Math.floor(Math.random() * 30));
     setInputValue('softener-param-dureza-salida-left', Math.floor(Math.random() * 20));
-    
+
     setInputValue('softener-condiciones-observaciones', 'Ambiente controlado. Sin exposición a humedad excesiva.');
-    
+
     // Sección G - Cierre
     setSelectValue('softener-conformidad-cliente', ['Conforme', 'Con observaciones'][Math.floor(Math.random() * 2)]);
     setInputValue('softener-representante-cliente', 'Responsable de Mantenimiento');
     setSelectValue('softener-medio-confirmacion', ['Firma en sitio', 'Correo electrónico'][Math.floor(Math.random() * 2)]);
     setCheckboxValue('softener-requiere-seguimiento', Math.random() > 0.7);
     setInputValue('softener-observaciones-finales', 'Servicio completado satisfactoriamente.');
-    
+
     // Actualizar cálculos
     updateAutonomia();
     updateCabezalFrequencyState();
@@ -2558,7 +2572,7 @@ function collectFormData() {
     // Obtener datos de cambio de filtro (modo simple o tren)
     const datosCambioFiltroTren = obtenerDatosCambioFiltroTren();
     const esTrenPrefiltrado = datosCambioFiltroTren !== null;
-    
+
     const seccionD = buildSection([
         // Inspección General
         ['inspeccion_fugas', getCheckboxValue('softener-check-fugas')],
@@ -2573,9 +2587,6 @@ function collectFormData() {
         ['verificacion_nivel_agua', getCheckboxValue('softener-check-nivel-agua')],
         ['carga_sal', getCheckboxValue('softener-check-carga-sal')],
         // Cabezal (Válvula)
-        ['verificacion_hora', getCheckboxValue('softener-check-hora-correcta')],
-        ['verificacion_parametros_ciclo', getCheckboxValue('softener-check-parametros-ciclo')],
-        ['ajuste_autonomia', getCheckboxValue('softener-check-ajuste-autonomia')],
         ['regeneracion_manual', getCheckboxValue('softener-check-regeneracion-manual')],
         // Campos adicionales
         ['otros', getInputValue('softener-check-otros')],
@@ -2681,7 +2692,7 @@ function updateAutonomia() {
     }
 
     setNumericFieldValue(AUTONOMIA_RECOMENDADA_ID, autonomiaRecomendada);
-    
+
     // Validar dureza del agua cruda
     validateDurezaAguaCruda(durezaEntrada);
 }
@@ -2689,11 +2700,11 @@ function updateAutonomia() {
 function validateDurezaAguaCruda(dureza) {
     const input = getElement(DUREZA_AGUA_CRUDA_ID);
     const warning = getElement('softener-dureza-warning');
-    
+
     if (!input) return;
-    
+
     const isHigh = dureza !== null && dureza >= 650;
-    
+
     // Cambiar color del input
     if (isHigh) {
         input.classList.remove('border-gray-300', 'focus:border-emerald-500', 'focus:ring-emerald-200');
@@ -2702,7 +2713,7 @@ function validateDurezaAguaCruda(dureza) {
         input.classList.remove('border-red-500', 'focus:border-red-600', 'focus:ring-red-200', 'bg-red-50', 'dark:bg-red-900/20');
         input.classList.add('border-gray-300', 'focus:border-emerald-500', 'focus:ring-emerald-200');
     }
-    
+
     // Mostrar/ocultar advertencia
     if (warning) {
         if (isHigh) {
@@ -2868,7 +2879,7 @@ export function createSoftenerModule(deps = {}) {
 
         // Limpiar formulario
         form.reset();
-        
+
         setTimeout(() => {
             setTechnicianFromLogin(); // Re-establecer técnico desde login
             resetClientSelection();
@@ -2879,7 +2890,7 @@ export function createSoftenerModule(deps = {}) {
             updateAutonomia();
             updatePrefiltroCambioVisibility();
             setReportNumber('ABL-PENDIENTE');
-            
+
             // Volver al estado inicial
             setButtonsToInitialState();
         }, 0);
@@ -2929,20 +2940,20 @@ export function createSoftenerModule(deps = {}) {
         }
 
         updateAutonomia();
-        
+
         // Verificar y guardar/actualizar equipo antes de continuar
         const { continuar, equipoId } = await verificarYGuardarEquipo();
         if (!continuar) {
             return; // El usuario canceló o hubo un error con el equipo
         }
-        
+
         const payload = collectFormData();
-        
+
         // Agregar referencia al equipo si existe
         if (equipoId) {
             payload.equipo_ablandador_id = equipoId;
         }
-        
+
         if (typeof guardarMantenimientoFn !== 'function') {
             alert('Servicio de mantenimiento de ablandador no disponible.');
             return;
@@ -2950,11 +2961,11 @@ export function createSoftenerModule(deps = {}) {
 
         // Guardar datos pendientes y abrir modal de firmas
         pendingFormData = payload;
-        
+
         // Obtener nombre del técnico del formulario si existe
         const tecnicoInput = getElement('softener-tecnico') || document.querySelector('[name="tecnico"]');
         const technicianName = tecnicoInput?.value || '';
-        
+
         // Crear o abrir modal de firmas
         if (!signatureModal) {
             signatureModal = new SignatureModal({
@@ -2963,10 +2974,10 @@ export function createSoftenerModule(deps = {}) {
                 technicianName: technicianName
             });
         }
-        
+
         signatureModal.open(technicianName);
     }
-    
+
     async function handleSignaturesComplete(signatures) {
         const saveButton = getElement(SAVE_BUTTON_ID);
         if (!saveButton || !pendingFormData) {
@@ -2998,14 +3009,14 @@ export function createSoftenerModule(deps = {}) {
                 pendingFormData.maintenanceId = maintenanceId;
                 lastSavedMaintenanceId = maintenanceId;
             }
-            
+
             // Actualizar el número de reporte en pantalla
             const reportNumber = pendingFormData.metadata?.numero_reporte || 'ABL-PENDIENTE';
             setReportNumber(reportNumber);
-            
+
             // Guardar el payload para poder generar el PDF
             lastSavedPayload = pendingFormData;
-            
+
             // Notificar al módulo de remito que hay un nuevo reporte guardado
             if (typeof onMaintenanceSaved === 'function') {
                 onMaintenanceSaved(pendingFormData);
@@ -3013,16 +3024,16 @@ export function createSoftenerModule(deps = {}) {
 
             // Limpiar datos pendientes
             pendingFormData = null;
-            
+
             // Restaurar texto del botón antes de cambiar al estado guardado
             saveButton.textContent = originalText;
-            
+
             // Cambiar al estado "guardado"
             setButtonsToSavedState();
-            
+
             // Mostrar overlay de formulario bloqueado
             showFormLockedOverlay();
-            
+
             alert(`✅ Mantenimiento de ablandador guardado correctamente con firmas.\n\nReporte N°: ${reportNumber}\n\nAhora podés generar el PDF o el Remito.\nPara crear un nuevo reporte, hacé clic en "Nuevo Reporte".`);
         } catch (error) {
             console.error('Error al guardar mantenimiento de ablandador:', error);
@@ -3033,7 +3044,7 @@ export function createSoftenerModule(deps = {}) {
             saveButton.textContent = originalText;
         }
     }
-    
+
     function handleSignaturesCancel() {
         pendingFormData = null;
         // El usuario canceló, no hacer nada más
@@ -3066,12 +3077,12 @@ export function createSoftenerModule(deps = {}) {
         setDefaultResinVolume();
         updateAutonomia();
         updatePrefiltroCambioVisibility();
-        
+
         // Cargar clientes y luego inicializar autocomplete
         loadClientes(obtenerClientesFn).then(() => {
             initializeClientAutocomplete();
         });
-        
+
         attachAutonomiaListeners();
         attachCabezalListeners();
         attachPrefilterInfoListeners();
@@ -3084,10 +3095,13 @@ export function createSoftenerModule(deps = {}) {
         attachDeltaPListeners();
         resetCabezalSection();
         attachFormHandlers();
-        
+
         // Establecer estado inicial de botones
         setButtonsToInitialState();
-        
+
+        // Inicializar Sistema de Validación Estática
+        initSoftenerValidation(FORM_ID);
+
         initialized = true;
     }
 

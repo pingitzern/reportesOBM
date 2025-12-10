@@ -1,9 +1,10 @@
 
 import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
 import { supabase } from '../../supabaseClient.js';
+import { checkSoftenerRules, buildSummaryPrompt } from './softenerRules.js';
 
 const GOOGLE_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GOOGLE_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
 
 /**
  * Módulo de Asistente IA para Reportes
@@ -17,6 +18,8 @@ export class AIAssistant {
         this.isProcessing = false;
         this.memoryContext = []; // Reglas aprendidas cargadas
         this.debounceTimer = null;
+        this.shownAlerts = new Set(); // Para no repetir alertas
+        this.lastFormData = null;
     }
 
     async initialize() {
@@ -33,7 +36,7 @@ export class AIAssistant {
         // Crear contenedor flotante
         const div = document.createElement('div');
         div.id = 'ai-assistant-widget';
-        div.className = 'fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none';
+        div.className = 'fixed bottom-6 left-6 z-50 flex flex-col items-start pointer-events-none';
 
         div.innerHTML = `
             <!-- Chat Panel (Hidden by default) -->
@@ -200,18 +203,79 @@ export class AIAssistant {
     }
 
     /**
-     * Llamado cuando el formulario cambia. Usar debounce externamente.
+     * Llamado cuando el formulario cambia. Valida reglas locales.
      */
-    async observe(formData) {
-        if (this.isProcessing) return;
+    observe(formData) {
+        if (!formData) return;
 
-        // Lógica simple para no saturar: solo analizar si hay suficientes datos o cambios clave
-        // Por ahora, analizamos "on demand" o con lógica muy específica si quisiéramos.
-        // Pero para el MVP, vamos a hacer que reaccione a ciertas "incompletitudes" notables o inconsistencias.
+        this.lastFormData = formData;
 
-        // Aquí podríamos llamar a la IA para validar
-        // const analysis = await this.callGemini(this.buildValidationPrompt(formData));
-        // if (analysis.hasSuggestion) this.addMessage(analysis.message);
+        // Ejecutar reglas de negocio LOCALES (sin API)
+        const alerts = checkSoftenerRules(formData);
+
+        // Mostrar nuevas alertas (evitar repetir las mismas)
+        for (const alert of alerts) {
+            const alertKey = `${alert.type}:${alert.field}:${alert.message.substring(0, 30)}`;
+
+            if (!this.shownAlerts.has(alertKey)) {
+                this.shownAlerts.add(alertKey);
+                this.showAlert(alert);
+            }
+        }
+    }
+
+    /**
+     * Muestra una alerta en el chat
+     */
+    showAlert(alert) {
+        const icons = {
+            'error': '🚨',
+            'warning': '⚠️',
+            'tip': '💡'
+        };
+        const icon = icons[alert.type] || '📢';
+        const message = `${icon} **${alert.type === 'error' ? 'Error' : alert.type === 'warning' ? 'Atención' : 'Tip'}**: ${alert.message}`;
+
+        this.addMessage(message, 'ai');
+        this.showNotification();
+    }
+
+    /**
+     * Genera resumen automático usando IA
+     */
+    async generateSummary() {
+        if (!this.lastFormData) {
+            this.addMessage('No hay datos del formulario para generar el resumen.', 'ai');
+            return null;
+        }
+
+        this.isProcessing = true;
+        const thinkingId = 'thinking-' + Date.now();
+        this.addMessage('<span id="' + thinkingId + '" class="animate-pulse">Generando resumen...</span>', 'ai');
+
+        const prompt = buildSummaryPrompt(this.lastFormData, this.memoryContext);
+        const response = await this.callGemini(prompt);
+
+        // Remover mensaje de thinking
+        const thinkingEl = document.getElementById(thinkingId);
+        if (thinkingEl) thinkingEl.parentElement.remove();
+
+        if (response && !response.startsWith('Error')) {
+            this.addMessage('**Resumen generado:**\n' + response, 'ai');
+            return response;
+        } else {
+            this.addMessage('No pude generar el resumen: ' + response, 'ai');
+            return null;
+        }
+
+        this.isProcessing = false;
+    }
+
+    /**
+     * Limpia las alertas mostradas (para nuevo reporte)
+     */
+    resetAlerts() {
+        this.shownAlerts.clear();
     }
 
     async analyze(formData) {
@@ -242,9 +306,13 @@ export class AIAssistant {
             };
 
             if (!GOOGLE_API_KEY) {
-                return "Error: No API Key configured.";
+                console.error('AI: No API Key found. Check VITE_GEMINI_API_KEY in .env');
+                return "Error: No hay API Key configurada. Revisá el archivo .env";
             }
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_API_KEY}`;
+
+            console.log('AI: Calling Gemini with key starting with:', GOOGLE_API_KEY.substring(0, 10) + '...');
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_API_KEY}`;
 
             const res = await fetch(url, {
                 method: 'POST',
@@ -253,10 +321,21 @@ export class AIAssistant {
             });
 
             const data = await res.json();
+
+            if (!res.ok) {
+                console.error('Gemini API Error:', res.status, data);
+                return `Error de API (${res.status}): ${data.error?.message || 'Desconocido'}`;
+            }
+
+            if (!data.candidates || !data.candidates[0]) {
+                console.warn('Gemini returned no candidates:', data);
+                return "La IA no pudo generar una respuesta.";
+            }
+
             return data.candidates[0].content.parts[0].text;
         } catch (e) {
             console.error('Gemini Error:', e);
-            return "Tuve un error contactando a mi cerebro en la nube.";
+            return "Tuve un error contactando a mi cerebro en la nube: " + e.message;
         }
     }
 
