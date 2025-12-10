@@ -750,7 +750,7 @@ function calculateAll() {
 	const caudalPermLeft = parseFloat(getElement('caudal_perm_left')?.value) || 0;
 	const caudalRechLeft = parseFloat(getElement('caudal_rech_left')?.value) || 0;
 
-    
+
 
 	const rechazoFound = condRedFound > 0 ? ((1 - (condPermFound / condRedFound)) * 100).toFixed(2) : '';
 	const rechazoLeft = condRedLeft > 0 ? ((1 - (condPermLeft / condRedLeft)) * 100).toFixed(2) : '';
@@ -1090,7 +1090,7 @@ function highlightMatch(text, query) {
 	const normalizedQuery = normalizeForSearch(query);
 	const index = normalizedText.indexOf(normalizedQuery);
 	if (index === -1) return text;
-	
+
 	const before = text.slice(0, index);
 	const match = text.slice(index, index + query.length);
 	const after = text.slice(index + query.length);
@@ -1101,18 +1101,18 @@ function filterClientes(query) {
 	if (!query || query.length < 1) {
 		return clientesListCache.slice(0, 10); // Show first 10 when empty
 	}
-	
+
 	const normalizedQuery = normalizeForSearch(query);
-	
+
 	return clientesListCache
 		.filter(cliente => {
 			const name = normalizeForSearch(extractClientName(cliente));
 			const direccion = normalizeForSearch(cliente.direccion || '');
 			const cuit = normalizeForSearch(cliente.cuit || '');
-			
-			return name.includes(normalizedQuery) || 
-			       direccion.includes(normalizedQuery) || 
-			       cuit.includes(normalizedQuery);
+
+			return name.includes(normalizedQuery) ||
+				direccion.includes(normalizedQuery) ||
+				cuit.includes(normalizedQuery);
 		})
 		.slice(0, 15); // Limit results
 }
@@ -1120,7 +1120,7 @@ function filterClientes(query) {
 function renderDropdown(clientes, query) {
 	const dropdown = getElement('cliente-dropdown');
 	if (!dropdown) return;
-	
+
 	if (clientes.length === 0) {
 		dropdown.innerHTML = `
 			<div class="cliente-dropdown-empty">
@@ -1130,14 +1130,14 @@ function renderDropdown(clientes, query) {
 		dropdown.classList.remove('hidden');
 		return;
 	}
-	
+
 	dropdown.innerHTML = clientes.map((cliente, index) => {
 		const name = extractClientName(cliente);
 		const direccion = cliente.direccion || '';
 		const highlightedName = highlightMatch(name, query);
 		const highlightedDireccion = highlightMatch(direccion, query);
 		const clientKey = `cliente-${clientesListCache.indexOf(cliente)}`;
-		
+
 		return `
 			<div class="cliente-dropdown-item ${index === selectedClientIndex ? 'selected' : ''}" 
 			     data-cliente-key="${clientKey}"
@@ -1149,7 +1149,7 @@ function renderDropdown(clientes, query) {
 			</div>
 		`;
 	}).join('');
-	
+
 	dropdown.classList.remove('hidden');
 }
 
@@ -1165,27 +1165,27 @@ function selectClient(clientKey) {
 	const index = parseInt(clientKey.replace('cliente-', ''), 10);
 	const cliente = clientesListCache[index];
 	if (!cliente) return;
-	
+
 	const searchInput = getElement('cliente-search');
 	const hiddenInput = getElement('cliente');
 	const clearBtn = getElement('cliente-clear-btn');
-	
+
 	const clientId = extractClientId(cliente) || extractClientName(cliente);
 	const clientName = extractClientName(cliente);
-	
+
 	if (hiddenInput) {
 		hiddenInput.value = clientId;
 	}
-	
+
 	if (searchInput) {
 		searchInput.value = clientName;
 		searchInput.classList.add('has-selection');
 	}
-	
+
 	if (clearBtn) {
 		clearBtn.classList.remove('hidden');
 	}
-	
+
 	// Store client details and apply them
 	clienteDataMap.set(clientKey, createClientDetails(cliente));
 	applyClientDetails(createClientDetails(cliente));
@@ -1204,54 +1204,54 @@ function clearClientSelection() {
 	const searchInput = getElement('cliente-search');
 	const hiddenInput = getElement('cliente');
 	const clearBtn = getElement('cliente-clear-btn');
-	
+
 	if (searchInput) {
 		searchInput.value = '';
 		searchInput.classList.remove('has-selection');
 		searchInput.focus();
 	}
-	
+
 	if (hiddenInput) {
 		hiddenInput.value = '';
 	}
-	
+
 	if (clearBtn) {
 		clearBtn.classList.add('hidden');
 	}
-	
+
 	clearClientDetails();
 	hideDropdown();
 }
 
 function initializeClientAutocomplete() {
 	if (autocompleteInitialized) return;
-	
+
 	const searchInput = getElement('cliente-search');
 	const dropdown = getElement('cliente-dropdown');
 	const clearBtn = getElement('cliente-clear-btn');
-	
+
 	if (!searchInput || !dropdown) return;
-	
+
 	// Input event - filter as user types
 	searchInput.addEventListener('input', (e) => {
 		const query = e.target.value;
 		searchInput.classList.remove('has-selection');
-		
+
 		// Clear hidden input when user modifies search
 		const hiddenInput = getElement('cliente');
 		if (hiddenInput) {
 			hiddenInput.value = '';
 		}
-		
+
 		if (clearBtn) {
 			clearBtn.classList.toggle('hidden', !query);
 		}
-		
+
 		const filtered = filterClientes(query);
 		selectedClientIndex = -1;
 		renderDropdown(filtered, query);
 	});
-	
+
 	// Focus event - show dropdown
 	searchInput.addEventListener('focus', () => {
 		const query = searchInput.value;
@@ -1260,11 +1260,11 @@ function initializeClientAutocomplete() {
 			renderDropdown(filtered, query);
 		}
 	});
-	
+
 	// Keyboard navigation
 	searchInput.addEventListener('keydown', (e) => {
 		const items = dropdown.querySelectorAll('.cliente-dropdown-item');
-		
+
 		if (e.key === 'ArrowDown') {
 			e.preventDefault();
 			selectedClientIndex = Math.min(selectedClientIndex + 1, items.length - 1);
@@ -1283,7 +1283,7 @@ function initializeClientAutocomplete() {
 			hideDropdown();
 		}
 	});
-	
+
 	// Click on dropdown item
 	dropdown.addEventListener('click', (e) => {
 		const item = e.target.closest('.cliente-dropdown-item');
@@ -1292,7 +1292,7 @@ function initializeClientAutocomplete() {
 			selectClient(clientKey);
 		}
 	});
-	
+
 	// Clear button
 	if (clearBtn) {
 		clearBtn.addEventListener('click', (e) => {
@@ -1300,7 +1300,7 @@ function initializeClientAutocomplete() {
 			clearClientSelection();
 		});
 	}
-	
+
 	// Click outside to close
 	document.addEventListener('click', (e) => {
 		const container = getElement('cliente-autocomplete-container');
@@ -1308,7 +1308,7 @@ function initializeClientAutocomplete() {
 			hideDropdown();
 		}
 	});
-	
+
 	autocompleteInitialized = true;
 }
 
@@ -1324,7 +1324,7 @@ function updateDropdownSelection(items) {
 export function configureClientSelect(clientes = []) {
 	// Store clients for autocomplete
 	clientesListCache = Array.isArray(clientes) ? clientes : [];
-	
+
 	// Clear and rebuild the data map
 	clienteDataMap.clear();
 	clientesListCache.forEach((cliente, index) => {
@@ -1332,21 +1332,21 @@ export function configureClientSelect(clientes = []) {
 		const clientKey = `cliente-${index}`;
 		clienteDataMap.set(clientKey, createClientDetails(cliente));
 	});
-	
+
 	// Initialize autocomplete if not already done
 	initializeClientAutocomplete();
-	
+
 	// If there was a previous selection, try to restore it
 	const hiddenInput = getElement('cliente');
 	const searchInput = getElement('cliente-search');
-	
+
 	if (hiddenInput && hiddenInput.value && searchInput) {
 		// Find the client by ID
 		const existingClient = clientesListCache.find(c => {
 			const id = extractClientId(c) || extractClientName(c);
 			return id === hiddenInput.value;
 		});
-		
+
 		if (existingClient) {
 			searchInput.value = extractClientName(existingClient);
 			searchInput.classList.add('has-selection');
@@ -1442,6 +1442,24 @@ export function getFormData() {
 			data[field] = 0;
 		}
 	});
+
+	// Agregar el nombre del cliente si hay un cliente seleccionado
+	if (data.cliente) {
+		// Intentar obtener el nombre del cliente desde el input de búsqueda (que tiene el nombre visible)
+		const searchInput = getElement('cliente-search');
+		if (searchInput && searchInput.value && searchInput.classList.contains('has-selection')) {
+			data.cliente_nombre = searchInput.value;
+		} else {
+			// Si no está en el input de búsqueda, buscarlo en el cache
+			const selectedCliente = clientesListCache.find(c => {
+				const id = extractClientId(c) || extractClientName(c);
+				return id === data.cliente;
+			});
+			if (selectedCliente) {
+				data.cliente_nombre = extractClientName(selectedCliente);
+			}
+		}
+	}
 
 	return data;
 }

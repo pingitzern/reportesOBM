@@ -60,6 +60,8 @@ function navigateToDashboard() {
 
 const remitoModule = createRemitoModule({
     showView,
+    crearRemito,
+    guardarPdfRemito,
     navigateToDashboard: navigateToMantenimientos, // Ahora va a mantenimientos después del remito
     onRemitoComplete: () => {
         // Limpiar formularios de mantenimiento después de completar el remito

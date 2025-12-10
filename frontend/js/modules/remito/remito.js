@@ -494,25 +494,44 @@ function buildPrintableRemitoData(report, { observaciones = '', repuestos = [], 
         cuit: resolveReportValue(report, ['cliente_cuit', 'cuit']),
     };
 
+
+    // Extraer datos del equipo desde la estructura de Supabase
+    const seccionEquipo = report.seccion_B_equipo || {};
+    const seccionCliente = report.seccion_A_cliente || {};
+
     const equipo = {
-        descripcion: resolveReportValue(report, ['equipo', 'modelo', 'descripcion_equipo']),
-        modelo: resolveReportValue(report, ['modelo', 'modelo_equipo']),
-        serie: resolveReportValue(report, ['n_serie', 'numero_serie']),
-        interno: resolveReportValue(report, ['id_interna', 'codigo_interno']),
-        ubicacion: resolveReportValue(report, ['ubicacion', 'direccion', 'cliente_direccion']),
-        tecnico: resolveReportValue(report, ['tecnico', 'tecnico_asignado']),
+        descripcion: resolveReportValue(report, [
+            'equipo', 'modelo', 'descripcion_equipo', 'tipoEquipo', 'tipo_equipo',
+            'TipoEquipo', 'sistemaTipo', 'modelo_sistema', 'tipo_sistema'
+        ]) || seccionEquipo.tipo,
+        modelo: seccionEquipo.modelo || resolveReportValue(report, [
+            'modelo', 'modelo_equipo', 'ModeloEquipo', 'modelo_sistema', 'volumen_resina', 'modeloSistema'
+        ]),
+        serie: seccionEquipo.numero_serie || resolveReportValue(report, [
+            'n_serie', 'numero_serie', 'NumeroSerie', 'serialNumber', 'serie', 'Serie'
+        ]),
+        interno: seccionEquipo.id_interna || resolveReportValue(report, [
+            'id_interna', 'codigo_interno', 'IDInterna', 'ActivoInterno', 'idInterno', 'activoId'
+        ]),
+        ubicacion: seccionEquipo.ubicacion || resolveReportValue(report, [
+            'ubicacion', 'direccion', 'cliente_direccion', 'Ubicacion', 'ubicacionEquipo'
+        ]),
+        tecnico: seccionCliente.tecnico || resolveReportValue(report, [
+            'tecnico', 'tecnico_asignado', 'TecnicoResponsable', 'tecnicoNombre', 'usuario'
+        ]),
     };
+
 
     const repuestosFuente = buildPrintableRepuestosList(repuestos, report);
     const repuestosNormalizados = Array.isArray(repuestosFuente)
         ? repuestosFuente
-              .map(item => normalizeRepuestoItem(item))
-              .map(item => ({
-                  codigo: normalizeString(item.codigo),
-                  descripcion: normalizeString(item.descripcion),
-                  cantidad: normalizeString(item.cantidad),
-              }))
-              .filter(item => hasContent(item.codigo) || hasContent(item.descripcion) || hasContent(item.cantidad))
+            .map(item => normalizeRepuestoItem(item))
+            .map(item => ({
+                codigo: normalizeString(item.codigo),
+                descripcion: normalizeString(item.descripcion),
+                cantidad: normalizeString(item.cantidad),
+            }))
+            .filter(item => hasContent(item.codigo) || hasContent(item.descripcion) || hasContent(item.cantidad))
         : [];
 
     const observacionesTexto = normalizeString(observaciones || report.observaciones || report.resumen || '');
@@ -580,17 +599,17 @@ function buildPhotosSection(fotos = []) {
     return `
         <div class="photo-grid">
             ${fotos
-                .map((foto, index) => {
-                    const labelValue = normalizeString(foto?.label) || `Foto ${index + 1}`;
-                    const sanitizedLabel = escapeHtml(labelValue);
-                    const sourceValue = normalizeString(foto?.src);
-                    if (!sourceValue) {
-                        return '';
-                    }
+            .map((foto, index) => {
+                const labelValue = normalizeString(foto?.label) || `Foto ${index + 1}`;
+                const sanitizedLabel = escapeHtml(labelValue);
+                const sourceValue = normalizeString(foto?.src);
+                if (!sourceValue) {
+                    return '';
+                }
 
-                    const sanitizedSource = escapeHtml(sourceValue);
-                    const altText = escapeHtml(`Registro fotográfico ${labelValue}`);
-                    return `
+                const sanitizedSource = escapeHtml(sourceValue);
+                const altText = escapeHtml(`Registro fotográfico ${labelValue}`);
+                return `
                         <figure class="photo-item">
                             <div class="photo-item__frame">
                                 <img src="${sanitizedSource}" alt="${altText}" loading="lazy">
@@ -598,8 +617,8 @@ function buildPhotosSection(fotos = []) {
                             <figcaption>${sanitizedLabel}</figcaption>
                         </figure>
                     `;
-                })
-                .join('')}
+            })
+            .join('')}
         </div>
     `;
 }
@@ -1178,15 +1197,40 @@ function addEmptyRepuestoRow({ focus = false } = {}) {
 function createReportSnapshot(rawData) {
     const snapshot = cloneReportData(rawData);
 
+    // Helper para detectar UUID
+    const isUUID = (value) => {
+        if (!value || typeof value !== 'string') return false;
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+    };
+
     if (!snapshot.clienteNombre) {
-        snapshot.clienteNombre = getSelectedOptionText('cliente') || snapshot.cliente || snapshot.cliente_nombre;
+        const selectedText = getSelectedOptionText('cliente');
+        const clienteValue = snapshot.cliente;
+        const clienteNombreValue = snapshot.cliente_nombre;
+
+        // Preferir en este orden: texto seleccionado, cliente_nombre, cliente (solo si no es UUID)
+        snapshot.clienteNombre = selectedText ||
+            clienteNombreValue ||
+            (!isUUID(clienteValue) ? clienteValue : '');
     }
 
+    // Datos del cliente
     snapshot.direccion = snapshot.direccion || getInputValue('direccion');
     snapshot.cliente_telefono = snapshot.cliente_telefono || getInputValue('cliente_telefono');
     snapshot.cliente_email = snapshot.cliente_email || getInputValue('cliente_email');
     snapshot.cliente_cuit = snapshot.cliente_cuit || getInputValue('cliente_cuit');
     snapshot.fecha_display = snapshot.fecha_display || getInputValue('fecha_display');
+
+    // Datos del equipo - capturar desde la estructura correcta de Supabase
+    // Primero intentar obtener desde seccion_B_equipo (estructura de Supabase)
+    const seccionEquipo = snapshot.seccion_B_equipo || {};
+    const seccionCliente = snapshot.seccion_A_cliente || {};
+
+    snapshot.modelo = snapshot.modelo || seccionEquipo.modelo || snapshot.modelo_sistema || getInputValue('softener-modelo-sistema') || getInputValue('modelo');
+    snapshot.n_serie = snapshot.n_serie || seccionEquipo.numero_serie || snapshot.numero_serie || getInputValue('softener-numero-serie') || getInputValue('n_serie');
+    snapshot.id_interna = snapshot.id_interna || seccionEquipo.id_interna || getInputValue('softener-id-interna') || getInputValue('id_interna');
+    snapshot.ubicacion = snapshot.ubicacion || seccionEquipo.ubicacion || getInputValue('softener-ubicacion') || getInputValue('ubicacion');
+    snapshot.tecnico = snapshot.tecnico || seccionCliente.tecnico || getInputValue('softener-tecnico') || getInputValue('tecnico');
 
     const componentesDerivados = buildComponentesFromReport(snapshot);
     snapshot.componentes = componentesDerivados;
@@ -1214,13 +1258,30 @@ function populateRemitoForm(report) {
     setReadonlyInputValue('remito-cliente-email', resolveReportValue(report, ['cliente_email', 'email']));
     setReadonlyInputValue('remito-cliente-cuit', resolveReportValue(report, ['cliente_cuit', 'cuit']));
 
-    const descripcionEquipo = resolveReportValue(report, ['equipo', 'modelo', 'descripcion_equipo']);
+    // Mapeo de datos del equipo - buscar en seccion_B_equipo y luego en campos directos
+    const seccionEquipo = report.seccion_B_equipo || {};
+    const seccionCliente = report.seccion_A_cliente || {};
+
+    const descripcionEquipo = resolveReportValue(report, [
+        'equipo', 'modelo', 'descripcion_equipo', 'tipoEquipo', 'tipo_equipo',
+        'TipoEquipo', 'sistemaTipo', 'modelo_sistema', 'tipo_sistema'
+    ]) || seccionEquipo.tipo;
     setReadonlyInputValue('remito-equipo-descripcion', descripcionEquipo);
-    setReadonlyInputValue('remito-equipo-modelo', resolveReportValue(report, ['modelo', 'modelo_equipo']));
-    setReadonlyInputValue('remito-equipo-serie', resolveReportValue(report, ['n_serie', 'numero_serie']));
-    setReadonlyInputValue('remito-equipo-interno', resolveReportValue(report, ['id_interna', 'codigo_interno']));
-    setReadonlyInputValue('remito-equipo-ubicacion', resolveReportValue(report, ['ubicacion', 'direccion', 'cliente_direccion']));
-    setReadonlyInputValue('remito-equipo-tecnico', resolveReportValue(report, ['tecnico', 'tecnico_asignado']));
+    setReadonlyInputValue('remito-equipo-modelo', seccionEquipo.modelo || resolveReportValue(report, [
+        'modelo', 'modelo_equipo', 'ModeloEquipo', 'modelo_sistema', 'volumen_resina', 'modeloSistema'
+    ]));
+    setReadonlyInputValue('remito-equipo-serie', seccionEquipo.numero_serie || resolveReportValue(report, [
+        'n_serie', 'numero_serie', 'NumeroSerie', 'serialNumber', 'serie', 'Serie'
+    ]));
+    setReadonlyInputValue('remito-equipo-interno', seccionEquipo.id_interna || resolveReportValue(report, [
+        'id_interna', 'codigo_interno', 'IDInterna', 'ActivoInterno', 'idInterno', 'activoId'
+    ]));
+    setReadonlyInputValue('remito-equipo-ubicacion', seccionEquipo.ubicacion || resolveReportValue(report, [
+        'ubicacion', 'direccion', 'cliente_direccion', 'Ubicacion', 'ubicacionEquipo'
+    ]));
+    setReadonlyInputValue('remito-equipo-tecnico', seccionCliente.tecnico || resolveReportValue(report, [
+        'tecnico', 'tecnico_asignado', 'TecnicoResponsable', 'tecnicoNombre', 'usuario'
+    ]));
 
     const observaciones = getElement('remito-observaciones');
     if (observaciones instanceof HTMLTextAreaElement) {
@@ -1256,7 +1317,7 @@ function enableButton(buttonId) {
     }
 }
 
-export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
+export function createRemitoModule({ showView, crearRemito, guardarPdfRemito, navigateToDashboard } = {}) {
     let lastSavedReport = null;
     let eventsInitialized = false;
     let photoSlots = createEmptyPhotoSlots();
@@ -1706,18 +1767,11 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         }
 
         try {
-            if (!apiUrl) {
-                throw new Error('La URL del servicio no está configurada.');
-            }
-
-            const token = typeof getToken === 'function' ? normalizeString(getToken()) : '';
-            if (!token) {
-                throw new Error('No hay una sesión activa. Ingresá nuevamente.');
+            if (typeof crearRemito !== 'function') {
+                throw new Error('La función crearRemito no está configurada.');
             }
 
             const requestBody = {
-                action: 'crear_remito',
-                token,
                 reporteData: lastSavedReport,
                 observaciones: observacionesTexto,
             };
@@ -1726,28 +1780,11 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
                 requestBody.fotos = fotosPayload;
             }
 
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain; charset=utf-8',
-                },
-                body: JSON.stringify(requestBody),
-            });
+            // Crear el remito primero para obtener el número
+            const payload = await crearRemito(requestBody);
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            let payload;
-            try {
-                payload = await response.json();
-            } catch (error) {
-                throw new Error('No se pudo interpretar la respuesta del servidor.');
-            }
-
-            if (payload?.result !== 'success') {
-                const message = normalizeString(payload?.error || payload?.message) || 'No fue posible generar el remito.';
-                throw new Error(message);
+            if (!payload || typeof payload !== 'object') {
+                throw new Error('Respuesta inválida del servidor.');
             }
 
             const remitoData = payload?.data || {};
@@ -1763,26 +1800,70 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
 
             const printableReport = lastPrintableSnapshot?.report || lastSavedReport;
             const printablePhotoSlots = lastPrintableSnapshot?.photoSlots || clonePhotoSlots(photoSlots);
-            const didOpenPrintPreview = openRemitoPrintPreview(printableReport, {
-                observaciones: printableReport?.observaciones,
-                repuestos: printableReport?.repuestos,
-                photoSlots: printablePhotoSlots,
-            });
 
-            const alertMessages = [];
-            if (didOpenPrintPreview) {
-                alertMessages.push('✅ Remito generado correctamente. Se abrirá la vista de impresión para descargar o imprimir el PDF.');
-            } else {
-                alertMessages.push('✅ Remito generado correctamente. No pudimos abrir la vista de impresión automáticamente. Revisá el bloqueador de ventanas emergentes y utilizá el botón "Imprimir remito" para reintentarlo.');
+            // Generar y guardar el PDF en Storage
+            const remitoId = remitoData?.id || remitoData?.IdUnico;
+            if (remitoId && typeof guardarPdfRemito === 'function') {
+                try {
+                    const printableData = buildPrintableRemitoData(printableReport, {
+                        observaciones: printableReport?.observaciones,
+                        repuestos: printableReport?.repuestos,
+                        photoSlots: printablePhotoSlots,
+                    });
+                    const html = createRemitoPrintHtml(printableData);
+                    if (html) {
+                        const pdfBlob = await generatePdfBlob(html);
+                        if (pdfBlob) {
+                            await guardarPdfRemito(remitoId, pdfBlob, numeroRemito);
+                        }
+                    }
+                } catch (pdfError) {
+                    console.warn('No se pudo guardar el PDF del remito:', pdfError);
+                }
             }
 
-            const emailMessage = buildEmailStatusAlertMessage(emailStatus);
-            if (emailMessage) {
-                alertMessages.push(emailMessage);
+            // Preguntar al usuario si quiere ver el remito
+            const shouldShowRemito = await (async () => {
+                if (window.Swal && typeof window.Swal.fire === 'function') {
+                    const result = await window.Swal.fire({
+                        title: '✅ Remito generado',
+                        text: `El remito N° ${numeroRemito || 'N/A'} fue creado exitosamente. ¿Deseas ver el PDF ahora?`,
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, ver remito',
+                        cancelButtonText: 'No, volver al dashboard',
+                        confirmButtonColor: '#2563eb',
+                        cancelButtonColor: '#6b7280',
+                    });
+                    return result.isConfirmed;
+                } else {
+                    return window.confirm(`✅ Remito N° ${numeroRemito || 'N/A'} generado exitosamente.\n\n¿Querés ver el PDF ahora?\n(Aceptar = Ver remito | Cancelar = Volver al dashboard)`);
+                }
+            })();
+
+            // Si el usuario quiere ver el remito, abrirlo
+            if (shouldShowRemito) {
+                const didOpenPrintPreview = openRemitoPrintPreview(printableReport, {
+                    observaciones: printableReport?.observaciones,
+                    repuestos: printableReport?.repuestos,
+                    photoSlots: printablePhotoSlots,
+                });
+
+                if (!didOpenPrintPreview && window.Swal && typeof window.Swal.fire === 'function') {
+                    await window.Swal.fire({
+                        title: 'Error al abrir vista',
+                        text: 'No se pudo abrir la vista de impresión. Revisa el bloqueador de ventanas emergentes.',
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                    });
+                } else if (!didOpenPrintPreview) {
+                    window.alert?.('⚠️ No se pudo abrir la vista de impresión. Revisa el bloqueador de ventanas emergentes.');
+                }
             }
 
-            if (alertMessages.length > 0) {
-                window.alert?.(alertMessages.join('\n\n'));
+            // Volver al dashboard
+            if (typeof showView === 'function') {
+                showView('tab-dashboard');
             }
         } catch (error) {
             console.error('Error al generar el remito:', error);
@@ -1875,3 +1956,166 @@ export function createRemitoModule({ showView, apiUrl, getToken } = {}) {
         getLastSavedReportForTests,
     };
 }
+
+/**
+ * Genera un PDF blob a partir del HTML del remito usando html2canvas + jsPDF
+ * Este PDF es para subir a Storage, NO para imprimir directamente.
+ * @param {string} html - HTML del remito
+ * @returns {Promise<Blob>} Blob del PDF generado
+ */
+async function generatePdfBlob(html) {
+    // Crear un iframe oculto para renderizar el HTML
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '-9999px';
+    iframe.style.width = '794px'; // A4 width at 96 DPI
+    iframe.style.height = '1123px'; // A4 height at 96 DPI
+    iframe.style.border = 'none';
+    iframe.style.visibility = 'hidden';
+    // Sandbox para evitar ejecución de scripts
+    iframe.sandbox = 'allow-same-origin';
+    document.body.appendChild(iframe);
+
+    // Limpiar el HTML: remover todos los scripts y eventos de print
+    let cleanHtml = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '') // Remover scripts
+        .replace(/onload\s*=\s*["'][^"']*["']/gi, '') // Remover onload
+        .replace(/window\.print\s*\(\s*\)/gi, '') // Remover llamadas a print
+        .replace(/window\.addEventListener\s*\(\s*['"]afterprint['"]/gi, '// disabled: addEventListener("afterprint"')
+        .replace(/window\.addEventListener\s*\(\s*['"]load['"]/gi, '// disabled: addEventListener("load"');
+
+    // Escribir el HTML en el iframe
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+    // Bloquear window.print en el iframe antes de escribir
+    try {
+        iframe.contentWindow.print = () => { };
+        iframe.contentWindow.alert = () => { };
+        iframe.contentWindow.confirm = () => true;
+    } catch (e) {
+        // Sandbox puede bloquear esto, está ok
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(cleanHtml);
+    iframeDoc.close();
+
+    // Esperar a que las imágenes se carguen
+    await new Promise(resolve => {
+        const images = iframeDoc.querySelectorAll('img');
+        if (images.length === 0) {
+            setTimeout(resolve, 100);
+            return;
+        }
+
+        let loadedCount = 0;
+        const checkComplete = () => {
+            loadedCount++;
+            if (loadedCount >= images.length) {
+                setTimeout(resolve, 100);
+            }
+        };
+
+        images.forEach(img => {
+            if (img.complete) {
+                checkComplete();
+            } else {
+                img.onload = checkComplete;
+                img.onerror = checkComplete;
+            }
+        });
+
+        // Timeout de seguridad
+        setTimeout(resolve, 5000);
+    });
+
+    // Usar html2canvas para capturar el contenido
+    const documentElement = iframeDoc.querySelector('.document');
+    if (!documentElement) {
+        document.body.removeChild(iframe);
+        throw new Error('No se encontró el elemento .document en el HTML');
+    }
+
+    const canvas = await html2canvas(documentElement, {
+        scale: 2, // Mayor resolución
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+    });
+
+    // Crear PDF con jsPDF (versión UMD cargada globalmente)
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+
+    // Calcular el ratio para que quepa en la página
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 0;
+
+    // Si el contenido es más alto que una página, dividir en múltiples páginas
+    const scaledHeight = imgHeight * ratio;
+    if (scaledHeight > pdfHeight) {
+        // Múltiples páginas
+        let remainingHeight = imgHeight;
+        let position = 0;
+        const pageImgHeight = pdfHeight / ratio;
+
+        while (remainingHeight > 0) {
+            // Crear canvas parcial para esta página
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = Math.min(pageImgHeight, remainingHeight);
+
+            const ctx = pageCanvas.getContext('2d');
+            ctx.drawImage(
+                canvas,
+                0, position,
+                canvas.width, pageCanvas.height,
+                0, 0,
+                pageCanvas.width, pageCanvas.height
+            );
+
+            const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+
+            if (position > 0) {
+                pdf.addPage();
+            }
+
+            pdf.addImage(
+                pageImgData,
+                'JPEG',
+                imgX,
+                0,
+                imgWidth * ratio,
+                pageCanvas.height * ratio
+            );
+
+            position += pageImgHeight;
+            remainingHeight -= pageImgHeight;
+        }
+    } else {
+        // Una sola página
+        pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    }
+
+    // Limpiar
+    document.body.removeChild(iframe);
+
+    // Retornar el blob
+    return pdf.output('blob');
+}
+
+// Utilidades exportadas para reutilizar en Gestión de Remitos (ABM manual)
+export { buildPrintableRemitoData, createRemitoPrintHtml, generatePdfBlob };

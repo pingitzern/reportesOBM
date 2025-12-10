@@ -135,7 +135,7 @@ export async function buscarMantenimientos(filtros = {}) {
             .from('clients')
             .select('id')
             .ilike('razon_social', `%${clienteSearch}%`);
-        
+
         if (matchingClients && matchingClients.length > 0) {
             const clientIds = matchingClients.map(c => c.id);
             query = query.in('client_id', clientIds);
@@ -152,7 +152,7 @@ export async function buscarMantenimientos(filtros = {}) {
             .from('profiles')
             .select('id')
             .ilike('full_name', `%${tecnicoSearch}%`);
-        
+
         if (matchingTecnicos && matchingTecnicos.length > 0) {
             const tecnicoIds = matchingTecnicos.map(t => t.id);
             query = query.in('technician_id', tecnicoIds);
@@ -166,7 +166,7 @@ export async function buscarMantenimientos(filtros = {}) {
         const fecha = filtros.fecha.trim();
         // Buscar mantenimientos en esa fecha específica
         query = query.gte('service_date', `${fecha}T00:00:00`)
-                     .lte('service_date', `${fecha}T23:59:59`);
+            .lte('service_date', `${fecha}T23:59:59`);
     }
 
     // Límite de resultados
@@ -183,23 +183,23 @@ export async function buscarMantenimientos(filtros = {}) {
     return (data || []).map(m => {
         const reportData = m.report_data || {};
         const clienteName = m.clients?.razon_social || reportData.Cliente || reportData.cliente || '';
-        
+
         // Buscar técnico en múltiples ubicaciones
-        const tecnicoName = m.profiles?.full_name 
-            || reportData.Tecnico_Asignado 
-            || reportData.tecnico 
+        const tecnicoName = m.profiles?.full_name
+            || reportData.Tecnico_Asignado
+            || reportData.tecnico
             || reportData.seccion_A_cliente?.tecnico
             || reportData.seccion_A_identificacion?.tecnico
             || '';
-        
+
         // Buscar modelo de equipo en múltiples ubicaciones
-        const modeloEquipo = m.equipments?.modelo 
-            || reportData.Modelo_Equipo 
-            || reportData.modelo 
-            || reportData.equipo 
+        const modeloEquipo = m.equipments?.modelo
+            || reportData.Modelo_Equipo
+            || reportData.modelo
+            || reportData.equipo
             || reportData.seccion_B_equipo?.modelo
             || '';
-        
+
         return {
             // ID único para edición/eliminación
             ID_Unico: m.id,
@@ -247,7 +247,7 @@ export async function actualizarMantenimiento(datos) {
     if (datos.service_date !== undefined) updateData.service_date = datos.service_date;
     if (datos.status !== undefined) updateData.status = datos.status;
     if (datos.type !== undefined) updateData.type = datos.type;
-    
+
     // Si hay datos del reporte, actualizarlos
     if (datos.report_data !== undefined) {
         updateData.report_data = datos.report_data;
@@ -262,7 +262,7 @@ export async function actualizarMantenimiento(datos) {
         delete reportFields.service_date;
         delete reportFields.status;
         delete reportFields.type;
-        
+
         if (Object.keys(reportFields).length > 0) {
             // Obtener report_data actual y merge
             const { data: current } = await supabase
@@ -270,7 +270,7 @@ export async function actualizarMantenimiento(datos) {
                 .select('report_data')
                 .eq('id', maintenanceId)
                 .single();
-            
+
             updateData.report_data = {
                 ...(current?.report_data || {}),
                 ...reportFields
@@ -295,7 +295,7 @@ export async function actualizarMantenimiento(datos) {
 
 export async function eliminarMantenimiento(id) {
     const maintenanceId = typeof id === 'object' ? (id.id || id.maintenanceId) : id;
-    
+
     if (!maintenanceId) {
         throw new Error('ID del mantenimiento requerido para eliminar.');
     }
@@ -331,7 +331,7 @@ export async function obtenerDashboard() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
-    
+
     // Total de mantenimientos
     const { count: totalMantenimientos } = await supabase
         .from('maintenances')
@@ -366,7 +366,7 @@ export async function obtenerDashboard() {
         .select('technician_id')
         .gte('service_date', thirtyDaysAgo)
         .not('technician_id', 'is', null);
-    
+
     const tecnicosUnicos = new Set((tecnicosData || []).map(m => m.technician_id));
     const tecnicosActivos = tecnicosUnicos.size;
 
@@ -375,13 +375,13 @@ export async function obtenerDashboard() {
     for (let i = 5; i >= 0; i--) {
         const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59);
-        
+
         const { count } = await supabase
             .from('maintenances')
             .select('*', { count: 'exact', head: true })
             .gte('service_date', monthStart.toISOString())
             .lte('service_date', monthEnd.toISOString());
-        
+
         const monthName = monthStart.toLocaleDateString('es-AR', { month: 'short' });
         mantenimientosPorMes.push({
             mes: monthName,
@@ -559,12 +559,12 @@ export async function obtenerRemitos({ page = 1, pageSize = 20 } = {}) {
  */
 async function getSignedPhotoUrl(path) {
     if (!path) return '';
-    
+
     try {
         const { data, error } = await supabase.storage
             .from('maintenance-reports')
             .createSignedUrl(path, 3600); // 1 hora de validez
-        
+
         if (error) {
             console.warn('Error obteniendo URL firmada:', error);
             return '';
@@ -716,7 +716,7 @@ export async function crearRemito(datos) {
         client_id: reporteData.clientId || reporteData.client_id || null,
         fecha_remito: new Date().toISOString(),
         fecha_servicio: reporteData.fecha_servicio || reporteData.fecha || null,
-        cliente_nombre: reporteData.clienteNombre || reporteData.cliente || reporteData.Cliente || '',
+        cliente_nombre: reporteData.clienteNombre || reporteData.cliente_nombre || reporteData.cliente || reporteData.Cliente || '',
         direccion: reporteData.direccion || reporteData.cliente_direccion || '',
         telefono: reporteData.cliente_telefono || reporteData.telefono || '',
         email: reporteData.cliente_email || reporteData.email || '',
@@ -732,6 +732,26 @@ export async function crearRemito(datos) {
 
     if (numeroRemitoGenerado) {
         remitoData.numero_remito = numeroRemitoGenerado;
+    }
+
+    // Si el cliente_nombre parece ser un UUID, buscar el nombre real del cliente
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (remitoData.cliente_nombre && uuidPattern.test(remitoData.cliente_nombre)) {
+        try {
+            // El nombre del cliente es un UUID, buscar el cliente real
+            const clientId = remitoData.client_id || remitoData.cliente_nombre;
+            const { data: clientData, error: clientError } = await supabase
+                .from('clients')
+                .select('razon_social')
+                .eq('id', clientId)
+                .maybeSingle();
+
+            if (!clientError && clientData?.razon_social) {
+                remitoData.cliente_nombre = clientData.razon_social;
+            }
+        } catch (err) {
+            console.warn('No se pudo obtener el nombre del cliente desde la BD:', err);
+        }
     }
 
     // Insertar remito (el numero_remito se genera automáticamente si no se provee)
@@ -812,7 +832,7 @@ export async function actualizarRemito(datos) {
 
     // Preparar datos para actualizar
     const updateData = {};
-    
+
     if (datos.cliente !== undefined) updateData.cliente_nombre = datos.cliente;
     if (datos.direccion !== undefined) updateData.direccion = datos.direccion;
     if (datos.telefono !== undefined) updateData.telefono = datos.telefono;
@@ -840,13 +860,13 @@ export async function actualizarRemito(datos) {
     for (let i = 0; i < Math.min(fotos.length, 4); i++) {
         const foto = fotos[i];
         const pathKey = `foto_${i + 1}_path`;
-        
+
         if (foto?.shouldRemove && remito[pathKey]) {
             // Eliminar foto de Storage
             await supabase.storage
                 .from('maintenance-reports')
                 .remove([remito[pathKey]]);
-            
+
             await supabase
                 .from('remitos')
                 .update({ [pathKey]: null })
@@ -878,7 +898,7 @@ export async function actualizarRemito(datos) {
  */
 export async function eliminarRemito(remitoId) {
     // Normalizar input
-    const id = typeof remitoId === 'object' 
+    const id = typeof remitoId === 'object'
         ? (remitoId.remitoId || remitoId.id)
         : remitoId;
 
@@ -1050,21 +1070,21 @@ export async function guardarMantenimientoSupabase(payload = {}) {
     // Intentar obtener el technician_id basado en el nombre del técnico
     // Buscar en múltiples ubicaciones del payload
     let technicianId = null;
-    const tecnicoNombre = payload.Tecnico_Asignado 
-        || payload.tecnico_asignado 
-        || payload.tecnico 
+    const tecnicoNombre = payload.Tecnico_Asignado
+        || payload.tecnico_asignado
+        || payload.tecnico
         || payload.seccion_A_cliente?.tecnico
         || payload.seccion_A_identificacion?.tecnico
         || '';
-    
+
     if (tecnicoNombre) {
         const { data: tecnicoData } = await supabase
             .from('profiles')
             .select('id')
             .ilike('full_name', tecnicoNombre)
             .limit(1)
-            .single();
-        
+            .maybeSingle();
+
         if (tecnicoData?.id) {
             technicianId = tecnicoData.id;
         }
@@ -1075,22 +1095,22 @@ export async function guardarMantenimientoSupabase(payload = {}) {
     const equipoData = payload.seccion_B_equipo || {};
     const equipoModelo = equipoData.modelo || '';
     const equipoSerial = equipoData.numero_serie || '';
-    
+
     if (clientId && (equipoModelo || equipoSerial)) {
         // Buscar equipo existente por cliente y serial/modelo
         let equipoQuery = supabase
             .from('equipments')
             .select('id')
             .eq('client_id', clientId);
-        
+
         if (equipoSerial) {
             equipoQuery = equipoQuery.eq('serial_number', equipoSerial);
         } else if (equipoModelo) {
             equipoQuery = equipoQuery.eq('modelo', equipoModelo);
         }
-        
+
         const { data: equipoExistente } = await equipoQuery.limit(1).single();
-        
+
         if (equipoExistente?.id) {
             equipmentId = equipoExistente.id;
         } else if (equipoModelo || equipoSerial) {
@@ -1105,7 +1125,7 @@ export async function guardarMantenimientoSupabase(payload = {}) {
                 })
                 .select('id')
                 .single();
-            
+
             if (nuevoEquipo?.id) {
                 equipmentId = nuevoEquipo.id;
             }
@@ -1534,7 +1554,7 @@ export function detectarCambiosEquipo(equipoGuardado, datosFormulario) {
     for (const campo of camposAComparar) {
         const valorGuardado = String(equipoGuardado[campo] || '').trim();
         const valorFormulario = String(datosFormulario[campo] || '').trim();
-        
+
         if (valorGuardado !== valorFormulario) {
             hayCambios = true;
             cambios[campo] = {
