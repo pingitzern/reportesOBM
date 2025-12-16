@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda - Coordinación de Servicios | OHM Instrumental</title>
+    <meta name="description" content="Sistema de coordinación y programación de servicios técnicos">
+    <link rel="stylesheet" href="./css/styles.build.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        html,
+        body,
+        #scheduler-root {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100">
+    <!-- React Mount Point -->
+    <div id="scheduler-root"></div>
+
+    <!-- Google Maps Places API (for address autocomplete) -->
+    <script>
+        // Load Google Maps dynamically with API key from env
+        (function () {
+            const apiKey = 'AIzaSyCw6euqJaGmuJmGcNo56tVGSy0svHUjlYg'; // From Supabase secrets
+            if (apiKey) {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            }
+        })();
+    </script>
+
+    <!-- React App -->
+    <script type="module" src="./js/modules/agenda/index.tsx"></script>
+</body>
+
+</html>

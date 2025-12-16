@@ -156,6 +156,13 @@
                 </svg>
                 Remitos
             </button>
+            <button class="tab-button" id="nav-agenda-btn">
+                <svg class="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Agenda
+            </button>
         </div>
 
         <div class="space-y-8" id="main-content">
@@ -2024,6 +2031,11 @@
                 </div>
             </section>
 
+            <!-- Vista de Agenda/Coordinación -->
+            <section id="agenda-view" class="tab-content hidden">
+                <div id="scheduler-root" class="h-[calc(100vh-200px)] min-h-[600px]"></div>
+            </section>
+
             <!-- Panel de Administración -->
             <section id="admin-panel-view" class="tab-content hidden">
                 <div class="max-w-7xl mx-auto">
@@ -3003,6 +3015,139 @@
                                 <input type="tel" id="admin-usuario-telefono" name="telefono"
                                     class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                     placeholder="+54 11 1234-5678">
+                            </div>
+                        </div>
+
+                        <!-- Sección Configuración de Técnico (visible solo cuando rol = tecnico) -->
+                        <div id="admin-usuario-tecnico-section" class="hidden border-t border-gray-200 pt-5 mt-2">
+                            <div class="flex items-center gap-2 mb-4">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <h4 class="text-sm font-semibold text-gray-900">Configuración de Técnico</h4>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Puntuación -->
+                                <div>
+                                    <label for="admin-usuario-score"
+                                        class="block text-sm font-medium text-gray-700 mb-1">
+                                        Puntuación <span class="text-gray-400 font-normal">(1-5)</span>
+                                    </label>
+                                    <div class="flex items-center gap-3">
+                                        <input type="range" id="admin-usuario-score" name="score_ponderado" min="0"
+                                            max="5" step="0.5" value="0"
+                                            class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                        <span id="admin-usuario-score-display"
+                                            class="text-sm font-semibold text-indigo-600 w-8 text-center">0</span>
+                                    </div>
+                                </div>
+
+                                <!-- Horario -->
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label for="admin-usuario-hora-entrada"
+                                            class="block text-sm font-medium text-gray-700 mb-1">
+                                            Entrada
+                                        </label>
+                                        <input type="time" id="admin-usuario-hora-entrada" name="hora_entrada"
+                                            value="08:00"
+                                            class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label for="admin-usuario-hora-salida"
+                                            class="block text-sm font-medium text-gray-700 mb-1">
+                                            Salida
+                                        </label>
+                                        <input type="time" id="admin-usuario-hora-salida" name="hora_salida"
+                                            value="18:00"
+                                            class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label for="admin-usuario-max-horas"
+                                            class="block text-sm font-medium text-gray-700 mb-1">
+                                            Max h/día
+                                        </label>
+                                        <input type="number" id="admin-usuario-max-horas" name="max_horas_dia"
+                                            value="10" min="1" max="24"
+                                            class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
+                                </div>
+
+                                <!-- Días laborables -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Días laborables</label>
+                                    <div class="flex flex-wrap gap-2">
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <input type="checkbox" name="dias_laborables" value="lunes" checked
+                                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                            <span class="text-sm text-gray-700">Lun</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <input type="checkbox" name="dias_laborables" value="martes" checked
+                                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                            <span class="text-sm text-gray-700">Mar</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <input type="checkbox" name="dias_laborables" value="miercoles" checked
+                                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                            <span class="text-sm text-gray-700">Mié</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <input type="checkbox" name="dias_laborables" value="jueves" checked
+                                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                            <span class="text-sm text-gray-700">Jue</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <input type="checkbox" name="dias_laborables" value="viernes" checked
+                                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                            <span class="text-sm text-gray-700">Vie</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <input type="checkbox" name="dias_laborables" value="sabado"
+                                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                            <span class="text-sm text-gray-700">Sáb</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <input type="checkbox" name="dias_laborables" value="domingo"
+                                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                            <span class="text-sm text-gray-700">Dom</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Dirección base -->
+                                <div>
+                                    <label for="admin-usuario-direccion"
+                                        class="block text-sm font-medium text-gray-700 mb-1">
+                                        Dirección base <span class="text-gray-400 font-normal">(para cálculo de
+                                            rutas)</span>
+                                    </label>
+                                    <input type="text" id="admin-usuario-direccion" name="direccion_base"
+                                        class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                        placeholder="Av. Corrientes 1234, CABA">
+                                    <input type="hidden" id="admin-usuario-lat" name="lat">
+                                    <input type="hidden" id="admin-usuario-lng" name="lng">
+                                </div>
+
+                                <!-- Estado activo -->
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">Técnico activo</span>
+                                        <p class="text-xs text-gray-500">Disponible para asignar trabajos</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="admin-usuario-activo" name="activo" checked
+                                            class="sr-only peer">
+                                        <div
+                                            class="w-11 h-6 bg-gray-300 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
+                                        </div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 

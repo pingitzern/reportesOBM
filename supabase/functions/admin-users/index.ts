@@ -80,8 +80,8 @@ Deno.serve(async (req) => {
         }
     } catch (error) {
         console.error('admin-users error:', error);
-        return jsonResponse({ 
-            error: error instanceof Error ? error.message : 'Error inesperado' 
+        return jsonResponse({
+            error: error instanceof Error ? error.message : 'Error inesperado'
         }, 500);
     }
 });
@@ -100,19 +100,39 @@ async function listUsers() {
         return jsonResponse({ error: 'Error al listar usuarios' }, 500);
     }
 
-    // Mapear a formato simplificado para el frontend
-    const mappedUsers = users.map(user => ({
-        id: user.id,
-        email: user.email,
-        nombre: user.user_metadata?.nombre || user.user_metadata?.full_name || '',
-        cargo: user.user_metadata?.cargo || '',
-        rol: user.user_metadata?.rol || user.app_metadata?.role || 'tecnico',
-        telefono: user.user_metadata?.telefono || '',
-        created_at: user.created_at,
-        last_sign_in_at: user.last_sign_in_at,
-        email_confirmed_at: user.email_confirmed_at,
-        banned_until: user.banned_until,
-    }));
+    // Obtener datos adicionales de profiles (campos de técnico)
+    const { data: profiles } = await supabaseAdmin
+        .from('profiles')
+        .select('id, score_ponderado, hora_entrada, hora_salida, max_horas_dia, dias_laborables, direccion_base, lat, lng, activo');
+
+    const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+    // Mapear y combinar datos de auth con profiles
+    const mappedUsers = users.map(user => {
+        const profile = profilesMap.get(user.id) || {};
+        return {
+            id: user.id,
+            email: user.email,
+            nombre: user.user_metadata?.nombre || user.user_metadata?.full_name || '',
+            cargo: user.user_metadata?.cargo || '',
+            rol: user.user_metadata?.rol || user.app_metadata?.role || 'tecnico',
+            telefono: user.user_metadata?.telefono || '',
+            created_at: user.created_at,
+            last_sign_in_at: user.last_sign_in_at,
+            email_confirmed_at: user.email_confirmed_at,
+            banned_until: user.banned_until,
+            // Campos de técnico desde profiles
+            score_ponderado: profile.score_ponderado ?? 0,
+            hora_entrada: profile.hora_entrada ?? '08:00',
+            hora_salida: profile.hora_salida ?? '18:00',
+            max_horas_dia: profile.max_horas_dia ?? 10,
+            dias_laborables: profile.dias_laborables ?? ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
+            direccion_base: profile.direccion_base ?? '',
+            lat: profile.lat ?? null,
+            lng: profile.lng ?? null,
+            activo: profile.activo ?? true,
+        };
+    });
 
     return jsonResponse({ users: mappedUsers });
 }
@@ -163,8 +183,8 @@ async function createUser(payload: CreateUserPayload) {
     // Validar rol si se proporciona
     const userRole = rol || 'tecnico';
     if (!VALID_ROLES.includes(userRole)) {
-        return jsonResponse({ 
-            error: `Rol inválido. Roles válidos: ${VALID_ROLES.join(', ')}` 
+        return jsonResponse({
+            error: `Rol inválido. Roles válidos: ${VALID_ROLES.join(', ')}`
         }, 400);
     }
 
@@ -186,6 +206,20 @@ async function createUser(payload: CreateUserPayload) {
             return jsonResponse({ error: 'Ya existe un usuario con ese email' }, 400);
         }
         return jsonResponse({ error: error.message }, 400);
+    }
+
+    // Actualizar profiles.full_name y role para que la vista de técnicos funcione
+    const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+            full_name: nombre?.trim() || '',
+            email: email.trim(),
+            role: userRole,
+        })
+        .eq('id', data.user.id);
+
+    if (profileError) {
+        console.error('Error updating profile after create:', profileError);
     }
 
     return jsonResponse({
@@ -210,6 +244,16 @@ interface UpdateUserPayload {
     rol?: string;
     telefono?: string;
     banned?: boolean;
+    // Campos de configuración de técnico
+    score_ponderado?: number;
+    hora_entrada?: string;
+    hora_salida?: string;
+    max_horas_dia?: number;
+    dias_laborables?: string[];
+    direccion_base?: string;
+    lat?: number;
+    lng?: number;
+    activo?: boolean;
 }
 
 async function updateUser(payload: UpdateUserPayload) {
@@ -220,7 +264,7 @@ async function updateUser(payload: UpdateUserPayload) {
     }
 
     // Obtener usuario actual para preservar metadata existente
-    const { data: { user: existingUser }, error: fetchError } = 
+    const { data: { user: existingUser }, error: fetchError } =
         await supabaseAdmin.auth.admin.getUserById(id);
 
     if (fetchError || !existingUser) {
@@ -229,8 +273,8 @@ async function updateUser(payload: UpdateUserPayload) {
 
     // Validar rol si se proporciona
     if (rol && !VALID_ROLES.includes(rol)) {
-        return jsonResponse({ 
-            error: `Rol inválido. Roles válidos: ${VALID_ROLES.join(', ')}` 
+        return jsonResponse({
+            error: `Rol inválido. Roles válidos: ${VALID_ROLES.join(', ')}`
         }, 400);
     }
 
@@ -275,6 +319,35 @@ async function updateUser(payload: UpdateUserPayload) {
         return jsonResponse({ error: error.message }, 400);
     }
 
+    // Actualizar campos de técnico en tabla profiles
+    const profileUpdate: Record<string, unknown> = {};
+
+    // Siempre sincronizar full_name y role con profiles para que la vista de técnicos funcione
+    if (nombre !== undefined) profileUpdate.full_name = nombre.trim();
+    if (rol !== undefined) profileUpdate.role = rol;
+
+    if (payload.score_ponderado !== undefined) profileUpdate.score_ponderado = payload.score_ponderado;
+    if (payload.hora_entrada !== undefined) profileUpdate.hora_entrada = payload.hora_entrada;
+    if (payload.hora_salida !== undefined) profileUpdate.hora_salida = payload.hora_salida;
+    if (payload.max_horas_dia !== undefined) profileUpdate.max_horas_dia = payload.max_horas_dia;
+    if (payload.dias_laborables !== undefined) profileUpdate.dias_laborables = payload.dias_laborables;
+    if (payload.direccion_base !== undefined) profileUpdate.direccion_base = payload.direccion_base;
+    if (payload.lat !== undefined) profileUpdate.lat = payload.lat;
+    if (payload.lng !== undefined) profileUpdate.lng = payload.lng;
+    if (payload.activo !== undefined) profileUpdate.activo = payload.activo;
+
+    if (Object.keys(profileUpdate).length > 0) {
+        const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .update(profileUpdate)
+            .eq('id', id);
+
+        if (profileError) {
+            console.error('Error updating profile:', profileError);
+            // No fallar la operación, solo loguear
+        }
+    }
+
     return jsonResponse({
         message: 'Usuario actualizado exitosamente',
         user: {
@@ -291,7 +364,7 @@ async function updateUser(payload: UpdateUserPayload) {
 
 async function deleteUser(userId: string) {
     // Verificar que el usuario existe
-    const { data: { user }, error: fetchError } = 
+    const { data: { user }, error: fetchError } =
         await supabaseAdmin.auth.admin.getUserById(userId);
 
     if (fetchError || !user) {
@@ -305,9 +378,9 @@ async function deleteUser(userId: string) {
         return jsonResponse({ error: error.message }, 400);
     }
 
-    return jsonResponse({ 
+    return jsonResponse({
         message: 'Usuario eliminado exitosamente',
-        deletedUserId: userId 
+        deletedUserId: userId
     });
 }
 
@@ -321,7 +394,7 @@ async function sendPasswordReset(payload: { email: string }) {
     try {
         // Primero verificamos que el usuario existe y obtenemos su nombre
         const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-        
+
         if (listError) {
             console.error('Error listing users:', listError);
             return jsonResponse({ error: 'Error al verificar usuario' }, 400);
@@ -351,7 +424,7 @@ async function sendPasswordReset(payload: { email: string }) {
         }
 
         const recoveryLink = data.properties?.action_link;
-        
+
         if (!recoveryLink) {
             return jsonResponse({ error: 'No se pudo generar el link de recuperación' }, 500);
         }
@@ -369,7 +442,7 @@ async function sendPasswordReset(payload: { email: string }) {
         }
 
         const emailHtml = generatePasswordResetEmail(userName, recoveryLink);
-        
+
         const resendResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -406,8 +479,8 @@ async function sendPasswordReset(payload: { email: string }) {
         });
     } catch (err) {
         console.error('sendPasswordReset error:', err);
-        return jsonResponse({ 
-            error: err instanceof Error ? err.message : 'Error inesperado al generar recuperación' 
+        return jsonResponse({
+            error: err instanceof Error ? err.message : 'Error inesperado al generar recuperación'
         }, 500);
     }
 }

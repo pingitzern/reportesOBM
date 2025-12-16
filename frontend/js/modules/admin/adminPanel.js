@@ -27,23 +27,23 @@ let placesAutocomplete = null;
 
 function initGooglePlacesAutocomplete() {
     const direccionInput = document.getElementById('admin-cliente-direccion');
-    
+
     if (!direccionInput) {
         console.warn('[AdminPanel] Direccion input not found');
         return;
     }
-    
+
     // Si ya está inicializado, no hacer nada
     if (placesAutocomplete) {
         return;
     }
-    
+
     // Verificar si Google Places está disponible
     if (!window.google?.maps?.places) {
         console.log('[AdminPanel] Google Places not loaded yet, waiting...');
         return;
     }
-    
+
     try {
         // Crear el autocomplete
         // eslint-disable-next-line no-undef
@@ -52,24 +52,24 @@ function initGooglePlacesAutocomplete() {
             componentRestrictions: { country: 'ar' }, // Restringir a Argentina
             fields: ['formatted_address', 'address_components', 'geometry']
         });
-        
+
         // Evitar que el formulario se envíe al presionar Enter en el autocomplete
         direccionInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
             }
         });
-        
+
         // Manejar la selección de una dirección
         placesAutocomplete.addListener('place_changed', () => {
             const place = placesAutocomplete.getPlace();
-            
+
             if (place.formatted_address) {
                 direccionInput.value = place.formatted_address;
                 console.log('[AdminPanel] Address selected:', place.formatted_address);
             }
         });
-        
+
         console.log('[AdminPanel] Google Places Autocomplete initialized');
     } catch (error) {
         console.error('[AdminPanel] Error initializing Google Places:', error);
@@ -90,7 +90,7 @@ function isAdmin() {
     console.log('[AdminPanel] Checking role:', role);
     // Aceptar variantes: Administrador, administrador, Admin, admin
     return role && (
-        role.toLowerCase() === 'administrador' || 
+        role.toLowerCase() === 'administrador' ||
         role.toLowerCase() === 'admin'
     );
 }
@@ -100,7 +100,7 @@ function updateAdminMenuVisibility() {
     const adminMenuItem = document.getElementById('admin-panel-menu-item');
     const isAdminUser = isAdmin();
     console.log('[AdminPanel] updateAdminMenuVisibility - isAdmin:', isAdminUser);
-    
+
     if (adminMenuItem) {
         if (isAdminUser) {
             adminMenuItem.classList.remove('hidden');
@@ -121,33 +121,33 @@ async function loadStats() {
         const { count: total } = await supabase
             .from('clients')
             .select('*', { count: 'exact', head: true });
-        
+
         // Con email
         const { count: conEmail } = await supabase
             .from('clients')
             .select('*', { count: 'exact', head: true })
             .not('email', 'is', null)
             .neq('email', '');
-        
+
         // Con teléfono
         const { count: conTelefono } = await supabase
             .from('clients')
             .select('*', { count: 'exact', head: true })
             .not('telefono', 'is', null)
             .neq('telefono', '');
-        
+
         // Con CUIT
         const { count: conCuit } = await supabase
             .from('clients')
             .select('*', { count: 'exact', head: true })
             .not('cuit', 'is', null)
             .neq('cuit', '');
-        
+
         document.getElementById('admin-stat-total-clientes').textContent = total || 0;
         document.getElementById('admin-stat-con-email').textContent = conEmail || 0;
         document.getElementById('admin-stat-con-telefono').textContent = conTelefono || 0;
         document.getElementById('admin-stat-con-cuit').textContent = conCuit || 0;
-        
+
         totalClientes = total || 0;
     } catch (error) {
         console.error('[AdminPanel] Error loading stats:', error);
@@ -163,32 +163,32 @@ async function loadFilterOptions() {
             .select('division')
             .not('division', 'is', null)
             .neq('division', '');
-        
+
         divisiones = [...new Set(divisionesData?.map(d => d.division).filter(Boolean))].sort();
-        
+
         // Obtener canales únicos
         const { data: canalesData } = await supabase
             .from('clients')
             .select('canal')
             .not('canal', 'is', null)
             .neq('canal', '');
-        
+
         canales = [...new Set(canalesData?.map(c => c.canal).filter(Boolean))].sort();
-        
+
         // Poblar selects
         const divisionSelect = document.getElementById('admin-clientes-filter-division');
         const canalSelect = document.getElementById('admin-clientes-filter-canal');
-        
+
         if (divisionSelect) {
             divisionSelect.innerHTML = '<option value="">Todas las divisiones</option>' +
                 divisiones.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
         }
-        
+
         if (canalSelect) {
             canalSelect.innerHTML = '<option value="">Todos los canales</option>' +
                 canales.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
         }
-        
+
         // También poblar los selects del formulario modal
         populateFormSelects();
     } catch (error) {
@@ -200,14 +200,14 @@ async function loadFilterOptions() {
 function populateFormSelects() {
     const divisionSelect = document.getElementById('admin-cliente-division');
     const canalSelect = document.getElementById('admin-cliente-canal');
-    
+
     if (divisionSelect) {
         const currentValue = divisionSelect.value;
         divisionSelect.innerHTML = '<option value="">Seleccionar división...</option>' +
             divisiones.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
         if (currentValue) divisionSelect.value = currentValue;
     }
-    
+
     if (canalSelect) {
         const currentValue = canalSelect.value;
         canalSelect.innerHTML = '<option value="">Seleccionar canal...</option>' +
@@ -220,9 +220,9 @@ function populateFormSelects() {
 async function loadClientes(page = 1) {
     currentPage = page;
     const tbody = document.getElementById('admin-clientes-tbody');
-    
+
     if (!tbody) return;
-    
+
     tbody.innerHTML = `
         <tr>
             <td colspan="5" class="px-6 py-8 text-center text-gray-500">
@@ -236,41 +236,41 @@ async function loadClientes(page = 1) {
             </td>
         </tr>
     `;
-    
+
     try {
         let query = supabase
             .from('clients')
             .select('*', { count: 'exact' });
-        
+
         // Aplicar filtros
         if (currentFilters.search) {
             const searchTerm = `%${currentFilters.search}%`;
             query = query.or(`razon_social.ilike.${searchTerm},cuit.ilike.${searchTerm},direccion.ilike.${searchTerm},email.ilike.${searchTerm}`);
         }
-        
+
         if (currentFilters.division) {
             query = query.eq('division', currentFilters.division);
         }
-        
+
         if (currentFilters.canal) {
             query = query.eq('canal', currentFilters.canal);
         }
-        
+
         // Ordenar y paginar
         const from = (page - 1) * ITEMS_PER_PAGE;
         const to = from + ITEMS_PER_PAGE - 1;
-        
+
         query = query
             .order('razon_social', { ascending: true })
             .range(from, to);
-        
+
         const { data: clientes, count, error } = await query;
-        
+
         if (error) throw error;
-        
+
         clientesCache = clientes || [];
         totalClientes = count || 0;
-        
+
         renderClientes(clientes);
         updatePagination();
     } catch (error) {
@@ -288,7 +288,7 @@ async function loadClientes(page = 1) {
 // Renderizar tabla de clientes
 function renderClientes(clientes) {
     const tbody = document.getElementById('admin-clientes-tbody');
-    
+
     if (!clientes || clientes.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -299,7 +299,7 @@ function renderClientes(clientes) {
         `;
         return;
     }
-    
+
     tbody.innerHTML = clientes.map(cliente => `
         <tr class="hover:bg-gray-50 transition-colors cursor-pointer" data-cliente-id="${cliente.id}">
             <td class="px-6 py-4">
@@ -353,7 +353,7 @@ function renderClientes(clientes) {
             </td>
         </tr>
     `).join('');
-    
+
     // Event listeners para los botones de acción
     tbody.querySelectorAll('.admin-cliente-view-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -361,21 +361,21 @@ function renderClientes(clientes) {
             showClienteDetalle(btn.dataset.id);
         });
     });
-    
+
     tbody.querySelectorAll('.admin-cliente-edit-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             openEditModal(btn.dataset.id);
         });
     });
-    
+
     tbody.querySelectorAll('.admin-cliente-delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             confirmDeleteCliente(btn.dataset.id);
         });
     });
-    
+
     // Click en fila para ver detalle
     tbody.querySelectorAll('tr[data-cliente-id]').forEach(row => {
         row.addEventListener('click', () => {
@@ -390,18 +390,18 @@ function updatePagination() {
     const info = document.getElementById('admin-clientes-info');
     const prevBtn = document.getElementById('admin-clientes-prev-btn');
     const nextBtn = document.getElementById('admin-clientes-next-btn');
-    
+
     const from = totalClientes === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
     const to = Math.min(currentPage * ITEMS_PER_PAGE, totalClientes);
-    
+
     if (info) {
         info.textContent = `Mostrando ${from}-${to} de ${totalClientes} clientes`;
     }
-    
+
     if (prevBtn) {
         prevBtn.disabled = currentPage <= 1;
     }
-    
+
     if (nextBtn) {
         nextBtn.disabled = currentPage >= totalPages;
     }
@@ -413,30 +413,30 @@ function openNewModal() {
     const backdrop = document.getElementById('admin-cliente-modal-backdrop');
     const title = document.getElementById('admin-cliente-modal-title');
     const form = document.getElementById('admin-cliente-form');
-    
+
     if (!modal || !form) return;
-    
+
     // Asegurar que los selects estén poblados
     populateFormSelects();
-    
+
     title.textContent = 'Nuevo Cliente';
     form.reset();
     document.getElementById('admin-cliente-id').value = '';
     document.getElementById('admin-cliente-error').classList.add('hidden');
-    
+
     modal.classList.remove('hidden');
     backdrop.classList.remove('hidden');
-    
+
     // Inicializar Google Places para el campo de dirección
     tryInitPlacesOnModalOpen();
-    
+
     document.getElementById('admin-cliente-razon-social').focus();
 }
 
 // Abrir modal para editar cliente
 async function openEditModal(id) {
     const cliente = clientesCache.find(c => c.id == id);
-    
+
     if (!cliente) {
         // Cargar desde BD
         const { data, error } = await supabase
@@ -444,12 +444,12 @@ async function openEditModal(id) {
             .select('*')
             .eq('id', id)
             .single();
-        
+
         if (error || !data) {
             alert('No se pudo cargar el cliente');
             return;
         }
-        
+
         fillEditForm(data);
     } else {
         fillEditForm(cliente);
@@ -460,10 +460,10 @@ function fillEditForm(cliente) {
     const modal = document.getElementById('admin-cliente-modal');
     const backdrop = document.getElementById('admin-cliente-modal-backdrop');
     const title = document.getElementById('admin-cliente-modal-title');
-    
+
     // Asegurar que los selects estén poblados antes de setear valores
     populateFormSelects();
-    
+
     title.textContent = 'Editar Cliente';
     document.getElementById('admin-cliente-id').value = cliente.id;
     document.getElementById('admin-cliente-razon-social').value = cliente.razon_social || '';
@@ -474,10 +474,10 @@ function fillEditForm(cliente) {
     document.getElementById('admin-cliente-division').value = cliente.division || '';
     document.getElementById('admin-cliente-canal').value = cliente.canal || '';
     document.getElementById('admin-cliente-error').classList.add('hidden');
-    
+
     modal.classList.remove('hidden');
     backdrop.classList.remove('hidden');
-    
+
     // Inicializar Google Places para el campo de dirección
     tryInitPlacesOnModalOpen();
 }
@@ -486,7 +486,7 @@ function fillEditForm(cliente) {
 function closeModal() {
     const modal = document.getElementById('admin-cliente-modal');
     const backdrop = document.getElementById('admin-cliente-modal-backdrop');
-    
+
     modal?.classList.add('hidden');
     backdrop?.classList.add('hidden');
 }
@@ -494,19 +494,19 @@ function closeModal() {
 // Guardar cliente
 async function saveCliente(event) {
     event.preventDefault();
-    
+
     const errorEl = document.getElementById('admin-cliente-error');
     const saveBtn = document.getElementById('admin-cliente-save-btn');
-    
+
     const id = document.getElementById('admin-cliente-id').value;
     const razonSocial = document.getElementById('admin-cliente-razon-social').value.trim();
-    
+
     if (!razonSocial) {
         errorEl.textContent = 'La razón social es obligatoria';
         errorEl.classList.remove('hidden');
         return;
     }
-    
+
     const clienteData = {
         razon_social: razonSocial,
         direccion: document.getElementById('admin-cliente-direccion').value.trim() || null,
@@ -516,13 +516,13 @@ async function saveCliente(event) {
         division: document.getElementById('admin-cliente-division').value.trim() || null,
         canal: document.getElementById('admin-cliente-canal').value.trim() || null
     };
-    
+
     saveBtn.disabled = true;
     saveBtn.textContent = 'Guardando...';
-    
+
     try {
         let result;
-        
+
         if (id) {
             // Actualizar
             result = await supabase
@@ -535,9 +535,9 @@ async function saveCliente(event) {
                 .from('clients')
                 .insert(clienteData);
         }
-        
+
         if (result.error) throw result.error;
-        
+
         closeModal();
         await loadClientes(currentPage);
         await loadStats();
@@ -556,19 +556,19 @@ async function saveCliente(event) {
 async function confirmDeleteCliente(id) {
     const cliente = clientesCache.find(c => c.id == id);
     const nombre = cliente?.razon_social || 'este cliente';
-    
+
     if (!confirm(`¿Estás seguro de eliminar "${nombre}"? Esta acción no se puede deshacer.`)) {
         return;
     }
-    
+
     try {
         const { error } = await supabase
             .from('clients')
             .delete()
             .eq('id', id);
-        
+
         if (error) throw error;
-        
+
         await loadClientes(currentPage);
         await loadStats();
     } catch (error) {
@@ -580,30 +580,30 @@ async function confirmDeleteCliente(id) {
 // Mostrar detalle del cliente
 async function showClienteDetalle(id) {
     let cliente = clientesCache.find(c => c.id == id);
-    
+
     if (!cliente) {
         const { data, error } = await supabase
             .from('clients')
             .select('*')
             .eq('id', id)
             .single();
-        
+
         if (error || !data) {
             alert('No se pudo cargar el cliente');
             return;
         }
         cliente = data;
     }
-    
+
     const modal = document.getElementById('admin-cliente-detalle-modal');
     const backdrop = document.getElementById('admin-cliente-detalle-backdrop');
     const title = document.getElementById('admin-cliente-detalle-title');
     const subtitle = document.getElementById('admin-cliente-detalle-subtitle');
     const content = document.getElementById('admin-cliente-detalle-content');
-    
+
     title.textContent = cliente.razon_social;
     subtitle.textContent = cliente.cuit || '';
-    
+
     content.innerHTML = `
         <div class="space-y-6">
             <!-- Información principal -->
@@ -633,18 +633,18 @@ async function showClienteDetalle(id) {
                     <div>
                         <p class="text-sm text-gray-500">Teléfono</p>
                         <p class="text-gray-900">
-                            ${cliente.telefono 
-                                ? `<a href="tel:${cliente.telefono}" class="text-indigo-600 hover:underline">${escapeHtml(cliente.telefono)}</a>` 
-                                : '-'}
+                            ${cliente.telefono
+            ? `<a href="tel:${cliente.telefono}" class="text-indigo-600 hover:underline">${escapeHtml(cliente.telefono)}</a>`
+            : '-'}
                         </p>
                     </div>
                     
                     <div>
                         <p class="text-sm text-gray-500">Email</p>
                         <p class="text-gray-900">
-                            ${cliente.email 
-                                ? `<a href="mailto:${cliente.email}" class="text-indigo-600 hover:underline">${escapeHtml(cliente.email)}</a>` 
-                                : '-'}
+                            ${cliente.email
+            ? `<a href="mailto:${cliente.email}" class="text-indigo-600 hover:underline">${escapeHtml(cliente.email)}</a>`
+            : '-'}
                         </p>
                     </div>
                 </div>
@@ -654,21 +654,21 @@ async function showClienteDetalle(id) {
             <div class="border-t border-gray-200 pt-6">
                 <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Clasificación</h4>
                 <div class="flex flex-wrap gap-3">
-                    ${cliente.division 
-                        ? `<div class="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-xl">
+                    ${cliente.division
+            ? `<div class="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-xl">
                             <span class="text-sm text-gray-600">División:</span>
                             <span class="font-medium text-indigo-700">${escapeHtml(cliente.division)}</span>
-                           </div>` 
-                        : ''}
-                    ${cliente.canal 
-                        ? `<div class="flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-xl">
+                           </div>`
+            : ''}
+                    ${cliente.canal
+            ? `<div class="flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-xl">
                             <span class="text-sm text-gray-600">Canal:</span>
                             <span class="font-medium text-purple-700">${escapeHtml(cliente.canal)}</span>
-                           </div>` 
-                        : ''}
-                    ${!cliente.division && !cliente.canal 
-                        ? '<p class="text-gray-500 text-sm">Sin clasificación asignada</p>' 
-                        : ''}
+                           </div>`
+            : ''}
+                    ${!cliente.division && !cliente.canal
+            ? '<p class="text-gray-500 text-sm">Sin clasificación asignada</p>'
+            : ''}
                 </div>
             </div>
             
@@ -692,10 +692,10 @@ async function showClienteDetalle(id) {
             </div>
         </div>
     `;
-    
+
     // Guardar ID para el botón de editar
     modal.dataset.clienteId = cliente.id;
-    
+
     modal.classList.remove('hidden');
     backdrop.classList.remove('hidden');
 }
@@ -704,7 +704,7 @@ async function showClienteDetalle(id) {
 function closeDetalleModal() {
     const modal = document.getElementById('admin-cliente-detalle-modal');
     const backdrop = document.getElementById('admin-cliente-detalle-backdrop');
-    
+
     modal?.classList.add('hidden');
     backdrop?.classList.add('hidden');
 }
@@ -755,39 +755,39 @@ function bindEventListeners() {
     // Botón de nuevo cliente
     const nuevoBtn = document.getElementById('admin-cliente-nuevo-btn');
     nuevoBtn?.addEventListener('click', openNewModal);
-    
+
     // Formulario de cliente
     const form = document.getElementById('admin-cliente-form');
     form?.addEventListener('submit', saveCliente);
-    
+
     // Botón cancelar del modal
     const cancelBtn = document.getElementById('admin-cliente-cancel-btn');
     cancelBtn?.addEventListener('click', closeModal);
-    
+
     // Cerrar modal con backdrop
     const backdrop = document.getElementById('admin-cliente-modal-backdrop');
     backdrop?.addEventListener('click', closeModal);
-    
+
     // Búsqueda con debounce
     const searchInput = document.getElementById('admin-clientes-search');
     searchInput?.addEventListener('input', debounce((e) => {
         currentFilters.search = e.target.value;
         loadClientes(1);
     }, 300));
-    
+
     // Filtros
     const divisionFilter = document.getElementById('admin-clientes-filter-division');
     divisionFilter?.addEventListener('change', (e) => {
         currentFilters.division = e.target.value;
         loadClientes(1);
     });
-    
+
     const canalFilter = document.getElementById('admin-clientes-filter-canal');
     canalFilter?.addEventListener('change', (e) => {
         currentFilters.canal = e.target.value;
         loadClientes(1);
     });
-    
+
     // Paginación
     const prevBtn = document.getElementById('admin-clientes-prev-btn');
     prevBtn?.addEventListener('click', () => {
@@ -795,7 +795,7 @@ function bindEventListeners() {
             loadClientes(currentPage - 1);
         }
     });
-    
+
     const nextBtn = document.getElementById('admin-clientes-next-btn');
     nextBtn?.addEventListener('click', () => {
         const totalPages = Math.ceil(totalClientes / ITEMS_PER_PAGE);
@@ -803,14 +803,14 @@ function bindEventListeners() {
             loadClientes(currentPage + 1);
         }
     });
-    
+
     // Modal de detalle
     const detalleCloseBtn = document.getElementById('admin-cliente-detalle-close-btn');
     detalleCloseBtn?.addEventListener('click', closeDetalleModal);
-    
+
     const detalleBackdrop = document.getElementById('admin-cliente-detalle-backdrop');
     detalleBackdrop?.addEventListener('click', closeDetalleModal);
-    
+
     const detalleEditBtn = document.getElementById('admin-cliente-detalle-edit-btn');
     detalleEditBtn?.addEventListener('click', () => {
         const modal = document.getElementById('admin-cliente-detalle-modal');
@@ -820,26 +820,26 @@ function bindEventListeners() {
             openEditModal(id);
         }
     });
-    
+
     // Opción de menú Panel de Administración
     const adminMenuItem = document.getElementById('admin-panel-menu-item');
     adminMenuItem?.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Cerrar menú de usuario
         const userMenu = document.getElementById('user-menu');
         userMenu?.classList.add('hidden');
-        
+
         // Disparar evento de navegación
-        document.dispatchEvent(new CustomEvent('auth:navigate', { 
-            detail: { action: 'admin' } 
+        document.dispatchEvent(new CustomEvent('auth:navigate', {
+            detail: { action: 'admin' }
         }));
     });
-    
+
     // Event listeners para usuarios
     bindUsuarioEventListeners();
-    
+
     // Event listeners para sistemas y equipos
     bindSistemasEquiposEventListeners();
 }
@@ -871,7 +871,7 @@ async function getAuthToken() {
 async function fetchAdminUsers(method, endpoint = '', body = null) {
     const token = await getAuthToken();
     const url = getAdminUsersUrl() + endpoint;
-    
+
     const options = {
         method,
         headers: {
@@ -879,27 +879,27 @@ async function fetchAdminUsers(method, endpoint = '', body = null) {
             'Content-Type': 'application/json',
         },
     };
-    
+
     if (body) {
         options.body = JSON.stringify(body);
     }
-    
+
     const response = await fetch(url, options);
     const data = await response.json();
-    
+
     if (!response.ok) {
         throw new Error(data.error || 'Error en la operación');
     }
-    
+
     return data;
 }
 
 // Cargar lista de usuarios
 async function loadUsuarios() {
     const tbody = document.getElementById('admin-usuarios-tbody');
-    
+
     if (!tbody) return;
-    
+
     tbody.innerHTML = `
         <tr>
             <td colspan="6" class="px-6 py-8 text-center text-gray-500">
@@ -913,29 +913,29 @@ async function loadUsuarios() {
             </td>
         </tr>
     `;
-    
+
     try {
         const data = await fetchAdminUsers('GET');
         usuariosCache = data.users || [];
-        
+
         // Aplicar filtros
         let filteredUsers = usuariosCache;
-        
+
         if (usuarioFilters.search) {
             const searchLower = usuarioFilters.search.toLowerCase();
-            filteredUsers = filteredUsers.filter(u => 
+            filteredUsers = filteredUsers.filter(u =>
                 u.email?.toLowerCase().includes(searchLower) ||
                 u.nombre?.toLowerCase().includes(searchLower)
             );
         }
-        
+
         if (usuarioFilters.rol) {
             filteredUsers = filteredUsers.filter(u => u.rol === usuarioFilters.rol);
         }
-        
+
         renderUsuariosTable(filteredUsers);
         updateUsuariosStats();
-        
+
     } catch (error) {
         console.error('[AdminPanel] Error loading users:', error);
         tbody.innerHTML = `
@@ -951,9 +951,9 @@ async function loadUsuarios() {
 // Renderizar tabla de usuarios
 function renderUsuariosTable(usuarios) {
     const tbody = document.getElementById('admin-usuarios-tbody');
-    
+
     if (!tbody) return;
-    
+
     if (usuarios.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -964,14 +964,14 @@ function renderUsuariosTable(usuarios) {
         `;
         return;
     }
-    
+
     tbody.innerHTML = usuarios.map(usuario => {
         const rolBadge = getRolBadge(usuario.rol);
         const estadoBadge = getEstadoBadge(usuario);
         const lastAccess = formatLastAccess(usuario.last_sign_in_at);
         const isBanned = !!usuario.banned_until;
         const blockButton = getBlockButton(usuario);
-        
+
         return `
             <tr class="hover:bg-gray-50 transition-colors ${isBanned ? 'bg-red-50/50' : ''}">
                 <td class="px-6 py-4">
@@ -1028,17 +1028,17 @@ function getRolBadge(rol) {
         'supervisor': 'bg-blue-100 text-blue-700',
         'tecnico': 'bg-gray-100 text-gray-700'
     };
-    
+
     const colorClass = roles[rol] || 'bg-gray-100 text-gray-700';
     const displayRol = rol === 'tecnico' ? 'Técnico' : (rol === 'supervisor' ? 'Supervisor' : rol);
-    
+
     return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}">${escapeHtml(displayRol)}</span>`;
 }
 
 // Obtener botón de bloquear/desbloquear
 function getBlockButton(usuario) {
     const isBanned = !!usuario.banned_until;
-    
+
     if (isBanned) {
         // Botón para desbloquear
         return `
@@ -1078,13 +1078,13 @@ function getEstadoBadge(usuario) {
 // Formatear último acceso
 function formatLastAccess(date) {
     if (!date) return 'Nunca';
-    
+
     const d = new Date(date);
     const now = new Date();
     const diffMs = now - d;
     const diffHours = diffMs / (1000 * 60 * 60);
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
-    
+
     if (diffHours < 1) {
         return 'Hace menos de 1 hora';
     } else if (diffHours < 24) {
@@ -1101,7 +1101,7 @@ function updateUsuariosStats() {
     const total = usuariosCache.length;
     const admins = usuariosCache.filter(u => u.rol === 'Administrador' || u.rol === 'admin').length;
     const tecnicos = usuariosCache.filter(u => u.rol === 'tecnico').length;
-    
+
     // Activos hoy = usuarios que accedieron en las últimas 24 horas
     const now = new Date();
     const activosHoy = usuariosCache.filter(u => {
@@ -1109,14 +1109,14 @@ function updateUsuariosStats() {
         const lastAccess = new Date(u.last_sign_in_at);
         return (now - lastAccess) < (24 * 60 * 60 * 1000);
     }).length;
-    
-    document.getElementById('admin-stat-total-usuarios')?.textContent !== undefined && 
+
+    document.getElementById('admin-stat-total-usuarios')?.textContent !== undefined &&
         (document.getElementById('admin-stat-total-usuarios').textContent = total);
-    document.getElementById('admin-stat-admins')?.textContent !== undefined && 
+    document.getElementById('admin-stat-admins')?.textContent !== undefined &&
         (document.getElementById('admin-stat-admins').textContent = admins);
-    document.getElementById('admin-stat-tecnicos')?.textContent !== undefined && 
+    document.getElementById('admin-stat-tecnicos')?.textContent !== undefined &&
         (document.getElementById('admin-stat-tecnicos').textContent = tecnicos);
-    document.getElementById('admin-stat-activos-hoy')?.textContent !== undefined && 
+    document.getElementById('admin-stat-activos-hoy')?.textContent !== undefined &&
         (document.getElementById('admin-stat-activos-hoy').textContent = activosHoy);
 }
 
@@ -1131,39 +1131,55 @@ function openUsuarioNewModal() {
     const passwordConfirmHint = document.getElementById('admin-usuario-password-confirm-hint');
     const passwordConfirmGroup = document.getElementById('admin-usuario-password-confirm-group');
     const emailInput = document.getElementById('admin-usuario-email');
-    
+
     if (!modal || !form) return;
-    
+
     title.textContent = 'Nuevo Usuario';
     form.reset();
     document.getElementById('admin-usuario-id').value = '';
     document.getElementById('admin-usuario-error').classList.add('hidden');
-    
+
     // Para nuevo usuario, contraseña es requerida
     passwordHint.textContent = '*';
     passwordConfirmHint.textContent = '*';
     passwordInfo.classList.add('hidden');
     passwordConfirmGroup?.classList.remove('hidden');
     emailInput.removeAttribute('disabled');
-    
+
     // Resetear indicadores de fortaleza
     resetPasswordIndicators();
-    
+
+    // Mostrar sección de técnico (ya que rol por defecto es 'tecnico')
+    updateTecnicoSectionVisibility('tecnico');
+
+    // Resetear campos de técnico a valores por defecto
+    loadTecnicoFields({
+        score_ponderado: 0,
+        hora_entrada: '08:00',
+        hora_salida: '18:00',
+        max_horas_dia: 10,
+        dias_laborables: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
+        direccion_base: '',
+        lat: null,
+        lng: null,
+        activo: true
+    });
+
     modal.classList.remove('hidden');
     backdrop.classList.remove('hidden');
-    
+
     emailInput.focus();
 }
 
 // Abrir modal para editar usuario
 function openUsuarioEditModal(id) {
     const usuario = usuariosCache.find(u => u.id === id);
-    
+
     if (!usuario) {
         alert('Usuario no encontrado');
         return;
     }
-    
+
     const modal = document.getElementById('admin-usuario-modal');
     const backdrop = document.getElementById('admin-usuario-modal-backdrop');
     const title = document.getElementById('admin-usuario-modal-title');
@@ -1172,7 +1188,7 @@ function openUsuarioEditModal(id) {
     const passwordConfirmHint = document.getElementById('admin-usuario-password-confirm-hint');
     const passwordConfirmGroup = document.getElementById('admin-usuario-password-confirm-group');
     const emailInput = document.getElementById('admin-usuario-email');
-    
+
     title.textContent = 'Editar Usuario';
     document.getElementById('admin-usuario-id').value = usuario.id;
     emailInput.value = usuario.email || '';
@@ -1184,16 +1200,22 @@ function openUsuarioEditModal(id) {
     document.getElementById('admin-usuario-rol').value = usuario.rol || 'tecnico';
     document.getElementById('admin-usuario-telefono').value = usuario.telefono || '';
     document.getElementById('admin-usuario-error').classList.add('hidden');
-    
+
+    // Cargar campos de técnico
+    loadTecnicoFields(usuario);
+
+    // Mostrar/ocultar sección de técnico según rol
+    updateTecnicoSectionVisibility(usuario.rol || 'tecnico');
+
     // Para edición, contraseña es opcional
     passwordHint.textContent = '(opcional)';
     passwordConfirmHint.textContent = '(opcional)';
     passwordInfo.classList.remove('hidden');
     passwordConfirmGroup?.classList.remove('hidden');
-    
+
     // Resetear indicadores de fortaleza
     resetPasswordIndicators();
-    
+
     modal.classList.remove('hidden');
     backdrop.classList.remove('hidden');
 }
@@ -1204,7 +1226,7 @@ function resetPasswordIndicators() {
     document.getElementById('admin-usuario-password-strength')?.classList.add('hidden');
     document.getElementById('admin-usuario-password-requirements')?.classList.add('hidden');
     document.getElementById('admin-usuario-password-match')?.classList.add('hidden');
-    
+
     // Resetear barras de fortaleza
     ['strength-bar-1', 'strength-bar-2', 'strength-bar-3', 'strength-bar-4'].forEach(id => {
         const bar = document.getElementById(id);
@@ -1212,7 +1234,7 @@ function resetPasswordIndicators() {
             bar.className = 'h-1 flex-1 rounded-full bg-gray-200';
         }
     });
-    
+
     // Resetear requisitos
     ['req-length', 'req-uppercase', 'req-lowercase', 'req-number', 'req-special'].forEach(reqId => {
         const reqEl = document.getElementById(reqId);
@@ -1225,13 +1247,13 @@ function resetPasswordIndicators() {
             span?.classList.add('text-gray-500');
         }
     });
-    
+
     // Resetear tipo de input a password
     const passwordInput = document.getElementById('admin-usuario-password');
     const passwordConfirmInput = document.getElementById('admin-usuario-password-confirm');
     if (passwordInput) passwordInput.type = 'password';
     if (passwordConfirmInput) passwordConfirmInput.type = 'password';
-    
+
     // Resetear iconos de ojo
     document.getElementById('admin-usuario-password-eye')?.classList.remove('hidden');
     document.getElementById('admin-usuario-password-eye-off')?.classList.add('hidden');
@@ -1239,11 +1261,65 @@ function resetPasswordIndicators() {
     document.getElementById('admin-usuario-password-confirm-eye-off')?.classList.add('hidden');
 }
 
+// Mostrar/ocultar sección de técnico según rol
+function updateTecnicoSectionVisibility(rol) {
+    const tecnicoSection = document.getElementById('admin-usuario-tecnico-section');
+    if (!tecnicoSection) return;
+
+    if (rol === 'tecnico') {
+        tecnicoSection.classList.remove('hidden');
+    } else {
+        tecnicoSection.classList.add('hidden');
+    }
+}
+
+// Cargar campos de técnico en el formulario
+function loadTecnicoFields(usuario) {
+    // Score
+    const scoreInput = document.getElementById('admin-usuario-score');
+    const scoreDisplay = document.getElementById('admin-usuario-score-display');
+    if (scoreInput) {
+        scoreInput.value = usuario.score_ponderado || 0;
+        if (scoreDisplay) scoreDisplay.textContent = usuario.score_ponderado || 0;
+    }
+
+    // Horarios
+    const horaEntradaInput = document.getElementById('admin-usuario-hora-entrada');
+    if (horaEntradaInput) horaEntradaInput.value = usuario.hora_entrada || '08:00';
+
+    const horaSalidaInput = document.getElementById('admin-usuario-hora-salida');
+    if (horaSalidaInput) horaSalidaInput.value = usuario.hora_salida || '18:00';
+
+    const maxHorasInput = document.getElementById('admin-usuario-max-horas');
+    if (maxHorasInput) maxHorasInput.value = usuario.max_horas_dia || 10;
+
+    // Días laborables - desmarcar todos primero, luego marcar los que corresponden
+    const diasCheckboxes = document.querySelectorAll('input[name="dias_laborables"]');
+    const diasLaborables = usuario.dias_laborables || ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+    diasCheckboxes.forEach(cb => {
+        cb.checked = diasLaborables.includes(cb.value);
+    });
+
+    // Dirección base
+    const direccionInput = document.getElementById('admin-usuario-direccion');
+    if (direccionInput) direccionInput.value = usuario.direccion_base || '';
+
+    const latInput = document.getElementById('admin-usuario-lat');
+    if (latInput) latInput.value = usuario.lat || '';
+
+    const lngInput = document.getElementById('admin-usuario-lng');
+    if (lngInput) lngInput.value = usuario.lng || '';
+
+    // Activo
+    const activoInput = document.getElementById('admin-usuario-activo');
+    if (activoInput) activoInput.checked = usuario.activo !== false;
+}
+
 // Cerrar modal de usuario
 function closeUsuarioModal() {
     const modal = document.getElementById('admin-usuario-modal');
     const backdrop = document.getElementById('admin-usuario-modal-backdrop');
-    
+
     modal?.classList.add('hidden');
     backdrop?.classList.add('hidden');
 }
@@ -1251,11 +1327,11 @@ function closeUsuarioModal() {
 // Guardar usuario (crear o editar)
 async function saveUsuario(event) {
     event.preventDefault();
-    
+
     const errorEl = document.getElementById('admin-usuario-error');
     const saveBtn = document.getElementById('admin-usuario-save-btn');
     const id = document.getElementById('admin-usuario-id').value;
-    
+
     const userData = {
         email: document.getElementById('admin-usuario-email').value.trim(),
         password: document.getElementById('admin-usuario-password').value,
@@ -1264,40 +1340,56 @@ async function saveUsuario(event) {
         rol: document.getElementById('admin-usuario-rol').value,
         telefono: document.getElementById('admin-usuario-telefono').value.trim(),
     };
-    
+
+    // Agregar campos de técnico si el rol es 'tecnico'
+    if (userData.rol === 'tecnico') {
+        userData.score_ponderado = parseFloat(document.getElementById('admin-usuario-score')?.value || '0');
+        userData.hora_entrada = document.getElementById('admin-usuario-hora-entrada')?.value || '08:00';
+        userData.hora_salida = document.getElementById('admin-usuario-hora-salida')?.value || '18:00';
+        userData.max_horas_dia = parseInt(document.getElementById('admin-usuario-max-horas')?.value || '10');
+        userData.direccion_base = document.getElementById('admin-usuario-direccion')?.value?.trim() || '';
+        userData.lat = parseFloat(document.getElementById('admin-usuario-lat')?.value) || null;
+        userData.lng = parseFloat(document.getElementById('admin-usuario-lng')?.value) || null;
+        userData.activo = document.getElementById('admin-usuario-activo')?.checked ?? true;
+
+        // Obtener días laborables de checkboxes
+        const diasCheckboxes = document.querySelectorAll('input[name="dias_laborables"]:checked');
+        userData.dias_laborables = Array.from(diasCheckboxes).map(cb => cb.value);
+    }
+
     const passwordConfirm = document.getElementById('admin-usuario-password-confirm')?.value || '';
-    
+
     // Validaciones
     if (!userData.email) {
         errorEl.textContent = 'El email es requerido';
         errorEl.classList.remove('hidden');
         return;
     }
-    
+
     if (!id && (!userData.password || userData.password.length < 6)) {
         errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres';
         errorEl.classList.remove('hidden');
         return;
     }
-    
+
     if (id && userData.password && userData.password.length > 0 && userData.password.length < 6) {
         errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres';
         errorEl.classList.remove('hidden');
         return;
     }
-    
+
     // Validar que las contraseñas coincidan (si hay contraseña)
     if (userData.password && userData.password !== passwordConfirm) {
         errorEl.textContent = 'Las contraseñas no coinciden';
         errorEl.classList.remove('hidden');
         return;
     }
-    
+
     // Si estamos editando y no hay contraseña, no la enviamos
     if (id && !userData.password) {
         delete userData.password;
     }
-    
+
     saveBtn.disabled = true;
     saveBtn.innerHTML = `
         <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
@@ -1306,7 +1398,7 @@ async function saveUsuario(event) {
         </svg>
         Guardando...
     `;
-    
+
     try {
         if (id) {
             // Actualizar
@@ -1316,10 +1408,10 @@ async function saveUsuario(event) {
             // Crear
             await fetchAdminUsers('POST', '', userData);
         }
-        
+
         closeUsuarioModal();
         await loadUsuarios();
-        
+
     } catch (error) {
         console.error('[AdminPanel] Error saving user:', error);
         errorEl.textContent = error.message;
@@ -1334,10 +1426,10 @@ async function saveUsuario(event) {
 function openUsuarioDeleteModal(id, nombre) {
     const modal = document.getElementById('admin-usuario-delete-modal');
     const backdrop = document.getElementById('admin-usuario-delete-backdrop');
-    
+
     document.getElementById('admin-usuario-delete-id').value = id;
     document.getElementById('admin-usuario-delete-name').textContent = nombre;
-    
+
     modal?.classList.remove('hidden');
     backdrop?.classList.remove('hidden');
 }
@@ -1346,7 +1438,7 @@ function openUsuarioDeleteModal(id, nombre) {
 function closeUsuarioDeleteModal() {
     const modal = document.getElementById('admin-usuario-delete-modal');
     const backdrop = document.getElementById('admin-usuario-delete-backdrop');
-    
+
     modal?.classList.add('hidden');
     backdrop?.classList.add('hidden');
 }
@@ -1355,9 +1447,9 @@ function closeUsuarioDeleteModal() {
 async function confirmDeleteUsuario() {
     const id = document.getElementById('admin-usuario-delete-id').value;
     const confirmBtn = document.getElementById('admin-usuario-delete-confirm-btn');
-    
+
     if (!id) return;
-    
+
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = `
         <svg class="animate-spin h-4 w-4 mr-2 inline" fill="none" viewBox="0 0 24 24">
@@ -1366,7 +1458,7 @@ async function confirmDeleteUsuario() {
         </svg>
         Eliminando...
     `;
-    
+
     try {
         await fetchAdminUsers('DELETE', `?id=${id}`);
         closeUsuarioDeleteModal();
@@ -1383,17 +1475,17 @@ async function confirmDeleteUsuario() {
 // Bloquear/Desbloquear usuario
 async function toggleBlockUsuario(id, shouldBlock, nombre) {
     const action = shouldBlock ? 'bloquear' : 'desbloquear';
-    
+
     if (!confirm(`¿Estás seguro de que deseas ${action} al usuario "${nombre}"?`)) {
         return;
     }
-    
+
     try {
-        const result = await fetchAdminUsers('PUT', '', { 
-            id: id, 
-            banned: shouldBlock 
+        const result = await fetchAdminUsers('PUT', '', {
+            id: id,
+            banned: shouldBlock
         });
-        
+
         // El Edge Function retorna { message, user } en éxito, o { error } en fallo
         if (result.error) {
             alert('Error al ' + action + ' usuario: ' + result.error);
@@ -1412,10 +1504,10 @@ async function sendPasswordReset(email, nombre) {
     if (!confirm(`¿Enviar email de recuperación de contraseña a "${nombre}" (${email})?`)) {
         return;
     }
-    
+
     try {
         const result = await fetchAdminUsers('PATCH', '', { email: email });
-        
+
         if (result.error) {
             alert('Error: ' + result.error);
         } else if (result.emailSent) {
@@ -1483,7 +1575,7 @@ function showRecoveryLinkModal(email, nombre, link) {
             </div>
         </div>
     `;
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
@@ -1522,19 +1614,19 @@ function bindUsuarioEventListeners() {
     document.querySelectorAll('.admin-tab-button').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabId = btn.dataset.adminTab;
-            
+
             // Actualizar botones
             document.querySelectorAll('.admin-tab-button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
+
             // Mostrar/ocultar contenido
             document.querySelectorAll('.admin-tab-content').forEach(content => {
                 content.classList.add('hidden');
             });
-            
+
             const targetContent = document.getElementById(`admin-tab-${tabId}`);
             targetContent?.classList.remove('hidden');
-            
+
             // Cargar datos según la pestaña
             if (tabId === 'usuarios') {
                 loadUsuarios();
@@ -1545,33 +1637,33 @@ function bindUsuarioEventListeners() {
             }
         });
     });
-    
+
     // Botón nuevo usuario
     const nuevoUsuarioBtn = document.getElementById('admin-usuario-nuevo-btn');
     nuevoUsuarioBtn?.addEventListener('click', openUsuarioNewModal);
-    
+
     // Formulario de usuario
     const usuarioForm = document.getElementById('admin-usuario-form');
     usuarioForm?.addEventListener('submit', saveUsuario);
-    
+
     // Cancelar modal usuario
     const usuarioCancelBtn = document.getElementById('admin-usuario-cancel-btn');
     usuarioCancelBtn?.addEventListener('click', closeUsuarioModal);
-    
+
     // Backdrop modal usuario
     const usuarioBackdrop = document.getElementById('admin-usuario-modal-backdrop');
     usuarioBackdrop?.addEventListener('click', closeUsuarioModal);
-    
+
     // Modal eliminar usuario
     const deleteCancelBtn = document.getElementById('admin-usuario-delete-cancel-btn');
     deleteCancelBtn?.addEventListener('click', closeUsuarioDeleteModal);
-    
+
     const deleteConfirmBtn = document.getElementById('admin-usuario-delete-confirm-btn');
     deleteConfirmBtn?.addEventListener('click', confirmDeleteUsuario);
-    
+
     const deleteBackdrop = document.getElementById('admin-usuario-delete-backdrop');
     deleteBackdrop?.addEventListener('click', closeUsuarioDeleteModal);
-    
+
     // Búsqueda de usuarios
     const usuariosSearch = document.getElementById('admin-usuarios-search');
     let searchTimeout;
@@ -1582,49 +1674,62 @@ function bindUsuarioEventListeners() {
             loadUsuarios();
         }, 300);
     });
-    
+
     // Filtro por rol
     const usuariosFilterRol = document.getElementById('admin-usuarios-filter-rol');
     usuariosFilterRol?.addEventListener('change', (e) => {
         usuarioFilters.rol = e.target.value;
         loadUsuarios();
     });
-    
+
+    // Cambio de rol en el formulario de usuario - mostrar/ocultar sección técnico
+    const usuarioRolSelect = document.getElementById('admin-usuario-rol');
+    usuarioRolSelect?.addEventListener('change', (e) => {
+        updateTecnicoSectionVisibility(e.target.value);
+    });
+
+    // Slider de puntuación - actualizar display en tiempo real
+    const scoreSlider = document.getElementById('admin-usuario-score');
+    const scoreDisplay = document.getElementById('admin-usuario-score-display');
+    scoreSlider?.addEventListener('input', (e) => {
+        if (scoreDisplay) scoreDisplay.textContent = e.target.value;
+    });
+
     // ============================================
     // Validación de contraseña en tiempo real
     // ============================================
-    
+
     const passwordInput = document.getElementById('admin-usuario-password');
     const passwordConfirmInput = document.getElementById('admin-usuario-password-confirm');
-    
+
     // Toggle mostrar/ocultar contraseña
     const passwordToggle = document.getElementById('admin-usuario-password-toggle');
     passwordToggle?.addEventListener('click', () => {
         togglePasswordVisibility('admin-usuario-password', 'admin-usuario-password-eye', 'admin-usuario-password-eye-off');
     });
-    
+
     const passwordConfirmToggle = document.getElementById('admin-usuario-password-confirm-toggle');
     passwordConfirmToggle?.addEventListener('click', () => {
         togglePasswordVisibility('admin-usuario-password-confirm', 'admin-usuario-password-confirm-eye', 'admin-usuario-password-confirm-eye-off');
     });
-    
+
     // Validar contraseña mientras escribe
     passwordInput?.addEventListener('input', (e) => {
         validatePasswordStrength(e.target.value);
         validatePasswordMatch();
     });
-    
+
     // Validar confirmación mientras escribe
     passwordConfirmInput?.addEventListener('input', () => {
         validatePasswordMatch();
     });
-    
+
     // Mostrar requisitos al enfocar
     passwordInput?.addEventListener('focus', () => {
         const strengthDiv = document.getElementById('admin-usuario-password-strength');
         const reqsDiv = document.getElementById('admin-usuario-password-requirements');
         const isEditing = document.getElementById('admin-usuario-id')?.value;
-        
+
         // Solo mostrar si hay algo escrito o es usuario nuevo
         if (passwordInput.value || !isEditing) {
             strengthDiv?.classList.remove('hidden');
@@ -1638,7 +1743,7 @@ function togglePasswordVisibility(inputId, eyeId, eyeOffId) {
     const input = document.getElementById(inputId);
     const eye = document.getElementById(eyeId);
     const eyeOff = document.getElementById(eyeOffId);
-    
+
     if (input.type === 'password') {
         input.type = 'text';
         eye.classList.add('hidden');
@@ -1655,16 +1760,16 @@ function validatePasswordStrength(password) {
     const strengthDiv = document.getElementById('admin-usuario-password-strength');
     const reqsDiv = document.getElementById('admin-usuario-password-requirements');
     const strengthText = document.getElementById('admin-usuario-password-strength-text');
-    
+
     if (!password) {
         strengthDiv?.classList.add('hidden');
         reqsDiv?.classList.add('hidden');
         return;
     }
-    
+
     strengthDiv?.classList.remove('hidden');
     reqsDiv?.classList.remove('hidden');
-    
+
     // Verificar requisitos
     const requirements = {
         length: password.length >= 6,
@@ -1673,17 +1778,17 @@ function validatePasswordStrength(password) {
         number: /[0-9]/.test(password),
         special: /[!@#$%^&*(),.?":{}|<>_\-+=[\]\\/`~]/.test(password)
     };
-    
+
     // Actualizar indicadores de requisitos
     updateRequirement('req-length', requirements.length);
     updateRequirement('req-uppercase', requirements.uppercase);
     updateRequirement('req-lowercase', requirements.lowercase);
     updateRequirement('req-number', requirements.number);
     updateRequirement('req-special', requirements.special);
-    
+
     // Calcular puntaje
     const score = Object.values(requirements).filter(Boolean).length;
-    
+
     // Actualizar barras de fortaleza
     const bars = ['strength-bar-1', 'strength-bar-2', 'strength-bar-3', 'strength-bar-4'];
     const colors = {
@@ -1693,21 +1798,21 @@ function validatePasswordStrength(password) {
         4: 'bg-green-400',
         5: 'bg-green-500'
     };
-    
+
     bars.forEach((barId, index) => {
         const bar = document.getElementById(barId);
         if (!bar) return;
-        
+
         // Resetear clases
         bar.className = 'h-1 flex-1 rounded-full';
-        
+
         if (index < score) {
             bar.classList.add(colors[score] || 'bg-gray-200');
         } else {
             bar.classList.add('bg-gray-200');
         }
     });
-    
+
     // Actualizar texto de fortaleza
     const strengthLabels = {
         0: { text: 'Muy débil', color: 'text-red-600' },
@@ -1717,13 +1822,13 @@ function validatePasswordStrength(password) {
         4: { text: 'Fuerte', color: 'text-green-500' },
         5: { text: 'Muy fuerte', color: 'text-green-600' }
     };
-    
+
     const label = strengthLabels[score];
     if (strengthText) {
         strengthText.textContent = `Fortaleza: ${label.text}`;
         strengthText.className = `text-xs ${label.color}`;
     }
-    
+
     return score;
 }
 
@@ -1731,10 +1836,10 @@ function validatePasswordStrength(password) {
 function updateRequirement(reqId, isMet) {
     const reqEl = document.getElementById(reqId);
     if (!reqEl) return;
-    
+
     const svg = reqEl.querySelector('svg');
     const span = reqEl.querySelector('span');
-    
+
     if (isMet) {
         svg.classList.remove('text-gray-300');
         svg.classList.add('text-green-500');
@@ -1754,14 +1859,14 @@ function validatePasswordMatch() {
     const confirm = document.getElementById('admin-usuario-password-confirm')?.value || '';
     const matchDiv = document.getElementById('admin-usuario-password-match');
     const matchText = document.getElementById('admin-usuario-password-match-text');
-    
+
     if (!confirm) {
         matchDiv?.classList.add('hidden');
         return true;
     }
-    
+
     matchDiv?.classList.remove('hidden');
-    
+
     if (password === confirm) {
         matchText.innerHTML = `
             <svg class="w-3 h-3 flex-shrink-0 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -1787,29 +1892,29 @@ function navigateToAdmin() {
         console.warn('[AdminPanel] User is not admin');
         return;
     }
-    
+
     // Ocultar otras vistas
     document.querySelectorAll('.tab-content').forEach(el => {
         el.classList.add('hidden');
     });
-    
+
     // Quitar active de los tabs de navegación principal
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     // Mostrar panel admin
     const adminView = document.getElementById('admin-panel-view');
     if (adminView) {
         adminView.classList.remove('hidden');
     }
-    
+
     // Actualizar título de sección
     const sectionTitle = document.getElementById('current-section-title');
     if (sectionTitle) {
         sectionTitle.textContent = 'Panel de Administración';
     }
-    
+
     // Cargar datos
     loadStats();
     loadFilterOptions();
@@ -1819,20 +1924,20 @@ function navigateToAdmin() {
 // Inicialización del módulo
 export function createAdminPanelModule() {
     let initialized = false;
-    
+
     return {
         init() {
             if (initialized) return;
-            
+
             bindEventListeners();
-            
+
             // Escuchar navegación desde el menú
             document.addEventListener('auth:navigate', (e) => {
                 if (e.detail?.action === 'admin') {
                     navigateToAdmin();
                 }
             });
-            
+
             // Suscribirse a cambios de autenticación para actualizar visibilidad
             supabase.auth.onAuthStateChange((event) => {
                 console.log('[AdminPanel] Auth state change:', event);
@@ -1841,14 +1946,14 @@ export function createAdminPanelModule() {
                     updateAdminMenuVisibility();
                 }, 100);
             });
-            
+
             // Actualizar visibilidad inicial
             updateAdminMenuVisibility();
-            
+
             initialized = true;
             console.log('[AdminPanel] Module initialized');
         },
-        
+
         isAdmin,
         navigateToAdmin,
         updateAdminMenuVisibility,

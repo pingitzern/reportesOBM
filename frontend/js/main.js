@@ -15,6 +15,7 @@ import { createFeedbackModule } from './modules/feedback/feedback.js';
 import { createAdminPanelModule } from './modules/admin/adminPanel.js';
 import { initEquipmentHistory } from './modules/equipmentHistory/equipmentHistory.js';
 import { supabase } from './supabaseClient.js';
+import { mountScheduler } from './modules/agenda/index.tsx';
 
 const {
     guardarMantenimiento,
@@ -421,6 +422,20 @@ function initializeNavigation() {
             showView('remitos-gestion-view');
             setActiveNavigation(null, 'nav-remitos-btn');
             void remitosGestionModule.renderListado({ page: 1 });
+        });
+    }
+
+    // Agenda button - lazy load scheduler
+    let schedulerMounted = false;
+    const agendaBtn = document.getElementById('nav-agenda-btn');
+    if (agendaBtn) {
+        agendaBtn.addEventListener('click', () => {
+            showView('agenda-view');
+            setActiveNavigation(null, 'nav-agenda-btn');
+            if (!schedulerMounted) {
+                mountScheduler('scheduler-root');
+                schedulerMounted = true;
+            }
         });
     }
 

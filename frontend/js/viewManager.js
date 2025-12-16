@@ -7,6 +7,7 @@ const MAIN_VIEW_IDS = [
     'remitos-gestion-view',
     'mantenimientos-gestion-view',
     'admin-panel-view',
+    'agenda-view',
 ];
 
 function hideElement(element) {
