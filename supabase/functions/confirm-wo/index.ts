@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
 
 function htmlResponse(status: 'success' | 'error' | 'warning' | 'info', title: string, message: string) {
     // Redirigir a página estática del frontend para evitar problemas de encoding
-    const baseUrl = 'https://ohmreportes.netlify.app';
+    const baseUrl = 'https://gilded-nasturtium-ce1040.netlify.app';
     const redirectUrl = `${baseUrl}/confirmacion.html?status=${status}&title=${encodeURIComponent(title)}&message=${encodeURIComponent(message)}`;
 
     return new Response(null, {
