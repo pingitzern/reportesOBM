@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación - OHM Instrumental</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .message {
+            font-size: 16px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 20px;
+            color: white;
+        }
+
+        .badge-success {
+            background: #10b981;
+        }
+
+        .badge-error {
+            background: #ef4444;
+        }
+
+        .badge-warning {
+            background: #f59e0b;
+        }
+
+        .badge-info {
+            background: #3b82f6;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="icon" id="icon">&#10004;</div>
+        <h1 class="title" id="title">Procesando...</h1>
+        <p class="message" id="message">Por favor espere.</p>
+        <span class="badge badge-success" id="badge">OHM Instrumental</span>
+        <p class="footer">Puede cerrar esta ventana</p>
+    </div>
+
+    <script>
+        // Leer parametros de URL
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get('status') || 'success';
+        const title = params.get('title') || 'Confirmado';
+        const message = params.get('message') || 'Accion completada correctamente.';
+
+        // Configuracion por status
+        const config = {
+            success: { icon: '&#10004;', badgeClass: 'badge-success' },
+            error: { icon: '&#10006;', badgeClass: 'badge-error' },
+            warning: { icon: '&#9888;', badgeClass: 'badge-warning' },
+            info: { icon: '&#8505;', badgeClass: 'badge-info' }
+        };
+
+        const cfg = config[status] || config.success;
+
+        // Actualizar UI
+        document.getElementById('icon').innerHTML = cfg.icon;
+        document.getElementById('title').textContent = decodeURIComponent(title);
+        document.getElementById('message').textContent = decodeURIComponent(message);
+        document.getElementById('badge').className = 'badge ' + cfg.badgeClass;
+    </script>
+</body>
+
+</html>

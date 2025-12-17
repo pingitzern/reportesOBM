@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { Clock, MapPin, User, Wrench, Trash2 } from 'lucide-react';
-import { WorkOrder, PRIORIDAD_BADGES, PRIORIDAD_COLORS } from './types';
+import { WorkOrder, PRIORIDAD_BADGES, PRIORIDAD_COLORS, CONFIRMACION_CONFIG } from './types';
 
 interface WorkOrderCardProps {
     wo: WorkOrder;
@@ -107,6 +107,32 @@ export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete }: 
                             {wo.tecnico_nombre}
                         </span>
                     )}
+                </div>
+            )}
+
+            {/* Debug confirmación */}
+            {console.log('[WorkOrderCard] WO:', wo.numero_wo, 'estado:', wo.estado, 'conf_tec:', wo.confirmacion_tecnico, 'conf_cli:', wo.confirmacion_cliente)}
+
+            {/* Indicadores de confirmación (solo en WOs asignadas) */}
+            {wo.estado === 'Asignada' && wo.confirmacion_tecnico && !isCompact && (
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200">
+                    <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${CONFIRMACION_CONFIG[wo.confirmacion_tecnico].bg} ${CONFIRMACION_CONFIG[wo.confirmacion_tecnico].text}`}>
+                        {CONFIRMACION_CONFIG[wo.confirmacion_tecnico].icon} Téc
+                    </span>
+                    {wo.confirmacion_cliente && (
+                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${CONFIRMACION_CONFIG[wo.confirmacion_cliente].bg} ${CONFIRMACION_CONFIG[wo.confirmacion_cliente].text}`}>
+                            {CONFIRMACION_CONFIG[wo.confirmacion_cliente].icon} Cli
+                        </span>
+                    )}
+                </div>
+            )}
+
+            {/* Estado Confirmada_Cliente - ambos confirmaron */}
+            {wo.estado === 'Confirmada_Cliente' && !isCompact && (
+                <div className="flex items-center gap-1 mt-2 pt-2 border-t border-green-200">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">
+                        ✅✅ Confirmada por ambos
+                    </span>
                 </div>
             )}
 

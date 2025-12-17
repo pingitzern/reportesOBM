@@ -29,6 +29,9 @@ export interface WorkOrder {
     hora_inicio?: string; // HH:mm
     tecnico_asignado_id?: string;
     tecnico_nombre?: string;
+    // Campos de confirmación
+    confirmacion_tecnico?: 'pendiente' | 'confirmada' | 'rechazada';
+    confirmacion_cliente?: 'pendiente' | 'confirmada' | 'rechazada';
 }
 
 export interface Habilidad {
@@ -86,4 +89,11 @@ export const PRIORIDAD_BADGES: Record<Prioridad, string> = {
     'Media': 'bg-blue-200 text-blue-800',
     'Alta': 'bg-amber-200 text-amber-800',
     'EMERGENCIA_COMODIN': 'bg-red-500 text-white',
+};
+
+// Colores y iconos de confirmación
+export const CONFIRMACION_CONFIG: Record<string, { icon: string; bg: string; text: string; label: string }> = {
+    'pendiente': { icon: '⏳', bg: 'bg-amber-100', text: 'text-amber-700', label: 'Pendiente' },
+    'confirmada': { icon: '✅', bg: 'bg-green-100', text: 'text-green-700', label: 'Confirmado' },
+    'rechazada': { icon: '❌', bg: 'bg-red-100', text: 'text-red-700', label: 'Rechazado' },
 };

@@ -12,6 +12,7 @@ import api, {
     unassignWorkOrder,
     calculateTravelTime,
 } from './api';
+const { processEmailQueue } = api;
 import { useDeleteWorkOrder } from './createWOHooks';
 
 // Modo: 'mock' o 'live'
@@ -83,6 +84,11 @@ function SchedulerApp() {
     useEffect(() => {
         loadData();
     }, [selectedDate]);
+
+    // Procesar cola de emails al montar (workaround para falta de pg_cron)
+    useEffect(() => {
+        processEmailQueue();
+    }, []);
 
     const loadData = async () => {
         setIsLoading(true);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { MapPin, Star, Briefcase } from 'lucide-react';
-import { Tecnico, ScheduledTask, TimeSlot, SCHEDULER_CONFIG, PRIORIDAD_COLORS } from './types';
+import { Tecnico, ScheduledTask, TimeSlot, SCHEDULER_CONFIG, PRIORIDAD_COLORS, CONFIRMACION_CONFIG } from './types';
 import { DroppableSlot, calculateBlockWidth, calculateBlockPosition } from './TimeGrid';
 
 interface TechnicianRowProps {
@@ -144,6 +144,15 @@ function ScheduledTaskBlock({ task, slots, rowHeight, onClick }: ScheduledTaskBl
 
     const colors = PRIORIDAD_COLORS[wo.prioridad];
 
+    // Color del borde izquierdo según confirmación (inline style porque Tailwind no compila clases dinámicas)
+    const getConfirmBorderColor = (): string => {
+        if (wo.confirmacion_tecnico === 'rechazada' || wo.confirmacion_cliente === 'rechazada') return '#ef4444'; // red-500
+        if (wo.confirmacion_tecnico === 'confirmada' && wo.confirmacion_cliente === 'confirmada') return '#22c55e'; // green-500
+        if (wo.confirmacion_tecnico === 'confirmada') return '#3b82f6'; // blue-500
+        if (wo.confirmacion_tecnico === 'pendiente') return '#fbbf24'; // amber-400
+        return 'transparent';
+    };
+
     return (
         <div
             className="absolute top-1 bottom-1 flex flex-col rounded-lg overflow-hidden cursor-pointer
@@ -151,6 +160,8 @@ function ScheduledTaskBlock({ task, slots, rowHeight, onClick }: ScheduledTaskBl
             style={{
                 left: `${position}px`,
                 width: `${totalWidth}px`,
+                borderLeftWidth: '4px',
+                borderLeftColor: getConfirmBorderColor(),
             }}
             onClick={onClick}
         >

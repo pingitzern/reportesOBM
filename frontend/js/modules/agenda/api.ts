@@ -156,16 +156,17 @@ export async function assignWorkOrder(
 
 /**
  * Desasignar una WO (volver a Bolsa_Trabajo)
+ * Usa la acción 'unassign' que maneja la cancelación de emails pendientes
  */
-export async function unassignWorkOrder(woId: string): Promise<{ success: boolean; error?: string }> {
+export async function unassignWorkOrder(woId: string, motivo?: string): Promise<{ success: boolean; error?: string }> {
     const supabase = getSupabase();
 
     try {
         const { data, error } = await supabase.functions.invoke('work-orders', {
             body: {
-                action: 'update-status',
+                action: 'unassign',
                 wo_id: woId,
-                estado: 'Bolsa_Trabajo',
+                motivo: motivo || 'Reprogramación por parte de coordinación',
             },
         });
 
@@ -175,6 +176,7 @@ export async function unassignWorkOrder(woId: string): Promise<{ success: boolea
             return { success: false, error: data.error };
         }
 
+        console.log(`[API] WO desasignada. Emails cancelados: ${data.emails_cancelados}, Cancelación enviada: ${data.email_cancelacion_enviado}`);
         return { success: true };
 
     } catch (err) {
@@ -264,6 +266,9 @@ function mapDbWorkOrderToWO(row: any): WorkOrder {
         hora_inicio: extractHoraFromFechaProgramada(row.fecha_programada),
         tecnico_asignado_id: row.tecnico_asignado_id || row.tecnico_id, // La vista usa tecnico_id
         tecnico_nombre: row.tecnico_nombre,
+        // Campos de confirmación
+        confirmacion_tecnico: row.confirmacion_tecnico,
+        confirmacion_cliente: row.confirmacion_cliente,
     };
 }
 
@@ -338,6 +343,50 @@ function mapDbTecnicoToTecnico(row: any): Tecnico {
 }
 
 // =====================================================
+// EMAIL QUEUE PROCESSING
+// =====================================================
+
+/**
+ * Procesa la cola de emails pendientes.
+ * Se llama al cargar la Agenda como workaround para la falta de pg_cron.
+ * No bloquea y no muestra errores al usuario.
+ */
+async function processEmailQueue(): Promise<void> {
+    try {
+        const supabase = getSupabase();
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
+
+        if (!token) {
+            console.log('[API/processEmailQueue] No hay sesión activa, saltando');
+            return;
+        }
+
+        const response = await fetch(
+            `${SUPABASE_URL}/functions/v1/process-email-queue`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({}),
+            }
+        );
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.processed > 0) {
+                console.log(`[API/processEmailQueue] ✉️ ${result.processed} email(s) procesados`);
+            }
+        }
+    } catch (error) {
+        // Silenciar errores - esto es background processing
+        console.log('[API/processEmailQueue] Error (silenciado):', error);
+    }
+}
+
+// =====================================================
 // EXPORT
 // =====================================================
 
@@ -348,6 +397,7 @@ const api = {
     unassignWorkOrder,
     fetchTechnicians,
     calculateTravelTime,
+    processEmailQueue,
 };
 
 export default api;

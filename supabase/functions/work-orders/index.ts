@@ -70,7 +70,13 @@ interface UpdateStatusPayload {
     estado: Estado;
 }
 
-type WorkOrderPayload = AssignPayload | CreatePayload | UpdateStatusPayload;
+interface UnassignPayload {
+    action: 'unassign';
+    wo_id: string;
+    motivo?: string; // Motivo de la cancelación
+}
+
+type WorkOrderPayload = AssignPayload | CreatePayload | UpdateStatusPayload | UnassignPayload;
 
 // =====================================================
 // MAIN HANDLER
@@ -107,6 +113,9 @@ Deno.serve(async (req) => {
 
             case 'update-status':
                 return await handleUpdateStatus(payload as UpdateStatusPayload);
+
+            case 'unassign':
+                return await handleUnassign(payload as UnassignPayload);
 
             default:
                 return jsonResponse({ error: `Acción no soportada` }, 400);
@@ -149,15 +158,21 @@ async function handleAssign(payload: AssignPayload): Promise<Response> {
             id,
             numero_wo,
             titulo,
+            descripcion,
+            notas_internas,
+            prioridad,
             estado,
             tiempo_servicio_estimado,
+            token_confirmacion,
             cliente_id,
             clients!inner (
                 id,
                 razon_social,
                 direccion,
                 lat,
-                lng
+                lng,
+                email,
+                telefono
             )
         `)
         .eq('id', wo_id)
@@ -322,6 +337,78 @@ async function handleAssign(payload: AssignPayload): Promise<Response> {
     };
 
     console.log(`[work-orders/assign] ✅ Asignación completada: ${wo.numero_wo} → ${tecnico.full_name}`);
+
+    // ─────────────────────────────────────────────────
+    // PASO F: ENCOLAR NOTIFICACIONES (delay de 2 minutos)
+    // ─────────────────────────────────────────────────
+    const fechaFormateada = new Date(fecha_hora_inicio).toLocaleString('es-AR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
+    const DELAY_MS = 2 * 60 * 1000; // 2 minutos
+    const enviarEn = new Date(Date.now() + DELAY_MS).toISOString();
+
+    const emailData = {
+        tecnicoNombre: tecnico.full_name,
+        numeroWO: wo.numero_wo,
+        clienteNombre: cliente.razon_social,
+        clienteTelefono: cliente.telefono || null,
+        clienteDireccion: cliente.direccion || '',
+        clienteLat: cliente.lat,
+        clienteLng: cliente.lng,
+        tipoServicio: wo.titulo || 'Servicio Técnico',
+        fechaProgramada: fechaFormateada,
+        tiempoEstimado: wo.tiempo_servicio_estimado || 60,
+        descripcion: wo.descripcion || '',
+        notasInternas: wo.notas_internas || '',
+        prioridad: wo.prioridad || 'Media',
+        tokenConfirmacion: (wo as any).token_confirmacion || '',
+    };
+
+    // Encolar emails (no bloquea la respuesta)
+    const emailsToQueue = [];
+
+    // Email al técnico
+    if (tecnico.email) {
+        emailsToQueue.push({
+            wo_id: wo_id,
+            tipo: 'wo-tecnico',
+            destinatario: tecnico.email,
+            destinatario_nombre: tecnico.full_name,
+            data: emailData,
+            programado_para: enviarEn,
+        });
+    }
+
+    // Email al cliente
+    if (cliente.email) {
+        emailsToQueue.push({
+            wo_id: wo_id,
+            tipo: 'wo-cliente',
+            destinatario: cliente.email,
+            destinatario_nombre: cliente.razon_social,
+            data: emailData,
+            programado_para: enviarEn,
+        });
+    }
+
+    if (emailsToQueue.length > 0) {
+        supabaseAdmin
+            .from('email_queue')
+            .insert(emailsToQueue)
+            .then(({ error }) => {
+                if (error) {
+                    console.error('[work-orders/assign] Error encolando emails:', error);
+                } else {
+                    console.log(`[work-orders/assign] ✉️ ${emailsToQueue.length} email(s) encolados para envío en 2 minutos`);
+                }
+            });
+    }
 
     return jsonResponse(responseData);
 }
@@ -540,6 +627,185 @@ async function handleDelete(payload: { action: 'delete'; wo_id: string }): Promi
 }
 
 // =====================================================
+// HANDLER: UNASSIGN (Desasignar WO y cancelar/enviar emails)
+// =====================================================
+
+async function handleUnassign(payload: UnassignPayload): Promise<Response> {
+    const { wo_id, motivo } = payload;
+    console.log(`[work-orders/unassign] Desasignando wo_id: ${wo_id}`);
+
+    if (!wo_id) return jsonResponse({ error: 'Se requiere wo_id' }, 400);
+
+    // Obtener WO con datos necesarios para email de cancelación
+    const { data: wo, error: woError } = await supabaseAdmin
+        .from('ordenes_trabajo')
+        .select(`
+            id,
+            numero_wo,
+            titulo,
+            estado,
+            fecha_programada,
+            tiempo_servicio_estimado,
+            tecnico_asignado_id,
+            cliente_id,
+            clients!inner (
+                id,
+                razon_social,
+                direccion,
+                email
+            )
+        `)
+        .eq('id', wo_id)
+        .single();
+
+    if (woError || !wo) {
+        console.error('[work-orders/unassign] WO no encontrada:', woError);
+        return jsonResponse({ error: 'Orden de trabajo no encontrada' }, 404);
+    }
+
+    // Verificar que está asignada
+    if (wo.estado !== 'Asignada') {
+        return jsonResponse({
+            error: `No se puede desasignar una WO en estado '${wo.estado}'`,
+            estado_actual: wo.estado
+        }, 400);
+    }
+
+    // Obtener datos del técnico para posible email de cancelación
+    let tecnico = null;
+    if (wo.tecnico_asignado_id) {
+        const { data: t } = await supabaseAdmin
+            .from('profiles')
+            .select('id, full_name, email')
+            .eq('id', wo.tecnico_asignado_id)
+            .single();
+        tecnico = t;
+    }
+
+    // ─────────────────────────────────────────────────
+    // PASO 1: Cancelar emails pendientes
+    // ─────────────────────────────────────────────────
+    const { data: pendingEmails } = await supabaseAdmin
+        .from('email_queue')
+        .select('id, estado')
+        .eq('wo_id', wo_id)
+        .eq('estado', 'pendiente');
+
+    const pendingCount = pendingEmails?.length || 0;
+
+    // Marcar emails pendientes como cancelados
+    if (pendingCount > 0) {
+        await supabaseAdmin
+            .from('email_queue')
+            .update({ estado: 'cancelado' })
+            .eq('wo_id', wo_id)
+            .eq('estado', 'pendiente');
+
+        console.log(`[work-orders/unassign] ✅ ${pendingCount} email(s) pendientes cancelados`);
+    }
+
+    // ─────────────────────────────────────────────────
+    // PASO 2: Si ya se enviaron emails, enviar cancelación
+    // ─────────────────────────────────────────────────
+    const { data: sentEmails } = await supabaseAdmin
+        .from('email_queue')
+        .select('id, tipo, destinatario')
+        .eq('wo_id', wo_id)
+        .eq('estado', 'enviado');
+
+    const sentToTecnico = sentEmails?.find(e => e.tipo === 'wo-tecnico');
+    const sentToCliente = sentEmails?.find(e => e.tipo === 'wo-cliente');
+
+    // Formatear fecha para el email de cancelación
+    const fechaFormateada = wo.fecha_programada
+        ? new Date(wo.fecha_programada).toLocaleString('es-AR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+        : 'No especificada';
+
+    const cliente = wo.clients as any;
+
+    // Enviar cancelación al técnico si ya recibió el email
+    if (sentToTecnico && tecnico?.email) {
+        await supabaseAdmin
+            .from('email_queue')
+            .insert({
+                wo_id: wo_id,
+                tipo: 'wo-cancelacion',
+                destinatario: tecnico.email,
+                destinatario_nombre: tecnico.full_name,
+                data: {
+                    tecnicoNombre: tecnico.full_name,
+                    numeroWO: wo.numero_wo,
+                    clienteNombre: cliente?.razon_social || 'Cliente',
+                    clienteDireccion: cliente?.direccion || '',
+                    tipoServicio: wo.titulo || 'Servicio Técnico',
+                    fechaProgramada: fechaFormateada,
+                    motivo: motivo || 'Reprogramación por parte de coordinación',
+                },
+                programado_para: new Date().toISOString(),
+            });
+
+        console.log(`[work-orders/unassign] ✉️ Email de cancelación encolado para técnico: ${tecnico.email}`);
+    }
+
+    // Enviar cancelación al cliente si ya recibió la confirmación
+    if (sentToCliente && cliente?.email) {
+        await supabaseAdmin
+            .from('email_queue')
+            .insert({
+                wo_id: wo_id,
+                tipo: 'wo-cancelacion-cliente',
+                destinatario: cliente.email,
+                destinatario_nombre: cliente.razon_social,
+                data: {
+                    clienteNombre: cliente.razon_social || 'Cliente',
+                    numeroWO: wo.numero_wo,
+                    tipoServicio: wo.titulo || 'Servicio Técnico',
+                    fechaProgramada: fechaFormateada,
+                    motivo: motivo || 'Reprogramación por parte de nuestro equipo',
+                },
+                programado_para: new Date().toISOString(),
+            });
+
+        console.log(`[work-orders/unassign] ✉️ Email de cancelación encolado para cliente: ${cliente.email}`);
+    }
+
+    // ─────────────────────────────────────────────────
+    // PASO 3: Actualizar WO a Bolsa_Trabajo
+    // ─────────────────────────────────────────────────
+    const { error: updateError } = await supabaseAdmin
+        .from('ordenes_trabajo')
+        .update({
+            estado: 'Bolsa_Trabajo',
+            tecnico_asignado_id: null,
+            fecha_programada: null,
+            tiempo_viaje_ida_estimado: null,
+            tiempo_viaje_vuelta_estimado: null,
+        })
+        .eq('id', wo_id);
+
+    if (updateError) {
+        console.error('[work-orders/unassign] Error actualizando WO:', updateError);
+        return jsonResponse({ error: 'Error al desasignar la orden de trabajo' }, 500);
+    }
+
+    console.log(`[work-orders/unassign] ✅ WO ${wo.numero_wo} desasignada y devuelta a Bolsa_Trabajo`);
+
+    return jsonResponse({
+        success: true,
+        numero_wo: wo.numero_wo,
+        emails_cancelados: pendingCount,
+        email_cancelacion_enviado: !!sentToTecnico,
+    });
+}
+
+// =====================================================
 // UTILIDADES
 // =====================================================
 
@@ -608,6 +874,115 @@ async function calculateDistanceMatrix(
     } catch (fetchError) {
         console.error('[work-orders] Distance Matrix FETCH ERROR:', fetchError);
         return null;
+    }
+}
+
+// =====================================================
+// ENVÍO DE NOTIFICACIONES POR EMAIL
+// =====================================================
+
+interface NotificationData {
+    tecnicoEmail: string | null;
+    tecnicoNombre: string;
+    clienteEmail: string | null;
+    clienteNombre: string;
+    clienteTelefono: string | null;
+    numeroWO: string;
+    fechaProgramada: string;
+    tipoServicio: string;
+    descripcion: string;
+    notasInternas: string;
+    tiempoEstimado: number;
+    clienteDireccion: string;
+    clienteLat: number | null;
+    clienteLng: number | null;
+    prioridad: string;
+}
+
+async function sendAssignmentNotifications(data: NotificationData): Promise<void> {
+    console.log('[work-orders/notify] Iniciando envío de notificaciones...');
+
+    const sendEmailEndpoint = `${SUPABASE_URL}/functions/v1/send-email`;
+
+    // Email al técnico (si tiene email)
+    if (data.tecnicoEmail) {
+        try {
+            console.log(`[work-orders/notify] Enviando email al técnico: ${data.tecnicoEmail}`);
+            const response = await fetch(sendEmailEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: 'wo-tecnico',
+                    to: data.tecnicoEmail,
+                    data: {
+                        tecnicoNombre: data.tecnicoNombre,
+                        numeroWO: data.numeroWO,
+                        clienteNombre: data.clienteNombre,
+                        clienteTelefono: data.clienteTelefono,
+                        clienteDireccion: data.clienteDireccion,
+                        clienteLat: data.clienteLat,
+                        clienteLng: data.clienteLng,
+                        tipoServicio: data.tipoServicio,
+                        fechaProgramada: data.fechaProgramada,
+                        tiempoEstimado: data.tiempoEstimado,
+                        descripcion: data.descripcion,
+                        notasInternas: data.notasInternas,
+                        prioridad: data.prioridad,
+                    },
+                }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('[work-orders/notify] Error enviando email al técnico:', error);
+            } else {
+                console.log('[work-orders/notify] ✅ Email al técnico enviado correctamente');
+            }
+        } catch (error) {
+            console.error('[work-orders/notify] Error fetch email técnico:', error);
+        }
+    } else {
+        console.log('[work-orders/notify] Técnico sin email configurado, no se envía notificación');
+    }
+
+    // Email al cliente (si tiene email)
+    if (data.clienteEmail) {
+        try {
+            console.log(`[work-orders/notify] Enviando email al cliente: ${data.clienteEmail}`);
+            const response = await fetch(sendEmailEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: 'wo-cliente',
+                    to: data.clienteEmail,
+                    data: {
+                        clienteNombre: data.clienteNombre,
+                        numeroWO: data.numeroWO,
+                        tecnicoNombre: data.tecnicoNombre,
+                        fechaProgramada: data.fechaProgramada,
+                        tipoServicio: data.tipoServicio,
+                        descripcion: data.descripcion,
+                    },
+                }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('[work-orders/notify] Error enviando email al cliente:', error);
+            } else {
+                console.log('[work-orders/notify] ✅ Email al cliente enviado correctamente');
+            }
+        } catch (error) {
+            console.error('[work-orders/notify] Error fetch email cliente:', error);
+        }
+    } else {
+        console.log('[work-orders/notify] Cliente sin email configurado, no se envía notificación');
     }
 }
 
