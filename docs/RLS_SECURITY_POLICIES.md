@@ -48,17 +48,37 @@ Este documento describe las políticas de Row Level Security (RLS) implementadas
 
 | Tabla | SELECT | INSERT | UPDATE | DELETE |
 |-------|:------:|:------:|:------:|:------:|
-| `profiles` | 🟢 Auth | 🟡 Own | 🟡 Own | 🔴 Admin |
-| `clients` | 🟢 Auth | 🟢 Auth | 🟢 Auth | 🔴 Admin |
-| `equipments` | 🟢 Auth | 🟢 Auth | 🟢 Auth | 🔴 Admin |
-| `maintenances` | 🟢 Auth | 🟢 Auth | 🟡 Owner | 🔴 Owner/Admin |
-| `remitos` | 🟢 Auth | 🟢 Auth | 🟡 Owner | 🔴 Owner/Admin |
-| `feedback` | 🟡 Own | 🟢 Auth | 🔴 Admin | 🔴 Admin |
+| `profiles` | 🟢 Auth | 🟡 Own | 🟡 Own | 🟣 Elevated |
+| `clients` | 🟢 Auth | 🟢 Auth | 🟢 Auth | 🟣 Elevated |
+| `equipments` | 🟢 Auth | 🟢 Auth | 🟢 Auth | 🟣 Elevated |
+| `maintenances` | 🟢 Auth | 🟢 Auth | 🟡 Owner/Elevated | 🟡 Owner/Elevated |
+| `remitos` | 🟢 Auth | 🟢 Auth | 🟡 Owner/Elevated | 🟡 Owner/Elevated |
+| `feedback` | 🟡 Own | 🟢 Auth | 🟣 Elevated | 🟣 Elevated |
 
 **Leyenda:**
 - 🟢 **Auth** = Cualquier usuario autenticado
 - 🟡 **Own/Owner** = Solo el propietario del registro
-- 🔴 **Admin** = Solo usuarios con `role = 'admin'`
+- 🟣 **Elevated** = Usuarios con permisos elevados (admin, ventas, coordinador, jefe_servicio)
+
+---
+
+## Roles del Sistema
+
+| Rol | Panel Admin | Coordinar Agenda | Crear WO | Delete/Update Datos |
+|-----|:-----------:|:----------------:|:--------:|:-------------------:|
+| `admin` | ✅ | ✅ | ✅ | ✅ |
+| `ventas` | ✅ | ❌ | ✅ | ✅ |
+| `coordinador` | ❌ | ✅ | ✅ | ✅ |
+| `jefe_servicio` | ❌ | ❌ (solo ver) | ✅ | ✅ |
+| `tecnico` | ❌ | ❌ (solo ver) | ❌ | Solo propios |
+
+### Descripción de Roles
+
+- **admin** - Administrador: Acceso completo a todas las funciones
+- **ventas** - Ventas: Panel Admin + Crear WOs, NO puede coordinar agenda
+- **coordinador** - Coordinador: Agenda completa, NO tiene panel admin
+- **jefe_servicio** - Jefe de Servicio: Permisos elevados, agenda solo lectura
+- **tecnico** - Técnico: Permisos básicos, agenda solo lectura
 
 ---
 

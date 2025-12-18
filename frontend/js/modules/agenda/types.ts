@@ -97,3 +97,41 @@ export const CONFIRMACION_CONFIG: Record<string, { icon: string; bg: string; tex
     'confirmada': { icon: '✅', bg: 'bg-green-100', text: 'text-green-700', label: 'Confirmado' },
     'rechazada': { icon: '❌', bg: 'bg-red-100', text: 'text-red-700', label: 'Rechazado' },
 };
+
+// Tipos para vistas de agenda
+export type ViewMode = 'day' | 'week' | 'month';
+
+// Datos de un día para vista semana/mes
+export interface DaySummary {
+    date: Date;
+    dateKey: string; // 'YYYY-MM-DD'
+    workOrderCount: number;
+    totalServiceHours: number;
+    isToday: boolean;
+    isCurrentMonth: boolean;
+}
+
+// Datos de técnico para vista semana
+export interface TechnicianWeekSummary {
+    tecnico: Tecnico;
+    days: DaySummary[];
+}
+
+// Helpers para calcular carga
+export const CARGA_THRESHOLDS = {
+    BAJA: 4,    // 0-4 horas
+    MEDIA: 6,   // 4-6 horas
+    ALTA: 8,    // 6+ horas
+};
+
+export function getCargaColor(hours: number): { bg: string; text: string; indicator: string } {
+    if (hours === 0) {
+        return { bg: 'bg-slate-50', text: 'text-slate-400', indicator: '—' };
+    } else if (hours <= CARGA_THRESHOLDS.BAJA) {
+        return { bg: 'bg-emerald-50', text: 'text-emerald-700', indicator: '🟢' };
+    } else if (hours <= CARGA_THRESHOLDS.MEDIA) {
+        return { bg: 'bg-amber-50', text: 'text-amber-700', indicator: '🟡' };
+    } else {
+        return { bg: 'bg-red-50', text: 'text-red-700', indicator: '🔴' };
+    }
+}

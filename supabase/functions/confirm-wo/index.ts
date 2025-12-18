@@ -15,6 +15,29 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
 });
 
+// Obtener usuarios por roles (ventas, jefe_servicio, coordinador)
+async function getUsersByRoles(roles: string[]): Promise<Array<{ email: string; nombre: string; rol: string }>> {
+    try {
+        const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+        if (error || !users) return [];
+
+        return users
+            .filter(user => {
+                const userRol = user.user_metadata?.rol?.toLowerCase() || '';
+                return roles.some(r => r.toLowerCase() === userRol);
+            })
+            .map(user => ({
+                email: user.email || '',
+                nombre: user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
+                rol: user.user_metadata?.rol || '',
+            }))
+            .filter(u => u.email); // Solo usuarios con email
+    } catch (e) {
+        console.error('[confirm-wo] Error fetching users by role:', e);
+        return [];
+    }
+}
+
 interface ConfirmPayload {
     token: string;
     tipo: 'tecnico' | 'cliente';
@@ -154,11 +177,72 @@ Deno.serve(async (req) => {
                 console.log(`[confirm-wo] ✉️ Email de confirmación encolado para cliente: ${cliente.email}`);
             }
 
+            // NOTIFICAR A VENTAS Y JEFE DE SERVICIO
+            const notifyUsers = await getUsersByRoles(['ventas', 'jefe_servicio']);
+            const tecnicoNombre = await getTecnicoNombre(wo.tecnico_asignado_id);
+
+            for (const user of notifyUsers) {
+                await supabaseAdmin
+                    .from('email_queue')
+                    .insert({
+                        wo_id: wo.id,
+                        tipo: 'wo-confirmada-interno',
+                        destinatario: user.email,
+                        destinatario_nombre: user.nombre,
+                        data: {
+                            destinatarioNombre: user.nombre,
+                            numeroWO: wo.numero_wo,
+                            tecnicoNombre: tecnicoNombre,
+                            clienteNombre: cliente?.razon_social || 'Cliente',
+                            tipoServicio: wo.titulo || 'Servicio Técnico',
+                            fechaProgramada: fechaFormateada,
+                        },
+                        programado_para: new Date().toISOString(),
+                    });
+                console.log(`[confirm-wo] ✉️ Notificación interna encolada para ${user.rol}: ${user.email}`);
+            }
+
             return htmlResponse('success', '¡Confirmado!',
                 `Has confirmado tu asistencia a la orden ${wo.numero_wo}. El cliente será notificado.`);
         } else {
             // Notificar a coordinación sobre el rechazo
-            // TODO: Implementar notificación a coordinación
+            const notifyUsers = await getUsersByRoles(['ventas', 'jefe_servicio', 'coordinador']);
+            const tecnicoNombre = await getTecnicoNombre(wo.tecnico_asignado_id);
+            const cliente = wo.clients as any;
+
+            const fechaFormateada = wo.fecha_programada
+                ? new Date(wo.fecha_programada).toLocaleString('es-AR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                })
+                : 'A coordinar';
+
+            for (const user of notifyUsers) {
+                await supabaseAdmin
+                    .from('email_queue')
+                    .insert({
+                        wo_id: wo.id,
+                        tipo: 'wo-rechazada-interno',
+                        destinatario: user.email,
+                        destinatario_nombre: user.nombre,
+                        data: {
+                            destinatarioNombre: user.nombre,
+                            numeroWO: wo.numero_wo,
+                            tecnicoNombre: tecnicoNombre,
+                            clienteNombre: cliente?.razon_social || 'Cliente',
+                            tipoServicio: wo.titulo || 'Servicio Técnico',
+                            fechaProgramada: fechaFormateada,
+                            motivo: motivo || 'No especificado',
+                        },
+                        programado_para: new Date().toISOString(),
+                    });
+                console.log(`[confirm-wo] ⚠️ Notificación de rechazo encolada para ${user.rol}: ${user.email}`);
+            }
+
             console.log(`[confirm-wo] ⚠️ Técnico rechazó WO ${wo.numero_wo}`);
 
             return htmlResponse('warning', 'Rechazo Registrado',
@@ -225,4 +309,15 @@ function htmlResponse(status: 'success' | 'error' | 'warning' | 'info', title: s
             'Location': redirectUrl,
         },
     });
+}
+
+// Helper para obtener nombre del técnico
+async function getTecnicoNombre(tecnicoId: string | null): Promise<string> {
+    if (!tecnicoId) return 'Técnico';
+    try {
+        const { data } = await supabaseAdmin.auth.admin.getUserById(tecnicoId);
+        return data?.user?.user_metadata?.nombre || 'Técnico';
+    } catch {
+        return 'Técnico';
+    }
 }

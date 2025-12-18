@@ -23,8 +23,8 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
 });
 
-// Roles válidos en el sistema
-const VALID_ROLES = ['Administrador', 'tecnico', 'supervisor'];
+// Roles válidos en el sistema (normalizados)
+const VALID_ROLES = ['admin', 'ventas', 'coordinador', 'jefe_servicio', 'tecnico'];
 
 Deno.serve(async (req) => {
     // Handle CORS preflight
@@ -35,21 +35,32 @@ Deno.serve(async (req) => {
     try {
         // Verificar que el usuario que hace la petición es admin
         const authHeader = req.headers.get('Authorization');
+        console.log('[admin-users] Auth header present:', !!authHeader);
+
         if (!authHeader) {
+            console.log('[admin-users] No auth header - returning 401');
             return jsonResponse({ error: 'No autorizado' }, 401);
         }
 
         const token = authHeader.replace('Bearer ', '');
+        console.log('[admin-users] Token length:', token.length);
+
         const { data: { user: requestingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
+        console.log('[admin-users] Auth result - user:', requestingUser?.email, 'error:', authError?.message);
+
         if (authError || !requestingUser) {
-            return jsonResponse({ error: 'Token inválido' }, 401);
+            console.log('[admin-users] Auth error or no user - returning 401');
+            return jsonResponse({ error: 'Token inválido', details: authError?.message }, 401);
         }
 
         // Verificar que el usuario es administrador
         const userRole = requestingUser.user_metadata?.rol || requestingUser.app_metadata?.role;
+        console.log('[admin-users] User role from metadata:', userRole, 'isAdmin:', isAdmin(userRole));
+
         if (!isAdmin(userRole)) {
-            return jsonResponse({ error: 'Acceso denegado. Se requiere rol de Administrador.' }, 403);
+            console.log('[admin-users] User not admin - returning 403');
+            return jsonResponse({ error: 'Acceso denegado. Se requiere rol de Administrador.', userRole }, 403);
         }
 
         const url = new URL(req.url);
@@ -89,7 +100,15 @@ Deno.serve(async (req) => {
 function isAdmin(role: string | undefined): boolean {
     if (!role) return false;
     const normalizedRole = role.toLowerCase().trim();
-    return normalizedRole === 'administrador' || normalizedRole === 'admin';
+    // Admin panel access: admin, ventas
+    return normalizedRole === 'administrador' || normalizedRole === 'admin' || normalizedRole === 'ventas';
+}
+
+function hasElevatedPermissions(role: string | undefined): boolean {
+    if (!role) return false;
+    const normalizedRole = role.toLowerCase().trim();
+    // Elevated permissions: admin, ventas, coordinador, jefe_servicio
+    return ['administrador', 'admin', 'ventas', 'coordinador', 'jefe_servicio'].includes(normalizedRole);
 }
 
 async function listUsers() {

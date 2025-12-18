@@ -12,6 +12,7 @@ interface BacklogPanelProps {
     onWorkOrderClick?: (wo: WorkOrder) => void;
     onCreateClick?: () => void;
     onDeleteWO?: (woId: string) => void;
+    readOnly?: boolean;
 }
 
 /**
@@ -26,6 +27,7 @@ export function BacklogPanel({
     onWorkOrderClick,
     onCreateClick,
     onDeleteWO,
+    readOnly = false,
 }: BacklogPanelProps) {
     // Filtrar WOs
     const filteredWOs = workOrders.filter(wo => {

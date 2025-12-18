@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '../../supabaseClient.js';
-import { getCurrentUserRole } from '../login/auth.js';
+import { getCurrentUserRole, isAdmin, canAccessAdminPanel } from '../login/auth.js';
 import { bindSistemasEquiposEventListeners, loadSistemas, loadEquipos } from './sistemasEquipos.js';
 
 const ITEMS_PER_PAGE = 15;
@@ -84,25 +84,15 @@ function tryInitPlacesOnModalOpen() {
     }
 }
 
-// Verificar si el usuario es admin
-function isAdmin() {
-    const role = getCurrentUserRole();
-    console.log('[AdminPanel] Checking role:', role);
-    // Aceptar variantes: Administrador, administrador, Admin, admin
-    return role && (
-        role.toLowerCase() === 'administrador' ||
-        role.toLowerCase() === 'admin'
-    );
-}
-
 // Mostrar/ocultar opción del menú según rol
+// Visible para: admin, ventas
 function updateAdminMenuVisibility() {
     const adminMenuItem = document.getElementById('admin-panel-menu-item');
-    const isAdminUser = isAdmin();
-    console.log('[AdminPanel] updateAdminMenuVisibility - isAdmin:', isAdminUser);
+    const hasAccess = canAccessAdminPanel();
+    console.log('[AdminPanel] updateAdminMenuVisibility - canAccessAdminPanel:', hasAccess);
 
     if (adminMenuItem) {
-        if (isAdminUser) {
+        if (hasAccess) {
             adminMenuItem.classList.remove('hidden');
             console.log('[AdminPanel] Admin menu item shown');
         } else {
@@ -863,13 +853,24 @@ function getAdminUsersUrl() {
 
 // Obtener token de autorización
 async function getAuthToken() {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token || '';
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+        console.error('[AdminPanel] Error getting session:', error);
+    }
+    const token = session?.access_token || '';
+    console.log('[AdminPanel] Token obtained:', token ? `${token.substring(0, 20)}...` : 'EMPTY');
+    return token;
 }
 
 // Hacer petición a la Edge Function
 async function fetchAdminUsers(method, endpoint = '', body = null) {
     const token = await getAuthToken();
+
+    if (!token) {
+        console.error('[AdminPanel] No token available - user might not be logged in');
+        throw new Error('No hay sesión activa. Por favor, vuelva a iniciar sesión.');
+    }
+
     const url = getAdminUsersUrl() + endpoint;
 
     const options = {
@@ -888,7 +889,8 @@ async function fetchAdminUsers(method, endpoint = '', body = null) {
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.error || 'Error en la operación');
+        console.error('[AdminPanel] API Error:', response.status, data);
+        throw new Error(data.error || data.message || 'Error en la operación');
     }
 
     return data;
@@ -1025,12 +1027,22 @@ function getRolBadge(rol) {
     const roles = {
         'Administrador': 'bg-purple-100 text-purple-700',
         'admin': 'bg-purple-100 text-purple-700',
-        'supervisor': 'bg-blue-100 text-blue-700',
+        'ventas': 'bg-emerald-100 text-emerald-700',
+        'coordinador': 'bg-amber-100 text-amber-700',
+        'jefe_servicio': 'bg-blue-100 text-blue-700',
         'tecnico': 'bg-gray-100 text-gray-700'
     };
 
     const colorClass = roles[rol] || 'bg-gray-100 text-gray-700';
-    const displayRol = rol === 'tecnico' ? 'Técnico' : (rol === 'supervisor' ? 'Supervisor' : rol);
+    const roleLabels = {
+        'admin': 'Administrador',
+        'Administrador': 'Administrador',
+        'ventas': 'Ventas',
+        'coordinador': 'Coordinador',
+        'jefe_servicio': 'Jefe de Servicio',
+        'tecnico': 'Técnico'
+    };
+    const displayRol = roleLabels[rol] || rol;
 
     return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}">${escapeHtml(displayRol)}</span>`;
 }

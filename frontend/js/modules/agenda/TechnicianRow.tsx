@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDraggable } from '@dnd-kit/core';
 import { MapPin, Star, Briefcase } from 'lucide-react';
 import { Tecnico, ScheduledTask, TimeSlot, SCHEDULER_CONFIG, PRIORIDAD_COLORS, CONFIRMACION_CONFIG } from './types';
 import { DroppableSlot, calculateBlockWidth, calculateBlockPosition } from './TimeGrid';
@@ -8,12 +9,13 @@ interface TechnicianRowProps {
     slots: TimeSlot[];
     scheduledTasks: ScheduledTask[];
     onTaskClick?: (task: ScheduledTask) => void;
+    isDragging?: boolean; // For highlighting available drop zones
 }
 
 /**
  * Fila de un técnico con sus tareas programadas
  */
-export function TechnicianRow({ tecnico, slots, scheduledTasks, onTaskClick }: TechnicianRowProps) {
+export function TechnicianRow({ tecnico, slots, scheduledTasks, onTaskClick, isDragging = false }: TechnicianRowProps) {
     const { INTERVALO_MIN, PIXEL_POR_MINUTO } = SCHEDULER_CONFIG;
     const slotWidth = INTERVALO_MIN * PIXEL_POR_MINUTO;
     const rowHeight = 80; // pixels
@@ -95,6 +97,7 @@ export function TechnicianRow({ tecnico, slots, scheduledTasks, onTaskClick }: T
                         tecnicoId={tecnico.id}
                         slot={slot}
                         scheduledTasks={tasks}
+                        isDragging={isDragging}
                     />
                 ))}
 
@@ -122,9 +125,16 @@ interface ScheduledTaskBlockProps {
 
 /**
  * Bloque de tarea programada con estructura de "sándwich" (viaje-servicio-viaje)
+ * Ahora es DRAGGABLE para permitir reubicación
  */
 function ScheduledTaskBlock({ task, slots, rowHeight, onClick }: ScheduledTaskBlockProps) {
     const { wo, viaje_ida_min, servicio_min, viaje_vuelta_min, hora_inicio } = task;
+
+    // Make this block draggable
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: `scheduled-${wo.id}`,
+        data: { type: 'scheduledTask', task, wo },
+    });
 
     const totalDuration = viaje_ida_min + servicio_min + viaje_vuelta_min;
     const totalWidth = calculateBlockWidth(totalDuration);
@@ -153,10 +163,22 @@ function ScheduledTaskBlock({ task, slots, rowHeight, onClick }: ScheduledTaskBl
         return 'transparent';
     };
 
+    // Style for drag transform
+    const dragStyle = transform ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 1000,
+    } : {};
+
     return (
         <div
-            className="absolute top-1 bottom-1 flex flex-col rounded-lg overflow-hidden cursor-pointer
-                       shadow-md hover:shadow-lg transition-shadow border border-slate-200"
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            className={`
+                absolute top-1 bottom-1 flex flex-col rounded-lg overflow-hidden
+                shadow-md hover:shadow-lg transition-all border border-slate-200
+                ${isDragging ? 'opacity-50 cursor-grabbing ring-2 ring-indigo-400' : 'cursor-grab'}
+            `}
             style={{
                 left: `${position}px`,
                 width: `${totalWidth}px`,

@@ -136,6 +136,31 @@
     animation: scaleIn 0.3s ease-out;
 }
 
+/* Drag and Drop feedback animations */
+@keyframes pulse-subtle {
+    0%, 100% {
+        background-color: rgb(240 253 244); /* green-50 */
+    }
+    50% {
+        background-color: rgb(220 252 231); /* green-100 */
+    }
+}
+
+.animate-pulse-subtle {
+    animation: pulse-subtle 1.5s ease-in-out infinite;
+}
+
+/* Striped pattern for occupied slots */
+.bg-stripes-red {
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(239, 68, 68, 0.15) 4px,
+        rgba(239, 68, 68, 0.15) 8px
+    );
+}
+
 @layer components {
     /* ===== Searchable Dropdown (Admin Equipos) ===== */
     .searchable-option {

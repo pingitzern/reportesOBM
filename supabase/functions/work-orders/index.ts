@@ -76,7 +76,15 @@ interface UnassignPayload {
     motivo?: string; // Motivo de la cancelación
 }
 
-type WorkOrderPayload = AssignPayload | CreatePayload | UpdateStatusPayload | UnassignPayload;
+interface RepositionPayload {
+    action: 'reposition';
+    wo_id: string;
+    nuevo_tecnico_id: string;
+    fecha_hora_inicio: string;
+    tecnico_anterior_id?: string; // Para enviar notificación de cancelación
+}
+
+type WorkOrderPayload = AssignPayload | CreatePayload | UpdateStatusPayload | UnassignPayload | RepositionPayload;
 
 // =====================================================
 // MAIN HANDLER
@@ -116,6 +124,9 @@ Deno.serve(async (req) => {
 
             case 'unassign':
                 return await handleUnassign(payload as UnassignPayload);
+
+            case 'reposition':
+                return await handleReposition(payload as RepositionPayload);
 
             default:
                 return jsonResponse({ error: `Acción no soportada` }, 400);
@@ -237,18 +248,28 @@ async function handleAssign(payload: AssignPayload): Promise<Response> {
     });
 
     // ─────────────────────────────────────────────────
-    // PASO C: Cálculo Logístico (Distance Matrix)
+    // PASO C: Cálculo Logístico con Origen Encadenado
     // ─────────────────────────────────────────────────
 
     let tiempoViajeEstimado = DEFAULT_TRAVEL_TIME_MIN;
     let distanciaKm = 0;
     let warningMessage: string | null = null;
 
-    if (tecnicoCoords && clienteCoords && GOOGLE_MAPS_API_KEY) {
+    // Encontrar el punto de origen correcto (cliente anterior o base del técnico)
+    const { origin: origenCoords } = await findOriginForNewWO(
+        tecnico_id,
+        tecnicoCoords,
+        fecha_hora_inicio,
+        wo_id
+    );
+
+    console.log('[work-orders/assign] Origen calculado:', origenCoords);
+
+    if (origenCoords && clienteCoords && GOOGLE_MAPS_API_KEY) {
         try {
             // Usar la hora de inicio de la WO para predicción de tráfico
             const departureTime = new Date(fecha_hora_inicio);
-            const travelResult = await calculateDistanceMatrix(tecnicoCoords, clienteCoords, departureTime);
+            const travelResult = await calculateDistanceMatrix(origenCoords, clienteCoords, departureTime);
 
             if (travelResult) {
                 tiempoViajeEstimado = travelResult.duration_min;
@@ -263,7 +284,7 @@ async function handleAssign(payload: AssignPayload): Promise<Response> {
             console.warn('[work-orders/assign] ⚠️', warningMessage);
         }
     } else {
-        if (!tecnicoCoords) warningMessage = 'Técnico sin coordenadas, usando tiempo por defecto';
+        if (!origenCoords) warningMessage = 'Sin coordenadas de origen, usando tiempo por defecto';
         else if (!clienteCoords) warningMessage = 'Cliente sin coordenadas, usando tiempo por defecto';
         else if (!GOOGLE_MAPS_API_KEY) warningMessage = 'API Key de Google Maps no configurada';
 
@@ -318,6 +339,21 @@ async function handleAssign(payload: AssignPayload): Promise<Response> {
             error: 'Error al actualizar la orden de trabajo',
             details: updateError.message
         }, 500);
+    }
+
+    // ─────────────────────────────────────────────────
+    // PASO D.1: Recalcular WOs posteriores en cascada
+    // ─────────────────────────────────────────────────
+    const fechaAsignacion = fecha_hora_inicio.split('T')[0];
+    const recalcResult = await recalculateSubsequentWOs(
+        tecnico_id,
+        tecnicoCoords,
+        fechaAsignacion,
+        fecha_hora_inicio
+    );
+
+    if (recalcResult.recalculated > 0) {
+        console.log(`[work-orders/assign] ♻️ Recalculadas ${recalcResult.recalculated} WOs posteriores`);
     }
 
     // ─────────────────────────────────────────────────
@@ -803,6 +839,445 @@ async function handleUnassign(payload: UnassignPayload): Promise<Response> {
         emails_cancelados: pendingCount,
         email_cancelacion_enviado: !!sentToTecnico,
     });
+}
+
+// =====================================================
+// HANDLER: REPOSITION (Reubicar WO a otro técnico/hora)
+// =====================================================
+
+async function handleReposition(payload: RepositionPayload): Promise<Response> {
+    const { wo_id, nuevo_tecnico_id, fecha_hora_inicio, tecnico_anterior_id } = payload;
+    console.log(`[work-orders/reposition] Reubicando wo_id: ${wo_id} → técnico: ${nuevo_tecnico_id}`);
+
+    if (!wo_id || !nuevo_tecnico_id || !fecha_hora_inicio) {
+        return jsonResponse({ error: 'Se requiere wo_id, nuevo_tecnico_id y fecha_hora_inicio' }, 400);
+    }
+
+    // Obtener WO con datos
+    const { data: wo, error: woError } = await supabaseAdmin
+        .from('ordenes_trabajo')
+        .select(`
+            id,
+            numero_wo,
+            titulo,
+            estado,
+            fecha_programada,
+            tiempo_servicio_estimado,
+            tecnico_asignado_id,
+            cliente_id,
+            clients!inner (
+                id,
+                razon_social,
+                direccion,
+                email,
+                lat,
+                lng
+            )
+        `)
+        .eq('id', wo_id)
+        .single();
+
+    if (woError || !wo) {
+        console.error('[work-orders/reposition] WO no encontrada:', woError);
+        return jsonResponse({ error: 'Orden de trabajo no encontrada' }, 404);
+    }
+
+    const tecnicoAnteriorId = tecnico_anterior_id || wo.tecnico_asignado_id;
+    const cambioTecnico = tecnicoAnteriorId && tecnicoAnteriorId !== nuevo_tecnico_id;
+
+    // Obtener datos del técnico anterior si hay cambio
+    let tecnicoAnterior: { id: string; full_name: string; email: string } | null = null;
+    if (cambioTecnico && tecnicoAnteriorId) {
+        const { data: t } = await supabaseAdmin
+            .from('profiles')
+            .select('id, full_name, email')
+            .eq('id', tecnicoAnteriorId)
+            .single();
+        tecnicoAnterior = t;
+    }
+
+    // Obtener datos del nuevo técnico
+    const { data: nuevoTecnico, error: tecnicoError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, email, lat, lng')
+        .eq('id', nuevo_tecnico_id)
+        .single();
+
+    if (tecnicoError || !nuevoTecnico) {
+        return jsonResponse({ error: 'Técnico nuevo no encontrado' }, 404);
+    }
+
+    const cliente = wo.clients as any;
+
+    // ─────────────────────────────────────────────────
+    // PASO 1: Si hay cambio de técnico, cancelar emails pendientes al anterior
+    // ─────────────────────────────────────────────────
+    if (cambioTecnico) {
+        // Cancelar emails pendientes al técnico anterior
+        const { data: pendingEmails } = await supabaseAdmin
+            .from('email_queue')
+            .select('id')
+            .eq('wo_id', wo_id)
+            .eq('estado', 'pendiente');
+
+        if (pendingEmails && pendingEmails.length > 0) {
+            await supabaseAdmin
+                .from('email_queue')
+                .update({ estado: 'cancelado' })
+                .eq('wo_id', wo_id)
+                .eq('estado', 'pendiente');
+
+            console.log(`[work-orders/reposition] ✅ ${pendingEmails.length} emails pendientes cancelados`);
+        }
+
+        // Verificar si ya se envió email al técnico anterior
+        const { data: sentEmails } = await supabaseAdmin
+            .from('email_queue')
+            .select('id, tipo')
+            .eq('wo_id', wo_id)
+            .eq('estado', 'enviado')
+            .eq('tipo', 'wo-tecnico');
+
+        const fechaOriginalFormateada = wo.fecha_programada
+            ? new Date(wo.fecha_programada).toLocaleString('es-AR', {
+                weekday: 'long', day: 'numeric', month: 'long',
+                year: 'numeric', hour: '2-digit', minute: '2-digit',
+            })
+            : 'No especificada';
+
+        // Enviar cancelación al técnico anterior si ya había recibido email
+        if (sentEmails && sentEmails.length > 0 && tecnicoAnterior?.email) {
+            await supabaseAdmin
+                .from('email_queue')
+                .insert({
+                    wo_id: wo_id,
+                    tipo: 'wo-cancelacion',
+                    destinatario: tecnicoAnterior.email,
+                    destinatario_nombre: tecnicoAnterior.full_name,
+                    data: {
+                        tecnicoNombre: tecnicoAnterior.full_name,
+                        numeroWO: wo.numero_wo,
+                        clienteNombre: cliente?.razon_social || 'Cliente',
+                        clienteDireccion: cliente?.direccion || '',
+                        tipoServicio: wo.titulo || 'Servicio Técnico',
+                        fechaProgramada: fechaOriginalFormateada,
+                        motivo: 'Servicio reasignado a otro técnico',
+                    },
+                    programado_para: new Date().toISOString(), // Enviar inmediatamente
+                });
+
+            console.log(`[work-orders/reposition] ✉️ Email de cancelación enviado a técnico anterior: ${tecnicoAnterior.email}`);
+        }
+    }
+
+    // ─────────────────────────────────────────────────
+    // PASO 2: Calcular tiempo de viaje con origen encadenado
+    // ─────────────────────────────────────────────────
+    const tecnicoCoords: Coordinates | null = (nuevoTecnico.lat && nuevoTecnico.lng)
+        ? { lat: nuevoTecnico.lat, lng: nuevoTecnico.lng }
+        : null;
+
+    const clienteCoords: Coordinates | null = (cliente?.lat && cliente?.lng)
+        ? { lat: cliente.lat, lng: cliente.lng }
+        : null;
+
+    // Encontrar el punto de origen correcto
+    const { origin: origenCoords } = await findOriginForNewWO(
+        nuevo_tecnico_id,
+        tecnicoCoords,
+        fecha_hora_inicio,
+        wo_id
+    );
+
+    let tiempoViajeEstimado = DEFAULT_TRAVEL_TIME_MIN;
+    if (origenCoords && clienteCoords && GOOGLE_MAPS_API_KEY) {
+        try {
+            const departureTime = new Date(fecha_hora_inicio);
+            const travelResult = await calculateDistanceMatrix(origenCoords, clienteCoords, departureTime);
+            if (travelResult) {
+                tiempoViajeEstimado = travelResult.duration_min;
+                console.log(`[work-orders/reposition] ✅ Tiempo viaje calculado: ${tiempoViajeEstimado} min`);
+            }
+        } catch (err) {
+            console.warn('[work-orders/reposition] ⚠️ Error calculando viaje:', err);
+        }
+    }
+
+    // ─────────────────────────────────────────────────
+    // PASO 2.1: Actualizar WO con nuevo técnico, hora y tiempos
+    // ─────────────────────────────────────────────────
+    const updateData = {
+        tecnico_asignado_id: nuevo_tecnico_id,
+        fecha_programada: fecha_hora_inicio,
+        tiempo_viaje_ida_estimado: tiempoViajeEstimado,
+        tiempo_viaje_vuelta_estimado: Math.round(tiempoViajeEstimado * 0.9),
+        estado: 'Asignada' as Estado,
+        updated_at: new Date().toISOString(),
+    };
+
+    const { data: updatedWO, error: updateError } = await supabaseAdmin
+        .from('ordenes_trabajo')
+        .update(updateData)
+        .eq('id', wo_id)
+        .select()
+        .single();
+
+    if (updateError) {
+        console.error('[work-orders/reposition] Error actualizando WO:', updateError);
+        return jsonResponse({ error: 'Error al reposicionar la orden de trabajo' }, 500);
+    }
+
+    // ─────────────────────────────────────────────────
+    // PASO 2.2: Recalcular WOs posteriores en cascada
+    // ─────────────────────────────────────────────────
+    const fechaDia = fecha_hora_inicio.split('T')[0];
+    await recalculateSubsequentWOs(nuevo_tecnico_id, tecnicoCoords, fechaDia, fecha_hora_inicio);
+
+    // ─────────────────────────────────────────────────
+    // PASO 3: Encolar notificación al nuevo técnico (con delay si es cambio de técnico)
+    // ─────────────────────────────────────────────────
+    const fechaNuevaFormateada = new Date(fecha_hora_inicio).toLocaleString('es-AR', {
+        weekday: 'long', day: 'numeric', month: 'long',
+        year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+
+    const DELAY_MS = cambioTecnico ? 0 : 2 * 60 * 1000; // Sin delay si es cambio de técnico
+    const enviarEn = new Date(Date.now() + DELAY_MS).toISOString();
+
+    const emailData = {
+        tecnicoNombre: nuevoTecnico.full_name,
+        numeroWO: wo.numero_wo,
+        clienteNombre: cliente?.razon_social || 'Cliente',
+        clienteDireccion: cliente?.direccion || '',
+        tipoServicio: wo.titulo || 'Servicio Técnico',
+        fechaProgramada: fechaNuevaFormateada,
+        tiempoEstimado: wo.tiempo_servicio_estimado || 60,
+        prioridad: 'Media',
+    };
+
+    // Email al nuevo técnico
+    if (nuevoTecnico.email) {
+        await supabaseAdmin
+            .from('email_queue')
+            .insert({
+                wo_id: wo_id,
+                tipo: 'wo-tecnico',
+                destinatario: nuevoTecnico.email,
+                destinatario_nombre: nuevoTecnico.full_name,
+                data: emailData,
+                programado_para: enviarEn,
+            });
+
+        console.log(`[work-orders/reposition] ✉️ Email encolado para nuevo técnico: ${nuevoTecnico.email}`);
+    }
+
+    // Email al cliente (si cambió de técnico, notificar inmediatamente)
+    if (cambioTecnico && cliente?.email) {
+        await supabaseAdmin
+            .from('email_queue')
+            .insert({
+                wo_id: wo_id,
+                tipo: 'wo-cliente',
+                destinatario: cliente.email,
+                destinatario_nombre: cliente.razon_social,
+                data: {
+                    ...emailData,
+                    clienteNombre: cliente.razon_social,
+                },
+                programado_para: new Date().toISOString(),
+            });
+
+        console.log(`[work-orders/reposition] ✉️ Email encolado para cliente: ${cliente.email}`);
+    }
+
+    console.log(`[work-orders/reposition] ✅ WO ${wo.numero_wo} reposicionada → ${nuevoTecnico.full_name}`);
+
+    return jsonResponse({
+        success: true,
+        numero_wo: wo.numero_wo,
+        cambio_tecnico: cambioTecnico,
+        tecnico_anterior: tecnicoAnterior?.full_name,
+        tecnico_nuevo: nuevoTecnico.full_name,
+        wo: updatedWO,
+    });
+}
+
+// =====================================================
+// HELPERS: CÁLCULO DE TIEMPOS ENCADENADOS
+// =====================================================
+
+interface ScheduledWO {
+    id: string;
+    fecha_programada: string;
+    tiempo_servicio_estimado: number | null;
+    tiempo_viaje_ida_estimado: number | null;
+    clients: { lat: number | null; lng: number | null } | null;
+}
+
+/**
+ * Encuentra las coordenadas del punto de origen para una nueva WO.
+ * - Si hay WOs anteriores del mismo técnico/día, usa la ubicación del último cliente
+ * - Si no hay, usa las coordenadas base del técnico
+ */
+async function findOriginForNewWO(
+    tecnicoId: string,
+    tecnicoCoords: Coordinates | null,
+    fechaHoraInicio: string,
+    excludeWoId?: string
+): Promise<{ origin: Coordinates | null; previousWO: ScheduledWO | null }> {
+    const fechaAsignacion = fechaHoraInicio.split('T')[0];
+    const horaInicioNueva = new Date(fechaHoraInicio).getTime();
+
+    // Buscar otras WOs del mismo técnico para el mismo día
+    const { data: otrasWOs, error } = await supabaseAdmin
+        .from('ordenes_trabajo')
+        .select(`
+            id,
+            fecha_programada,
+            tiempo_servicio_estimado,
+            tiempo_viaje_ida_estimado,
+            clients!inner (lat, lng)
+        `)
+        .eq('tecnico_asignado_id', tecnicoId)
+        .gte('fecha_programada', `${fechaAsignacion}T00:00:00`)
+        .lt('fecha_programada', `${fechaAsignacion}T23:59:59`)
+        .neq('id', excludeWoId || 'no-exclude')
+        .in('estado', ['Asignada', 'Confirmada_Cliente', 'En_Progreso'])
+        .order('fecha_programada', { ascending: true });
+
+    if (error || !otrasWOs || otrasWOs.length === 0) {
+        // No hay otras WOs, usar base del técnico
+        console.log('[work-orders] Sin WOs previas, usando base del técnico');
+        return { origin: tecnicoCoords, previousWO: null };
+    }
+
+    // Encontrar la WO que termina justo antes de nuestra hora de inicio
+    let previousWO: ScheduledWO | null = null;
+    for (const otraWO of otrasWOs) {
+        const horaInicioOtra = new Date(otraWO.fecha_programada).getTime();
+        const duracionOtraMs = (
+            (otraWO.tiempo_viaje_ida_estimado || DEFAULT_TRAVEL_TIME_MIN) +
+            (otraWO.tiempo_servicio_estimado || 60)
+        ) * 60 * 1000;
+        const horaFinOtra = horaInicioOtra + duracionOtraMs;
+
+        // Si esta WO termina antes de nuestra hora, es candidata
+        if (horaFinOtra <= horaInicioNueva) {
+            previousWO = otraWO as ScheduledWO;
+        }
+    }
+
+    if (previousWO) {
+        const clienteAnterior = previousWO.clients as { lat: number | null; lng: number | null } | null;
+        if (clienteAnterior?.lat && clienteAnterior?.lng) {
+            console.log(`[work-orders] Origen desde cliente anterior (WO ${previousWO.id})`);
+            return {
+                origin: { lat: clienteAnterior.lat, lng: clienteAnterior.lng },
+                previousWO
+            };
+        }
+    }
+
+    // No encontró WO anterior válida, usar base
+    console.log('[work-orders] Sin WO anterior válida, usando base del técnico');
+    return { origin: tecnicoCoords, previousWO: null };
+}
+
+/**
+ * Recalcula los tiempos de viaje de todas las WOs posteriores a una hora dada
+ * para un técnico específico en un día.
+ */
+async function recalculateSubsequentWOs(
+    tecnicoId: string,
+    tecnicoCoords: Coordinates | null,
+    fechaDia: string,
+    despuesDeHora: string
+): Promise<{ recalculated: number; errors: number }> {
+    console.log(`[work-orders] Recalculando WOs posteriores a ${despuesDeHora}...`);
+
+    // Obtener todas las WOs del día para este técnico, ordenadas por hora
+    const { data: wosDelDia, error } = await supabaseAdmin
+        .from('ordenes_trabajo')
+        .select(`
+            id,
+            numero_wo,
+            fecha_programada,
+            tiempo_servicio_estimado,
+            tiempo_viaje_ida_estimado,
+            clients!inner (id, lat, lng)
+        `)
+        .eq('tecnico_asignado_id', tecnicoId)
+        .gte('fecha_programada', `${fechaDia}T00:00:00`)
+        .lt('fecha_programada', `${fechaDia}T23:59:59`)
+        .in('estado', ['Asignada', 'Confirmada_Cliente', 'En_Progreso'])
+        .order('fecha_programada', { ascending: true });
+
+    if (error || !wosDelDia || wosDelDia.length === 0) {
+        console.log('[work-orders] No hay WOs para recalcular');
+        return { recalculated: 0, errors: 0 };
+    }
+
+    const horaLimite = new Date(despuesDeHora).getTime();
+    let recalculated = 0;
+    let errors = 0;
+
+    // Construir lista ordenada y recalcular cada una
+    let ultimaUbicacion = tecnicoCoords;
+
+    for (const wo of wosDelDia) {
+        const horaWO = new Date(wo.fecha_programada).getTime();
+        const clienteWO = wo.clients as { id: string; lat: number | null; lng: number | null } | null;
+
+        // Actualizar la última ubicación para WOs que terminaron ANTES de la hora límite
+        if (horaWO < horaLimite) {
+            if (clienteWO?.lat && clienteWO?.lng) {
+                ultimaUbicacion = { lat: clienteWO.lat, lng: clienteWO.lng };
+            }
+            continue; // No recalcular, solo actualizar ubicación
+        }
+
+        // Esta WO está DESPUÉS de la hora límite, recalcular
+        const clienteCoords: Coordinates | null = (clienteWO?.lat && clienteWO?.lng)
+            ? { lat: clienteWO.lat, lng: clienteWO.lng }
+            : null;
+
+        if (!ultimaUbicacion || !clienteCoords) {
+            console.log(`[work-orders] WO ${wo.numero_wo}: sin coordenadas, skip`);
+            // Actualizar ubicación para la siguiente
+            if (clienteCoords) ultimaUbicacion = clienteCoords;
+            continue;
+        }
+
+        try {
+            const departureTime = new Date(wo.fecha_programada);
+            const travelResult = await calculateDistanceMatrix(ultimaUbicacion, clienteCoords, departureTime);
+
+            if (travelResult) {
+                await supabaseAdmin
+                    .from('ordenes_trabajo')
+                    .update({
+                        tiempo_viaje_ida_estimado: travelResult.duration_min,
+                        tiempo_viaje_vuelta_estimado: Math.round(travelResult.duration_min * 0.9),
+                    })
+                    .eq('id', wo.id);
+
+                console.log(`[work-orders] ✅ WO ${wo.numero_wo} recalculada: ${travelResult.duration_min} min`);
+                recalculated++;
+            } else {
+                console.warn(`[work-orders] ⚠️ WO ${wo.numero_wo}: no se pudo calcular`);
+                errors++;
+            }
+        } catch (e) {
+            console.error(`[work-orders] ❌ Error recalculando WO ${wo.numero_wo}:`, e);
+            errors++;
+        }
+
+        // Actualizar ubicación para la siguiente WO
+        ultimaUbicacion = clienteCoords;
+    }
+
+    console.log(`[work-orders] Recálculo completado: ${recalculated} actualizadas, ${errors} errores`);
+    return { recalculated, errors };
 }
 
 // =====================================================

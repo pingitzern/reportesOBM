@@ -71,6 +71,36 @@ export async function fetchScheduledWorkOrders(date: Date): Promise<ScheduledTas
 }
 
 /**
+ * Obtener WOs programadas para un rango de fechas (para vista semanal/mensual)
+ */
+export async function fetchWorkOrdersForDateRange(
+    startDate: Date,
+    endDate: Date
+): Promise<WorkOrder[]> {
+    const supabase = getSupabase();
+
+    const startStr = startDate.toISOString().split('T')[0];
+    const endStr = endDate.toISOString().split('T')[0];
+
+    console.log(`[API] Fetching WOs for range: ${startStr} to ${endStr}`);
+
+    const { data, error } = await supabase
+        .from('ordenes_trabajo_detalle')
+        .select('*')
+        .in('estado', ['Asignada', 'Confirmada_Cliente', 'En_Progreso'])
+        .gte('fecha_programada', `${startStr}T00:00:00`)
+        .lte('fecha_programada', `${endStr}T23:59:59`);
+
+    if (error) {
+        console.error('[API] Error fetching WOs for range:', error);
+        throw error;
+    }
+
+    console.log(`[API] Found ${data?.length || 0} WOs for date range`);
+    return (data || []).map(mapDbWorkOrderToWO);
+}
+
+/**
  * Respuesta de la API de asignación
  */
 export interface AssignWorkOrderResult {
@@ -138,6 +168,69 @@ export async function assignWorkOrder(
         }
 
         console.log('[API] ✅ Asignación exitosa:', data);
+
+        return {
+            success: true,
+            warning: data.warning,
+            wo: data.wo,
+        };
+
+    } catch (err) {
+        console.error('[API] Error de red:', err);
+        return {
+            success: false,
+            error: err instanceof Error ? err.message : 'Error de red'
+        };
+    }
+}
+
+/**
+ * Reposicionar una WO ya asignada (cambiar técnico y/o hora)
+ * Envía notificaciones al técnico anterior si corresponde
+ */
+export async function repositionWorkOrder(
+    woId: string,
+    nuevoTecnicoId: string,
+    horaInicio: string,
+    fecha: Date,
+    tecnicoAnteriorId?: string
+): Promise<AssignWorkOrderResult> {
+    const supabase = getSupabase();
+
+    // Combinar fecha + hora en ISO string
+    const dateStr = fecha.toISOString().split('T')[0];
+    const fechaHoraInicio = `${dateStr}T${horaInicio}:00`;
+
+    console.log('[API] Llamando work-orders/reposition:', { woId, nuevoTecnicoId, tecnicoAnteriorId, fechaHoraInicio });
+
+    try {
+        const { data, error } = await supabase.functions.invoke('work-orders', {
+            body: {
+                action: 'reposition',
+                wo_id: woId,
+                nuevo_tecnico_id: nuevoTecnicoId,
+                fecha_hora_inicio: fechaHoraInicio,
+                tecnico_anterior_id: tecnicoAnteriorId,
+            },
+        });
+
+        if (error) {
+            console.error('[API] Error en Edge Function:', error);
+            return {
+                success: false,
+                error: error.message || 'Error en Edge Function'
+            };
+        }
+
+        if (!data.success) {
+            console.error('[API] Error en respuesta:', data.error);
+            return {
+                success: false,
+                error: data.error || 'Error desconocido'
+            };
+        }
+
+        console.log('[API] ✅ Reposición exitosa:', data);
 
         return {
             success: true,
@@ -393,6 +486,7 @@ async function processEmailQueue(): Promise<void> {
 const api = {
     fetchBacklogWorkOrders,
     fetchScheduledWorkOrders,
+    fetchWorkOrdersForDateRange,
     assignWorkOrder,
     unassignWorkOrder,
     fetchTechnicians,

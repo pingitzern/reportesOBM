@@ -21,7 +21,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const FROM_EMAIL = 'OHM Instrumental <notificaciones@ohminstrumental.net>';
 
 interface EmailPayload {
-    type: 'remito' | 'reporte' | 'notificacion' | 'custom' | 'wo-tecnico' | 'wo-cliente' | 'wo-cancelacion' | 'wo-cancelacion-cliente' | 'wo-confirmar-cliente';
+    type: 'remito' | 'reporte' | 'notificacion' | 'custom' | 'wo-tecnico' | 'wo-cliente' | 'wo-cancelacion' | 'wo-cancelacion-cliente' | 'wo-confirmar-cliente' | 'wo-confirmada-interno' | 'wo-rechazada-interno';
     to: string | string[];
     subject?: string;
     data?: Record<string, unknown>;
@@ -143,6 +143,12 @@ function generateEmailContent(payload: EmailPayload): { subject: string; html: s
 
         case 'wo-confirmar-cliente':
             return generateWOConfirmarClienteEmail(data || {}, subject);
+
+        case 'wo-confirmada-interno':
+            return generateWOConfirmadaInternoEmail(data || {}, subject);
+
+        case 'wo-rechazada-interno':
+            return generateWORechazadaInternoEmail(data || {}, subject);
 
         case 'custom':
             return {
@@ -1106,6 +1112,238 @@ ${rejectUrl}
 ---
 OHM Instrumental
 info@ohminstrumental.net
+`;
+
+    return { subject, html, text };
+}
+
+// =====================================================
+// TEMPLATE: WO CONFIRMADA INTERNO (Notificación a equipo)
+// =====================================================
+function generateWOConfirmadaInternoEmail(data: Record<string, unknown>, customSubject?: string): { subject: string; html: string; text: string } {
+    const numeroWO = data.numeroWO as string || '';
+    const tecnicoNombre = data.tecnicoNombre as string || 'Técnico';
+    const clienteNombre = data.clienteNombre as string || 'Cliente';
+    const fechaProgramada = data.fechaProgramada as string || '';
+    const tipoServicio = data.tipoServicio as string || 'Servicio Técnico';
+    const destinatarioNombre = data.destinatarioNombre as string || '';
+
+    const subject = customSubject || `✅ Técnico confirmó: ${numeroWO} - ${clienteNombre}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f5;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">✅ Técnico Confirmó Asistencia</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px; font-weight: 600;">${numeroWO}</p>
+        </div>
+        
+        <!-- Content -->
+        <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            ${destinatarioNombre ? `
+            <p style="color: #374151; font-size: 16px; margin: 0 0 20px 0;">
+                Hola <strong>${destinatarioNombre}</strong>,
+            </p>
+            ` : ''}
+            
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+                El técnico ha confirmado su asistencia para la siguiente orden de trabajo:
+            </p>
+            
+            <!-- Info Card -->
+            <div style="background: #f0fdf4; border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid #bbf7d0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid #e5e7eb;">📋 Orden:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600; text-align: right; border-bottom: 1px solid #e5e7eb;">${numeroWO}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid #e5e7eb;">👤 Técnico:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600; text-align: right; border-bottom: 1px solid #e5e7eb;">${tecnicoNombre}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid #e5e7eb;">🏢 Cliente:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; text-align: right; border-bottom: 1px solid #e5e7eb;">${clienteNombre}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid #e5e7eb;">🔧 Servicio:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; text-align: right; border-bottom: 1px solid #e5e7eb;">${tipoServicio}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px;">📅 Fecha:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600; text-align: right;">${fechaProgramada}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="background: #dcfce7; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
+                <p style="color: #166534; font-size: 14px; font-weight: 600; margin: 0;">
+                    ✅ El servicio está confirmado por parte del técnico
+                </p>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+                Este es un email automático del sistema de coordinación.
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                © ${new Date().getFullYear()} OHM Instrumental
+            </p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    const text = `
+✅ TÉCNICO CONFIRMÓ ASISTENCIA - ${numeroWO}
+
+${destinatarioNombre ? `Hola ${destinatarioNombre},` : ''}
+
+El técnico ha confirmado su asistencia:
+
+📋 Orden: ${numeroWO}
+👤 Técnico: ${tecnicoNombre}
+🏢 Cliente: ${clienteNombre}
+🔧 Servicio: ${tipoServicio}
+📅 Fecha: ${fechaProgramada}
+
+El servicio está confirmado por parte del técnico.
+
+---
+OHM Instrumental - Sistema de Coordinación
+`;
+
+    return { subject, html, text };
+}
+
+// =====================================================
+// TEMPLATE: WO RECHAZADA INTERNO (Técnico no puede asistir)
+// =====================================================
+function generateWORechazadaInternoEmail(data: Record<string, unknown>, customSubject?: string): { subject: string; html: string; text: string } {
+    const numeroWO = data.numeroWO as string || '';
+    const tecnicoNombre = data.tecnicoNombre as string || 'Técnico';
+    const clienteNombre = data.clienteNombre as string || 'Cliente';
+    const fechaProgramada = data.fechaProgramada as string || '';
+    const tipoServicio = data.tipoServicio as string || 'Servicio Técnico';
+    const motivo = data.motivo as string || 'No especificado';
+    const destinatarioNombre = data.destinatarioNombre as string || '';
+
+    const subject = customSubject || `⚠️ Técnico rechazó: ${numeroWO} - ${clienteNombre}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f5;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ Técnico No Puede Asistir</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px; font-weight: 600;">${numeroWO}</p>
+        </div>
+        
+        <!-- Content -->
+        <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            ${destinatarioNombre ? `
+            <p style="color: #374151; font-size: 16px; margin: 0 0 20px 0;">
+                Hola <strong>${destinatarioNombre}</strong>,
+            </p>
+            ` : ''}
+            
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+                El técnico ha indicado que <strong>no puede asistir</strong> a la siguiente orden de trabajo:
+            </p>
+            
+            <!-- Info Card -->
+            <div style="background: #fef3c7; border-radius: 12px; padding: 24px; margin: 20px 0; border: 1px solid #fcd34d;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid #fcd34d;">📋 Orden:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600; text-align: right; border-bottom: 1px solid #fcd34d;">${numeroWO}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid #fcd34d;">👤 Técnico:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600; text-align: right; border-bottom: 1px solid #fcd34d;">${tecnicoNombre}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid #fcd34d;">🏢 Cliente:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; text-align: right; border-bottom: 1px solid #fcd34d;">${clienteNombre}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px; border-bottom: 1px solid #fcd34d;">🔧 Servicio:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; text-align: right; border-bottom: 1px solid #fcd34d;">${tipoServicio}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 0; color: #6b7280; font-size: 14px;">📅 Fecha:</td>
+                        <td style="padding: 12px 0; color: #111827; font-size: 14px; font-weight: 600; text-align: right;">${fechaProgramada}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="background: #fef2f2; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #ef4444;">
+                <p style="color: #991b1b; font-size: 14px; margin: 0;">
+                    <strong>❌ Motivo del rechazo:</strong><br>
+                    ${motivo}
+                </p>
+            </div>
+            
+            <div style="background: #fffbeb; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
+                <p style="color: #92400e; font-size: 14px; font-weight: 600; margin: 0;">
+                    ⚠️ Esta orden requiere reasignación
+                </p>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+                Este es un email automático del sistema de coordinación.
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                © ${new Date().getFullYear()} OHM Instrumental
+            </p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    const text = `
+⚠️ TÉCNICO NO PUEDE ASISTIR - ${numeroWO}
+
+${destinatarioNombre ? `Hola ${destinatarioNombre},` : ''}
+
+El técnico ha indicado que NO puede asistir:
+
+📋 Orden: ${numeroWO}
+👤 Técnico: ${tecnicoNombre}
+🏢 Cliente: ${clienteNombre}
+🔧 Servicio: ${tipoServicio}
+📅 Fecha: ${fechaProgramada}
+
+❌ Motivo: ${motivo}
+
+⚠️ Esta orden requiere reasignación.
+
+---
+OHM Instrumental - Sistema de Coordinación
 `;
 
     return { subject, html, text };

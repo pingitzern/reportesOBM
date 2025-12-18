@@ -68,6 +68,7 @@ interface DroppableSlotProps {
     tecnicoId: string;
     slot: TimeSlot;
     scheduledTasks?: { hora_inicio: string; viaje_ida_min: number; servicio_min: number; viaje_vuelta_min: number }[];
+    isDragging?: boolean; // True when a WO is being dragged
     children?: React.ReactNode;
 }
 
@@ -104,7 +105,7 @@ function isSlotOccupied(
 /**
  * Un slot droppable en el grid
  */
-export function DroppableSlot({ tecnicoId, slot, scheduledTasks = [], children }: DroppableSlotProps) {
+export function DroppableSlot({ tecnicoId, slot, scheduledTasks = [], isDragging = false, children }: DroppableSlotProps) {
     const { PIXEL_POR_MINUTO, INTERVALO_MIN } = SCHEDULER_CONFIG;
     const slotWidth = INTERVALO_MIN * PIXEL_POR_MINUTO;
 
@@ -116,22 +117,36 @@ export function DroppableSlot({ tecnicoId, slot, scheduledTasks = [], children }
     const isHour = slot.hora.endsWith(':00');
     const isOccupied = isSlotOccupied(slot.minutos, scheduledTasks);
 
+    // Visual states:
+    // - occupied: red striped pattern (can't drop)
+    // - isDragging + available: green pulsing highlight (can drop here)
+    // - isOver + available: brighter green (about to drop)
+    // - normal: subtle grey hover
+
     return (
         <div
             ref={setNodeRef}
             style={{ width: `${slotWidth}px` }}
             className={`
-                h-full border-r relative transition-colors
+                h-full border-r relative transition-all duration-200
                 ${isHour ? 'border-slate-200' : 'border-slate-100'}
                 ${isOccupied
-                    ? 'bg-red-50 cursor-not-allowed'
+                    ? 'bg-red-50 cursor-not-allowed bg-stripes-red'
                     : isOver
-                        ? 'bg-indigo-100'
-                        : 'hover:bg-slate-50'
+                        ? 'bg-green-200 ring-2 ring-green-400 ring-inset'
+                        : isDragging
+                            ? 'bg-green-50 animate-pulse-subtle'
+                            : 'hover:bg-slate-50'
                 }
             `}
             title={isOccupied ? 'Horario ocupado' : `${slot.hora} - Disponible`}
         >
+            {/* Drop indicator */}
+            {isDragging && !isOccupied && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className={`w-1.5 h-1.5 rounded-full ${isOver ? 'bg-green-500' : 'bg-green-300'}`} />
+                </div>
+            )}
             {children}
         </div>
     );

@@ -22,7 +22,7 @@ function getStorage() {
     if (typeof window === 'undefined') {
         return null;
     }
-    
+
     // Si "recordarme" está activo, usar localStorage (persiste al cerrar navegador)
     // Si no, usar sessionStorage (se limpia al cerrar pestaña/navegador)
     if (useLocalStorage) {
@@ -160,10 +160,10 @@ function loadStoredAuth() {
     cachedSession = null;
 
     // Intentar cargar de localStorage primero, luego sessionStorage
-    const storages = typeof window !== 'undefined' 
+    const storages = typeof window !== 'undefined'
         ? [window.localStorage, window.sessionStorage].filter(Boolean)
         : [];
-    
+
     for (const storage of storages) {
         const raw = storage.getItem(STORAGE_KEY);
         if (!raw) continue;
@@ -188,7 +188,7 @@ function loadStoredAuth() {
 
         storage.removeItem(STORAGE_KEY);
     }
-    
+
     return null;
 }
 
@@ -782,11 +782,11 @@ async function handleLogout(event) {
     } finally {
         // Limpiar el estado de recovery mode
         isPasswordRecoveryMode = false;
-        
+
         closeUserMenu();
         clearStoredAuth();
         setMainViewVisible(false);
-        
+
         // Mostrar el formulario de login normal (no el de nueva contraseña)
         showLoginForm();
         createPendingAuthPromise();
@@ -831,17 +831,17 @@ function showForgotPasswordForm() {
 
 function showLoginForm() {
     const { form, resetPasswordForm, newPasswordForm, resetEmailSent, loginCardHeader, loginContainer, mailInput } = getElements();
-    
+
     // Mostrar el container de login
     if (loginContainer) {
         loginContainer.classList.remove('hidden');
     }
-    
+
     // Mostrar el header
     if (loginCardHeader) {
         loginCardHeader.classList.remove('hidden');
     }
-    
+
     // Ocultar otros formularios y pantallas
     if (resetPasswordForm) {
         resetPasswordForm.classList.add('hidden');
@@ -852,15 +852,15 @@ function showLoginForm() {
     if (resetEmailSent) {
         resetEmailSent.classList.add('hidden');
     }
-    
+
     // Mostrar el formulario de login
     if (form) {
         form.classList.remove('hidden');
     }
-    
+
     clearResetMessages();
     clearNewPasswordMessages();
-    
+
     if (mailInput) {
         mailInput.focus();
     }
@@ -879,17 +879,17 @@ function displayResetError(message) {
 
 function showEmailSentConfirmation() {
     const { resetPasswordForm, resetEmailSent, loginCardHeader } = getElements();
-    
+
     // Ocultar el formulario de reset
     if (resetPasswordForm) {
         resetPasswordForm.classList.add('hidden');
     }
-    
+
     // Ocultar el header original
     if (loginCardHeader) {
         loginCardHeader.classList.add('hidden');
     }
-    
+
     // Mostrar la confirmación
     if (resetEmailSent) {
         resetEmailSent.classList.remove('hidden');
@@ -899,7 +899,7 @@ function showEmailSentConfirmation() {
 async function handlePasswordReset(email) {
     // Construir la URL de redirección (misma app, sin hash para que Supabase pueda agregar los tokens)
     const redirectUrl = `${window.location.origin}${window.location.pathname}`;
-    
+
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: redirectUrl,
     });
@@ -940,17 +940,17 @@ async function handleResetFormSubmit(event) {
 
 function showNewPasswordForm() {
     const { form, resetPasswordForm, newPasswordForm, loginCardHeader, newPasswordInput } = getElements();
-    
+
     // Ocultar otros formularios
     if (form) form.classList.add('hidden');
     if (resetPasswordForm) resetPasswordForm.classList.add('hidden');
     if (loginCardHeader) loginCardHeader.classList.add('hidden');
-    
+
     // Mostrar formulario de nueva contraseña
     if (newPasswordForm) {
         newPasswordForm.classList.remove('hidden');
     }
-    
+
     clearNewPasswordMessages();
     if (newPasswordInput) {
         newPasswordInput.value = '';
@@ -1015,13 +1015,13 @@ async function handleNewPasswordSubmit(event) {
     setFormLoading(newPasswordForm, true);
     try {
         const { error } = await supabase.auth.updateUser({ password: newPassword });
-        
+
         if (error) {
             throw new Error(error.message || 'No se pudo actualizar la contraseña.');
         }
 
         displayNewPasswordSuccess('¡Contraseña actualizada correctamente! Ingresando...');
-        
+
         // Limpiar el hash de la URL
         if (window.history?.replaceState) {
             window.history.replaceState(null, '', window.location.pathname);
@@ -1051,10 +1051,10 @@ let isPasswordRecoveryMode = false;
 function setupAuthStateListener() {
     if (authStateListenerSetup) return;
     authStateListenerSetup = true;
-    
+
     supabase.auth.onAuthStateChange((event, session) => {
         console.log('[auth] Auth state change:', event, session ? 'with session' : 'no session');
-        
+
         if (event === 'PASSWORD_RECOVERY') {
             console.log('[auth] PASSWORD_RECOVERY event detected');
             isPasswordRecoveryMode = true;
@@ -1067,47 +1067,47 @@ function setupAuthStateListener() {
 // Detectar si la URL tiene fragmento de recovery (type=recovery en el hash o query params)
 function checkUrlForPasswordRecovery() {
     if (typeof window === 'undefined') return false;
-    
+
     const hash = window.location.hash;
     const search = window.location.search;
-    
+
     // Supabase puede añadir tokens en el hash o en query params
     const isRecoveryHash = hash.includes('type=recovery') || hash.includes('type%3Drecovery');
     const isRecoveryQuery = search.includes('type=recovery');
     const hasErrorDescription = hash.includes('error_description') || search.includes('error_description');
-    
+
     // También detectar si hay access_token (indica que Supabase procesó el recovery)
     const hasAccessToken = hash.includes('access_token') || search.includes('access_token');
-    
+
     const isRecovery = isRecoveryHash || isRecoveryQuery || (hasAccessToken && (isRecoveryHash || isRecoveryQuery));
-    
+
     if (isRecovery || hasAccessToken) {
         console.log('[auth] Password recovery detected - hash:', isRecoveryHash, 'query:', isRecoveryQuery, 'hasToken:', hasAccessToken);
         isPasswordRecoveryMode = true;
         return true;
     }
-    
+
     // Verificar si hay error en el hash (token expirado, etc.)
     if (hasErrorDescription) {
         console.log('[auth] Error in recovery URL detected');
         return true; // Mostrar el form de recovery para que puedan pedir otro link
     }
-    
+
     return false;
 }
 
 // Extraer tokens del hash o query params de la URL para establecer la sesión
 async function processRecoveryTokenFromUrl() {
     if (typeof window === 'undefined') return null;
-    
+
     const fullHash = window.location.hash;
     const fullSearch = window.location.search;
     console.log('[auth] Full hash:', fullHash);
     console.log('[auth] Full search:', fullSearch);
-    
+
     // Combinar hash y query params para buscar tokens
     let searchString = '';
-    
+
     // Primero intentar del hash (sin el #)
     if (fullHash && fullHash.length > 1) {
         searchString = fullHash.substring(1);
@@ -1115,23 +1115,23 @@ async function processRecoveryTokenFromUrl() {
             searchString = searchString.substring(1);
         }
     }
-    
+
     // Si no hay nada en el hash, intentar de los query params
     if (!searchString && fullSearch && fullSearch.length > 1) {
         searchString = fullSearch.substring(1);
     }
-    
+
     if (!searchString) {
         console.log('[auth] No hash or search params to parse');
         return null;
     }
-    
+
     // Intentar parsear como query string
     const params = new URLSearchParams(searchString);
     let accessToken = params.get('access_token');
     let refreshToken = params.get('refresh_token');
     let type = params.get('type');
-    
+
     // Si no funcionó, intentar parseo manual
     if (!accessToken && searchString.includes('access_token=')) {
         const tokenMatch = searchString.match(/access_token=([^&]+)/);
@@ -1139,30 +1139,30 @@ async function processRecoveryTokenFromUrl() {
             accessToken = decodeURIComponent(tokenMatch[1]);
         }
     }
-    
+
     if (!refreshToken && searchString.includes('refresh_token=')) {
         const refreshMatch = searchString.match(/refresh_token=([^&]+)/);
         if (refreshMatch) {
             refreshToken = decodeURIComponent(refreshMatch[1]);
         }
     }
-    
+
     if (!type && searchString.includes('type=')) {
         const typeMatch = searchString.match(/type=([^&]+)/);
         if (typeMatch) {
             type = decodeURIComponent(typeMatch[1]);
         }
     }
-    
+
     console.log('[auth] Parsed - type:', type, 'has access_token:', !!accessToken, 'token length:', accessToken?.length);
-    
+
     // Verificar si hay un error en la URL (token expirado, etc.)
     const errorDescription = params.get('error_description');
     if (errorDescription) {
         console.error('[auth] Recovery error:', errorDescription);
         return { error: decodeURIComponent(errorDescription) };
     }
-    
+
     if (accessToken) {
         try {
             // Establecer la sesión usando los tokens del URL
@@ -1170,12 +1170,12 @@ async function processRecoveryTokenFromUrl() {
                 access_token: accessToken,
                 refresh_token: refreshToken || '',
             });
-            
+
             if (error) {
                 console.error('[auth] Error setting session from recovery token:', error);
                 return null;
             }
-            
+
             console.log('[auth] Session established from recovery token');
             return data.session;
         } catch (err) {
@@ -1183,7 +1183,7 @@ async function processRecoveryTokenFromUrl() {
             return null;
         }
     }
-    
+
     return null;
 }
 
@@ -1272,6 +1272,78 @@ export function getCurrentUserRole() {
     return session?.user?.rol || '';
 }
 
+/**
+ * Verifica si el usuario actual tiene rol de Administrador
+ * @returns {boolean} true si el rol es 'admin' o 'Administrador'
+ */
+export function isAdmin() {
+    const role = getCurrentUserRole();
+    if (!role) return false;
+    const normalizedRole = role.toLowerCase().trim();
+    return normalizedRole === 'admin' || normalizedRole === 'administrador';
+}
+
+/**
+ * Verifica si el usuario actual tiene permisos elevados (delete/update datos)
+ * Incluye: admin, ventas, coordinador, jefe_servicio
+ * @returns {boolean}
+ */
+export function hasElevatedPermissions() {
+    const role = getCurrentUserRole();
+    if (!role) return false;
+    const normalizedRole = role.toLowerCase().trim();
+    return ['admin', 'administrador', 'ventas', 'coordinador', 'jefe_servicio'].includes(normalizedRole);
+}
+
+/**
+ * Verifica si el usuario puede acceder al panel de administración
+ * Solo: admin, ventas
+ * @returns {boolean}
+ */
+export function canAccessAdminPanel() {
+    const role = getCurrentUserRole();
+    if (!role) return false;
+    const normalizedRole = role.toLowerCase().trim();
+    return ['admin', 'administrador', 'ventas'].includes(normalizedRole);
+}
+
+/**
+ * Verifica si el usuario puede coordinar (asignar/desasignar) en la agenda
+ * Solo: admin, coordinador
+ * @returns {boolean}
+ */
+export function canCoordinateAgenda() {
+    const role = getCurrentUserRole();
+    if (!role) return false;
+    const normalizedRole = role.toLowerCase().trim();
+    return ['admin', 'administrador', 'coordinador'].includes(normalizedRole);
+}
+
+/**
+ * Verifica si el usuario puede crear Work Orders
+ * Incluye: admin, ventas, coordinador, jefe_servicio
+ * @returns {boolean}
+ */
+export function canCreateWorkOrders() {
+    const role = getCurrentUserRole();
+    if (!role) return false;
+    const normalizedRole = role.toLowerCase().trim();
+    return ['admin', 'administrador', 'ventas', 'coordinador', 'jefe_servicio'].includes(normalizedRole);
+}
+
+/**
+ * Verifica si el usuario tiene acceso de solo lectura a la agenda
+ * (puede ver pero no puede coordinar ni crear WOs)
+ * Aplica a: tecnico, jefe_servicio
+ * @returns {boolean}
+ */
+export function isAgendaViewOnly() {
+    const role = getCurrentUserRole();
+    if (!role) return true; // Sin rol = solo lectura
+    const normalizedRole = role.toLowerCase().trim();
+    return ['tecnico', 'jefe_servicio'].includes(normalizedRole);
+}
+
 // ⚠️ SOLO PARA DESARROLLO - Token mock cuando el login está desactivado
 // IMPORTANTE: Para que funcione correctamente con el backend, debes:
 // 1. Establecer DEV_MODE = false (RECOMENDADO)
@@ -1293,7 +1365,7 @@ export function getCurrentToken() {
     if (DEV_MODE) {
         return DEV_TOKEN;
     }
-    
+
     const session = loadStoredAuth();
     const token = typeof session?.token === 'string' ? session.token.trim() : '';
     return token || null;
@@ -1302,14 +1374,14 @@ export function getCurrentToken() {
 export async function initializeAuth() {
     // Cargar preferencia de "recordarme" antes de cualquier operación de storage
     useLocalStorage = loadRememberPreference();
-    
+
     // IMPORTANTE: Configurar el listener ANTES de cualquier operación de sesión
     // para capturar el evento PASSWORD_RECOVERY que Supabase dispara automáticamente
     setupAuthStateListener();
-    
+
     // Verificar si la URL indica que es un flujo de password recovery
     const isRecoveryUrl = checkUrlForPasswordRecovery();
-    
+
     bindEventListeners();
 
     // En modo desarrollo, omitir el inicio de sesión y mostrar la app inmediatamente
@@ -1330,17 +1402,17 @@ export async function initializeAuth() {
     // Si es un recovery URL, procesar el token y mostrar el formulario
     if (isRecoveryUrl) {
         console.log('[auth] Recovery URL detected, processing token...');
-        
+
         // Mostrar el login container
         setMainViewVisible(false);
         const { loginContainer } = getElements();
         if (loginContainer) {
             loginContainer.classList.remove('hidden');
         }
-        
+
         // Procesar el token del hash para establecer la sesión
         const recoveryResult = await processRecoveryTokenFromUrl();
-        
+
         // Si hay un error (token expirado, etc.), mostrar el mensaje
         if (recoveryResult && recoveryResult.error) {
             console.log('[auth] Recovery token error:', recoveryResult.error);
@@ -1348,19 +1420,19 @@ export async function initializeAuth() {
             displayResetError('El enlace ha expirado. Solicitá uno nuevo.');
             return createPendingAuthPromise();
         }
-        
+
         if (recoveryResult) {
             console.log('[auth] Recovery session established, showing password form');
             isPasswordRecoveryMode = true;
         } else {
             console.log('[auth] Could not establish recovery session, but showing form anyway');
         }
-        
+
         // Limpiar la URL del hash/query params
         if (window.history?.replaceState) {
             window.history.replaceState(null, '', window.location.pathname);
         }
-        
+
         // Mostrar el formulario de nueva contraseña
         showNewPasswordForm();
         return createPendingAuthPromise();

@@ -2,18 +2,25 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { SchedulerBoard } from './SchedulerBoard';
 import { CreateWorkOrderModal } from './CreateWorkOrderModal';
-import { WorkOrder, Tecnico, ScheduledTask } from './types';
+import { WorkOrder, Tecnico, ScheduledTask, ViewMode } from './types';
+import { getWeekStart } from './WeekView';
+import { getMonthEnd } from './MonthView';
 import { mockTecnicos, mockBacklogWOs, mockScheduledTasks } from './mockData';
 import api, {
     fetchBacklogWorkOrders,
     fetchTechnicians,
     fetchScheduledWorkOrders,
+    fetchWorkOrdersForDateRange,
     assignWorkOrder,
+    repositionWorkOrder,
     unassignWorkOrder,
     calculateTravelTime,
 } from './api';
 const { processEmailQueue } = api;
 import { useDeleteWorkOrder } from './createWOHooks';
+
+// @ts-ignore - JavaScript module import
+import { canCoordinateAgenda, canCreateWorkOrders } from '../login/auth.js';
 
 // Modo: 'mock' o 'live'
 const DATA_MODE: 'mock' | 'live' = 'live';
@@ -70,6 +77,11 @@ function SchedulerApp() {
     const [successToast, setSuccessToast] = useState<string | null>(null);
     const [errorToast, setErrorToast] = useState<string | null>(null);
 
+    // View mode y datos semanales/mensuales
+    const [viewMode, setViewMode] = useState<ViewMode>('day');
+    const [weekWorkOrders, setWeekWorkOrders] = useState<WorkOrder[]>([]);
+    const [monthWorkOrders, setMonthWorkOrders] = useState<WorkOrder[]>([]);
+
     // Estado para Undo de asignación
     const [undoData, setUndoData] = useState<{ wo: WorkOrder; woId: string; message: string } | null>(null);
     const undoTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -80,10 +92,19 @@ function SchedulerApp() {
     // ID del creador (debería venir de auth context)
     const creadorId = '0289360d-be14-445b-96a2-00503afbab76'; // Tu UUID
 
-    // Cargar datos al iniciar
+    // Cargar datos al iniciar o cambiar fecha
     useEffect(() => {
         loadData();
     }, [selectedDate]);
+
+    // Cargar datos de semana cuando se cambia a vista semanal
+    useEffect(() => {
+        if (viewMode === 'week') {
+            loadWeekData();
+        } else if (viewMode === 'month') {
+            loadMonthData();
+        }
+    }, [viewMode, selectedDate]);
 
     // Procesar cola de emails al montar (workaround para falta de pg_cron)
     useEffect(() => {
@@ -139,6 +160,43 @@ function SchedulerApp() {
             setTecnicos(mockTecnicos);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // Cargar WOs de la semana completa
+    const loadWeekData = async () => {
+        try {
+            const weekStart = getWeekStart(selectedDate);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+
+            console.log('[Scheduler] Loading week data from', weekStart.toISOString().split('T')[0], 'to', weekEnd.toISOString().split('T')[0]);
+
+            // Fetch WOs para toda la semana desde la API
+            const weekWOs = await fetchWorkOrdersForDateRange(weekStart, weekEnd);
+
+            setWeekWorkOrders(weekWOs);
+            console.log('[Scheduler] Loaded week data:', weekWOs.length, 'WOs');
+        } catch (err) {
+            console.error('[Scheduler] Error loading week data:', err);
+        }
+    };
+
+    // Cargar WOs del mes completo
+    const loadMonthData = async () => {
+        try {
+            const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+            const monthEnd = getMonthEnd(selectedDate);
+
+            console.log('[Scheduler] Loading month data from', monthStart.toISOString().split('T')[0], 'to', monthEnd.toISOString().split('T')[0]);
+
+            // Fetch WOs para todo el mes desde la API
+            const monthWOs = await fetchWorkOrdersForDateRange(monthStart, monthEnd);
+
+            setMonthWorkOrders(monthWOs);
+            console.log('[Scheduler] Loaded month data:', monthWOs.length, 'WOs');
+        } catch (err) {
+            console.error('[Scheduler] Error loading month data:', err);
         }
     };
 
@@ -328,6 +386,78 @@ function SchedulerApp() {
         setUndoData(null);
     }, [undoData, handleUnassignTask]);
 
+    // 🔄 Reposicionar tarea ya asignada (mover a otra hora/técnico)
+    const handleRepositionTask = useCallback(async (woId: string, tecnicoId: string, horaInicio: string) => {
+        const task = scheduledTasks.find(t => t.wo.id === woId);
+        if (!task) {
+            console.warn('[Scheduler] No se encontró la tarea para reposicionar:', woId);
+            return;
+        }
+
+        // Si es la misma posición, no hacer nada
+        if (task.tecnico_id === tecnicoId && task.hora_inicio === horaInicio) {
+            console.log('[Scheduler] Mismo destino, no se requiere reposición');
+            return;
+        }
+
+        const tecnico = tecnicos.find(t => t.id === tecnicoId);
+        if (!tecnico) {
+            console.warn('[Scheduler] Técnico no encontrado:', tecnicoId);
+            return;
+        }
+
+        console.log(`[Scheduler] 🔄 Reposicionando ${task.wo.numero_wo} → ${tecnico.nombre} a las ${horaInicio}`);
+
+        // Tiempos (usamos los existentes ya que la WO ya está programada)
+        const viajeIda = task.viaje_ida_min;
+        const servicioMin = task.servicio_min;
+        const viajeVuelta = task.viaje_vuelta_min;
+        const duracionTotal = viajeIda + servicioMin + viajeVuelta;
+
+        // Verificar conflicto en nueva posición (excluyendo la tarea actual)
+        const otrasTasksMismoTecnico = scheduledTasks.filter(
+            t => t.tecnico_id === tecnicoId && t.wo.id !== woId
+        );
+        const conflicto = checkTimeConflict(tecnicoId, horaInicio, duracionTotal, otrasTasksMismoTecnico);
+        if (conflicto) {
+            const mensaje = `⚠️ No se puede mover: ${tecnico.nombre} ya tiene "${conflicto.wo.cliente_nombre}" a las ${conflicto.hora_inicio}`;
+            console.warn('[Scheduler] Conflicto detectado:', mensaje);
+            setErrorToast(mensaje);
+            setTimeout(() => setErrorToast(null), 4000);
+            return;
+        }
+
+        // Optimistic update: actualizar posición inmediatamente
+        setScheduledTasks(prev => prev.map(t => {
+            if (t.wo.id !== woId) return t;
+            return {
+                ...t,
+                tecnico_id: tecnicoId,
+                hora_inicio: horaInicio,
+                wo: {
+                    ...t.wo,
+                    tecnico_asignado_id: tecnicoId,
+                    tecnico_nombre: tecnico.nombre,
+                    hora_inicio: horaInicio,
+                },
+            };
+        }));
+
+        // Mostrar toast de éxito
+        setSuccessToast(`✅ ${task.wo.numero_wo} movida a ${tecnico.nombre} - ${horaInicio}`);
+        setTimeout(() => setSuccessToast(null), 3000);
+
+        // Persistir en API con notificaciones de cancelación al técnico anterior
+        if (DATA_MODE === 'live') {
+            const tecnicoAnteriorId = task.tecnico_id !== tecnicoId ? task.tecnico_id : undefined;
+            const result = await repositionWorkOrder(woId, tecnicoId, horaInicio, selectedDate, tecnicoAnteriorId);
+            if (!result.success) {
+                console.error('[Scheduler] Error persistiendo reposición:', result.error);
+                // Aquí podríamos revertir el optimistic update, pero por ahora lo dejamos
+            }
+        }
+    }, [scheduledTasks, tecnicos, selectedDate]);
+
     // Loading state
     if (isLoading) {
         return (
@@ -388,6 +518,10 @@ function SchedulerApp() {
         }
     };
 
+    // Permisos del usuario
+    const userCanCoordinate = typeof canCoordinateAgenda === 'function' ? canCoordinateAgenda() : true;
+    const userCanCreateWO = typeof canCreateWorkOrders === 'function' ? canCreateWorkOrders() : true;
+
     return (
         <>
             <SchedulerBoard
@@ -395,12 +529,19 @@ function SchedulerApp() {
                 tecnicos={tecnicos}
                 scheduledTasks={scheduledTasks}
                 selectedDate={selectedDate}
+                viewMode={viewMode}
+                weekWorkOrders={weekWorkOrders}
+                monthWorkOrders={monthWorkOrders}
                 onDateChange={setSelectedDate}
+                onViewModeChange={setViewMode}
                 onAssignTask={handleAssignTask}
                 onUnassignTask={handleUnassignTask}
+                onRepositionTask={handleRepositionTask}
                 onRefresh={handleRefresh}
                 onCreateWO={() => setIsCreateModalOpen(true)}
                 onDeleteWO={handleDeleteWO}
+                readOnly={!userCanCoordinate}
+                canCreateWO={userCanCreateWO}
             />
 
             {/* Modal de Creación de WO */}

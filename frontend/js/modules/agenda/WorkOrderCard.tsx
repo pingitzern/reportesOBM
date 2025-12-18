@@ -148,7 +148,8 @@ export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete }: 
 }
 
 /**
- * Versión estática de la tarjeta (para el preview mientras se arrastra)
+ * Versión estática mejorada de la tarjeta (para el preview mientras se arrastra)
+ * Con efecto de "flotando" más pronunciado
  */
 export function WorkOrderCardStatic({ wo, isCompact }: { wo: WorkOrder; isCompact?: boolean }) {
     const colors = PRIORIDAD_COLORS[wo.prioridad];
@@ -157,21 +158,44 @@ export function WorkOrderCardStatic({ wo, isCompact }: { wo: WorkOrder; isCompac
         <div
             className={`
                 ${colors.bg} ${colors.border}
-                border-l-4 rounded-lg shadow-lg
-                ${isCompact ? 'p-2' : 'p-3'}
+                border-l-4 rounded-lg shadow-2xl
+                ${isCompact ? 'p-2 w-64' : 'p-3 w-72'}
+                transform rotate-2 scale-105
+                ring-2 ring-indigo-400 ring-opacity-50
+                opacity-95
             `}
+            style={{
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 15px rgba(99, 102, 241, 0.3)',
+            }}
         >
+            {/* Header with badge */}
             <div className="flex items-start justify-between gap-2 mb-1">
-                <span className="font-mono text-xs font-semibold text-slate-500">
+                <span className="font-mono text-xs font-bold text-slate-600">
                     {wo.numero_wo}
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORIDAD_BADGES[wo.prioridad]}`}>
-                    {wo.prioridad === 'EMERGENCIA_COMODIN' ? '🔥' : wo.prioridad.charAt(0)}
+                    {wo.prioridad === 'EMERGENCIA_COMODIN' ? '🔥' : wo.prioridad}
                 </span>
             </div>
-            <h4 className={`font-semibold ${colors.text} text-sm line-clamp-1`}>
+
+            {/* Client name */}
+            <h4 className={`font-semibold ${colors.text} text-sm line-clamp-1 mb-1`}>
                 {wo.cliente_nombre}
             </h4>
+
+            {/* Title */}
+            <p className="text-xs text-slate-500 line-clamp-1 mb-2">
+                {wo.titulo}
+            </p>
+
+            {/* Time indicator */}
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+                <Clock size={12} />
+                <span>{wo.tiempo_servicio_estimado} min</span>
+                <span className="text-indigo-500 font-medium ml-auto">
+                    Arrastrando...
+                </span>
+            </div>
         </div>
     );
 }
