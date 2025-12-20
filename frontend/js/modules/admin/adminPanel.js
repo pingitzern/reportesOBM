@@ -102,6 +102,24 @@ function updateAdminMenuVisibility() {
     } else {
         console.warn('[AdminPanel] Admin menu item not found in DOM');
     }
+
+    // Ocultar tab de Usuarios para roles que no son admin
+    const usuariosTabBtn = document.getElementById('admin-tab-usuarios-btn');
+    const usuariosTabContent = document.getElementById('admin-tab-usuarios');
+
+    if (usuariosTabBtn) {
+        if (isAdmin()) {
+            usuariosTabBtn.classList.remove('hidden');
+            console.log('[AdminPanel] Usuarios tab shown (admin)');
+        } else {
+            usuariosTabBtn.classList.add('hidden');
+            // También ocultar el contenido si estaba visible
+            if (usuariosTabContent) {
+                usuariosTabContent.classList.add('hidden');
+            }
+            console.log('[AdminPanel] Usuarios tab hidden (non-admin)');
+        }
+    }
 }
 
 // Cargar estadísticas rápidas
@@ -1900,8 +1918,8 @@ function validatePasswordMatch() {
 
 // Navegar al panel de admin
 function navigateToAdmin() {
-    if (!isAdmin()) {
-        console.warn('[AdminPanel] User is not admin');
+    if (!canAccessAdminPanel()) {
+        console.warn('[AdminPanel] User cannot access admin panel');
         return;
     }
 
