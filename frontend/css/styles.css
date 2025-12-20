@@ -87,6 +87,7 @@
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -98,6 +99,7 @@
         opacity: 0;
         transform: translateX(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -109,6 +111,7 @@
         opacity: 0;
         transform: scale(0.95);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -116,9 +119,12 @@
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.8;
     }
@@ -138,11 +144,16 @@
 
 /* Drag and Drop feedback animations */
 @keyframes pulse-subtle {
-    0%, 100% {
-        background-color: rgb(240 253 244); /* green-50 */
+
+    0%,
+    100% {
+        background-color: rgb(240 253 244);
+        /* green-50 */
     }
+
     50% {
-        background-color: rgb(220 252 231); /* green-100 */
+        background-color: rgb(220 252 231);
+        /* green-100 */
     }
 }
 
@@ -152,59 +163,58 @@
 
 /* Striped pattern for occupied slots */
 .bg-stripes-red {
-    background-image: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 4px,
-        rgba(239, 68, 68, 0.15) 4px,
-        rgba(239, 68, 68, 0.15) 8px
-    );
+    background-image: repeating-linear-gradient(45deg,
+            transparent,
+            transparent 4px,
+            rgba(239, 68, 68, 0.15) 4px,
+            rgba(239, 68, 68, 0.15) 8px);
 }
 
 @layer components {
+
     /* ===== Searchable Dropdown (Admin Equipos) ===== */
     .searchable-option {
         @apply px-4 py-2.5 cursor-pointer transition-colors duration-150;
         @apply hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none;
         @apply border-b border-gray-100 last:border-b-0;
     }
-    
+
     .searchable-option:focus {
         @apply bg-indigo-100;
     }
-    
+
     #admin-equipo-cliente-dropdown,
     #admin-equipo-sistema-dropdown {
         @apply z-[60];
     }
-    
+
     /* ===== Cliente Autocomplete ===== */
     .cliente-dropdown-item {
         @apply px-4 py-3 cursor-pointer transition-colors duration-150;
         @apply hover:bg-blue-50 focus:bg-blue-50 focus:outline-none;
         @apply border-b border-gray-100 last:border-b-0;
     }
-    
+
     .cliente-dropdown-item.selected {
         @apply bg-blue-100;
     }
-    
+
     .cliente-dropdown-item-name {
         @apply font-medium text-gray-800;
     }
-    
+
     .cliente-dropdown-item-detail {
         @apply text-xs text-gray-500 mt-0.5;
     }
-    
+
     .cliente-dropdown-item mark {
         @apply bg-yellow-200 text-gray-800 px-0.5 rounded;
     }
-    
+
     .cliente-dropdown-empty {
         @apply px-4 py-3 text-gray-500 text-center italic;
     }
-    
+
     #cliente-search.has-selection,
     #softener-cliente-search.has-selection {
         @apply bg-green-50 border-green-300;
@@ -233,20 +243,20 @@
     .dark-theme .form-locked-floating-message {
         @apply bg-green-900/30 border-green-700 text-green-300;
     }
-    
+
     .dark-theme .cliente-dropdown-item {
         @apply hover:bg-gray-700 focus:bg-gray-700;
         @apply border-gray-700;
     }
-    
+
     .dark-theme .cliente-dropdown-item-name {
         @apply text-gray-100;
     }
-    
+
     .dark-theme .cliente-dropdown-item-detail {
         @apply text-gray-400;
     }
-    
+
     .dark-theme #cliente-dropdown,
     .dark-theme #softener-cliente-dropdown {
         @apply bg-gray-800 border-gray-700;
@@ -261,20 +271,21 @@
     .equipo-campo-bloqueado {
         @apply bg-gray-100 dark:bg-gray-700 cursor-not-allowed opacity-75;
     }
-    
+
     .equipo-status-banner {
         animation: slideDown 0.3s ease-out;
     }
-    
+
     .equipo-selector-container {
         animation: slideDown 0.3s ease-out;
     }
-    
+
     @keyframes slideDown {
         from {
             opacity: 0;
             transform: translateY(-10px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -509,6 +520,34 @@
         color: var(--app-color-text-default);
     }
 
+    /* Avatar con iniciales del usuario */
+    .user-avatar-initials {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .user-menu-toggle:hover .user-avatar-initials {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .dark-theme .user-avatar-initials {
+        background: linear-gradient(135deg, #818cf8, #a78bfa);
+        box-shadow: 0 2px 8px rgba(129, 140, 248, 0.3);
+    }
+
     .app-container {
         @apply min-h-screen;
     }
@@ -516,7 +555,7 @@
     .login-container {
         @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-900 p-6;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        background-image: 
+        background-image:
             radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15), transparent 50%),
             radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.15), transparent 50%),
             radial-gradient(circle at 40% 20%, rgba(34, 211, 238, 0.1), transparent 40%);
@@ -1540,7 +1579,7 @@
         transform: translateY(-2px);
     }
 
-    .form-card + .form-card {
+    .form-card+.form-card {
         @apply mt-8;
     }
 
@@ -1585,15 +1624,15 @@
         transition: transform 0.2s ease-in-out;
     }
 
-    .toggle-switch-input:checked + .toggle-switch-slider {
+    .toggle-switch-input:checked+.toggle-switch-slider {
         @apply bg-blue-600;
     }
 
-    .toggle-switch-input:checked + .toggle-switch-slider::after {
+    .toggle-switch-input:checked+.toggle-switch-slider::after {
         transform: translateX(1.25rem);
     }
 
-    .toggle-switch-input:focus-visible + .toggle-switch-slider {
+    .toggle-switch-input:focus-visible+.toggle-switch-slider {
         @apply ring-2 ring-blue-400 ring-offset-2;
     }
 
@@ -1771,16 +1810,16 @@
         --card-glow: rgba(59, 130, 246, 0.22);
     }
 
-    .sanitizacion-card__input:checked + .sanitizacion-card,
+    .sanitizacion-card__input:checked+.sanitizacion-card,
     .sanitizacion-card:hover {
         border-color: var(--card-accent, rgba(148, 163, 184, 0.6));
     }
 
-    .sanitizacion-card__input:focus-visible + .sanitizacion-card {
+    .sanitizacion-card__input:focus-visible+.sanitizacion-card {
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
     }
 
-    .sanitizacion-card__input:checked + .sanitizacion-card {
+    .sanitizacion-card__input:checked+.sanitizacion-card {
         color: #0f172a;
         background: linear-gradient(135deg, var(--card-surface, rgba(255, 255, 255, 0.9)), var(--card-surface-strong, rgba(226, 232, 240, 0.8)));
         box-shadow: 0 18px 36px var(--card-glow, rgba(148, 163, 184, 0.2));
@@ -1808,7 +1847,7 @@
         color: #94a3b8;
     }
 
-    .dark-theme .sanitizacion-card__input:checked + .sanitizacion-card {
+    .dark-theme .sanitizacion-card__input:checked+.sanitizacion-card {
         color: #f8fafc;
         box-shadow: 0 22px 40px var(--card-glow, rgba(15, 23, 42, 0.4));
     }
@@ -2304,6 +2343,7 @@
         0% {
             background-position: -200% 0;
         }
+
         100% {
             background-position: 200% 0;
         }
@@ -2338,6 +2378,7 @@
 }
 
 @layer utilities {
+
     .text-gray-900,
     .text-gray-800,
     .text-gray-700 {
@@ -2386,7 +2427,7 @@
         border-color: var(--app-color-border-strong) !important;
     }
 
-    .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    .divide-gray-200> :not([hidden])~ :not([hidden]) {
         border-color: var(--app-color-border) !important;
     }
 

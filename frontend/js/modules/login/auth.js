@@ -594,6 +594,13 @@ function updateUserPanel(auth) {
         if (menuButton) {
             menuButton.disabled = false;
             menuButton.setAttribute?.('aria-expanded', menuIsOpen ? 'true' : 'false');
+
+            // Mostrar iniciales del usuario en el avatar
+            const initials = getInitials(displayName);
+            menuButton.innerHTML = `
+                <span class="sr-only">Abrir menú de usuario</span>
+                <span class="user-avatar-initials">${initials}</span>
+            `;
         }
         if (menu) {
             if (menuIsOpen) {
@@ -621,12 +628,40 @@ function updateUserPanel(auth) {
         if (menuButton) {
             menuButton.disabled = true;
             menuButton.setAttribute?.('aria-expanded', 'false');
+            // Restaurar ícono genérico cuando no hay sesión
+            menuButton.innerHTML = `
+                <span class="sr-only">Abrir menú de usuario</span>
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a8.25 8.25 0 0 1 15 0" />
+                </svg>
+            `;
         }
         menu?.setAttribute?.('aria-hidden', 'true');
         if (logoutButton) {
             logoutButton.disabled = true;
         }
     }
+}
+
+/**
+ * Obtiene las iniciales de un nombre (máximo 2 caracteres)
+ * @param {string} name - Nombre completo
+ * @returns {string} Iniciales en mayúsculas
+ */
+function getInitials(name) {
+    if (!name || typeof name !== 'string') return '??';
+
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+
+    if (parts.length === 0) return '??';
+    if (parts.length === 1) {
+        // Solo un nombre, tomar las primeras 2 letras
+        return parts[0].substring(0, 2).toUpperCase();
+    }
+
+    // Tomar primera letra del primer y último nombre
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function createPendingAuthPromise() {
