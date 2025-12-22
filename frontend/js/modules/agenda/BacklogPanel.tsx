@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Briefcase, Clock, Filter, Search, AlertCircle, Plus } from 'lucide-react';
+import { useDroppable } from '@dnd-kit/core';
+import { Briefcase, Clock, Filter, Search, AlertCircle, Plus, Undo2 } from 'lucide-react';
 import { WorkOrder, Prioridad, PRIORIDAD_BADGES } from './types';
 import { WorkOrderCard } from './WorkOrderCard';
 import { WorkOrderDetailsModal } from './WorkOrderDetailsModal';
@@ -14,6 +15,8 @@ interface BacklogPanelProps {
     onCreateClick?: () => void;
     onDeleteWO?: (woId: string) => void;
     readOnly?: boolean;
+    isDragging?: boolean; // When any drag is happening
+    activeWOId?: string | null; // ID of the currently dragged WO (for ghost effect)
 }
 
 /**
@@ -29,7 +32,14 @@ export function BacklogPanel({
     onCreateClick,
     onDeleteWO,
     readOnly = false,
+    isDragging = false,
+    activeWOId = null,
 }: BacklogPanelProps) {
+    // Droppable zone for canceling drag (returning to backlog)
+    const { isOver, setNodeRef: setDropRef } = useDroppable({
+        id: 'backlog-cancel-zone',
+        data: { type: 'cancel' },
+    });
     // Filtrar WOs
     const filteredWOs = workOrders.filter(wo => {
         const matchesSearch =
@@ -119,8 +129,27 @@ export function BacklogPanel({
                 </div>
             </div>
 
-            {/* Work Orders List */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {/* Work Orders List - Droppable zone to cancel drag */}
+            <div
+                ref={setDropRef}
+                className={`flex-1 overflow-y-auto p-3 space-y-3 transition-colors relative
+                    ${isDragging && isOver ? 'bg-amber-50 border-2 border-dashed border-amber-300' : ''}
+                    ${isDragging && !isOver ? 'bg-slate-100' : ''}
+                `}
+            >
+                {/* Drop here to cancel indicator */}
+                {isDragging && (
+                    <div className={`absolute inset-0 flex items-center justify-center pointer-events-none z-10
+                        ${isOver ? 'opacity-100' : 'opacity-0'}
+                        transition-opacity duration-200
+                    `}>
+                        <div className="bg-amber-100 border border-amber-300 rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg">
+                            <Undo2 size={18} className="text-amber-600" />
+                            <span className="text-amber-700 font-medium text-sm">Soltar para cancelar</span>
+                        </div>
+                    </div>
+                )}
+
                 {sortedWOs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                         <AlertCircle size={32} className="mb-2" />
@@ -131,6 +160,7 @@ export function BacklogPanel({
                         <WorkOrderCard
                             key={wo.id}
                             wo={wo}
+                            isDragging={activeWOId === wo.id}
                             onClick={() => onWorkOrderClick?.(wo)}
                             onDelete={() => onDeleteWO?.(wo.id)}
                             onViewDetails={() => setSelectedWOForDetails(wo)}

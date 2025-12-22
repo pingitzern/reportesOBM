@@ -161,6 +161,23 @@
     animation: pulse-subtle 1.5s ease-in-out infinite;
 }
 
+/* Drag lift animation - starts normal, then applies visual effects */
+@keyframes dragLift {
+    0% {
+        transform: rotate(0deg) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: rotate(2deg) scale(1.02);
+        opacity: 0.92;
+    }
+}
+
+.animate-dragLift {
+    animation: dragLift 0.15s ease-out forwards;
+}
+
 /* Striped pattern for occupied slots */
 .bg-stripes-red {
     background-image: repeating-linear-gradient(45deg,

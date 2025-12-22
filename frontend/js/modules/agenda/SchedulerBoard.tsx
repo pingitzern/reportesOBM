@@ -8,7 +8,9 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
+    defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
+import type { DropAnimation } from '@dnd-kit/core';
 import { Calendar, RefreshCw, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import {
     WorkOrder,
@@ -77,6 +79,7 @@ export function SchedulerBoard({
     const [searchTerm, setSearchTerm] = useState('');
     const [filterPrioridad, setFilterPrioridad] = useState<Prioridad | 'all'>('all');
     const [activeWO, setActiveWO] = useState<WorkOrder | null>(null);
+    const [activeNodeWidth, setActiveNodeWidth] = useState<number | null>(null); // Track dragged element width
     const [selectedTask, setSelectedTask] = useState<ScheduledTask | null>(null);
 
     // Derived state for drag feedback
@@ -93,6 +96,17 @@ export function SchedulerBoard({
             },
         })
     );
+
+    // Custom drop animation for smoother UX
+    const dropAnimation: DropAnimation = {
+        sideEffects: defaultDropAnimationSideEffects({
+            styles: {
+                active: {
+                    opacity: '0.5',
+                },
+            },
+        }),
+    };
 
     // Format date
     const formatDate = (date: Date) => {
@@ -148,14 +162,33 @@ export function SchedulerBoard({
         const woData = active.data.current?.wo as WorkOrder;
         if (woData) {
             setActiveWO(woData);
+            // Use dnd-kit's rect which provides accurate dimensions
+            // The active.rect.current contains the bounding rect of the dragged element
+            if (active.rect.current.initial) {
+                setActiveNodeWidth(active.rect.current.initial.width);
+            } else {
+                // Fallback to querySelector if rect not available
+                const node = document.querySelector(`[data-draggable-id="${active.id}"]`) as HTMLElement;
+                if (node) {
+                    setActiveNodeWidth(node.offsetWidth);
+                }
+            }
         }
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveWO(null);
+        setActiveNodeWidth(null); // Clear width on drag end
 
         if (!over) return;
+
+        // Check if dropped on cancel zone (backlog) - just cancel the operation
+        const dropType = over.data.current?.type as string | undefined;
+        if (dropType === 'cancel') {
+            // Dropped back on backlog - do nothing (cancel)
+            return;
+        }
 
         const dragType = active.data.current?.type as string | undefined;
         const woData = active.data.current?.wo as WorkOrder;
@@ -205,6 +238,8 @@ export function SchedulerBoard({
                     onCreateClick={canCreateWO ? onCreateWO : undefined}
                     onDeleteWO={readOnly ? undefined : onDeleteWO}
                     readOnly={readOnly}
+                    isDragging={isDragging}
+                    activeWOId={activeWO?.id ?? null}
                 />
 
                 {/* Main Timeline (Right) */}
@@ -348,9 +383,9 @@ export function SchedulerBoard({
                     </div>
                 </div>
 
-                {/* Drag Overlay */}
-                <DragOverlay>
-                    {activeWO && <WorkOrderCardStatic wo={activeWO} isCompact />}
+                {/* Drag Overlay - follows cursor naturally */}
+                <DragOverlay dropAnimation={dropAnimation}>
+                    {activeWO && <WorkOrderCardStatic wo={activeWO} width={activeNodeWidth} />}
                 </DragOverlay>
 
                 {/* Task Detail Modal */}

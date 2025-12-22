@@ -17,22 +17,20 @@ interface WorkOrderCardProps {
  */
 export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete, onViewDetails }: WorkOrderCardProps) {
     const [isHovered, setIsHovered] = useState(false);
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    const { attributes, listeners, setNodeRef } = useDraggable({
         id: wo.id,
         data: { type: 'workorder', wo },
     });
 
-    const style = transform ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        zIndex: 1000,
-    } : undefined;
+    // IMPORTANTE: NO aplicamos transform aquí porque usamos DragOverlay
+    // El DragOverlay se encarga del movimiento visual, la tarjeta original queda en su lugar
 
     const colors = PRIORIDAD_COLORS[wo.prioridad];
 
     return (
         <div
             ref={setNodeRef}
-            style={style}
+            data-draggable-id={wo.id}
             {...listeners}
             {...attributes}
             onClick={onClick}
@@ -40,9 +38,9 @@ export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete, on
             onMouseLeave={() => setIsHovered(false)}
             className={`
                 ${colors.bg} ${colors.border}
-                border-l-4 rounded-lg p-3 cursor-grab active:cursor-grabbing
-                shadow-sm hover:shadow-md transition-all duration-200
-                ${isDragging ? 'opacity-50 scale-105 shadow-lg' : ''}
+                border-l-4 rounded-lg cursor-grab active:cursor-grabbing
+                shadow-sm hover:shadow-md
+                ${isDragging ? 'opacity-30 pointer-events-none' : 'transition-all duration-200'}
                 ${isCompact ? 'p-2' : 'p-3'}
                 group relative
             `}
@@ -208,24 +206,29 @@ export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete, on
 }
 
 /**
- * Versión estática mejorada de la tarjeta (para el preview mientras se arrastra)
- * Con efecto de "flotando" más pronunciado
+ * Versión estática de la tarjeta para el DragOverlay
+ * IMPORTANTE: SIN transform para evitar que el cursor se desalinee
+ * Solo efectos visuales que no modifican la posición (shadow, ring, opacity)
  */
-export function WorkOrderCardStatic({ wo, isCompact }: { wo: WorkOrder; isCompact?: boolean }) {
+export function WorkOrderCardStatic({ wo, width }: { wo: WorkOrder; width?: number | null }) {
     const colors = PRIORIDAD_COLORS[wo.prioridad];
 
     return (
         <div
             className={`
                 ${colors.bg} ${colors.border}
-                border-l-4 rounded-lg shadow-2xl
-                ${isCompact ? 'p-2 w-64' : 'p-3 w-72'}
-                transform rotate-2 scale-105
-                ring-2 ring-indigo-400 ring-opacity-50
-                opacity-95
+                border-l-4 rounded-lg p-3
+                cursor-grabbing select-none
+                ring-2 ring-indigo-400/50
+                opacity-70
             `}
             style={{
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 15px rgba(99, 102, 241, 0.3)',
+                // Usar el ancho exacto capturado del elemento original para pixel-perfect alignment
+                width: width ? `${width}px` : 'auto',
+                // Solo shadow para feedback visual, SIN rotate/scale que alteren la posición
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 15px rgba(99, 102, 241, 0.3)',
+                // CRÍTICO: Deshabilitar transiciones para evitar animación de posición inicial
+                transition: 'none',
             }}
         >
             {/* Header with badge */}
@@ -253,7 +256,7 @@ export function WorkOrderCardStatic({ wo, isCompact }: { wo: WorkOrder; isCompac
                 <Clock size={12} />
                 <span>{wo.tiempo_servicio_estimado} min</span>
                 <span className="text-indigo-500 font-medium ml-auto">
-                    Arrastrando...
+                    ✋ Arrastrando...
                 </span>
             </div>
         </div>
