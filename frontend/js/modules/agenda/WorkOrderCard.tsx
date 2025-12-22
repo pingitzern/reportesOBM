@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Clock, MapPin, User, Wrench, Trash2 } from 'lucide-react';
+import { Clock, MapPin, User, Wrench, Trash2, Eye } from 'lucide-react';
 import { WorkOrder, PRIORIDAD_BADGES, PRIORIDAD_COLORS, CONFIRMACION_CONFIG } from './types';
 
 interface WorkOrderCardProps {
@@ -9,12 +9,14 @@ interface WorkOrderCardProps {
     isCompact?: boolean;
     onClick?: () => void;
     onDelete?: () => void;
+    onViewDetails?: () => void;
 }
 
 /**
  * Tarjeta de Work Order arrastrable
  */
-export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete }: WorkOrderCardProps) {
+export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete, onViewDetails }: WorkOrderCardProps) {
+    const [isHovered, setIsHovered] = useState(false);
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: wo.id,
         data: { type: 'workorder', wo },
@@ -34,6 +36,8 @@ export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete }: 
             {...listeners}
             {...attributes}
             onClick={onClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             className={`
                 ${colors.bg} ${colors.border}
                 border-l-4 rounded-lg p-3 cursor-grab active:cursor-grabbing
@@ -53,6 +57,22 @@ export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete }: 
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${PRIORIDAD_BADGES[wo.prioridad]}`}>
                         {wo.prioridad === 'EMERGENCIA_COMODIN' ? '🔥 Emergencia' : wo.prioridad}
                     </span>
+
+                    {onViewDetails && !isDragging && (
+                        <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                onViewDetails();
+                            }}
+                            className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 p-1 rounded transition-colors"
+                            title="Ver detalles"
+                        >
+                            <Eye size={14} />
+                        </button>
+                    )}
 
                     {onDelete && !isDragging && (
                         <button
@@ -141,6 +161,46 @@ export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete }: 
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Clock size={11} />
                     <span>{wo.tiempo_servicio_estimado} min</span>
+                </div>
+            )}
+
+            {/* Hover Tooltip */}
+            {isHovered && !isDragging && !isCompact && (
+                <div className="absolute left-full top-0 ml-2 z-50 w-72 bg-white rounded-lg shadow-xl border border-slate-200 p-3 pointer-events-none animate-fadeIn">
+                    <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white"></div>
+
+                    {/* Descripción */}
+                    {wo.descripcion && (
+                        <div className="mb-2">
+                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Descripción</span>
+                            <p className="text-sm text-slate-700 mt-0.5 line-clamp-3">{wo.descripcion}</p>
+                        </div>
+                    )}
+
+                    {/* Dirección */}
+                    {wo.cliente_direccion && (
+                        <div className="flex items-start gap-2 mb-2 text-sm">
+                            <MapPin size={14} className="text-indigo-500 mt-0.5 flex-shrink-0" />
+                            <span className="text-slate-600">{wo.cliente_direccion}</span>
+                        </div>
+                    )}
+
+                    {/* Tiempos de viaje */}
+                    {(wo.tiempo_viaje_ida_estimado || wo.tiempo_viaje_vuelta_estimado) && (
+                        <div className="flex gap-3 text-xs text-slate-500 pt-2 border-t border-slate-100">
+                            {wo.tiempo_viaje_ida_estimado && (
+                                <span>🚗→ {wo.tiempo_viaje_ida_estimado} min</span>
+                            )}
+                            {wo.tiempo_viaje_vuelta_estimado && (
+                                <span>←🚗 {wo.tiempo_viaje_vuelta_estimado} min</span>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Si no hay info adicional */}
+                    {!wo.descripcion && !wo.cliente_direccion && !wo.tiempo_viaje_ida_estimado && (
+                        <p className="text-sm text-slate-400 italic">Sin información adicional</p>
+                    )}
                 </div>
             )}
         </div>

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Briefcase, Clock, Filter, Search, AlertCircle, Plus } from 'lucide-react';
 import { WorkOrder, Prioridad, PRIORIDAD_BADGES } from './types';
 import { WorkOrderCard } from './WorkOrderCard';
+import { WorkOrderDetailsModal } from './WorkOrderDetailsModal';
 
 interface BacklogPanelProps {
     workOrders: WorkOrder[];
@@ -54,6 +55,9 @@ export function BacklogPanel({
     );
 
     const prioridadOptions: (Prioridad | 'all')[] = ['all', 'EMERGENCIA_COMODIN', 'Alta', 'Media', 'Baja'];
+
+    // Estado para el modal de detalles
+    const [selectedWOForDetails, setSelectedWOForDetails] = useState<WorkOrder | null>(null);
 
     return (
         <div className="w-80 flex-shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col h-full">
@@ -129,6 +133,7 @@ export function BacklogPanel({
                             wo={wo}
                             onClick={() => onWorkOrderClick?.(wo)}
                             onDelete={() => onDeleteWO?.(wo.id)}
+                            onViewDetails={() => setSelectedWOForDetails(wo)}
                         />
                     ))
                 )}
@@ -152,6 +157,15 @@ export function BacklogPanel({
                     })}
                 </div>
             </div>
+
+            {/* Modal de detalles */}
+            {selectedWOForDetails && (
+                <WorkOrderDetailsModal
+                    wo={selectedWOForDetails}
+                    isOpen={true}
+                    onClose={() => setSelectedWOForDetails(null)}
+                />
+            )}
         </div>
     );
 }
