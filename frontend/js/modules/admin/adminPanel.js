@@ -2252,12 +2252,63 @@ function showFeedbackDetail(ticketId) {
                         <p class="text-xs text-gray-500 uppercase mb-1">Estado actual</p>
                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs ${est.color}">${est.label}</span>
                     </div>
+                    <div class="border-t pt-4">
+                        <p class="text-xs text-gray-500 uppercase mb-2">Respuesta del Admin (visible para el usuario)</p>
+                        <textarea id="swal-admin-response" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows="3" placeholder="Escribe un comentario para el usuario...">${escapeHtml(ticket.respuesta_admin || '')}</textarea>
+                    </div>
                 </div>
             `,
             width: 500,
-            confirmButtonText: 'Cerrar',
-            confirmButtonColor: '#6366f1'
+            showCancelButton: true,
+            confirmButtonText: 'Guardar Respuesta',
+            cancelButtonText: 'Cerrar',
+            confirmButtonColor: '#6366f1',
+            preConfirm: () => {
+                const response = document.getElementById('swal-admin-response').value.trim();
+                return response;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateFeedbackResponse(ticketId, result.value);
+            }
         });
+    }
+}
+
+// Actualizar respuesta del admin en un ticket
+async function updateFeedbackResponse(ticketId, response) {
+    try {
+        const { error } = await supabase
+            .from('feedback')
+            .update({ respuesta_admin: response || null })
+            .eq('id', ticketId);
+
+        if (error) {
+            console.error('[AdminPanel] Error updating feedback response:', error);
+            if (window.Swal) {
+                window.Swal.fire('Error', 'No se pudo guardar la respuesta: ' + error.message, 'error');
+            }
+            return;
+        }
+
+        // Actualizar cache local
+        const ticket = feedbackCache.find(t => t.id === ticketId);
+        if (ticket) {
+            ticket.respuesta_admin = response || null;
+        }
+
+        if (window.Swal) {
+            window.Swal.fire({
+                icon: 'success',
+                title: '¡Guardado!',
+                text: 'La respuesta fue guardada y el usuario podrá verla.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+        console.log('[AdminPanel] Feedback response updated:', ticketId);
+    } catch (err) {
+        console.error('[AdminPanel] Error in updateFeedbackResponse:', err);
     }
 }
 

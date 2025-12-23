@@ -80,6 +80,13 @@
                                     d="M7 8h10M7 12h4m-2 8c-4.418 0-8-3.134-8-7s3.582-7 8-7h6c4.418 0 8 3.134 8 7s-3.582 7-8 7H9l-4 3v-3z" />
                             </svg>
                         </button>
+                        <button id="mis-tickets-menu-item" type="button" class="user-menu__item" role="menuitem">
+                            <span>Mis Tickets</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                        </button>
                         <a href="#" class="user-menu__item" role="menuitem">
                             <span>Configuración</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4118,6 +4125,29 @@
                     Guardar nueva contraseña
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal: Mis Tickets -->
+    <div id="mis-tickets-backdrop" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-40 hidden"></div>
+    <div id="mis-tickets-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden">
+            <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Mis Tickets de Feedback</h3>
+                    <p class="text-sm text-gray-500">Estado de tus comentarios y reportes</p>
+                </div>
+                <button id="mis-tickets-close-btn"
+                    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="mis-tickets-list" class="p-4 space-y-3 overflow-y-auto max-h-[60vh]">
+                <!-- Tickets will be rendered here -->
+            </div>
         </div>
     </div>
 

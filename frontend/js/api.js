@@ -1043,6 +1043,34 @@ export async function enviarFeedbackTicket(datos) {
     return { success: true, ticketId: data.id };
 }
 
+/**
+ * Obtiene los tickets de feedback del usuario actual
+ * @returns {Promise<Array>} Lista de tickets del usuario con id, categoria, impacto, estado, mensaje, created_at
+ */
+export async function getMisFeedbackTickets() {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+
+    if (!userId) {
+        console.warn('[feedback] Usuario no autenticado');
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('feedback')
+        .select('id, categoria, impacto, estado, mensaje, respuesta_admin, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+    if (error) {
+        console.error('[feedback] Error obteniendo tickets:', error);
+        throw new Error('No se pudieron obtener los tickets.');
+    }
+
+    return data || [];
+}
+
 export async function fetchClientesSupabase() {
     const { data, error } = await supabase
         .from('clients')

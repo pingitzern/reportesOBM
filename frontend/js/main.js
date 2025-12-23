@@ -12,6 +12,7 @@ import { createRemitosGestionModule } from './modules/remitos-gestion/remitos-ge
 import { createMantenimientosGestionModule } from './modules/mantenimientos-gestion/mantenimientos-gestion.js';
 import { createSoftenerModule } from './modules/mantenimiento-ablandador/ablandador.js';
 import { createFeedbackModule } from './modules/feedback/feedback.js';
+import { createMisTicketsModule } from './modules/feedback/misTickets.js';
 import { createAdminPanelModule } from './modules/admin/adminPanel.js';
 import { initEquipmentHistory } from './modules/equipmentHistory/equipmentHistory.js';
 import { supabase } from './supabaseClient.js';
@@ -31,6 +32,7 @@ const {
     eliminarRemito,
     obtenerVersionServidor,
     enviarFeedbackTicket,
+    getMisFeedbackTickets,
     obtenerUrlPdfRemito,
     guardarPdfRemito,
     generarPdfMantenimiento,
@@ -135,6 +137,10 @@ const feedbackModule = createFeedbackModule({
     enviarFeedbackTicket,
 });
 
+const misTicketsModule = createMisTicketsModule({
+    getMisFeedbackTickets,
+});
+
 const adminPanelModule = createAdminPanelModule();
 
 const mantenimientosGestionModule = createMantenimientosGestionModule({
@@ -154,6 +160,7 @@ const appModules = {
     mantenimientosGestion: mantenimientosGestionModule,
     softener: softenerModule,
     feedback: feedbackModule,
+    misTickets: misTicketsModule,
     adminPanel: adminPanelModule,
 };
 
@@ -486,6 +493,7 @@ async function initializeApp() {
     initializeNavigation();
     initializeHelpToggle();
     appModules.feedback.initialize();
+    appModules.misTickets.initialize();
     // Inicializar módulos que no requieren autenticación
     appModules.remito.initialize();
     appModules.search.initialize();
