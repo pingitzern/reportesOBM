@@ -262,13 +262,13 @@ export class AIAssistant {
 
         if (response && !response.startsWith('Error')) {
             this.addMessage('**Resumen generado:**\n' + response, 'ai');
+            this.isProcessing = false;
             return response;
         } else {
             this.addMessage('No pude generar el resumen: ' + response, 'ai');
+            this.isProcessing = false;
             return null;
         }
-
-        this.isProcessing = false;
     }
 
     /**

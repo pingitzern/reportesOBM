@@ -54,6 +54,7 @@ function navigateToMantenimientos() {
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 function navigateToDashboard() {
     showView('tab-dashboard');
     setActiveNavigation('dashboard');
@@ -273,6 +274,7 @@ function formatScriptVersion(rawInfo) {
     return label ? `Scripts ${label}` : '';
 }
 
+// eslint-disable-next-line no-unused-vars
 async function showScriptVersion() {
     const versionElement = document.getElementById('script-version-menu');
     if (!versionElement) {

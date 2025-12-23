@@ -10,5 +10,12 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  rules: {},
+  globals: {
+    Swal: 'readonly',
+    html2canvas: 'readonly',
+    google: 'readonly',
+  },
+  rules: {
+    'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+  },
 };

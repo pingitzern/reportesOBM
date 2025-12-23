@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '../../supabaseClient.js';
-import { getCurrentUserRole, isAdmin, canAccessAdminPanel } from '../login/auth.js';
+import { isAdmin, canAccessAdminPanel } from '../login/auth.js';
 import { bindSistemasEquiposEventListeners, loadSistemas, loadEquipos } from './sistemasEquipos.js';
 
 const ITEMS_PER_PAGE = 15;
@@ -2083,7 +2083,7 @@ function renderFeedbackTable(tickets) {
     tbody.innerHTML = tickets.map(ticket => {
         const cat = CATEGORIA_MAP[ticket.categoria] || CATEGORIA_MAP['otro'];
         const imp = IMPACTO_MAP[ticket.impacto] || IMPACTO_MAP['bajo'];
-        const est = ESTADO_MAP[ticket.estado] || ESTADO_MAP['nuevo'];
+        // est is used in showFeedbackDetail, not here
         const fecha = new Date(ticket.created_at).toLocaleDateString('es-AR', {
             day: '2-digit',
             month: '2-digit',

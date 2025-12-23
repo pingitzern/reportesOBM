@@ -1,0 +1,48 @@
+﻿
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\api.js
+  806:22  error  'pdfPath' is not defined  no-undef
+
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\modules\admin\userManagement.js
+  11:7  error  'VALID_ROLES' is assigned a value but never used  no-unused-vars
+
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\modules\ai\aiAssistant.js
+  271:9  error  Unreachable code  no-unreachable
+
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\modules\login\auth.js
+  1084:5  error  'isPasswordRecoveryMode' is assigned a value but never used  no-unused-vars
+
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\modules\mantenimiento-ablandador\ablandador.js
+    12:34  error  'canSaveForm' is defined but never used                             no-unused-vars
+    12:47  error  'showBlockingErrors' is defined but never used                      no-unused-vars
+    99:7   error  'CLIENT_OPTION_ATTRIBUTE' is assigned a value but never used        no-unused-vars
+   139:5   error  'clienteSelectChangeHandler' is assigned a value but never used     no-unused-vars
+   143:5   error  'lastSavedMaintenanceId' is assigned a value but never used         no-unused-vars
+   422:10  error  'configureClientDetailFieldInteractions' is defined but never used  no-unused-vars
+   440:10  error  'updateClientDetailsFromSelect' is defined but never used           no-unused-vars
+  2935:36  error  'saveButton' is defined but never used                              no-unused-vars
+
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\modules\mantenimiento-ablandador\softenerValidator.js
+   30:10  error  'isElementVisible' is defined but never used     no-unused-vars
+  522:11  error  'checkFugas' is assigned a value but never used  no-unused-vars
+
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\modules\mantenimiento\forms.js
+   11:7   error  'CLIENT_OPTION_ATTRIBUTE' is assigned a value but never used     no-unused-vars
+  106:5   error  'clienteSelectChangeHandler' is assigned a value but never used  no-unused-vars
+  497:10  error  'updateClientDetailsFromSelect' is defined but never used        no-unused-vars
+
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\modules\remito\remito.js
+  1320:79  error  'navigateToDashboard' is assigned a value but never used  no-unused-vars
+  1366:14  error  'buildEmailStatusAlertMessage' is defined but never used  no-unused-vars
+  1791:19  error  'emailStatus' is assigned a value but never used          no-unused-vars
+  2040:26  error  'html2canvas' is not defined                              no-undef
+
+C:\Users\Nicolas Pingitzer\reportesOBM\frontend\js\modules\remitos-gestion\remitos-gestion.js
+   309:10  error  'hasPhotoContent' is defined but never used                       no-unused-vars
+   785:10  error  'buildClienteOptionsHtml' is defined but never used               no-unused-vars
+  1391:11  error  'hasEquipoSelected' is assigned a value but never used            no-unused-vars
+  1440:11  error  'numeroRemitoPlaceholderAttr' is assigned a value but never used  no-unused-vars
+  1443:11  error  'numeroRemitoHelpHtml' is assigned a value but never used         no-unused-vars
+  1446:11  error  'numeroReporteFieldHtml' is assigned a value but never used       no-unused-vars
+
+Ô£û 27 problems (27 errors, 0 warnings)
+

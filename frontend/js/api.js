@@ -1,4 +1,5 @@
-import { getCurrentToken, handleSessionExpiration, isDevMode } from './modules/login/auth.js';
+// Note: These auth functions are available for future use if needed
+// import { getCurrentToken, handleSessionExpiration, isDevMode } from './modules/login/auth.js';
 import { state } from './modules/mantenimiento/state.js';
 import { supabase } from './supabaseClient.js';
 
@@ -557,6 +558,7 @@ export async function obtenerRemitos({ page = 1, pageSize = 20 } = {}) {
 /**
  * Obtiene URL firmada para una foto en Storage
  */
+// eslint-disable-next-line no-unused-vars
 async function getSignedPhotoUrl(path) {
     if (!path) return '';
 
@@ -793,17 +795,7 @@ export async function crearRemito(datos) {
         }
     }
 
-    // Guardar el HTML del PDF si se proporciona
-    let pdfPath = null;
-    if (datos.pdfHtml) {
-        pdfPath = await uploadRemitoPdfHtml(remito.id, datos.pdfHtml);
-        if (pdfPath) {
-            await supabase
-                .from('remitos')
-                .update({ pdf_path: pdfPath })
-                .eq('id', remito.id);
-        }
-    }
+    // Note: PDF generation now handled via uploadRemitoPdfBlob in remito module
 
     return {
         success: true,
@@ -811,7 +803,7 @@ export async function crearRemito(datos) {
             id: remito.id,
             NumeroRemito: remito.numero_remito,
             numeroRemito: remito.numero_remito,
-            pdfPath: pdfPath,
+            pdfPath: null, // PDF generation handled in remito module
             emailStatus: { skipped: true, message: 'Envío de email pendiente de migración' },
         },
     };
