@@ -1332,14 +1332,14 @@ export function hasElevatedPermissions() {
 
 /**
  * Verifica si el usuario puede acceder al panel de administración
- * Solo: admin, ventas
+ * Incluye: admin, ventas, coordinador, jefe_servicio
  * @returns {boolean}
  */
 export function canAccessAdminPanel() {
     const role = getCurrentUserRole();
     if (!role) return false;
     const normalizedRole = role.toLowerCase().trim();
-    return ['admin', 'administrador', 'ventas'].includes(normalizedRole);
+    return ['admin', 'administrador', 'ventas', 'coordinador', 'jefe_servicio'].includes(normalizedRole);
 }
 
 /**

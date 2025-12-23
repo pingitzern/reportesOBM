@@ -2089,6 +2089,13 @@
                             </svg>
                             Equipos
                         </button>
+                        <button class="admin-tab-button hidden" id="admin-tab-feedback-btn" data-admin-tab="feedback">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            Feedback
+                        </button>
                     </div>
 
                     <!-- Contenido de la pestaña Clientes -->
@@ -2712,6 +2719,182 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Feedback (Solo Admin) -->
+                <div id="admin-tab-feedback" class="admin-tab-content hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">Tickets de Feedback</h2>
+                            <p class="text-sm text-gray-500">Gestiona los comentarios y sugerencias de los usuarios
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Stats Feedback -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex-shrink-0 w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Total</p>
+                                    <p id="admin-feedback-total" class="text-xl font-bold text-gray-900">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Nuevos</p>
+                                    <p id="admin-feedback-nuevos" class="text-xl font-bold text-amber-600">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">En Revisión</p>
+                                    <p id="admin-feedback-revision" class="text-xl font-bold text-blue-600">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Resueltos</p>
+                                    <p id="admin-feedback-resueltos" class="text-xl font-bold text-green-600">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="bg-white shadow-sm rounded-2xl p-4 mb-6 border border-gray-200">
+                        <div class="flex flex-col gap-4 md:flex-row md:items-center">
+                            <select id="admin-feedback-filter-estado"
+                                class="border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Todos los estados</option>
+                                <option value="nuevo">Nuevos</option>
+                                <option value="en_revision">En Revisión</option>
+                                <option value="resuelto">Resueltos</option>
+                                <option value="cerrado">Cerrados</option>
+                            </select>
+                            <select id="admin-feedback-filter-categoria"
+                                class="border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Todas las categorías</option>
+                                <option value="bug">🐛 Error/Bug</option>
+                                <option value="mejora">💡 Mejora</option>
+                                <option value="rendimiento">⚡ Rendimiento</option>
+                                <option value="otro">📝 Otro</option>
+                            </select>
+                            <select id="admin-feedback-filter-impacto"
+                                class="border border-gray-300 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">Todos los impactos</option>
+                                <option value="critico">🔴 Crítico</option>
+                                <option value="alto">🟠 Alto</option>
+                                <option value="medio">🟡 Medio</option>
+                                <option value="bajo">🟢 Bajo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de feedback -->
+                    <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Fecha</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Usuario</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Categoría</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Impacto</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Mensaje</th>
+                                        <th
+                                            class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Estado</th>
+                                        <th
+                                            class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-feedback-tbody" class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <svg class="animate-spin h-5 w-5 text-indigo-600" fill="none"
+                                                    viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                        stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                                </svg>
+                                                Cargando feedback...
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Paginación -->
+                        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                            <p id="admin-feedback-info" class="text-sm text-gray-500">Mostrando 0 tickets</p>
+                            <div class="flex gap-2">
+                                <button id="admin-feedback-prev-btn"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled>
+                                    Anterior
+                                </button>
+                                <button id="admin-feedback-next-btn"
+                                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled>
+                                    Siguiente
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

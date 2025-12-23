@@ -68,16 +68,16 @@ Este documento describe las políticas de Row Level Security (RLS) implementadas
 |-----|:-----------:|:----------------:|:--------:|:-------------------:|
 | `admin` | ✅ | ✅ | ✅ | ✅ |
 | `ventas` | ✅ | ❌ | ✅ | ✅ |
-| `coordinador` | ❌ | ✅ | ✅ | ✅ |
-| `jefe_servicio` | ❌ | ❌ (solo ver) | ✅ | ✅ |
+| `coordinador` | ✅ | ✅ | ✅ | ✅ |
+| `jefe_servicio` | ✅ | ❌ (solo ver) | ✅ | ✅ |
 | `tecnico` | ❌ | ❌ (solo ver) | ❌ | Solo propios |
 
 ### Descripción de Roles
 
 - **admin** - Administrador: Acceso completo a todas las funciones
 - **ventas** - Ventas: Panel Admin + Crear WOs, NO puede coordinar agenda
-- **coordinador** - Coordinador: Agenda completa, NO tiene panel admin
-- **jefe_servicio** - Jefe de Servicio: Permisos elevados, agenda solo lectura
+- **coordinador** - Coordinador: Panel Admin + Agenda completa
+- **jefe_servicio** - Jefe de Servicio: Panel Admin + permisos elevados, agenda solo lectura
 - **tecnico** - Técnico: Permisos básicos, agenda solo lectura
 
 ---

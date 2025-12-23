@@ -120,6 +120,23 @@ function updateAdminMenuVisibility() {
             console.log('[AdminPanel] Usuarios tab hidden (non-admin)');
         }
     }
+
+    // Ocultar tab de Feedback para roles que no son admin
+    const feedbackTabBtn = document.getElementById('admin-tab-feedback-btn');
+    const feedbackTabContent = document.getElementById('admin-tab-feedback');
+
+    if (feedbackTabBtn) {
+        if (isAdmin()) {
+            feedbackTabBtn.classList.remove('hidden');
+            console.log('[AdminPanel] Feedback tab shown (admin)');
+        } else {
+            feedbackTabBtn.classList.add('hidden');
+            if (feedbackTabContent) {
+                feedbackTabContent.classList.add('hidden');
+            }
+            console.log('[AdminPanel] Feedback tab hidden (non-admin)');
+        }
+    }
 }
 
 // Cargar estadísticas rápidas
@@ -850,6 +867,34 @@ function bindEventListeners() {
 
     // Event listeners para sistemas y equipos
     bindSistemasEquiposEventListeners();
+
+    // Event listeners para feedback filters
+    const feedbackEstadoFilter = document.getElementById('admin-feedback-filter-estado');
+    const feedbackCategoriaFilter = document.getElementById('admin-feedback-filter-categoria');
+    const feedbackImpactoFilter = document.getElementById('admin-feedback-filter-impacto');
+
+    feedbackEstadoFilter?.addEventListener('change', (e) => {
+        feedbackFilters.estado = e.target.value;
+        loadFeedback();
+    });
+    feedbackCategoriaFilter?.addEventListener('change', (e) => {
+        feedbackFilters.categoria = e.target.value;
+        loadFeedback();
+    });
+    feedbackImpactoFilter?.addEventListener('change', (e) => {
+        feedbackFilters.impacto = e.target.value;
+        loadFeedback();
+    });
+
+    // Cargar feedback cuando se cambia a la pestaña de feedback
+    document.querySelectorAll('.admin-tab-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.adminTab;
+            if (tabId === 'feedback') {
+                loadFeedback();
+            }
+        });
+    });
 }
 
 // ============================================
@@ -1664,6 +1709,8 @@ function bindUsuarioEventListeners() {
                 loadSistemas();
             } else if (tabId === 'equipos') {
                 loadEquipos();
+            } else if (tabId === 'feedback') {
+                loadFeedback();
             }
         });
     });
@@ -1949,6 +1996,269 @@ function navigateToAdmin() {
     loadStats();
     loadFilterOptions();
     loadClientes(1);
+}
+
+// ============================================
+// GESTIÓN DE FEEDBACK
+// ============================================
+
+let feedbackCache = [];
+let feedbackFilters = {
+    estado: '',
+    categoria: '',
+    impacto: ''
+};
+
+// Mapeos para display
+const CATEGORIA_MAP = {
+    'bug': { label: 'Error/Bug', emoji: '🐛', color: 'bg-red-100 text-red-700' },
+    'mejora': { label: 'Mejora', emoji: '💡', color: 'bg-green-100 text-green-700' },
+    'rendimiento': { label: 'Rendimiento', emoji: '⚡', color: 'bg-amber-100 text-amber-700' },
+    'otro': { label: 'Otro', emoji: '📝', color: 'bg-gray-100 text-gray-700' }
+};
+
+const IMPACTO_MAP = {
+    'bajo': { label: 'Bajo', color: 'bg-blue-100 text-blue-700' },
+    'medio': { label: 'Medio', color: 'bg-yellow-100 text-yellow-700' },
+    'alto': { label: 'Alto', color: 'bg-orange-100 text-orange-700' },
+    'critico': { label: 'Crítico', color: 'bg-red-100 text-red-700' }
+};
+
+const ESTADO_MAP = {
+    'nuevo': { label: 'Nuevo', color: 'bg-amber-100 text-amber-700' },
+    'en_revision': { label: 'En Revisión', color: 'bg-blue-100 text-blue-700' },
+    'resuelto': { label: 'Resuelto', color: 'bg-green-100 text-green-700' },
+    'cerrado': { label: 'Cerrado', color: 'bg-gray-100 text-gray-700' }
+};
+
+// Cargar feedback
+async function loadFeedback() {
+    try {
+        let query = supabase
+            .from('feedback')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (feedbackFilters.estado) {
+            query = query.eq('estado', feedbackFilters.estado);
+        }
+        if (feedbackFilters.categoria) {
+            query = query.eq('categoria', feedbackFilters.categoria);
+        }
+        if (feedbackFilters.impacto) {
+            query = query.eq('impacto', feedbackFilters.impacto);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('[AdminPanel] Error loading feedback:', error);
+            return;
+        }
+
+        feedbackCache = data || [];
+        renderFeedbackTable(feedbackCache);
+        updateFeedbackStats();
+    } catch (err) {
+        console.error('[AdminPanel] Error in loadFeedback:', err);
+    }
+}
+
+// Renderizar tabla de feedback
+function renderFeedbackTable(tickets) {
+    const tbody = document.getElementById('admin-feedback-tbody');
+    if (!tbody) return;
+
+    if (!tickets || tickets.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                    No se encontraron tickets de feedback
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = tickets.map(ticket => {
+        const cat = CATEGORIA_MAP[ticket.categoria] || CATEGORIA_MAP['otro'];
+        const imp = IMPACTO_MAP[ticket.impacto] || IMPACTO_MAP['bajo'];
+        const est = ESTADO_MAP[ticket.estado] || ESTADO_MAP['nuevo'];
+        const fecha = new Date(ticket.created_at).toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        const mensajeCorto = ticket.mensaje?.length > 60
+            ? ticket.mensaje.substring(0, 60) + '...'
+            : ticket.mensaje || '';
+
+        return `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 text-sm text-gray-600">${fecha}</td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(ticket.user_email || 'Anónimo')}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${cat.color}">
+                        ${cat.emoji} ${cat.label}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${imp.color}">
+                        ${imp.label}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" title="${escapeHtml(ticket.mensaje || '')}">
+                    ${escapeHtml(mensajeCorto)}
+                </td>
+                <td class="px-6 py-4">
+                    <select 
+                        onchange="window.adminUpdateFeedbackStatus('${ticket.id}', this.value)"
+                        class="text-xs border border-gray-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <option value="nuevo" ${ticket.estado === 'nuevo' ? 'selected' : ''}>🟡 Nuevo</option>
+                        <option value="en_revision" ${ticket.estado === 'en_revision' ? 'selected' : ''}>🔵 En Revisión</option>
+                        <option value="resuelto" ${ticket.estado === 'resuelto' ? 'selected' : ''}>🟢 Resuelto</option>
+                        <option value="cerrado" ${ticket.estado === 'cerrado' ? 'selected' : ''}>⚫ Cerrado</option>
+                    </select>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <button 
+                        onclick="window.adminShowFeedbackDetail('${ticket.id}')"
+                        class="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                    >
+                        Ver detalle
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // Actualizar info de paginación
+    const infoEl = document.getElementById('admin-feedback-info');
+    if (infoEl) {
+        infoEl.textContent = `Mostrando ${tickets.length} tickets`;
+    }
+}
+
+// Actualizar estadísticas de feedback
+function updateFeedbackStats() {
+    const total = feedbackCache.length;
+    const nuevos = feedbackCache.filter(t => t.estado === 'nuevo').length;
+    const enRevision = feedbackCache.filter(t => t.estado === 'en_revision').length;
+    const resueltos = feedbackCache.filter(t => t.estado === 'resuelto').length;
+
+    const totalEl = document.getElementById('admin-feedback-total');
+    const nuevosEl = document.getElementById('admin-feedback-nuevos');
+    const revisionEl = document.getElementById('admin-feedback-revision');
+    const resueltosEl = document.getElementById('admin-feedback-resueltos');
+
+    if (totalEl) totalEl.textContent = total;
+    if (nuevosEl) nuevosEl.textContent = nuevos;
+    if (revisionEl) revisionEl.textContent = enRevision;
+    if (resueltosEl) resueltosEl.textContent = resueltos;
+}
+
+// Actualizar estado de un ticket
+async function updateFeedbackStatus(ticketId, newStatus) {
+    try {
+        const { error } = await supabase
+            .from('feedback')
+            .update({ estado: newStatus })
+            .eq('id', ticketId);
+
+        if (error) {
+            console.error('[AdminPanel] Error updating feedback status:', error);
+            if (window.Swal) {
+                window.Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
+            }
+            return;
+        }
+
+        // Actualizar cache local
+        const ticket = feedbackCache.find(t => t.id === ticketId);
+        if (ticket) {
+            ticket.estado = newStatus;
+        }
+        updateFeedbackStats();
+        console.log('[AdminPanel] Feedback status updated:', ticketId, newStatus);
+    } catch (err) {
+        console.error('[AdminPanel] Error in updateFeedbackStatus:', err);
+    }
+}
+
+// Mostrar detalle del ticket
+function showFeedbackDetail(ticketId) {
+    const ticket = feedbackCache.find(t => t.id === ticketId);
+    if (!ticket) return;
+
+    const cat = CATEGORIA_MAP[ticket.categoria] || CATEGORIA_MAP['otro'];
+    const imp = IMPACTO_MAP[ticket.impacto] || IMPACTO_MAP['bajo'];
+    const est = ESTADO_MAP[ticket.estado] || ESTADO_MAP['nuevo'];
+    const fecha = new Date(ticket.created_at).toLocaleString('es-AR', {
+        dateStyle: 'full',
+        timeStyle: 'short'
+    });
+
+    if (window.Swal) {
+        window.Swal.fire({
+            title: `${cat.emoji} Ticket de Feedback`,
+            html: `
+                <div class="text-left space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Usuario</p>
+                            <p class="text-sm font-medium">${escapeHtml(ticket.user_email || 'Anónimo')}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Fecha</p>
+                            <p class="text-sm">${fecha}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Categoría</p>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${cat.color}">${cat.emoji} ${cat.label}</span>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Impacto</p>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs ${imp.color}">${imp.label}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase mb-1">Mensaje</p>
+                        <div class="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 whitespace-pre-wrap">${escapeHtml(ticket.mensaje || 'Sin mensaje')}</div>
+                    </div>
+                    ${ticket.contacto_info ? `
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase mb-1">Contacto adicional</p>
+                        <p class="text-sm">${escapeHtml(ticket.contacto_info)}</p>
+                    </div>
+                    ` : ''}
+                    ${ticket.origen_url ? `
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase mb-1">Origen</p>
+                        <a href="${escapeHtml(ticket.origen_url)}" target="_blank" class="text-xs text-indigo-600 hover:underline break-all">${escapeHtml(ticket.origen_url)}</a>
+                    </div>
+                    ` : ''}
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase mb-1">Estado actual</p>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs ${est.color}">${est.label}</span>
+                    </div>
+                </div>
+            `,
+            width: 500,
+            confirmButtonText: 'Cerrar',
+            confirmButtonColor: '#6366f1'
+        });
+    }
+}
+
+// Exponer funciones globales para eventos onclick en HTML
+if (typeof window !== 'undefined') {
+    window.adminUpdateFeedbackStatus = updateFeedbackStatus;
+    window.adminShowFeedbackDetail = showFeedbackDetail;
 }
 
 // Inicialización del módulo

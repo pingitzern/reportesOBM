@@ -1021,6 +1021,33 @@ export async function enviarFeedbackTicket(datos) {
         throw new Error('No se pudo enviar el feedback.');
     }
 
+    // Enviar notificación por email al admin
+    try {
+        const userName = sessionData?.session?.user?.user_metadata?.nombre
+            || sessionData?.session?.user?.user_metadata?.full_name
+            || '';
+
+        await supabase.functions.invoke('send-email', {
+            body: {
+                type: 'feedback-notificacion',
+                to: 'info@ohminstrumental.net',
+                data: {
+                    userEmail,
+                    userName,
+                    categoria,
+                    impacto,
+                    mensaje: feedbackData.mensaje,
+                    origenUrl: feedbackData.origen_url,
+                    ticketId: data.id,
+                },
+            },
+        });
+        console.log('[feedback] Email de notificación enviado');
+    } catch (emailError) {
+        // No bloquear si el email falla - el feedback ya se guardó
+        console.warn('[feedback] Error enviando email de notificación:', emailError);
+    }
+
     return { success: true, ticketId: data.id };
 }
 

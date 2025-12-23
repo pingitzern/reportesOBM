@@ -21,7 +21,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const FROM_EMAIL = 'OHM Instrumental <notificaciones@ohminstrumental.net>';
 
 interface EmailPayload {
-    type: 'remito' | 'reporte' | 'notificacion' | 'custom' | 'wo-tecnico' | 'wo-cliente' | 'wo-cancelacion' | 'wo-cancelacion-cliente' | 'wo-confirmar-cliente' | 'wo-confirmada-interno' | 'wo-rechazada-interno';
+    type: 'remito' | 'reporte' | 'notificacion' | 'custom' | 'wo-tecnico' | 'wo-cliente' | 'wo-cancelacion' | 'wo-cancelacion-cliente' | 'wo-confirmar-cliente' | 'wo-confirmada-interno' | 'wo-rechazada-interno' | 'feedback-notificacion';
     to: string | string[];
     subject?: string;
     data?: Record<string, unknown>;
@@ -149,6 +149,9 @@ function generateEmailContent(payload: EmailPayload): { subject: string; html: s
 
         case 'wo-rechazada-interno':
             return generateWORechazadaInternoEmail(data || {}, subject);
+
+        case 'feedback-notificacion':
+            return generateFeedbackNotificacionEmail(data || {}, subject);
 
         case 'custom':
             return {
@@ -1344,6 +1347,155 @@ El técnico ha indicado que NO puede asistir:
 
 ---
 OHM Instrumental - Sistema de Coordinación
+`;
+
+    return { subject, html, text };
+}
+
+// =====================================================
+// TEMPLATE: FEEDBACK NOTIFICATION (New Ticket Alert)
+// =====================================================
+function generateFeedbackNotificacionEmail(data: Record<string, unknown>, customSubject?: string): { subject: string; html: string; text: string } {
+    const userEmail = data.userEmail as string || 'Usuario anónimo';
+    const userName = data.userName as string || '';
+    const categoria = data.categoria as string || 'otro';
+    const impacto = data.impacto as string || 'bajo';
+    const mensaje = data.mensaje as string || '';
+    const origenUrl = data.origenUrl as string || '';
+    const ticketId = data.ticketId as string || '';
+    const timestamp = new Date().toLocaleString('es-AR', {
+        timeZone: 'America/Argentina/Buenos_Aires',
+        dateStyle: 'full',
+        timeStyle: 'short'
+    });
+
+    // Mapeo de categorías a display names y colores
+    const categoriaMap: Record<string, { label: string; color: string; emoji: string }> = {
+        'bug': { label: 'Error/Bug', color: '#dc2626', emoji: '🐛' },
+        'mejora': { label: 'Mejora/Sugerencia', color: '#059669', emoji: '💡' },
+        'rendimiento': { label: 'Rendimiento', color: '#f59e0b', emoji: '⚡' },
+        'otro': { label: 'Otro', color: '#6b7280', emoji: '📝' },
+    };
+
+    const impactoMap: Record<string, { label: string; color: string }> = {
+        'bajo': { label: 'Bajo', color: '#3b82f6' },
+        'medio': { label: 'Medio', color: '#f59e0b' },
+        'alto': { label: 'Alto', color: '#f97316' },
+        'critico': { label: 'Crítico', color: '#dc2626' },
+    };
+
+    const cat = categoriaMap[categoria] || categoriaMap['otro'];
+    const imp = impactoMap[impacto] || impactoMap['bajo'];
+
+    const subject = customSubject || `${cat.emoji} Nuevo Feedback: ${cat.label} (${imp.label})`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f5;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">📨 Nuevo Ticket de Feedback</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">ReportesOBM - Sistema de Feedback</p>
+        </div>
+        
+        <!-- Content -->
+        <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="color: #374151; font-size: 16px; margin: 0 0 20px 0;">
+                Se ha recibido un nuevo ticket de feedback:
+            </p>
+            
+            <!-- Category & Impact Badges -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <span style="display: inline-block; background: ${cat.color}15; color: ${cat.color}; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid ${cat.color}30;">
+                    ${cat.emoji} ${cat.label}
+                </span>
+                <span style="display: inline-block; background: ${imp.color}15; color: ${imp.color}; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1px solid ${imp.color}30;">
+                    ⚡ Impacto: ${imp.label}
+                </span>
+            </div>
+            
+            <!-- User Info -->
+            <div style="background: #f9fafb; border-radius: 12px; padding: 16px; margin: 20px 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 8px 0; color: #6b7280; font-size: 14px; width: 30%;">👤 Usuario:</td>
+                        <td style="padding: 8px 0; color: #111827; font-size: 14px; font-weight: 600;">${userName || userEmail}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">📧 Email:</td>
+                        <td style="padding: 8px 0; color: #111827; font-size: 14px;">
+                            <a href="mailto:${userEmail}" style="color: #6366f1; text-decoration: none;">${userEmail}</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">🕐 Fecha:</td>
+                        <td style="padding: 8px 0; color: #111827; font-size: 14px;">${timestamp}</td>
+                    </tr>
+                    ${ticketId ? `
+                    <tr>
+                        <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">🎫 Ticket ID:</td>
+                        <td style="padding: 8px 0; color: #6b7280; font-size: 12px; font-family: monospace;">${ticketId}</td>
+                    </tr>
+                    ` : ''}
+                </table>
+            </div>
+            
+            <!-- Message -->
+            <div style="background: #fef3c7; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                <p style="color: #92400e; font-size: 13px; font-weight: 600; margin: 0 0 10px 0;">📝 Mensaje del usuario:</p>
+                <p style="color: #78350f; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${mensaje}</p>
+            </div>
+            
+            ${origenUrl ? `
+            <p style="color: #9ca3af; font-size: 12px; margin: 20px 0 0 0;">
+                📍 Origen: <a href="${origenUrl}" style="color: #6366f1;">${origenUrl}</a>
+            </p>
+            ` : ''}
+            
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+                Este ticket está pendiente de revisión en el Panel de Administración.<br>
+                <a href="https://reportesobm.netlify.app/" style="color: #6366f1;">Ir al Panel Admin</a>
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                © ${new Date().getFullYear()} OHM Instrumental - Sistema de Gestión
+            </p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    const text = `
+📨 NUEVO TICKET DE FEEDBACK
+============================
+
+Categoría: ${cat.emoji} ${cat.label}
+Impacto: ${imp.label}
+
+👤 Usuario: ${userName || userEmail}
+📧 Email: ${userEmail}
+🕐 Fecha: ${timestamp}
+${ticketId ? `🎫 Ticket ID: ${ticketId}` : ''}
+
+📝 MENSAJE:
+${mensaje}
+
+${origenUrl ? `📍 Origen: ${origenUrl}` : ''}
+
+---
+Este ticket está pendiente de revisión en el Panel de Administración.
+OHM Instrumental - Sistema de Gestión
 `;
 
     return { subject, html, text };
