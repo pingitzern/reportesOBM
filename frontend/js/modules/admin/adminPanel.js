@@ -6,6 +6,7 @@
 import { supabase } from '../../supabaseClient.js';
 import { isAdmin, canAccessAdminPanel } from '../login/auth.js';
 import { bindSistemasEquiposEventListeners, loadSistemas, loadEquipos } from './sistemasEquipos.js';
+import { bindCatalogoServiciosEventListeners, loadCatalogoServicios } from './catalogoServicios.js';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -868,6 +869,9 @@ function bindEventListeners() {
     // Event listeners para sistemas y equipos
     bindSistemasEquiposEventListeners();
 
+    // Event listeners para catálogo de servicios
+    bindCatalogoServiciosEventListeners();
+
     // Event listeners para feedback filters
     const feedbackEstadoFilter = document.getElementById('admin-feedback-filter-estado');
     const feedbackCategoriaFilter = document.getElementById('admin-feedback-filter-categoria');
@@ -886,12 +890,14 @@ function bindEventListeners() {
         loadFeedback();
     });
 
-    // Cargar feedback cuando se cambia a la pestaña de feedback
+    // Cargar contenido cuando se cambia de pestaña
     document.querySelectorAll('.admin-tab-button').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabId = btn.dataset.adminTab;
             if (tabId === 'feedback') {
                 loadFeedback();
+            } else if (tabId === 'catalogo') {
+                loadCatalogoServicios();
             }
         });
     });
