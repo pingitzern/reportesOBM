@@ -57,21 +57,20 @@ export async function loadCatalogoServicios() {
             .select('*')
             .eq('activo', true)
             .order('tipo_tarea', { ascending: true })
-            .order('descripcion', { ascending: true });
+            .order('nombre', { ascending: true });
 
         if (servicioFilters.search) {
             const searchTerm = `%${servicioFilters.search}%`;
-            query = query.or(`descripcion.ilike.${searchTerm}`);
+            query = query.or(`nombre.ilike.${searchTerm},descripcion.ilike.${searchTerm}`);
         }
 
         if (servicioFilters.tipoTarea) {
             query = query.eq('tipo_tarea', servicioFilters.tipoTarea);
         }
 
-        // Note: categorias filter disabled until column is added to DB
-        // if (servicioFilters.categoria) {
-        //     query = query.contains('categorias', [servicioFilters.categoria]);
-        // }
+        if (servicioFilters.categoria) {
+            query = query.contains('categorias', [servicioFilters.categoria]);
+        }
 
         const { data, error } = await query.limit(50);
 
@@ -217,11 +216,10 @@ export function openServicioEditModal(id) {
 
     title.textContent = 'Editar Servicio';
     document.getElementById('admin-servicio-id').value = servicio.id;
-    // Use descripcion as nombre until DB migration
-    document.getElementById('admin-servicio-nombre').value = servicio.nombre || servicio.descripcion || '';
+    document.getElementById('admin-servicio-nombre').value = servicio.nombre || '';
     document.getElementById('admin-servicio-tipo-tarea').value = servicio.tipo_tarea || '';
     document.getElementById('admin-servicio-duracion').value = servicio.duracion_estimada_min || 60;
-    document.getElementById('admin-servicio-descripcion').value = ''; // Disabled until separate field
+    document.getElementById('admin-servicio-descripcion').value = servicio.descripcion || '';
     document.getElementById('admin-servicio-error').classList.add('hidden');
 
     // Set checkboxes de categorías
@@ -263,18 +261,18 @@ export async function saveServicio(event) {
         return;
     }
 
-    // Obtener categorías seleccionadas (para cuando se migre la DB)
+    // Obtener categorías seleccionadas
     const categoriasSeleccionadas = [];
     document.querySelectorAll('.admin-servicio-categoria-checkbox:checked').forEach(cb => {
         categoriasSeleccionadas.push(cb.value);
     });
 
-    // Note: Using descripcion for now until 'nombre' column is added to DB
     const servicioData = {
-        descripcion: nombre, // Store nombre as descripcion temporarily
+        nombre,
         tipo_tarea: tipoTarea,
         duracion_estimada_min: duracion,
-        // categorias: categoriasSeleccionadas, // Uncomment after DB migration
+        descripcion: document.getElementById('admin-servicio-descripcion').value.trim() || nombre,
+        categorias: categoriasSeleccionadas,
     };
 
     saveBtn.disabled = true;
