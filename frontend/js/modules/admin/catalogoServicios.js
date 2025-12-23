@@ -16,6 +16,7 @@ const CATEGORIAS = [
     { value: 'osmosis', label: 'Ósmosis' },
     { value: 'hplc', label: 'HPLC' },
     { value: 'laboratorio', label: 'Laboratorio' },
+    { value: 'dispenser', label: 'Dispenser' },
     { value: 'servicio', label: 'Servicio' },
     { value: 'insumo', label: 'Insumo' },
     { value: 'otro', label: 'Otro' },

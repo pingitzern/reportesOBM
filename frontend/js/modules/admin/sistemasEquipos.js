@@ -20,6 +20,7 @@ const CATEGORIAS = [
     { value: 'osmosis', label: 'Ósmosis' },
     { value: 'hplc', label: 'HPLC' },
     { value: 'laboratorio', label: 'Laboratorio' },
+    { value: 'dispenser', label: 'Dispenser' },
     { value: 'servicio', label: 'Servicio' },
     { value: 'insumo', label: 'Insumo' },
     { value: 'otro', label: 'Otro' },
@@ -100,7 +101,7 @@ function renderSistemasTable(sistemas) {
 
     tbody.innerHTML = sistemas.map(sistema => {
         const categoriaBadge = getCategoriaBadge(sistema.categoria);
-        
+
         return `
             <tr class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4">
@@ -198,10 +199,10 @@ export function openSistemaEditModal(id) {
     document.getElementById('admin-sistema-codigo').value = sistema.codigo || '';
     document.getElementById('admin-sistema-descripcion').value = sistema.descripcion || '';
     document.getElementById('admin-sistema-vida-util').value = sistema.vida_util_dias || '';
-    
+
     populateCategoriaSelect('admin-sistema-categoria');
     document.getElementById('admin-sistema-categoria').value = sistema.categoria || '';
-    
+
     document.getElementById('admin-sistema-error').classList.add('hidden');
 
     modal.classList.remove('hidden');
@@ -512,21 +513,21 @@ export function openEquipoEditModal(id) {
     const title = document.getElementById('admin-equipo-modal-title');
 
     title.textContent = 'Editar Equipo';
-    
+
     setupSearchableDropdowns();
 
     document.getElementById('admin-equipo-id').value = equipo.id;
-    
+
     // Set cliente
     document.getElementById('admin-equipo-cliente').value = equipo.client_id || '';
     const clienteNombre = equipo.clients?.razon_social || '';
     document.getElementById('admin-equipo-cliente-search').value = clienteNombre;
-    
+
     // Set sistema
     document.getElementById('admin-equipo-sistema').value = equipo.sistema_id || '';
     const sistemaNombre = equipo.sistemas ? `${equipo.sistemas.nombre}${equipo.sistemas.codigo ? ` (${equipo.sistemas.codigo})` : ''}` : '';
     document.getElementById('admin-equipo-sistema-search').value = sistemaNombre;
-    
+
     document.getElementById('admin-equipo-serie').value = equipo.serial_number || '';
     document.getElementById('admin-equipo-modelo').value = equipo.modelo || '';
     document.getElementById('admin-equipo-tag').value = equipo.tag_id || '';
@@ -800,6 +801,7 @@ function getCategoriaBadge(categoria) {
         osmosis: 'bg-cyan-100 text-cyan-700',
         hplc: 'bg-purple-100 text-purple-700',
         laboratorio: 'bg-amber-100 text-amber-700',
+        dispenser: 'bg-teal-100 text-teal-700',
         servicio: 'bg-green-100 text-green-700',
         insumo: 'bg-gray-100 text-gray-700',
         otro: 'bg-gray-100 text-gray-600',
@@ -810,6 +812,7 @@ function getCategoriaBadge(categoria) {
         osmosis: 'Ósmosis',
         hplc: 'HPLC',
         laboratorio: 'Laboratorio',
+        dispenser: 'Dispenser',
         servicio: 'Servicio',
         insumo: 'Insumo',
         otro: 'Otro',
@@ -857,10 +860,10 @@ export function bindSistemasEquiposEventListeners() {
     // === SISTEMAS ===
     // Nuevo sistema
     document.getElementById('admin-sistema-new-btn')?.addEventListener('click', openSistemaNewModal);
-    
+
     // Form sistema
     document.getElementById('admin-sistema-form')?.addEventListener('submit', saveSistema);
-    
+
     // Cancelar modal sistema
     document.getElementById('admin-sistema-cancel-btn')?.addEventListener('click', closeSistemaModal);
     document.getElementById('admin-sistema-modal-backdrop')?.addEventListener('click', closeSistemaModal);
@@ -880,10 +883,10 @@ export function bindSistemasEquiposEventListeners() {
     // === EQUIPOS ===
     // Nuevo equipo
     document.getElementById('admin-equipo-new-btn')?.addEventListener('click', openEquipoNewModal);
-    
+
     // Form equipo
     document.getElementById('admin-equipo-form')?.addEventListener('submit', saveEquipo);
-    
+
     // Cancelar modal equipo
     document.getElementById('admin-equipo-cancel-btn')?.addEventListener('click', closeEquipoModal);
     document.getElementById('admin-equipo-modal-backdrop')?.addEventListener('click', closeEquipoModal);
