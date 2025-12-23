@@ -1,0 +1,2729 @@
+﻿
+> reportesobm@1.0.0 test
+> node --experimental-vm-modules ./node_modules/jest/bin/jest.js
+
+node.exe : (node:32424) ExperimentalWarning: 
+VM Modules is an experimental feature and 
+might change at any time
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( 
+   (node:32424) Ex...nge at any time:String)  
+   [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandEr 
+   ror
+ 
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/__tests__/api.test.js
+  ÔùÅ Console
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:61:55)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:85:55)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:95:42)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at 
+frontend/js/__tests__/api.test.js:118:51
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at 
+frontend/js/__tests__/api.test.js:118:51
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:128:45)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:135:38)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:154:37)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:175:37)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:202:55)
+
+  ÔùÅ api.js ÔÇ║ guardarMantenimiento env├¡a 
+los datos con acci├│n guardar
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:61:55)
+
+  ÔùÅ api.js ÔÇ║ no realiza petici├│n cuando 
+no hay token disponible
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:85:55)
+
+  ÔùÅ api.js ÔÇ║ buscarMantenimientos env├¡a 
+la acci├│n buscar
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:95:42)
+
+  ÔùÅ api.js ÔÇ║ invoca el manejador de 
+expiraci├│n cuando la API devuelve Sesi├│n 
+expirada
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at 
+frontend/js/__tests__/api.test.js:118:51
+
+  ÔùÅ api.js ÔÇ║ invoca el manejador de 
+expiraci├│n cuando la API devuelve Token 
+inv├ílido
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at 
+frontend/js/__tests__/api.test.js:118:51
+
+  ÔùÅ api.js ÔÇ║ lanza error cuando la API 
+responde con fallo
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:128:45)
+
+  ÔùÅ api.js ÔÇ║ obtenerDashboard realiza 
+petici├│n GET y devuelve datos
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:135:38)
+
+  ÔùÅ api.js ÔÇ║ obtenerClientes cachea la 
+respuesta
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:154:37)
+
+  ÔùÅ api.js ÔÇ║ obtenerClientes fuerza una 
+nueva petici├│n con forceRefresh
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:175:37)
+
+  ÔùÅ api.js ÔÇ║ lanza error cuando API_URL 
+no est├í configurada
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at loadApiModule 
+(frontend/js/__tests__/api.test.js:18:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:202:55)
+
+FAIL __tests__/husky.test.js
+  ÔùÅ husky pre-push hook exists and runs 
+clasp push
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /@google\/clasp/
+    Received string:  "#!/bin/sh┬À
+    # Husky pre-push hook┬À
+    # clasp push deshabilitado - migraci├│n 
+completa a Supabase┬À
+    echo \"Pre-push hook: OK (Supabase 
+migration - clasp disabled)\"┬À
+    exit 0┬À
+    "
+
+    [0m [90m 10 |[39m   [90m// should 
+call clasp push (via npx) to sync scripts[39m
+     [90m 11 |[39m   
+expect(content)[33m.[39mtoMatch([35m/clasp 
+push/[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 12 |[39m   expe
+ct(content)[33m.[39mtoMatch([35m/@google\/c
+lasp/[39m)[33m;[39m
+     [90m    |[39m                   
+[31m[1m^[22m[39m
+     [90m 13 |[39m })[33m;[39m
+     [90m 14 |[39m[0m
+
+      at Object.<anonymous> 
+(__tests__/husky.test.js:12:19)
+
+(node:32984) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/modules/mantenimiento-ablanda
+dor/collectForm.test.js
+  ÔùÅ Console
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at Object.<anonymous> (frontend/js/modul
+es/mantenimiento-ablandador/collectForm.test.j
+s:54:47)
+
+  ÔùÅ collectFormData contract - cabezal 
+defaults and visibility ÔÇ║ seccion_C_cabezal 
+is included and defaults applied to As Left 
+on reset/save
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> (frontend/js/modul
+es/mantenimiento-ablandador/collectForm.test.j
+s:54:47)
+
+PASS __tests__/clasp-config.test.js
+FAIL frontend/js/modules/remitos-gestion/remit
+os-gestion.test.js
+  ÔùÅ Test suite failed to run
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+
+(node:30084) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+(node:5568) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/__tests__/main.test.js
+  ÔùÅ handleGuardarClick ÔÇ║ usa el mismo 
+n├║mero de reporte para guardar y mostrar
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens 
+e.g. when your code or its dependencies use 
+non-standard JavaScript syntax, or when Jest 
+is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which 
+will be used to transform your files into 
+valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is 
+ignored by transformers.
+
+    Here's what you can do:
+     ÔÇó If you are trying to use ECMAScript 
+Modules, see 
+https://jestjs.io/docs/ecmascript-modules for 
+how to enable it.
+     ÔÇó If you are trying to use TypeScript, 
+see https://jestjs.io/docs/getting-started#usi
+ng-typescript
+     ÔÇó To have some of your "node_modules" 
+files transformed, you can specify a custom 
+"transformIgnorePatterns" in your config.
+     ÔÇó If you need a custom transformation, 
+specify a "transform" option in your config.
+     ÔÇó If you simply want to mock your 
+non-JS modules (e.g. binary assets) you can 
+stub them out with the "moduleNameMapper" 
+config option.
+
+    You'll find more details and examples of 
+these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom 
+transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    C:\Users\Nicolas Pingitzer\reportesOBM\fro
+ntend\js\modules\agenda\index.tsx:1
+    import React, { useState, useCallback, 
+useEffect } from 'react';
+    ^^^^^^
+
+    SyntaxError: Cannot use import statement 
+outside a module
+
+      at Runtime.createScriptFromCode (node_mo
+dules/jest-runtime/build/index.js:1318:40)
+
+FAIL frontend/js/modules/mantenimiento-ablanda
+dor/ablandador.test.js
+  ÔùÅ Test suite failed to run
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+
+(node:36892) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+(node:9380) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/__tests__/forms.test.js
+  ÔùÅ Console
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ serializeForm ÔÇ║ serializa campos 
+incluyendo radios sin seleccionar
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ serializeForm ÔÇ║ devuelve objeto 
+vac├¡o cuando el elemento no es un formulario
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ autoResizeInput ÔÇ║ aumenta el ancho 
+cuando el contenido crece
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ calculateAll ÔÇ║ calcula rechazo y 
+relaci├│n de caudales
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ calculateAll ÔÇ║ deja campos vac├¡os 
+cuando faltan datos
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ selecci├│n de clientes ÔÇ║ pobla el 
+selector y actualiza los datos del cliente al 
+cambiar
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ selecci├│n de clientes ÔÇ║ maneja 
+clientes con nombres duplicados sin 
+identificadores visibles
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ selecci├│n de clientes ÔÇ║ resetForm 
+limpia la selecci├│n y los campos de cliente
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ conversiones de caudal ÔÇ║ convierte de 
+L/min a L/h y GPD
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+  ÔùÅ conversiones de caudal ÔÇ║ limpia el 
+texto cuando el valor no es v├ílido
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:17:25)
+
+FAIL 
+frontend/js/__tests__/remitos-gestion.test.js
+  ÔùÅ Test suite failed to run
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+
+(node:27116) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+(node:11924) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/__tests__/auth.test.js
+  ÔùÅ Console
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:331:53)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:370:53)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:392:28)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:406:28)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:414:70)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:442:41)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:463:28)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:493:28)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:525:28)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:574:57)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:599:57)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:628:57)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:675:40)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:692:40)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:708:40)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:721:40)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:735:40)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:748:40)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:770:47)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:793:47)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:802:47)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:810:47)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:818:47)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:828:47)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:844:47)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:861:47)
+
+    console.error
+      [supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at frontend/js/supabaseClient.js:20:11
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:869:47)
+
+  ÔùÅ auth helpers ÔÇ║ persistAuth ÔÇ║ guarda 
+la sesi├│n y actualiza el panel de usuario
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:331:53)
+
+  ÔùÅ auth helpers ÔÇ║ persistAuth ÔÇ║ no 
+falla cuando localStorage no est├í disponible
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:370:53)
+
+  ÔùÅ auth helpers ÔÇ║ getCurrentToken ÔÇ║ 
+devuelve el token actual normalizado cuando 
+existe sesi├│n
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:392:28)
+
+  ÔùÅ auth helpers ÔÇ║ getCurrentToken ÔÇ║ 
+devuelve null cuando no hay sesi├│n activa
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:406:28)
+
+  ÔùÅ auth helpers ÔÇ║ clearStoredAuth ÔÇ║ 
+elimina la sesi├│n almacenada y oculta el 
+panel
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:414:70)
+
+  ÔùÅ auth helpers ÔÇ║ clearStoredAuth ÔÇ║ no 
+falla cuando no existe almacenamiento 
+disponible
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:442:41)
+
+  ÔùÅ auth helpers ÔÇ║ logout ÔÇ║ env├¡a la 
+petici├│n de logout con el token y limpia el 
+estado
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:463:28)
+
+  ÔùÅ auth helpers ÔÇ║ logout ÔÇ║ limpia el 
+estado aunque la petici├│n de logout falle
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:493:28)
+
+  ÔùÅ auth helpers ÔÇ║ 
+handleSessionExpiration ÔÇ║ limpia la sesi├│n 
+y muestra el mensaje de expiraci├│n
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:525:28)
+
+  ÔùÅ auth helpers ÔÇ║ user menu interactions 
+ÔÇ║ abre y cierra el men├║ con el bot├│n de 
+usuario
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:574:57)
+
+  ÔùÅ auth helpers ÔÇ║ user menu interactions 
+ÔÇ║ cierra el men├║ al hacer clic fuera y al 
+presionar Escape
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:599:57)
+
+  ÔùÅ auth helpers ÔÇ║ user menu interactions 
+ÔÇ║ emite eventos de navegaci├│n para Ayuda y 
+Configuraci├│n
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:628:57)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve la sesi├│n v├ílida desde localStorage
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:675:40)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ usa 
+la sesi├│n en cach├® sin volver a consultar 
+el almacenamiento
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:692:40)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve null si el JSON almacenado es 
+inv├ílido
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:708:40)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve null si faltan datos obligatorios
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:721:40)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve null si el token expir├│
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:735:40)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve null si la fecha de expiraci├│n es 
+inv├ílida
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:748:40)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ env├¡a credenciales y devuelve la sesi├│n 
+autenticada
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:770:47)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando la API responde con 
+estado HTTP fallido
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:793:47)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando la respuesta indica 
+fallo
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:802:47)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando la respuesta no es 
+JSON v├ílido
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:810:47)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando el servidor no responde
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:818:47)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error si falta la informaci├│n del 
+usuario
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:828:47)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error si falta el token de sesi├│n
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:844:47)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error si el token recibido est├í 
+expirado
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:861:47)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando API_URL no est├í 
+configurada
+
+    [supabaseClient] Credenciales de Supabase 
+no encontradas. Define VITE_SUPABASE_URL y 
+VITE_SUPABASE_ANON_KEY en el archivo .env
+
+    [0m [90m 19 |[39m     
+[32m'[supabaseClient] Credenciales de 
+Supabase no encontradas. Define 
+VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en 
+el archivo .env'[39m[33m;[39m
+     [90m 20 |[39m   
+console[33m.[39merror(message)[33m;[39m
+    [31m[1m>[22m[39m[90m 21 |[39m   
+[36mthrow[39m [36mnew[39m 
+[33mError[39m(message)[33m;[39m
+     [90m    |[39m         
+[31m[1m^[22m[39m
+     [90m 22 |[39m }
+     [90m 23 |[39m
+     [90m 24 |[39m [90m// Configuraci├│n 
+del cliente con auto-refresh de 
+tokens[39m[0m
+
+      at frontend/js/supabaseClient.js:21:9
+      at getTestables 
+(frontend/js/__tests__/auth.test.js:300:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:869:47)
+
+Test Suites: 9 failed, 1 passed, 10 total
+Tests:       50 failed, 4 passed, 54 total
+Snapshots:   0 total
+Time:        3.567 s
+Ran all test suites.

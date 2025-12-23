@@ -1,0 +1,2052 @@
+﻿
+> reportesobm@1.0.0 test
+> node --experimental-vm-modules ./node_modules/jest/bin/jest.js
+
+node.exe : PASS __tests__/husky.test.js
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( 
+   PASS __tests__/husky.test.js:String) [],   
+  RemoteException
+    + FullyQualifiedErrorId : NativeCommandEr 
+   ror
+ 
+PASS __tests__/clasp-config.test.js
+(node:27636) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+PASS 
+frontend/js/__tests__/remitos-gestion.test.js
+(node:36176) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+PASS frontend/js/modules/mantenimiento-ablanda
+dor/ablandador.test.js
+  ÔùÅ Console
+
+    console.log
+      Ô£à Sistema de validaci├│n de 
+ablandador inicializado
+
+      at initSoftenerValidation (frontend/js/m
+odules/mantenimiento-ablandador/softenerValida
+tionUI.js:305:13)
+
+    console.error
+      Supabase fetch error: {
+        message: 'ReferenceError: fetch is 
+not defined',
+        details: 'ReferenceError: fetch is 
+not defined\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:7:42\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:34:12\n' +
+          '    at processTicksAndRejections 
+(node:internal/process/task_queues:105:5)\n' +
+          '    at fetchClientesSupabase 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:1047:29)\n' +
+          '    at obtenerClientes 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:442:18)\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\frontend\\js\\modules\\mantenim
+iento-ablandador\\ablandador.js:1285:34\n' +
+          '    at loadClientes 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\modules\\mantenimiento-ablandador\
+\ablandador.js:1307:5)',
+        hint: '',
+        code: ''
+      }
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at fetchClientesSupabase 
+(frontend/js/api.js:1053:17)
+      at obtenerClientes 
+(frontend/js/api.js:442:18)
+      at frontend/js/modules/mantenimiento-abl
+andador/ablandador.js:1285:34
+      at loadClientes (frontend/js/modules/man
+tenimiento-ablandador/ablandador.js:1307:5)
+
+    console.warn
+      Intento 1/3 de cargar clientes fall├│: {
+        message: 'ReferenceError: fetch is 
+not defined',
+        details: 'ReferenceError: fetch is 
+not defined\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:7:42\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:34:12\n' +
+          '    at processTicksAndRejections 
+(node:internal/process/task_queues:105:5)\n' +
+          '    at fetchClientesSupabase 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:1047:29)\n' +
+          '    at obtenerClientes 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:442:18)\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\frontend\\js\\modules\\mantenim
+iento-ablandador\\ablandador.js:1285:34\n' +
+          '    at loadClientes 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\modules\\mantenimiento-ablandador\
+\ablandador.js:1307:5)',
+        hint: '',
+        code: ''
+      }
+
+    [0m [90m 39 |[39m       [90m// 
+console.debug('jest.setup shim error', 
+e);[39m
+     [90m 40 |[39m     }
+    [31m[1m>[22m[39m[90m 41 |[39m     
+[36mreturn[39m 
+origWarn([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 42 |[39m   }[33m;[39m
+     [90m 43 |[39m
+     [90m 44 |[39m   [36mconst[39m 
+origError [33m=[39m console[33m.[39merror
+[33m.[39mbind(console)[33m;[39m[0m
+
+      at console.warn (jest.setup.js:41:12)
+      at frontend/js/modules/mantenimiento-abl
+andador/ablandador.js:1290:25
+      at loadClientes (frontend/js/modules/man
+tenimiento-ablandador/ablandador.js:1307:5)
+
+(node:29116) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+PASS frontend/js/modules/remitos-gestion/remit
+os-gestion.test.js
+(node:36652) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/__tests__/main.test.js
+  ÔùÅ handleGuardarClick ÔÇ║ usa el mismo 
+n├║mero de reporte para guardar y mostrar
+
+    SyntaxError: The requested module 
+'../../api.js' does not provide an export 
+named 'actualizarEquipoAblandador'
+
+    [0m [90m 74 |[39m         
+}))[33m;[39m
+     [90m 75 |[39m
+    [31m[1m>[22m[39m[90m 76 |[39m       
+  [36mconst[39m mainModule [33m=[39m 
+[36mawait[39m [36mimport[39m([32m'../main
+.js'[39m)[33m;[39m
+     [90m    |[39m                          
+  [31m[1m^[22m[39m
+     [90m 77 |[39m         ({ 
+handleGuardarClick } [33m=[39m 
+mainModule[33m.[39m__testables__)[33m;[39m
+     [90m 78 |[39m
+     [90m 79 |[39m         
+document[33m.[39mbody[33m.[39minnerHTML 
+[33m=[39m [32m'<button id="guardarButton">G
+uardar</button>'[39m[33m;[39m[0m
+
+      at Runtime.linkAndEvaluateModule (node_m
+odules/jest-runtime/build/index.js:684:5)
+      at Object.<anonymous> 
+(frontend/js/__tests__/main.test.js:76:28)
+
+(node:36752) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+(node:21680) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/__tests__/api.test.js
+  ÔùÅ Console
+
+    console.error
+      Error buscando mantenimientos: {
+        message: 'Error: fetch-mock: No 
+response or fallback rule to cover get to http
+s://test.supabase.co/rest/v1/maintenances?sele
+ct=id%2Cclient_id%2Cequipment_id%2Ctechnician_
+id%2Cservice_date%2Cstatus%2Ctype%2Creport_dat
+a%2Cpdf_path%2Cclients%3Aclient_id%28id%2Crazo
+n_social%29%2Cprofiles%3Atechnician_id%28id%2C
+full_name%29%2Cequipments%3Aequipment_id%28id%
+2Cmodelo%2Cserial_number%29&order=service_date
+.desc&or=%28report_data-%3E%3ECliente.ilike.%2
+5acme%25%2Creport_data-%3E%3Ecliente.ilike.%25
+acme%25%29&limit=100',
+        details: 'Error: fetch-mock: No 
+response or fallback rule to cover get to http
+s://test.supabase.co/rest/v1/maintenances?sele
+ct=id%2Cclient_id%2Cequipment_id%2Ctechnician_
+id%2Cservice_date%2Cstatus%2Ctype%2Creport_dat
+a%2Cpdf_path%2Cclients%3Aclient_id%28id%2Crazo
+n_social%29%2Cprofiles%3Atechnician_id%28id%2C
+full_name%29%2Cequipments%3Aequipment_id%28id%
+2Cmodelo%2Cserial_number%29&order=service_date
+.desc&or=%28report_data-%3E%3ECliente.ilike.%2
+5acme%25%2Creport_data-%3E%3Ecliente.ilike.%25
+acme%25%29&limit=100\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\fetch-mock\\dist\
+\esm\\Router.js:129:24\n' +
+          '    at new Promise 
+(<anonymous>)\n' +
+          '    at Router.execute 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\no
+de_modules\\fetch-mock\\dist\\esm\\Router.js:8
+0:16)\n' +
+          '    at FetchMock.fetchHandler 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\no
+de_modules\\fetch-mock\\dist\\esm\\FetchMock.j
+s:63:45)\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:7:42\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:34:12\n' +
+          '    at processTicksAndRejections 
+(node:internal/process/task_queues:105:5)\n' +
+          '    at buscarMantenimientos 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:176:29)\n' +
+          '    at Object.<anonymous> 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\__tests__\\api.test.js:101:22)',
+        hint: '',
+        code: ''
+      }
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at buscarMantenimientos 
+(frontend/js/api.js:179:17)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:101:22)
+
+    console.error
+      Error actualizando mantenimiento: {
+        message: 'Error: fetch-mock: No 
+response or fallback rule to cover patch to ht
+tps://test.supabase.co/rest/v1/maintenances?id
+=eq.1&select=*',
+        details: 'Error: fetch-mock: No 
+response or fallback rule to cover patch to ht
+tps://test.supabase.co/rest/v1/maintenances?id
+=eq.1&select=*\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\fetch-mock\\dist\
+\esm\\Router.js:129:24\n' +
+          '    at new Promise 
+(<anonymous>)\n' +
+          '    at Router.execute 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\no
+de_modules\\fetch-mock\\dist\\esm\\Router.js:8
+0:16)\n' +
+          '    at FetchMock.fetchHandler 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\no
+de_modules\\fetch-mock\\dist\\esm\\FetchMock.j
+s:63:45)\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:7:42\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:34:12\n' +
+          '    at processTicksAndRejections 
+(node:internal/process/task_queues:105:5)\n' +
+          '    at actualizarMantenimiento 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:282:29)\n' +
+          '    at Object.<anonymous> 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\__tests__\\api.test.js:131:9)',
+        hint: '',
+        code: ''
+      }
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at actualizarMantenimiento 
+(frontend/js/api.js:290:17)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:131:9)
+
+    console.error
+      Supabase fetch error: {
+        message: 'Error: fetch-mock: No 
+response or fallback rule to cover get to http
+s://test.supabase.co/rest/v1/clients?select=*&
+order=razon_social.asc',
+        details: 'Error: fetch-mock: No 
+response or fallback rule to cover get to http
+s://test.supabase.co/rest/v1/clients?select=*&
+order=razon_social.asc\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\fetch-mock\\dist\
+\esm\\Router.js:129:24\n' +
+          '    at new Promise 
+(<anonymous>)\n' +
+          '    at Router.execute 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\no
+de_modules\\fetch-mock\\dist\\esm\\Router.js:8
+0:16)\n' +
+          '    at FetchMock.fetchHandler 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\no
+de_modules\\fetch-mock\\dist\\esm\\FetchMock.j
+s:63:45)\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:7:42\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:34:12\n' +
+          '    at processTicksAndRejections 
+(node:internal/process/task_queues:105:5)\n' +
+          '    at fetchClientesSupabase 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:1047:29)\n' +
+          '    at obtenerClientes 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:442:18)\n' +
+          '    at Object.<anonymous> 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\__tests__\\api.test.js:159:34)',
+        hint: '',
+        code: ''
+      }
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at fetchClientesSupabase 
+(frontend/js/api.js:1053:17)
+      at obtenerClientes 
+(frontend/js/api.js:442:18)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:159:34)
+
+    console.error
+      Supabase fetch error: {
+        message: 'Error: fetch-mock: No 
+response or fallback rule to cover get to http
+s://test.supabase.co/rest/v1/clients?select=*&
+order=razon_social.asc',
+        details: 'Error: fetch-mock: No 
+response or fallback rule to cover get to http
+s://test.supabase.co/rest/v1/clients?select=*&
+order=razon_social.asc\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\fetch-mock\\dist\
+\esm\\Router.js:129:24\n' +
+          '    at new Promise 
+(<anonymous>)\n' +
+          '    at Router.execute 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\no
+de_modules\\fetch-mock\\dist\\esm\\Router.js:8
+0:16)\n' +
+          '    at FetchMock.fetchHandler 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\no
+de_modules\\fetch-mock\\dist\\esm\\FetchMock.j
+s:63:45)\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:7:42\n' +
+          '    at C:\\Users\\Nicolas Pingitzer
+\\reportesOBM\\node_modules\\@supabase\\supaba
+se-js\\src\\lib\\fetch.ts:34:12\n' +
+          '    at processTicksAndRejections 
+(node:internal/process/task_queues:105:5)\n' +
+          '    at fetchClientesSupabase 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:1047:29)\n' +
+          '    at obtenerClientes 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\api.js:442:18)\n' +
+          '    at Object.<anonymous> 
+(C:\\Users\\Nicolas Pingitzer\\reportesOBM\\fr
+ontend\\js\\__tests__\\api.test.js:181:9)',
+        hint: '',
+        code: ''
+      }
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at fetchClientesSupabase 
+(frontend/js/api.js:1053:17)
+      at obtenerClientes 
+(frontend/js/api.js:442:18)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:181:9)
+
+  ÔùÅ api.js ÔÇ║ guardarMantenimiento env├¡a 
+los datos con acci├│n guardar
+
+    Selecciona un cliente v├ílido antes de 
+guardar.
+
+    [0m [90m 1069 |[39m     
+[36mconst[39m clientId [33m=[39m 
+extractClientIdFromPayload(payload)[33m;[39m
+     [90m 1070 |[39m     [36mif[39m 
+([33m![39mclientId) {
+    [31m[1m>[22m[39m[90m 1071 |[39m     
+    [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Selecciona un cliente 
+v├ílido antes de guardar.'[39m)[33m;[39m
+     [90m      |[39m               
+[31m[1m^[22m[39m
+     [90m 1072 |[39m     }
+     [90m 1073 |[39m
+     [90m 1074 |[39m     [36mconst[39m 
+serviceDate [33m=[39m normalizeDate(payload
+[33m.[39mfecha_servicio [33m||[39m 
+payload[33m.[39mservice_date [33m||[39m 
+payload[33m.[39mfecha)[33m;[39m[0m
+
+      at guardarMantenimientoSupabase 
+(frontend/js/api.js:1071:15)
+      at guardarMantenimiento 
+(frontend/js/api.js:45:12)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:67:28)
+
+  ÔùÅ api.js ÔÇ║ no realiza petici├│n cuando 
+no hay token disponible
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "No hay una sesi├│n 
+activa. Por favor, ingres├í de nuevo."
+    Received message:   "Selecciona un 
+cliente v├ílido antes de guardar."
+
+        [0m [90m 1069 |[39m     
+[36mconst[39m clientId [33m=[39m 
+extractClientIdFromPayload(payload)[33m;[39m
+         [90m 1070 |[39m     [36mif[39m 
+([33m![39mclientId) {
+        [31m[1m>[22m[39m[90m 1071 |[39m 
+        [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Selecciona un cliente 
+v├ílido antes de guardar.'[39m)[33m;[39m
+         [90m      |[39m               
+[31m[1m^[22m[39m
+         [90m 1072 |[39m     }
+         [90m 1073 |[39m
+         [90m 1074 |[39m     
+[36mconst[39m serviceDate [33m=[39m normal
+izeDate(payload[33m.[39mfecha_servicio 
+[33m||[39m payload[33m.[39mservice_date 
+[33m||[39m 
+payload[33m.[39mfecha)[33m;[39m[0m
+
+      at guardarMantenimientoSupabase 
+(frontend/js/api.js:1071:15)
+      at guardarMantenimiento 
+(frontend/js/api.js:45:12)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:87:22)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:88:22)
+
+  ÔùÅ api.js ÔÇ║ buscarMantenimientos env├¡a 
+la acci├│n buscar
+
+    No se pudieron buscar los mantenimientos.
+
+    [0m [90m 178 |[39m     [36mif[39m 
+(error) {
+     [90m 179 |[39m         
+console[33m.[39merror([32m'Error buscando 
+mantenimientos:'[39m[33m,[39m 
+error)[33m;[39m
+    [31m[1m>[22m[39m[90m 180 |[39m      
+   [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'No se pudieron buscar 
+los mantenimientos.'[39m)[33m;[39m
+     [90m     |[39m               
+[31m[1m^[22m[39m
+     [90m 181 |[39m     }
+     [90m 182 |[39m
+     [90m 183 |[39m     [90m// Normalizar 
+resultados al formato esperado por el 
+frontend[39m[0m
+
+      at buscarMantenimientos 
+(frontend/js/api.js:180:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:101:22)
+
+  ÔùÅ api.js ÔÇ║ invoca el manejador de 
+expiraci├│n cuando la API devuelve Sesi├│n 
+expirada
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of 
+rejected
+    Resolved to value: 
+{"distribucionTecnico": [], "esteMes": 0, 
+"mantenimientosPorMes": [{"cantidad": 0, 
+"mes": "jul"}, {"cantidad": 0, "mes": "ago"}, 
+{"cantidad": 0, "mes": "sept"}, {"cantidad": 
+0, "mes": "oct"}, {"cantidad": 0, "mes": 
+"nov"}, {"cantidad": 0, "mes": "dic"}], 
+"proximos": 0, "proximosMantenimientos": [], 
+"tecnicosActivos": 0, "totalMantenimientos": 
+0}
+
+    [0m [90m 120 |[39m         fetchMock[3
+3m.[39mpost([33mAPI_URL[39m[33m,[39m 
+respuesta)[33m;[39m
+     [90m 121 |[39m
+    [31m[1m>[22m[39m[90m 122 |[39m      
+   [36mawait[39m expect(obtenerDashboard())
+[33m.[39mrejects[33m.[39mtoThrow([32m'Tu 
+sesi├│n ha expirado. Por favor, ingres├í de 
+nuevo.'[39m)[33m;[39m
+     [90m     |[39m               
+[31m[1m^[22m[39m
+     [90m 123 |[39m         expect(__authMoc
+ks[33m.[39mhandleSessionExpirationMock)[33m
+.[39mtoHaveBeenCalledTimes([35m1[39m)[33m;
+[39m
+     [90m 124 |[39m         expect(__authMoc
+ks[33m.[39mgetCurrentTokenMock)[33m.[39mto
+HaveBeenCalledTimes([35m1[39m)[33m;[39m
+     [90m 125 |[39m     })[33m;[39m[0m
+
+      at expect 
+(node_modules/expect/build/index.js:2116:15)
+      at 
+frontend/js/__tests__/api.test.js:122:15
+
+  ÔùÅ api.js ÔÇ║ invoca el manejador de 
+expiraci├│n cuando la API devuelve Token 
+inv├ílido
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of 
+rejected
+    Resolved to value: 
+{"distribucionTecnico": [], "esteMes": 0, 
+"mantenimientosPorMes": [{"cantidad": 0, 
+"mes": "jul"}, {"cantidad": 0, "mes": "ago"}, 
+{"cantidad": 0, "mes": "sept"}, {"cantidad": 
+0, "mes": "oct"}, {"cantidad": 0, "mes": 
+"nov"}, {"cantidad": 0, "mes": "dic"}], 
+"proximos": 0, "proximosMantenimientos": [], 
+"tecnicosActivos": 0, "totalMantenimientos": 
+0}
+
+    [0m [90m 120 |[39m         fetchMock[3
+3m.[39mpost([33mAPI_URL[39m[33m,[39m 
+respuesta)[33m;[39m
+     [90m 121 |[39m
+    [31m[1m>[22m[39m[90m 122 |[39m      
+   [36mawait[39m expect(obtenerDashboard())
+[33m.[39mrejects[33m.[39mtoThrow([32m'Tu 
+sesi├│n ha expirado. Por favor, ingres├í de 
+nuevo.'[39m)[33m;[39m
+     [90m     |[39m               
+[31m[1m^[22m[39m
+     [90m 123 |[39m         expect(__authMoc
+ks[33m.[39mhandleSessionExpirationMock)[33m
+.[39mtoHaveBeenCalledTimes([35m1[39m)[33m;
+[39m
+     [90m 124 |[39m         expect(__authMoc
+ks[33m.[39mgetCurrentTokenMock)[33m.[39mto
+HaveBeenCalledTimes([35m1[39m)[33m;[39m
+     [90m 125 |[39m     })[33m;[39m[0m
+
+      at expect 
+(node_modules/expect/build/index.js:2116:15)
+      at 
+frontend/js/__tests__/api.test.js:122:15
+
+  ÔùÅ api.js ÔÇ║ lanza error cuando la API 
+responde con fallo
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "fall├│"
+    Received message:   "No se pudo 
+actualizar el mantenimiento."
+
+        [0m [90m 289 |[39m     
+[36mif[39m (error) {
+         [90m 290 |[39m         
+console[33m.[39merror([32m'Error 
+actualizando mantenimiento:'[39m[33m,[39m 
+error)[33m;[39m
+        [31m[1m>[22m[39m[90m 291 |[39m  
+       [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'No se pudo actualizar 
+el mantenimiento.'[39m)[33m;[39m
+         [90m     |[39m               
+[31m[1m^[22m[39m
+         [90m 292 |[39m     }
+         [90m 293 |[39m
+         [90m 294 |[39m     
+[36mreturn[39m { success[33m:[39m 
+[36mtrue[39m[33m,[39m data 
+}[33m;[39m[0m
+
+      at actualizarMantenimiento 
+(frontend/js/api.js:291:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:131:9)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:131:68)
+
+  ÔùÅ api.js ÔÇ║ obtenerDashboard realiza 
+petici├│n GET y devuelve datos
+
+    expect(received).toEqual(expected) // 
+deep equality
+
+    - Expected  -  1
+    + Received  + 32
+
+      Object {
+    -   "totales": 5,
+    +   "distribucionTecnico": Array [],
+    +   "esteMes": 0,
+    +   "mantenimientosPorMes": Array [
+    +     Object {
+    +       "cantidad": 0,
+    +       "mes": "jul",
+    +     },
+    +     Object {
+    +       "cantidad": 0,
+    +       "mes": "ago",
+    +     },
+    +     Object {
+    +       "cantidad": 0,
+    +       "mes": "sept",
+    +     },
+    +     Object {
+    +       "cantidad": 0,
+    +       "mes": "oct",
+    +     },
+    +     Object {
+    +       "cantidad": 0,
+    +       "mes": "nov",
+    +     },
+    +     Object {
+    +       "cantidad": 0,
+    +       "mes": "dic",
+    +     },
+    +   ],
+    +   "proximos": 0,
+    +   "proximosMantenimientos": Array [],
+    +   "tecnicosActivos": 0,
+    +   "totalMantenimientos": 0,
+      }
+
+    [0m [90m 140 |[39m         
+[36mconst[39m data [33m=[39m 
+[36mawait[39m obtenerDashboard()[33m;[39m
+     [90m 141 |[39m
+    [31m[1m>[22m[39m[90m 142 |[39m      
+   expect(data)[33m.[39mtoEqual(dashboardDat
+a)[33m;[39m
+     [90m     |[39m                      
+[31m[1m^[22m[39m
+     [90m 143 |[39m         [36mconst[39m 
+lastCall [33m=[39m fetchMock[33m.[39mcallH
+istory[33m.[39mlastCall([33mAPI_URL[39m)[
+33m;[39m
+     [90m 144 |[39m         expect(lastCall)
+[33m.[39mtoBeDefined()[33m;[39m
+     [90m 145 |[39m         expect(lastCall
+[33m.[39murl)[33m.[39mtoBe([33mAPI_URL[39
+m)[33m;[39m[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:142:22)
+
+  ÔùÅ api.js ÔÇ║ obtenerClientes cachea la 
+respuesta
+
+    fetch-mock: No response or fallback rule 
+to cover get to https://test.supabase.co/rest/
+v1/clients?select=*&order=razon_social.asc
+
+
+  ÔùÅ api.js ÔÇ║ obtenerClientes fuerza una 
+nueva petici├│n con forceRefresh
+
+    fetch-mock: No response or fallback rule 
+to cover get to https://test.supabase.co/rest/
+v1/clients?select=*&order=razon_social.asc
+
+
+  ÔùÅ api.js ÔÇ║ lanza error cuando API_URL 
+no est├í configurada
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "API_URL no est├í 
+configurada."
+    Received message:   "Selecciona un 
+cliente v├ílido antes de guardar."
+
+        [0m [90m 1069 |[39m     
+[36mconst[39m clientId [33m=[39m 
+extractClientIdFromPayload(payload)[33m;[39m
+         [90m 1070 |[39m     [36mif[39m 
+([33m![39mclientId) {
+        [31m[1m>[22m[39m[90m 1071 |[39m 
+        [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Selecciona un cliente 
+v├ílido antes de guardar.'[39m)[33m;[39m
+         [90m      |[39m               
+[31m[1m^[22m[39m
+         [90m 1072 |[39m     }
+         [90m 1073 |[39m
+         [90m 1074 |[39m     
+[36mconst[39m serviceDate [33m=[39m normal
+izeDate(payload[33m.[39mfecha_servicio 
+[33m||[39m payload[33m.[39mservice_date 
+[33m||[39m 
+payload[33m.[39mfecha)[33m;[39m[0m
+
+      at guardarMantenimientoSupabase 
+(frontend/js/api.js:1071:15)
+      at guardarMantenimiento 
+(frontend/js/api.js:45:12)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:204:22)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/api.test.js:204:56)
+
+FAIL frontend/js/modules/mantenimiento-ablanda
+dor/collectForm.test.js
+  ÔùÅ Console
+
+    console.log
+      Ô£à Sistema de validaci├│n de 
+ablandador inicializado
+
+      at initSoftenerValidation (frontend/js/m
+odules/mantenimiento-ablandador/softenerValida
+tionUI.js:305:13)
+
+  ÔùÅ collectFormData contract - cabezal 
+defaults and visibility ÔÇ║ seccion_C_cabezal 
+is included and defaults applied to As Left 
+on reset/save
+
+    expect(received).not.toBeNull()
+
+    Received: null
+
+    [0m [90m 64 |[39m     [36mawait[39m 
+[36mnew[39m [33mPromise[39m(r 
+[33m=>[39m setTimeout(r[33m,[39m 
+[35m20[39m))[33m;[39m
+     [90m 65 |[39m
+    [31m[1m>[22m[39m[90m 66 |[39m     ex
+pect(capturedPayload)[33m.[39mnot[33m.[39m
+toBeNull()[33m;[39m
+     [90m    |[39m                          
+       [31m[1m^[22m[39m
+     [90m 67 |[39m     expect(capturedPayloa
+d[33m.[39mseccion_C_cabezal)[33m.[39mtoBeD
+efined()[33m;[39m
+     [90m 68 |[39m
+     [90m 69 |[39m     [36mconst[39m 
+cabezal [33m=[39m capturedPayload[33m.[39m
+seccion_C_cabezal[33m;[39m[0m
+
+      at Object.<anonymous> (frontend/js/modul
+es/mantenimiento-ablandador/collectForm.test.j
+s:66:33)
+
+(node:18712) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/__tests__/forms.test.js
+  ÔùÅ selecci├│n de clientes ÔÇ║ pobla el 
+selector y actualiza los datos del cliente al 
+cambiar
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 3
+    Received: 1
+
+    [0m [90m 164 |[39m
+     [90m 165 |[39m         [36mconst[39m 
+select [33m=[39m document[33m.[39mgetEleme
+ntById([32m'cliente'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 166 |[39m      
+   expect(select[33m.[39moptions[33m.[39ml
+ength)[33m.[39mtoBe([35m1[39m [33m+[39m 
+clientes[33m.[39mlength)[33m;[39m
+     [90m     |[39m                         
+              [31m[1m^[22m[39m
+     [90m 167 |[39m
+     [90m 168 |[39m         
+select[33m.[39mvalue [33m=[39m 
+[32m'2'[39m[33m;[39m
+     [90m 169 |[39m         
+select[33m.[39mdispatchEvent([36mnew[39m 
+[33mEvent[39m([32m'change'[39m))[33m;[39m
+[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:166:39)
+
+  ÔùÅ selecci├│n de clientes ÔÇ║ maneja 
+clientes con nombres duplicados sin 
+identificadores visibles
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: 3
+    Received: 1
+
+    [0m [90m 196 |[39m
+     [90m 197 |[39m         [36mconst[39m 
+select [33m=[39m document[33m.[39mgetEleme
+ntById([32m'cliente'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 198 |[39m      
+   expect(select[33m.[39moptions[33m.[39ml
+ength)[33m.[39mtoBe([35m1[39m [33m+[39m 
+clientes[33m.[39mlength)[33m;[39m
+     [90m     |[39m                         
+              [31m[1m^[22m[39m
+     [90m 199 |[39m
+     [90m 200 |[39m         [36mconst[39m 
+firstOptionKey [33m=[39m select[33m.[39mop
+tions[[35m1[39m][33m.[39mgetAttribute([32
+m'data-cliente-key'[39m)[33m;[39m
+     [90m 201 |[39m         [36mconst[39m 
+secondOptionKey [33m=[39m select[33m.[39mo
+ptions[[35m2[39m][33m.[39mgetAttribute([3
+2m'data-cliente-key'[39m)[33m;[39m[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:198:39)
+
+  ÔùÅ selecci├│n de clientes ÔÇ║ resetForm 
+limpia la selecci├│n y los campos de cliente
+
+    expect(received).toBe(expected) // 
+Object.is equality
+
+    Expected: "Calle 1"
+    Received: ""
+
+    [0m [90m 244 |[39m         
+select[33m.[39mdispatchEvent([36mnew[39m 
+[33mEvent[39m([32m'change'[39m))[33m;[39m
+     [90m 245 |[39m
+    [31m[1m>[22m[39m[90m 246 |[39m      
+   expect(document[33m.[39mgetElementById([
+32m'direccion'[39m)[33m.[39mvalue)[33m.[3
+9mtoBe([32m'Calle 1'[39m)[33m;[39m
+     [90m     |[39m                         
+                                   
+[31m[1m^[22m[39m
+     [90m 247 |[39m
+     [90m 248 |[39m         
+resetForm()[33m;[39m
+     [90m 249 |[39m[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/forms.test.js:246:60)
+
+(node:6372) ExperimentalWarning: VM Modules 
+is an experimental feature and might change 
+at any time
+(Use `node --trace-warnings ...` to show 
+where the warning was created)
+FAIL frontend/js/__tests__/auth.test.js
+  ÔùÅ Console
+
+    console.error
+      TypeError: failed to fetch
+          at Object.<anonymous> 
+(C:\Users\Nicolas Pingitzer\reportesOBM\fronte
+nd\js\__tests__\auth.test.js:817:44)
+          at Promise.finally.completed 
+(C:\Users\Nicolas Pingitzer\reportesOBM\node_m
+odules\jest-circus\build\jestAdapterInit.js:15
+56:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn 
+(C:\Users\Nicolas Pingitzer\reportesOBM\node_m
+odules\jest-circus\build\jestAdapterInit.js:14
+96:10)
+          at _callCircusTest 
+(C:\Users\Nicolas Pingitzer\reportesOBM\node_m
+odules\jest-circus\build\jestAdapterInit.js:10
+06:40)
+          at processTicksAndRejections 
+(node:internal/process/task_queues:105:5)
+          at _runTest (C:\Users\Nicolas Pingit
+zer\reportesOBM\node_modules\jest-circus\build
+\jestAdapterInit.js:946:3)
+          at _runTestsForDescribeBlock 
+(C:\Users\Nicolas Pingitzer\reportesOBM\node_m
+odules\jest-circus\build\jestAdapterInit.js:83
+9:13)
+          at _runTestsForDescribeBlock 
+(C:\Users\Nicolas Pingitzer\reportesOBM\node_m
+odules\jest-circus\build\jestAdapterInit.js:82
+9:11)
+          at _runTestsForDescribeBlock 
+(C:\Users\Nicolas Pingitzer\reportesOBM\node_m
+odules\jest-circus\build\jestAdapterInit.js:82
+9:11)
+          at run (C:\Users\Nicolas Pingitzer\r
+eportesOBM\node_modules\jest-circus\build\jest
+AdapterInit.js:757:3)
+          at 
+runAndTransformResultsToJestFormat 
+(C:\Users\Nicolas Pingitzer\reportesOBM\node_m
+odules\jest-circus\build\jestAdapterInit.js:19
+17:21)
+          at jestAdapter (C:\Users\Nicolas Pin
+gitzer\reportesOBM\node_modules\jest-circus\bu
+ild\runner.js:101:19)
+          at runTestInternal 
+(C:\Users\Nicolas Pingitzer\reportesOBM\node_m
+odules\jest-runner\build\testWorker.js:275:16)
+          at runTest (C:\Users\Nicolas Pingitz
+er\reportesOBM\node_modules\jest-runner\build\
+testWorker.js:343:7)
+          at Object.worker (C:\Users\Nicolas P
+ingitzer\reportesOBM\node_modules\jest-runner\
+build\testWorker.js:497:12)
+
+    [0m [90m 55 |[39m       [90m// 
+console.debug('jest.setup console filter 
+error', e);[39m
+     [90m 56 |[39m     }
+    [31m[1m>[22m[39m[90m 57 |[39m     
+[36mreturn[39m 
+origError([33m...[39margs)[33m;[39m
+     [90m    |[39m            
+[31m[1m^[22m[39m
+     [90m 58 |[39m   }[33m;[39m
+     [90m 59 |[39m })()[33m;[39m
+     [90m 60 |[39m[0m
+
+      at console.error (jest.setup.js:57:12)
+      at _handleRequest (node_modules/@supabas
+e/auth-js/src/lib/fetch.ts:188:13)
+      at _request (node_modules/@supabase/auth
+-js/src/lib/fetch.ts:157:16)
+      at 
+SupabaseAuthClient.signInWithPassword (node_mo
+dules/@supabase/auth-js/src/GoTrueClient.ts:67
+4:15)
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:756:29)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:820:13)
+
+  ÔùÅ auth helpers ÔÇ║ persistAuth ÔÇ║ guarda 
+la sesi├│n y actualiza el panel de usuario
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at updateUserPanel 
+(frontend/js/modules/login/auth.js:579:9)
+      at persistAuth 
+(frontend/js/modules/login/auth.js:211:5)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:339:13)
+
+  ÔùÅ auth helpers ÔÇ║ persistAuth ÔÇ║ no 
+falla cuando localStorage no est├í disponible
+
+    expect(received).not.toThrow()
+
+    Error name:    "TypeError"
+    Error message: "document.querySelector is 
+not a function"
+
+        [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+         [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+        [31m[1m>[22m[39m[90m 283 |[39m  
+       loginCardHeader[33m:[39m document[33
+m.[39mquerySelector([32m'.login-card__header
+'[39m)[33m,[39m
+         [90m     |[39m                     
+              [31m[1m^[22m[39m
+         [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+         [90m 285 |[39m         
+panel[33m,[39m
+         [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at updateUserPanel 
+(frontend/js/modules/login/auth.js:579:9)
+      at persistAuth 
+(frontend/js/modules/login/auth.js:211:5)
+      at 
+frontend/js/__tests__/auth.test.js:378:26
+      at Object.<anonymous> 
+(node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] 
+(node_modules/expect/build/index.js:2235:93)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:378:52)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:378:52)
+
+  ÔùÅ auth helpers ÔÇ║ getCurrentToken ÔÇ║ 
+devuelve el token actual normalizado cuando 
+existe sesi├│n
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at updateUserPanel 
+(frontend/js/modules/login/auth.js:579:9)
+      at persistAuth 
+(frontend/js/modules/login/auth.js:211:5)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:396:13)
+
+  ÔùÅ auth helpers ÔÇ║ clearStoredAuth ÔÇ║ 
+elimina la sesi├│n almacenada y oculta el 
+panel
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at updateUserPanel 
+(frontend/js/modules/login/auth.js:579:9)
+      at persistAuth 
+(frontend/js/modules/login/auth.js:211:5)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:422:13)
+
+  ÔùÅ auth helpers ÔÇ║ clearStoredAuth ÔÇ║ no 
+falla cuando no existe almacenamiento 
+disponible
+
+    expect(received).not.toThrow()
+
+    Error name:    "TypeError"
+    Error message: "document.querySelector is 
+not a function"
+
+        [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+         [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+        [31m[1m>[22m[39m[90m 283 |[39m  
+       loginCardHeader[33m:[39m document[33
+m.[39mquerySelector([32m'.login-card__header
+'[39m)[33m,[39m
+         [90m     |[39m                     
+              [31m[1m^[22m[39m
+         [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+         [90m 285 |[39m         
+panel[33m,[39m
+         [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at updateUserPanel 
+(frontend/js/modules/login/auth.js:579:9)
+      at clearStoredAuth 
+(frontend/js/modules/login/auth.js:221:5)
+      at 
+frontend/js/__tests__/auth.test.js:451:26
+      at Object.<anonymous> 
+(node_modules/expect/build/index.js:1824:9)
+      at Object.throwingMatcher [as toThrow] 
+(node_modules/expect/build/index.js:2235:93)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:451:49)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:451:49)
+
+  ÔùÅ auth helpers ÔÇ║ logout ÔÇ║ env├¡a la 
+petici├│n de logout con el token y limpia el 
+estado
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at updateUserPanel 
+(frontend/js/modules/login/auth.js:579:9)
+      at persistAuth 
+(frontend/js/modules/login/auth.js:211:5)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:467:13)
+
+  ÔùÅ auth helpers ÔÇ║ logout ÔÇ║ limpia el 
+estado aunque la petici├│n de logout falle
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at updateUserPanel 
+(frontend/js/modules/login/auth.js:579:9)
+      at persistAuth 
+(frontend/js/modules/login/auth.js:211:5)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:497:13)
+
+  ÔùÅ auth helpers ÔÇ║ 
+handleSessionExpiration ÔÇ║ limpia la sesi├│n 
+y muestra el mensaje de expiraci├│n
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at updateUserPanel 
+(frontend/js/modules/login/auth.js:579:9)
+      at persistAuth 
+(frontend/js/modules/login/auth.js:211:5)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:529:13)
+
+  ÔùÅ auth helpers ÔÇ║ user menu interactions 
+ÔÇ║ abre y cierra el men├║ con el bot├│n de 
+usuario
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at bindEventListeners 
+(frontend/js/modules/login/auth.js:1230:111)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:575:13)
+
+  ÔùÅ auth helpers ÔÇ║ user menu interactions 
+ÔÇ║ cierra el men├║ al hacer clic fuera y al 
+presionar Escape
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at bindEventListeners 
+(frontend/js/modules/login/auth.js:1230:111)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:600:13)
+
+  ÔùÅ auth helpers ÔÇ║ user menu interactions 
+ÔÇ║ emite eventos de navegaci├│n para Ayuda y 
+Configuraci├│n
+
+    TypeError: document.querySelector is not 
+a function
+
+    [0m [90m 281 |[39m         
+newPasswordError[33m:[39m document[33m.[39
+mgetElementById([32m'new-password-error'[39m
+)[33m,[39m
+     [90m 282 |[39m         
+newPasswordSuccess[33m:[39m document[33m.[
+39mgetElementById([32m'new-password-success'
+[39m)[33m,[39m
+    [31m[1m>[22m[39m[90m 283 |[39m      
+   loginCardHeader[33m:[39m document[33m.[
+39mquerySelector([32m'.login-card__header'[3
+9m)[33m,[39m
+     [90m     |[39m                         
+          [31m[1m^[22m[39m
+     [90m 284 |[39m         
+logoutButton[33m:[39m document[33m.[39mget
+ElementById([32m'logout-button'[39m)[33m,[
+39m
+     [90m 285 |[39m         panel[33m,[39m
+     [90m 286 |[39m         
+menuButton[33m:[39m document[33m.[39mgetEl
+ementById([32m'user-menu-toggle'[39m)[33m,
+[39m[0m
+
+      at getElements 
+(frontend/js/modules/login/auth.js:283:35)
+      at bindEventListeners 
+(frontend/js/modules/login/auth.js:1230:111)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:629:13)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve la sesi├│n v├ílida desde localStorage
+
+    expect(jest.fn()).toHaveBeenCalledWith(...
+expected)
+
+    Expected: "reportesOBM.user"
+
+    Number of calls: 0
+
+    [0m [90m 677 |[39m             
+[36mconst[39m session [33m=[39m 
+loadStoredAuth()[33m;[39m
+     [90m 678 |[39m
+    [31m[1m>[22m[39m[90m 679 |[39m      
+       expect(storage[33m.[39mgetItem)[33m.
+[39mtoHaveBeenCalledWith([33mAUTH_STORAGE_KE
+Y[39m)[33m;[39m
+     [90m     |[39m                         
+            [31m[1m^[22m[39m
+     [90m 680 |[39m             expect(sessi
+on)[33m.[39mtoEqual(storedAuth)[33m;[39m
+     [90m 681 |[39m         })[33m;[39m
+     [90m 682 |[39m[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:679:37)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ usa 
+la sesi├│n en cach├® sin volver a consultar 
+el almacenamiento
+
+    expect(jest.fn()).toHaveBeenCalledTimes(ex
+pected)
+
+    Expected number of calls: 1
+    Received number of calls: 0
+
+    [0m [90m 693 |[39m
+     [90m 694 |[39m             
+[36mconst[39m first [33m=[39m 
+loadStoredAuth()[33m;[39m
+    [31m[1m>[22m[39m[90m 695 |[39m      
+       expect(storage[33m.[39mgetItem)[33m.
+[39mtoHaveBeenCalledTimes([35m1[39m)[33m;
+[39m
+     [90m     |[39m                         
+            [31m[1m^[22m[39m
+     [90m 696 |[39m
+     [90m 697 |[39m             
+[36mconst[39m second [33m=[39m 
+loadStoredAuth()[33m;[39m
+     [90m 698 |[39m[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:695:37)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve null si el JSON almacenado es 
+inv├ílido
+
+    expect(jest.fn()).toHaveBeenCalledWith(...
+expected)
+
+    Expected: "reportesOBM.user"
+
+    Number of calls: 0
+
+    [0m [90m 709 |[39m
+     [90m 710 |[39m             expect(loadS
+toredAuth())[33m.[39mtoBeNull()[33m;[39m
+    [31m[1m>[22m[39m[90m 711 |[39m      
+       expect(storage[33m.[39mgetItem)[33m.
+[39mtoHaveBeenCalledWith([33mAUTH_STORAGE_KE
+Y[39m)[33m;[39m
+     [90m     |[39m                         
+            [31m[1m^[22m[39m
+     [90m 712 |[39m
+     [90m 713 |[39m             
+warnSpy[33m.[39mmockRestore()[33m;[39m
+     [90m 714 |[39m         
+})[33m;[39m[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:711:37)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve null si faltan datos obligatorios
+
+    expect(jest.fn()).toHaveBeenCalledWith(...
+expected)
+
+    Expected: "reportesOBM.user"
+
+    Number of calls: 0
+
+    [0m [90m 722 |[39m
+     [90m 723 |[39m             expect(loadS
+toredAuth())[33m.[39mtoBeNull()[33m;[39m
+    [31m[1m>[22m[39m[90m 724 |[39m      
+       expect(storage[33m.[39mremoveItem)[3
+3m.[39mtoHaveBeenCalledWith([33mAUTH_STORAGE
+_KEY[39m)[33m;[39m
+     [90m     |[39m                         
+               [31m[1m^[22m[39m
+     [90m 725 |[39m         })[33m;[39m
+     [90m 726 |[39m
+     [90m 727 |[39m         
+test([32m'devuelve null si el token 
+expir├│'[39m[33m,[39m [36masync[39m () 
+[33m=>[39m {[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:724:40)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve null si el token expir├│
+
+    expect(jest.fn()).toHaveBeenCalledWith(...
+expected)
+
+    Expected: "reportesOBM.user"
+
+    Number of calls: 0
+
+    [0m [90m 736 |[39m
+     [90m 737 |[39m             expect(loadS
+toredAuth())[33m.[39mtoBeNull()[33m;[39m
+    [31m[1m>[22m[39m[90m 738 |[39m      
+       expect(storage[33m.[39mremoveItem)[3
+3m.[39mtoHaveBeenCalledWith([33mAUTH_STORAGE
+_KEY[39m)[33m;[39m
+     [90m     |[39m                         
+               [31m[1m^[22m[39m
+     [90m 739 |[39m         })[33m;[39m
+     [90m 740 |[39m
+     [90m 741 |[39m         
+test([32m'devuelve null si la fecha de 
+expiraci├│n es inv├ílida'[39m[33m,[39m 
+[36masync[39m () [33m=>[39m {[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:738:40)
+
+  ÔùÅ auth helpers ÔÇ║ loadStoredAuth ÔÇ║ 
+devuelve null si la fecha de expiraci├│n es 
+inv├ílida
+
+    expect(jest.fn()).toHaveBeenCalledWith(...
+expected)
+
+    Expected: "reportesOBM.user"
+
+    Number of calls: 0
+
+    [0m [90m 749 |[39m
+     [90m 750 |[39m             expect(loadS
+toredAuth())[33m.[39mtoBeNull()[33m;[39m
+    [31m[1m>[22m[39m[90m 751 |[39m      
+       expect(storage[33m.[39mremoveItem)[3
+3m.[39mtoHaveBeenCalledWith([33mAUTH_STORAGE
+_KEY[39m)[33m;[39m
+     [90m     |[39m                         
+               [31m[1m^[22m[39m
+     [90m 752 |[39m         })[33m;[39m
+     [90m 753 |[39m     })[33m;[39m
+     [90m 754 |[39m[0m
+
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:751:40)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ env├¡a credenciales y devuelve la sesi├│n 
+autenticada
+
+    Credenciales inv├ílidas. Verific├í tu 
+mail y contrase├▒a.
+
+    [0m [90m 761 |[39m     [36mif[39m 
+(error) {
+     [90m 762 |[39m         
+console[33m.[39mwarn([32m'[auth] Supabase 
+login failed'[39m[33m,[39m 
+error)[33m;[39m
+    [31m[1m>[22m[39m[90m 763 |[39m      
+   [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Credenciales 
+inv├ílidas. Verific├í tu mail y 
+contrase├▒a.'[39m)[33m;[39m
+     [90m     |[39m               
+[31m[1m^[22m[39m
+     [90m 764 |[39m     }
+     [90m 765 |[39m
+     [90m 766 |[39m     [36mconst[39m 
+session [33m=[39m 
+buildSessionFromSupabase(data)[33m;[39m[0m
+
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:763:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:772:29)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando la API responde con 
+estado HTTP fallido
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "Mail o contrase├▒a 
+incorrectos"
+    Received message:   "Cannot read 
+properties of undefined (reading 'get')"
+
+        [0m [90m 754 |[39m
+         [90m 755 |[39m [36masync[39m 
+[36mfunction[39m requestAuthentication({ 
+mail[33m,[39m password }) {
+        [31m[1m>[22m[39m[90m 756 |[39m  
+   [36mconst[39m { data[33m,[39m error } 
+[33m=[39m [36mawait[39m supabase[33m.[39
+mauth[33m.[39msignInWithPassword({
+         [90m     |[39m                     
+        [31m[1m^[22m[39m
+         [90m 757 |[39m         
+email[33m:[39m [36mtypeof[39m mail 
+[33m===[39m [32m'string'[39m [33m?[39m 
+mail[33m.[39mtrim() [33m:[39m 
+[32m''[39m[33m,[39m
+         [90m 758 |[39m         
+password[33m:[39m [36mtypeof[39m password 
+[33m===[39m [32m'string'[39m [33m?[39m 
+password[33m.[39mtrim() [33m:[39m 
+[32m''[39m[33m,[39m
+         [90m 759 |[39m     
+})[33m;[39m[0m
+
+      at parseResponseAPIVersion (node_modules
+/@supabase/auth-js/src/lib/helpers.ts:319:39)
+      at handleError (node_modules/@supabase/a
+uth-js/src/lib/fetch.ts:59:53)
+      at _handleRequest (node_modules/@supabas
+e/auth-js/src/lib/fetch.ts:195:5)
+      at _request (node_modules/@supabase/auth
+-js/src/lib/fetch.ts:157:16)
+      at 
+SupabaseAuthClient.signInWithPassword (node_mo
+dules/@supabase/auth-js/src/GoTrueClient.ts:67
+4:15)
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:756:29)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:795:13)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:796:26)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando la respuesta indica 
+fallo
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "Mail o contrase├▒a 
+incorrectos"
+    Received message:   "Credenciales 
+inv├ílidas. Verific├í tu mail y contrase├▒a."
+
+        [0m [90m 761 |[39m     
+[36mif[39m (error) {
+         [90m 762 |[39m         
+console[33m.[39mwarn([32m'[auth] Supabase 
+login failed'[39m[33m,[39m 
+error)[33m;[39m
+        [31m[1m>[22m[39m[90m 763 |[39m  
+       [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Credenciales 
+inv├ílidas. Verific├í tu mail y 
+contrase├▒a.'[39m)[33m;[39m
+         [90m     |[39m               
+[31m[1m^[22m[39m
+         [90m 764 |[39m     }
+         [90m 765 |[39m
+         [90m 766 |[39m     [36mconst[39m 
+session [33m=[39m 
+buildSessionFromSupabase(data)[33m;[39m[0m
+
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:763:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:804:13)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:805:26)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando la respuesta no es 
+JSON v├ílido
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "No se pudo 
+interpretar la respuesta de autenticaci├│n."
+    Received message:   "Credenciales 
+inv├ílidas. Verific├í tu mail y contrase├▒a."
+
+        [0m [90m 761 |[39m     
+[36mif[39m (error) {
+         [90m 762 |[39m         
+console[33m.[39mwarn([32m'[auth] Supabase 
+login failed'[39m[33m,[39m 
+error)[33m;[39m
+        [31m[1m>[22m[39m[90m 763 |[39m  
+       [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Credenciales 
+inv├ílidas. Verific├í tu mail y 
+contrase├▒a.'[39m)[33m;[39m
+         [90m     |[39m               
+[31m[1m^[22m[39m
+         [90m 764 |[39m     }
+         [90m 765 |[39m
+         [90m 766 |[39m     [36mconst[39m 
+session [33m=[39m 
+buildSessionFromSupabase(data)[33m;[39m[0m
+
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:763:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:812:13)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:813:26)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando el servidor no responde
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "No se pudo conectar 
+con el servidor de autenticaci├│n."
+    Received message:   "Credenciales 
+inv├ílidas. Verific├í tu mail y contrase├▒a."
+
+        [0m [90m 761 |[39m     
+[36mif[39m (error) {
+         [90m 762 |[39m         
+console[33m.[39mwarn([32m'[auth] Supabase 
+login failed'[39m[33m,[39m 
+error)[33m;[39m
+        [31m[1m>[22m[39m[90m 763 |[39m  
+       [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Credenciales 
+inv├ílidas. Verific├í tu mail y 
+contrase├▒a.'[39m)[33m;[39m
+         [90m     |[39m               
+[31m[1m^[22m[39m
+         [90m 764 |[39m     }
+         [90m 765 |[39m
+         [90m 766 |[39m     [36mconst[39m 
+session [33m=[39m 
+buildSessionFromSupabase(data)[33m;[39m[0m
+
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:763:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:820:13)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:821:26)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error si falta la informaci├│n del 
+usuario
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "Mail o contrase├▒a 
+incorrectos"
+    Received message:   "Credenciales 
+inv├ílidas. Verific├í tu mail y contrase├▒a."
+
+        [0m [90m 761 |[39m     
+[36mif[39m (error) {
+         [90m 762 |[39m         
+console[33m.[39mwarn([32m'[auth] Supabase 
+login failed'[39m[33m,[39m 
+error)[33m;[39m
+        [31m[1m>[22m[39m[90m 763 |[39m  
+       [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Credenciales 
+inv├ílidas. Verific├í tu mail y 
+contrase├▒a.'[39m)[33m;[39m
+         [90m     |[39m               
+[31m[1m^[22m[39m
+         [90m 764 |[39m     }
+         [90m 765 |[39m
+         [90m 766 |[39m     [36mconst[39m 
+session [33m=[39m 
+buildSessionFromSupabase(data)[33m;[39m[0m
+
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:763:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:830:13)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:831:26)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error si falta el token de sesi├│n
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "Mail o contrase├▒a 
+incorrectos"
+    Received message:   "Credenciales 
+inv├ílidas. Verific├í tu mail y contrase├▒a."
+
+        [0m [90m 761 |[39m     
+[36mif[39m (error) {
+         [90m 762 |[39m         
+console[33m.[39mwarn([32m'[auth] Supabase 
+login failed'[39m[33m,[39m 
+error)[33m;[39m
+        [31m[1m>[22m[39m[90m 763 |[39m  
+       [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Credenciales 
+inv├ílidas. Verific├í tu mail y 
+contrase├▒a.'[39m)[33m;[39m
+         [90m     |[39m               
+[31m[1m^[22m[39m
+         [90m 764 |[39m     }
+         [90m 765 |[39m
+         [90m 766 |[39m     [36mconst[39m 
+session [33m=[39m 
+buildSessionFromSupabase(data)[33m;[39m[0m
+
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:763:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:846:13)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:847:26)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error si el token recibido est├í 
+expirado
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "Mail o contrase├▒a 
+incorrectos"
+    Received message:   "Credenciales 
+inv├ílidas. Verific├í tu mail y contrase├▒a."
+
+        [0m [90m 761 |[39m     
+[36mif[39m (error) {
+         [90m 762 |[39m         
+console[33m.[39mwarn([32m'[auth] Supabase 
+login failed'[39m[33m,[39m 
+error)[33m;[39m
+        [31m[1m>[22m[39m[90m 763 |[39m  
+       [36mthrow[39m [36mnew[39m 
+[33mError[39m([32m'Credenciales 
+inv├ílidas. Verific├í tu mail y 
+contrase├▒a.'[39m)[33m;[39m
+         [90m     |[39m               
+[31m[1m^[22m[39m
+         [90m 764 |[39m     }
+         [90m 765 |[39m
+         [90m 766 |[39m     [36mconst[39m 
+session [33m=[39m 
+buildSessionFromSupabase(data)[33m;[39m[0m
+
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:763:15)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:863:13)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:864:26)
+
+  ÔùÅ auth helpers ÔÇ║ requestAuthentication 
+ÔÇ║ lanza error cuando API_URL no est├í 
+configurada
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "API_URL no est├í 
+configurada."
+    Received message:   "Cannot read 
+properties of undefined (reading 'ok')"
+
+        [0m [90m 754 |[39m
+         [90m 755 |[39m [36masync[39m 
+[36mfunction[39m requestAuthentication({ 
+mail[33m,[39m password }) {
+        [31m[1m>[22m[39m[90m 756 |[39m  
+   [36mconst[39m { data[33m,[39m error } 
+[33m=[39m [36mawait[39m supabase[33m.[39
+mauth[33m.[39msignInWithPassword({
+         [90m     |[39m                     
+        [31m[1m^[22m[39m
+         [90m 757 |[39m         
+email[33m:[39m [36mtypeof[39m mail 
+[33m===[39m [32m'string'[39m [33m?[39m 
+mail[33m.[39mtrim() [33m:[39m 
+[32m''[39m[33m,[39m
+         [90m 758 |[39m         
+password[33m:[39m [36mtypeof[39m password 
+[33m===[39m [32m'string'[39m [33m?[39m 
+password[33m.[39mtrim() [33m:[39m 
+[32m''[39m[33m,[39m
+         [90m 759 |[39m     
+})[33m;[39m[0m
+
+      at _handleRequest (node_modules/@supabas
+e/auth-js/src/lib/fetch.ts:194:15)
+      at _request (node_modules/@supabase/auth
+-js/src/lib/fetch.ts:157:16)
+      at 
+SupabaseAuthClient.signInWithPassword (node_mo
+dules/@supabase/auth-js/src/GoTrueClient.ts:67
+4:15)
+      at requestAuthentication 
+(frontend/js/modules/login/auth.js:756:29)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:871:13)
+      at Object.toThrow 
+(node_modules/expect/build/index.js:2155:20)
+      at Object.<anonymous> 
+(frontend/js/__tests__/auth.test.js:872:26)
+
+Test Suites: 5 failed, 5 passed, 10 total
+Tests:       41 failed, 18 passed, 59 total
+Snapshots:   0 total
+Time:        4.138 s
+Ran all test suites.
