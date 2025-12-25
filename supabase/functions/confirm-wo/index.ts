@@ -145,18 +145,18 @@ Deno.serve(async (req) => {
         if (accion === 'confirmar') {
             // Encolar email al cliente para que confirme
             const cliente = wo.clients as any;
-            if (cliente?.email) {
-                const fechaFormateada = wo.fecha_programada
-                    ? new Date(wo.fecha_programada).toLocaleString('es-AR', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })
-                    : 'A coordinar';
+            const fechaFormateada = wo.fecha_programada
+                ? new Date(wo.fecha_programada).toLocaleString('es-AR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                })
+                : 'A coordinar';
 
+            if (cliente?.email) {
                 await supabaseAdmin
                     .from('email_queue')
                     .insert({
