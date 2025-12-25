@@ -32,6 +32,8 @@ export interface WorkOrder {
     // Campos de confirmación
     confirmacion_tecnico?: 'pendiente' | 'confirmada' | 'rechazada';
     confirmacion_cliente?: 'pendiente' | 'confirmada' | 'rechazada';
+    // Creador
+    creador_nombre?: string;
 }
 
 export interface Habilidad {

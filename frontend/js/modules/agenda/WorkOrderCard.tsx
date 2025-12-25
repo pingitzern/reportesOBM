@@ -125,6 +125,11 @@ export function WorkOrderCard({ wo, isDragging, isCompact, onClick, onDelete, on
                             {wo.tecnico_nombre}
                         </span>
                     )}
+                    {wo.creador_nombre && (
+                        <span className="flex items-center gap-1 text-indigo-600" title="Creado por">
+                            ✎ {wo.creador_nombre}
+                        </span>
+                    )}
                 </div>
             )}
 

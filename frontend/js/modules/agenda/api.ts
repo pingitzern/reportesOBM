@@ -362,6 +362,8 @@ function mapDbWorkOrderToWO(row: any): WorkOrder {
         // Campos de confirmación
         confirmacion_tecnico: row.confirmacion_tecnico,
         confirmacion_cliente: row.confirmacion_cliente,
+        // Creador
+        creador_nombre: row.creador_nombre,
     };
 }
 
